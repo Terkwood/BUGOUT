@@ -24,3 +24,7 @@ Topic : MoveEvents
 MoveMade
 MoveRejected
 ```
+
+## frontend
+
+Use Google cloud auth for simplicity. GCP userid can be tied to games
