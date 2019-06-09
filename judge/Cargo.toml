@@ -1,7 +1,8 @@
 [package]
 name = "judge"
-version = "0.1.0"
+version = "0.0.1-existence"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+rdkafka = "~0.21"
