@@ -4,13 +4,13 @@ Multiplayer web implementation of Go/Baduk/Weiqi using Kafka as the backend 🐛
 - simple lobby... Join game and put you with the first player who is waiting
 - react JS for UI. KISS
 - Kafka is an audit log of all moves.
-- maybe pushpin to enable SSE /push to web client and hide Kafka layer from internet
--  write rust Middleware to adjudicate... Command (move black 5 16) vs event
+- [pushpin to enable SSE /push](https://hackernoon.com/supercharging-kafka-enable-realtime-web-streaming-by-adding-pushpin-fd62a9809d94) to web client and hide Kafka layer from internet
+- write rust Middleware to adjudicate... Command (move black 5 16) vs event
 - on game over, replay game moves quickly
 - on join game, race to pick a color
 - allow handicap
 
-# domain model
+## domain model
 
 Topic : MoveCommands 
 
