@@ -2,6 +2,12 @@
 
 Uses [Kafka Streams](https://kafka.apache.org/22/documentation/streams/quickstart) to calculate game states.  Rejects invalid moves.  Declares the game completed when both parties pass
 
+## streams example
+
+A simple example of using Kafka streams 
+
+https://github.com/gwenshap/kafka-streams-stockstats/blob/master/src/main/java/com/shapira/examples/streams/stockstats/StockStatsExample.java
+
 ## kafkacat crib notes
 
 ```sh
