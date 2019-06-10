@@ -4,9 +4,11 @@ Uses [Kafka Streams](https://kafka.apache.org/22/documentation/streams/quickstar
 
 ## streams example
 
-A simple example of using Kafka streams 
+Here's [a reference example for using Kafka streams](https://github.com/gwenshap/kafka-streams-stockstats/blob/master/src/main/java/com/shapira/examples/streams/stockstats/StockStatsExample.java).
 
-https://github.com/gwenshap/kafka-streams-stockstats/blob/master/src/main/java/com/shapira/examples/streams/stockstats/StockStatsExample.java
+There's [another helpful example in this project](https://github.com/adrien-ben/kstream-aggregation-example/blob/master/src/main/kotlin/com/boulanger/poc/salesaggregation/Configuration.kt).
+
+There's [yet another example here](https://github.com/stream1984/kafka-stream-examples/blob/master/src/main/kotlin/cn/leapcloud/watchout/WatchHTTPStatus.kt).
 
 ## kafkacat crib notes
 

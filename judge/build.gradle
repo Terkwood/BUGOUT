@@ -26,6 +26,10 @@ dependencies {
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.9.7'
 
     compile 'org.apache.kafka:kafka-streams:2.2.1'
+
+    // Fix JNI unsatisfied link error
+    compile group: 'org.rocksdb', name: 'rocksdbjni', version: '6.0.1'
+
 }
 
 compileKotlin {
