@@ -1,5 +1,4 @@
 
-import model.MakeMoveCmd
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.KeyValue
@@ -25,7 +24,17 @@ class Judge(private val brokers: String) {
         }
 
         val moveMadeEventStream: KStream<String, String> = makeMoveCommandStream.map { _, move ->
-            KeyValue("${move.gameId}", "moved")
+            val eventId = UUID.randomUUID()
+            KeyValue("${move.gameId} $eventId",
+                jsonMapper.writeValueAsString(
+                    MoveMadeEv(
+                        gameId=move.gameId,
+                        reqId=move.reqId,
+                        eventId = eventId,
+                        player=move.player,
+                        coord=move.coord
+                    )
+                ))
         }
 
         moveMadeEventStream.to(MOVE_MODE_EV_TOPIC, Produced.with(Serdes.String(), Serdes.String()))
