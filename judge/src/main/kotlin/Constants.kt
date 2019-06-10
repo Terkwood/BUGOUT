@@ -1,0 +1,2 @@
+
+val gamesTopic = "bugout-games"
