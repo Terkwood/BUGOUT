@@ -5,6 +5,13 @@ plugins {
 group 'terkwood.farm'
 version '0.0.1-existence'
 
+apply plugin: 'kotlin'
+apply plugin: 'application'
+
+mainClassName = 'JudgeKt'
+
+defaultTasks 'run'
+
 repositories {
     mavenCentral()
     maven { url 'https://packages.confluent.io/maven/' }
@@ -12,6 +19,7 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    compile "org.jetbrains.kotlin:kotlin-reflect:1.3.0"
 
     // JSON serialization
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.7'
@@ -29,6 +37,7 @@ compileTestKotlin {
 
 // fat jar
 jar {
+    manifest { attributes 'Main-Class': 'Judge' }
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
