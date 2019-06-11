@@ -10,7 +10,9 @@ There's [another helpful example in this project](https://github.com/adrien-ben/
 
 There's [yet another example here](https://github.com/stream1984/kafka-stream-examples/blob/master/src/main/kotlin/cn/leapcloud/watchout/WatchHTTPStatus.kt).
 
-## topic testing
+More [inspiration here](https://blog.softwaremill.com/event-sourcing-using-kafka-53dfd72ad45d).
+
+## pushing data around by hand
 
 You need to run these commands from inside the `kafka` docker
 container in order for their hostname to work correctly.
@@ -19,13 +21,19 @@ Produce an event to the Make Move Command topic:
 
 ```sh
 kafka-console-producer.sh --broker-list kafka:9092 --topic bugout-make-move-cmd
->{"gameId":"50b8d848-7c12-47fd-955f-c61c40d858af","reqId":"50b8d848-7c12-47fd-955f-c61c40d858af", "player":"BLACK","coord":{"x":0,"y":0}}
+{"gameId":"50b8d848-7c12-47fd-955f-c61c40d858af","reqId":"6706b0e5-a943-491a-938a-19a35677a501", "player":"BLACK","coord":{"x":0,"y":0}}
 ```
 
 Consume an event from the Move Made Event topic:
 
 ```sh
 kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic bugout-move-made-ev --from-beginning
+```
+
+Check the game states stream output:
+
+```sh
+kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic bugout-game-states --from-beginning
 ```
 
 ## kafkacat notes

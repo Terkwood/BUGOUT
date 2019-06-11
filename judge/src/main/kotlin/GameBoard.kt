@@ -1,9 +1,31 @@
+import org.apache.kafka.common.serialization.Deserializer
+import org.apache.kafka.common.serialization.Serde
+import org.apache.kafka.common.serialization.Serdes
+import org.apache.kafka.common.serialization.Serializer
+
 class GameBoard {
-    private val _board: MutableMap<Coord, Player> = HashMap()
-    fun heedlessAdd(move: MakeMoveCmd): GameBoard {
-        if (!_board.containsKey(move.coord))
-            _board[move.coord] = move.player
+
+    // the moves are tracked in order
+    val moves: MutableList<Move> = ArrayList()
+
+    fun add(ev: MoveMadeEv): GameBoard {
+        val move = Move(ev.player, ev.coord)
+        if (!moves.map { it.coord }.contains(move.coord))
+            moves.add(move)
 
         return this
     }
+
+    fun asByteArray(): ByteArray {
+        return jsonMapper.writeValueAsBytes(this)
+    }
 }
+
+private val gameBoardSerializer: Serializer<GameBoard> =
+    GameBoardSerializer()
+
+private val gameBoardDeserializer: Deserializer<GameBoard> =
+    GameBoardDeserializer()
+
+val gameBoardSerde: Serde<GameBoard> =
+    Serdes.serdeFrom(gameBoardSerializer, gameBoardDeserializer)

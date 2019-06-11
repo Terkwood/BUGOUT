@@ -32,3 +32,8 @@ data class MoveRejectedEv(
     val player: Player,
     val coord: Coord
 )
+
+data class Move(
+    val player: Player,
+    val coord: Coord
+)
