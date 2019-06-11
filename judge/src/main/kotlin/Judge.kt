@@ -84,29 +84,17 @@ class Judge(private val brokers: String) {
                         .withValueSerde(gameBoardSerde)
                 )
 
-        // TODO experimental
         gameStatesTable
             .toStream()
             .mapValues { gameBoard ->
                 jsonMapper.writeValueAsString(
-                    gameBoard
-                        .board
+                    gameBoard.moves()
                 )
             }
             .to(
                 GAME_STATES_TOPIC,
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
-
-        // see https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Stream+Usage+Patterns
-        /* val gameStatesJsonTable: KTable<GameId, String> =
-             gameStatesTable.mapValues { list ->
-                 jsonMapper
-                     .writeValueAsString(list)
-             }
-
-         gameStatesJsonTable to GAME_STATES_TOPIC*/
-
 
         val topology = streamsBuilder.build()
 
