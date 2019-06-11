@@ -20,3 +20,18 @@ kafkacat -b 0.0.0.0:9092 -t bugout-make-move-cmd -P
 ```sh
 kafkacat -b 0.0.0.0:9092 -t bugout-move-made-ev -C
 ```
+
+...or use the kafka tooling...
+
+producer:
+
+```sh
+kafka-console-producer.sh --broker-list kafka:9092 --topic bugout-make-move-cmd
+>{"gameId":"50b8d848-7c12-47fd-955f-c61c40d858af","reqId":"50b8d848-7c12-47fd-955f-c61c40d858af", "player":"BLACK","coord":{"x":0,"y":0}}
+```
+
+consumer:
+
+```sh
+kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic bugout-move-made-ev --from-beginning
+```
