@@ -55,7 +55,7 @@ class Judge(private val brokers: String) {
             MOVE_MODE_EV_TOPIC,
             Produced.with(Serdes.UUID(), Serdes.String())
         )
-        
+
 
         val gameStatesTable: KTable<GameId, GameBoard> =
             moveMadeEventJsonStream.groupByKey(

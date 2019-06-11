@@ -21,10 +21,10 @@ class GameBoard {
 }
 
 private val gameBoardSerializer: Serializer<GameBoard> =
-    JsonPOJOSerializer<GameBoard>()
+    GameBoardSerializer()
 
 private val gameBoardDeserializer: Deserializer<GameBoard> =
-    JsonPOJODeserializer<GameBoard>()
+    GameBoardDeserializer()
 
 val gameBoardSerde: Serde<GameBoard> =
     Serdes.serdeFrom(gameBoardSerializer, gameBoardDeserializer)
