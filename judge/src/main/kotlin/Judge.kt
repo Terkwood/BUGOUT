@@ -58,19 +58,25 @@ class Judge(private val brokers: String) {
 
 
         val gameStatesTable: KTable<GameId, GameBoard> =
-            moveMadeEventStream.groupByKey().aggregate(
-                { GameBoard() },
-                { _, v, list ->
-                    list.add(Move(v.player, v.coord))
-                    list
-                },
-                Materialized.`as`<GameId, GameBoard, KeyValueStore<Bytes,
-                        ByteArray>>(
-                    GAME_STATES_TOPIC
+            moveMadeEventJsonStream.groupByKey(
+                Serialized.with(
+                    Serdes.UUID(),
+                    Serdes.String()
                 )
-                    .withKeySerde(Serdes.UUID())
-                    .withValueSerde(gameBoardSerde)
             )
+                .aggregate(
+                    { GameBoard() },
+                    { _, v, list ->
+                        list.add(jsonMapper.readValue(v, Move::class.java))
+                        list
+                    },
+                    Materialized.`as`<GameId, GameBoard, KeyValueStore<Bytes,
+                            ByteArray>>(
+                        GAME_STATES_TOPIC
+                    )
+                        .withKeySerde(Serdes.UUID())
+                        .withValueSerde(gameBoardSerde)
+                )
 
         // see https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Stream+Usage+Patterns
         /* val gameStatesJsonTable: KTable<GameId, String> =
