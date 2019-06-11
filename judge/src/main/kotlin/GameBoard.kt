@@ -5,12 +5,12 @@ import org.apache.kafka.common.serialization.Serializer
 
 class GameBoard {
 
-    private val _board: MutableList<Move> = ArrayList()
+    val board: MutableList<Move> = ArrayList()
 
     fun add(ev: MoveMadeEv): GameBoard {
         val move = Move(ev.player, ev.coord)
-        if (!_board.contains(move))
-            _board.add(move)
+        if (!board.contains(move))
+            board.add(move)
 
         return this
     }
