@@ -1,39 +1,44 @@
 import org.apache.kafka.common.serialization.Deserializer
+import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.serialization.Serializer
 import java.util.*
 
 
 class GameBoard {
-    private val _board: MutableMap<Coord, Player> = HashMap()
-    fun add(move: MoveMadeEv): GameBoard {
-        if (!_board.containsKey(move.coord))
-            _board[move.coord] = move.player
+    private val _board: MutableList<Move> = ArrayList()
+    fun add(move: Move): GameBoard {
+        if (!_board.contains(move))
+            _board.add(move)
 
         return this
     }
 }
 
-object GameBoardSerde {
-    // see https://kafka.apache.org/10/documentation/streams/developer-guide/datatypes.html
-    // see https://github.com/apache/kafka/blob/1.0/streams/examples/src/main/java/org/apache/kafka/streams/examples/pageview/PageViewTypedDemo.java
-    val gameBoardSerializer: Serializer<GameBoard> =
-        JsonPOJOSerializer<GameBoard>()
+private val gameBoardSerializer: Serializer<GameBoard> =
+    JsonPOJOSerializer<GameBoard>()
 
-    val gameBoardDeserializer: Deserializer<GameBoard> =
-        JsonPOJODeserializer()
+private val gameBoardDeserializer: Deserializer<GameBoard> =
+    JsonPOJODeserializer()
 
-    fun setup() {
-        val serdeProps: MutableMap<String, Any> = HashMap()
+val gameBoardSerde =
+    Serdes.serdeFrom(gameBoardSerializer, gameBoardDeserializer)
+//object GameBoardSerde {
+// see https://kafka.apache.org/10/documentation/streams/developer-guide/datatypes.html
+// see https://github.com/apache/kafka/blob/1.0/streams/examples/src/main/java/org/apache/kafka/streams/examples/pageview/PageViewTypedDemo.java
 
-        serdeProps["JsonPOJOClass"] =
-            GameBoard::class.java
 
-        gameBoardSerializer.configure(
-            serdeProps, false
-        )
+/*  fun setup() {
+      val serdeProps: MutableMap<String, Any> = HashMap()
 
-        serdeProps[
-                "JsonPOJOClass"] = GameBoard::class.java
-        gameBoardDeserializer.configure(serdeProps, false)
-    }
-}
+      serdeProps["JsonPOJOClass"] =
+          GameBoard::class.java
+
+      gameBoardSerializer.configure(
+          serdeProps, false
+      )
+
+      serdeProps["JsonPOJOClass"] = GameBoard::class.java
+      gameBoardDeserializer.configure(serdeProps, false)
+
+  }*/
+//}

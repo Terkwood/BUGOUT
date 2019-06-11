@@ -1,10 +1,10 @@
 import org.apache.kafka.common.serialization.Serdes
+import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
-import org.apache.kafka.streams.kstream.Consumed
-import org.apache.kafka.streams.kstream.KStream
-import org.apache.kafka.streams.kstream.Produced
+import org.apache.kafka.streams.kstream.*
+import org.apache.kafka.streams.state.KeyValueStore
 import java.util.*
 
 fun main() {
@@ -57,27 +57,31 @@ class Judge(private val brokers: String) {
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
-        /*
-        // TODO WOE TO THEE
-        val gameStatesTable: KTable<GameId, ArrayList<MoveMadeEv>> =
+
+        val gameStatesTable: KTable<GameId, GameBoard> =
             moveMadeEventStream.groupByKey().aggregate(
-                { ArrayList<MoveMadeEv>(0) },
+                { GameBoard() },
                 { _, v, list ->
-                    list.add(v)
+                    list.add(Move(v.player, v.coord))
                     list
-                }, TODO()  // figuring this out could be quite helpful
+                },
+                Materialized.`as`<GameId, GameBoard, KeyValueStore<Bytes,
+                        ByteArray>>(
+                    GAME_STATES_TOPIC
+                )
+                    .withKeySerde(Serdes.UUID())
+                    .withValueSerde(gameBoardSerde)
             )
 
-        // TODO below probably not needed?
         // see https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Stream+Usage+Patterns
-        val gameStatesJsonTable: KTable<GameId, String> =
-            gameStatesTable.mapValues { list ->
-                jsonMapper
-                    .writeValueAsString(list)
-            }
+        /* val gameStatesJsonTable: KTable<GameId, String> =
+             gameStatesTable.mapValues { list ->
+                 jsonMapper
+                     .writeValueAsString(list)
+             }
 
-        gameStatesJsonTable to GAME_STATES_TOPIC
-         */
+         gameStatesJsonTable to GAME_STATES_TOPIC*/
+
 
         val topology = streamsBuilder.build()
 
