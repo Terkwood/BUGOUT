@@ -26,7 +26,7 @@ class Judge(private val brokers: String) {
                 jsonMapper.readValue(v, MakeMoveCmd::class.java)
             }
 
-        val moveMadeEventStream: KStream<GameId, String> =
+        val moveMadeEventJsonStream: KStream<GameId, String> =
             makeMoveCommandStream.map { _, move ->
                 val eventId = UUID.randomUUID()
                 KeyValue(
@@ -43,10 +43,16 @@ class Judge(private val brokers: String) {
                 )
             }
 
-        moveMadeEventStream.to(
+        moveMadeEventJsonStream.to(
             MOVE_MODE_EV_TOPIC,
             Produced.with(Serdes.UUID(), Serdes.String())
         )
+
+        // transform moves that are successfully made into a queryable KTable
+        val moveMadeEventStream: KStream<GameId, MoveMadeEv> =
+            moveMadeEventJsonStream.mapValues { v ->
+                jsonMapper.readValue(v, MoveMadeEv::class.java)
+            }
 
         // TODO link error
         // https://stackoverflow.com/questions/43742423/unsatisfiedlinkerror-on-lib-rocks-db-dll-when-developing-with-kafka-streams
@@ -55,11 +61,11 @@ class Judge(private val brokers: String) {
         // ... or else, you may need to use an in-memory store to run this on
         // mac, see
         // https://stackoverflow.com/questions/50572237/error-librocksdbjni6770528225908825804-dll-whil-joining-2-streams-or-while-crea
-        val tinkerBoardStream =
-            makeMoveCommandStream.groupByKey().aggregate<GameBoard>(
+        val gameStatesJsonStream =
+            moveMadeEventStream.groupByKey().aggregate<GameBoard>(
                 { GameBoard() },
                 { _, v, board ->
-                    board.heedlessAdd(v)
+                    board.add(v)
                 }
             ).toStream().map { key, value ->
                 KeyValue(
@@ -67,8 +73,8 @@ class Judge(private val brokers: String) {
                         .writeValueAsString(value)
                 )
             }
-        
-        tinkerBoardStream.to(
+
+        gameStatesJsonStream.to(
             GAME_STATES_TOPIC, Produced.with(
                 Serdes.UUID(),
                 Serdes.String()
