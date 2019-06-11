@@ -55,31 +55,25 @@ class Judge(private val brokers: String) {
                 jsonMapper.readValue(v, MoveMadeEv::class.java)
             }
 
-        /*   val gameStatesJsonStream =
-               moveMadeEventStream.groupByKey().aggregate<GameBoard>(
-                   { GameBoard() },
-                   { _, v, board ->
-                       board.add(v)
-                   }, Materialized.with(
-                       Serdes.UUID(), Serdes.serdeFrom(
-                           GameBoardSerde
-                               .gameBoardSerializer,
-                           GameBoardSerde.gameBoardDeserializer
-                       )
-                   )
-               ).toStream().map { key, value ->
-                   KeyValue(
-                       key, jsonMapper
-                           .writeValueAsString(value)
-                   )
-               }
+        val gameStatesJsonStream =
+            moveMadeEventStream.groupByKey().aggregate<GameBoard>(
+                { GameBoard() },
+                { _, v, board ->
+                    board.add(v)
+                }
+            ).toStream().map { key, value ->
+                KeyValue(
+                    key, jsonMapper
+                        .writeValueAsString(value)
+                )
+            }
 
-           gameStatesJsonStream.to(
-               GAME_STATES_TOPIC, Produced.with(
-                   Serdes.UUID(),
-                   Serdes.String()
-               )
-           )*/
+        gameStatesJsonStream.to(
+            GAME_STATES_TOPIC, Produced.with(
+                Serdes.UUID(),
+                Serdes.String()
+            )
+        )
 
         val topology = streamsBuilder.build()
 
