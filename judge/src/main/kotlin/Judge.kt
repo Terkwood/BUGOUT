@@ -84,7 +84,10 @@ class Judge(private val brokers: String) {
                         .withValueSerde(gameBoardSerde)
                 )
 
-        gameStatesTable to GAME_STATES_TOPIC
+        // TODO experimental
+        gameStatesTable
+            .toStream()
+            .to(GAME_STATES_TOPIC, Produced.with(Serdes.UUID(), gameBoardSerde))
 
         // see https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Stream+Usage+Patterns
         /* val gameStatesJsonTable: KTable<GameId, String> =
