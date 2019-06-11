@@ -4,3 +4,5 @@ FROM gradle
 RUN gradle tasks 
 
 COPY . .
+
+CMD ["gradle", "run"]
