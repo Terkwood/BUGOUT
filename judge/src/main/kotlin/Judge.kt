@@ -1,4 +1,5 @@
 import org.apache.kafka.common.serialization.Serdes
+import org.apache.kafka.common.serialization.UUIDSerializer
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.KeyValue
@@ -117,13 +118,19 @@ class Judge(private val brokers: String) {
                     GAME_STATES_STORE_NAME,
                     QueryableStoreTypes.keyValueStore<Bytes,
                             ByteArray>()
-                )
-                .get(
+                ).get(
                     Bytes.wrap(
-                        Serdes.UUID().serializer().serialize
+                        UUIDSerializer().serialize
                             (GAME_STATES_STORE_NAME, testGameId)
                     )
                 )
+            // TODO: dead below
+            /*.get(
+                Bytes.wrap(
+                    Serdes.UUID().serializer().serialize
+                        (GAME_STATES_STORE_NAME, testGameId)
+                )
+            )*/
             println("$found")
         }
     }
