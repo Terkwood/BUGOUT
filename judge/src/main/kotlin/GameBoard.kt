@@ -5,6 +5,7 @@ import org.apache.kafka.common.serialization.Serializer
 
 class GameBoard {
 
+    // the moves are tracked in order
     val moves: MutableList<Move> = ArrayList()
 
     fun add(ev: MoveMadeEv): GameBoard {
