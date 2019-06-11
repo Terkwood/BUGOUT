@@ -15,6 +15,7 @@ class GameBoard {
 
 object GameBoardSerde {
     // see https://kafka.apache.org/10/documentation/streams/developer-guide/datatypes.html
+    // see https://github.com/apache/kafka/blob/1.0/streams/examples/src/main/java/org/apache/kafka/streams/examples/pageview/PageViewTypedDemo.java
     val gameBoardSerializer: Serializer<GameBoard> =
         JsonPOJOSerializer<GameBoard>()
 

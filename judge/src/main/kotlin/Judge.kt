@@ -4,7 +4,6 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.Consumed
 import org.apache.kafka.streams.kstream.KStream
-import org.apache.kafka.streams.kstream.Materialized
 import org.apache.kafka.streams.kstream.Produced
 import java.util.*
 
@@ -56,31 +55,31 @@ class Judge(private val brokers: String) {
                 jsonMapper.readValue(v, MoveMadeEv::class.java)
             }
 
-        val gameStatesJsonStream =
-            moveMadeEventStream.groupByKey().aggregate<GameBoard>(
-                { GameBoard() },
-                { _, v, board ->
-                    board.add(v)
-                }, Materialized.with(
-                    Serdes.UUID(), Serdes.serdeFrom(
-                        GameBoardSerde
-                            .gameBoardSerializer,
-                        GameBoardSerde.gameBoardDeserializer
-                    )
-                )
-            ).toStream().map { key, value ->
-                KeyValue(
-                    key, jsonMapper
-                        .writeValueAsString(value)
-                )
-            }
+        /*   val gameStatesJsonStream =
+               moveMadeEventStream.groupByKey().aggregate<GameBoard>(
+                   { GameBoard() },
+                   { _, v, board ->
+                       board.add(v)
+                   }, Materialized.with(
+                       Serdes.UUID(), Serdes.serdeFrom(
+                           GameBoardSerde
+                               .gameBoardSerializer,
+                           GameBoardSerde.gameBoardDeserializer
+                       )
+                   )
+               ).toStream().map { key, value ->
+                   KeyValue(
+                       key, jsonMapper
+                           .writeValueAsString(value)
+                   )
+               }
 
-        gameStatesJsonStream.to(
-            GAME_STATES_TOPIC, Produced.with(
-                Serdes.UUID(),
-                Serdes.String()
-            )
-        )
+           gameStatesJsonStream.to(
+               GAME_STATES_TOPIC, Produced.with(
+                   Serdes.UUID(),
+                   Serdes.String()
+               )
+           )*/
 
         val topology = streamsBuilder.build()
 

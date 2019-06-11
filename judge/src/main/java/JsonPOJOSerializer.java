@@ -4,6 +4,7 @@ import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Map;
 
+// from https://github.com/apache/kafka/blob/1.0/streams/examples/src/main/java/org/apache/kafka/streams/examples/pageview/PageViewTypedDemo.java
 public class JsonPOJOSerializer<T> implements Serializer<T> {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
