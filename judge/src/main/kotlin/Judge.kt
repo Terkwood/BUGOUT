@@ -4,6 +4,7 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.Consumed
 import org.apache.kafka.streams.kstream.KStream
+import org.apache.kafka.streams.kstream.Materialized
 import org.apache.kafka.streams.kstream.Produced
 import java.util.*
 
@@ -54,19 +55,15 @@ class Judge(private val brokers: String) {
                 jsonMapper.readValue(v, MoveMadeEv::class.java)
             }
 
-        // TODO link error
-        // https://stackoverflow.com/questions/43742423/unsatisfiedlinkerror-on-lib-rocks-db-dll-when-developing-with-kafka-streams
-        // TODO you can probably work around this by running in a *nix
-        // environment!
-        // ... or else, you may need to use an in-memory store to run this on
-        // mac, see
-        // https://stackoverflow.com/questions/50572237/error-librocksdbjni6770528225908825804-dll-whil-joining-2-streams-or-while-crea
         val gameStatesJsonStream =
             moveMadeEventStream.groupByKey().aggregate<GameBoard>(
                 { GameBoard() },
                 { _, v, board ->
                     board.add(v)
-                }
+                }, Materialized.with(
+                    Serdes.UUID(), Serdes.serdeFrom
+                        (GameBoard::class.java)
+                )
             ).toStream().map { key, value ->
                 KeyValue(
                     key, jsonMapper
