@@ -80,8 +80,8 @@ class Judge(private val brokers: String) {
                             ByteArray>>(
                         GAME_STATES_TOPIC
                     )
-                    /*   .withKeySerde(Serdes.UUID())
-                       .withValueSerde(gameBoardSerde)*/
+                        .withKeySerde(Serdes.UUID())
+                        .withValueSerde(gameBoardSerde)
                 )
 
         // see https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Stream+Usage+Patterns
