@@ -65,9 +65,11 @@ class Judge(private val brokers: String) {
                 { _, v, list ->
                     list.add(v)
                     list
-                }
+                }, TODO()  // figuring this out could be quite helpful
             )
 
+        // TODO below probably not needed?
+        // see https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Stream+Usage+Patterns
         val gameStatesJsonTable: KTable<GameId, String> =
             gameStatesTable.mapValues { list ->
                 jsonMapper
