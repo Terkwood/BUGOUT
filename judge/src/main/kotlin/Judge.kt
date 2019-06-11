@@ -5,6 +5,7 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
+import org.apache.kafka.streams.state.QueryableStoreTypes
 import java.util.*
 
 fun main() {
@@ -15,11 +16,12 @@ class Judge(private val brokers: String) {
     fun process() {
         val streamsBuilder = StreamsBuilder()
 
-        val makeMoveCommandJsonStream: KStream<GameId, String> = streamsBuilder
-            .stream<UUID, String>(
-                MAKE_MOVE_CMD_TOPIC,
-                Consumed.with(Serdes.UUID(), Serdes.String())
-            )
+        val makeMoveCommandJsonStream: KStream<GameId, String> =
+            streamsBuilder
+                .stream<UUID, String>(
+                    MAKE_MOVE_CMD_TOPIC,
+                    Consumed.with(Serdes.UUID(), Serdes.String())
+                )
 
         val makeMoveCommandStream: KStream<GameId, MakeMoveCmd> =
             makeMoveCommandJsonStream.mapValues { v ->
@@ -55,7 +57,6 @@ class Judge(private val brokers: String) {
             MOVE_MODE_EV_TOPIC,
             Produced.with(Serdes.UUID(), Serdes.String())
         )
-
 
         val gameStatesTable: KTable<GameId, GameBoard> =
             moveMadeEventJsonStream.groupByKey(
@@ -104,5 +105,23 @@ class Judge(private val brokers: String) {
 
         val streams = KafkaStreams(topology, props)
         streams.start()
+
+
+        val testGameId = UUID.fromString("50b8d848-7c12-47fd-955f-c61c40d858af")
+        kotlin.concurrent.fixedRateTimer("query", period = 1000) {
+            val found = streams
+                .store(
+                    GAME_STATES_STORE_NAME,
+                    QueryableStoreTypes.keyValueStore<Bytes,
+                            ByteArray>()
+                )
+                .get(
+                    Bytes.wrap(
+                        Serdes.UUID().serializer().serialize
+                            (GAME_STATES_STORE_NAME, testGameId)
+                    )
+                )
+            println("$found")
+        }
     }
 }
