@@ -6,7 +6,8 @@ import java.util.*
 
 class GameBoard {
     private val _board: MutableList<Move> = ArrayList()
-    fun add(move: Move): GameBoard {
+    fun add(ev: MoveMadeEv): GameBoard {
+        val move = Move(ev.player, ev.coord)
         if (!_board.contains(move))
             _board.add(move)
 

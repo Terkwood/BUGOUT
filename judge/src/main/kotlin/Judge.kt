@@ -61,13 +61,18 @@ class Judge(private val brokers: String) {
             moveMadeEventJsonStream.groupByKey(
                 Serialized.with(
                     Serdes.UUID(),
-                    Serdes.String()
+                    Serdes.String() // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
                 )
             )
                 .aggregate(
                     { GameBoard() },
                     { _, v, list ->
-                        list.add(jsonMapper.readValue(v, Move::class.java))
+                        list.add(
+                            jsonMapper.readValue(
+                                v,
+                                MoveMadeEv::class.java
+                            )
+                        )
                         list
                     },
                     Materialized.`as`<GameId, GameBoard, KeyValueStore<Bytes,
