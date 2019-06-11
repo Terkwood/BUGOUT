@@ -88,7 +88,7 @@ class Judge(private val brokers: String) {
             .toStream()
             .mapValues { gameBoard ->
                 jsonMapper.writeValueAsString(
-                    gameBoard.moves()
+                    gameBoard.moves
                 )
             }
             .to(
