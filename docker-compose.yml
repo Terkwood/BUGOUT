@@ -9,7 +9,8 @@ services:
     ports:
       - "9092:9092"
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: localhost
+      #KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ADVERTISED_HOST_NAME: 192.168.65.1
       KAFKA_CREATE_TOPICS: "bugout-move-made-ev:1:1,bugout-make-move-cmd:1:1,bugout-game-state:1:1"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     volumes:

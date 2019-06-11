@@ -9,7 +9,7 @@ import java.util.*
 
 fun main() {
     println("Hello")
-    Judge("kafka:9092").process()
+    Judge("192.168.65.1:9092").process()
 }
 
 class Judge(private val brokers: String) {
