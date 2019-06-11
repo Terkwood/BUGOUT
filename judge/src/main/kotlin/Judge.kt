@@ -8,7 +8,6 @@ import org.apache.kafka.streams.state.KeyValueStore
 import java.util.*
 
 fun main() {
-    GameBoardSerde.setup()
     Judge("kafka:9092").process()
 }
 
