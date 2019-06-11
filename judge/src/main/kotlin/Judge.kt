@@ -59,9 +59,10 @@ class Judge(private val brokers: String) {
 
         val gameStatesTable: KTable<GameId, GameBoard> =
             moveMadeEventJsonStream.groupByKey(
+                // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
                 Serialized.with(
                     Serdes.UUID(),
-                    Serdes.String() // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
+                    Serdes.String()
                 )
             )
                 .aggregate(
