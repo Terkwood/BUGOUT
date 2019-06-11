@@ -78,11 +78,13 @@ class Judge(private val brokers: String) {
                     },
                     Materialized.`as`<GameId, GameBoard, KeyValueStore<Bytes,
                             ByteArray>>(
-                        GAME_STATES_TOPIC
+                        GAME_STATES_STORE_NAME
                     )
                         .withKeySerde(Serdes.UUID())
                         .withValueSerde(gameBoardSerde)
                 )
+
+        gameStatesTable to GAME_STATES_TOPIC
 
         // see https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Stream+Usage+Patterns
         /* val gameStatesJsonTable: KTable<GameId, String> =
