@@ -108,7 +108,10 @@ class Judge(private val brokers: String) {
 
 
         val testGameId = UUID.fromString("50b8d848-7c12-47fd-955f-c61c40d858af")
-        kotlin.concurrent.fixedRateTimer("query", period = 1000) {
+        kotlin.concurrent.fixedRateTimer(
+            "query", initialDelay = 60000,
+            period = 1000
+        ) {
             val found = streams
                 .store(
                     GAME_STATES_STORE_NAME,
