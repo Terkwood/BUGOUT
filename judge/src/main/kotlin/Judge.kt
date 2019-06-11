@@ -4,7 +4,6 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.Consumed
 import org.apache.kafka.streams.kstream.KStream
-import org.apache.kafka.streams.kstream.KTable
 import org.apache.kafka.streams.kstream.Produced
 import java.util.*
 
@@ -28,20 +27,28 @@ class Judge(private val brokers: String) {
                 jsonMapper.readValue(v, MakeMoveCmd::class.java)
             }
 
-        val moveMadeEventJsonStream: KStream<GameId, String> =
+
+        // transform moves that are successfully made into a queryable KTable
+        val moveMadeEventStream: KStream<GameId, MoveMadeEv> =
             makeMoveCommandStream.map { _, move ->
                 val eventId = UUID.randomUUID()
                 KeyValue(
                     move.gameId,
-                    jsonMapper.writeValueAsString(
-                        MoveMadeEv(
-                            gameId = move.gameId,
-                            replyTo = move.reqId,
-                            eventId = eventId,
-                            player = move.player,
-                            coord = move.coord
-                        )
+                    MoveMadeEv(
+                        gameId = move.gameId,
+                        replyTo = move.reqId,
+                        eventId = eventId,
+                        player = move.player,
+                        coord = move.coord
                     )
+                )
+
+            }
+
+        val moveMadeEventJsonStream: KStream<GameId, String> =
+            moveMadeEventStream.mapValues { move ->
+                jsonMapper.writeValueAsString(
+                    move
                 )
             }
 
@@ -49,23 +56,17 @@ class Judge(private val brokers: String) {
             MOVE_MODE_EV_TOPIC,
             Produced.with(Serdes.UUID(), Serdes.String())
         )
+        
+        /* val gameStatesJsonStream: KTable<GameId, ArrayList<MoveMadeEv>> =
+             moveMadeEventStream.groupByKey().aggregate(
+                 { ArrayList<MoveMadeEv>(0) },
+                 { _, v, list ->
+                     list.add(v)
+                     list
+                 }
+             )
 
-        // transform moves that are successfully made into a queryable KTable
-        val moveMadeEventStream: KStream<GameId, MoveMadeEv> =
-            moveMadeEventJsonStream.mapValues { v ->
-                jsonMapper.readValue(v, MoveMadeEv::class.java)
-            }
-
-        val gameStatesJsonStream: KTable<GameId, ArrayList<MoveMadeEv>> =
-            moveMadeEventStream.groupByKey().aggregate(
-                { ArrayList<MoveMadeEv>(0) },
-                { _, v, list ->
-                    list.add(v)
-                    list
-                }
-            )
-
-        gameStatesJsonStream to GAME_STATES_TOPIC
+         gameStatesJsonStream to GAME_STATES_TOPIC*/
 
         val topology = streamsBuilder.build()
 
