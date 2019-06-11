@@ -9,6 +9,7 @@ import org.apache.kafka.streams.kstream.Produced
 import java.util.*
 
 fun main() {
+    GameBoardSerde.setup()
     Judge("kafka:9092").process()
 }
 
@@ -61,8 +62,11 @@ class Judge(private val brokers: String) {
                 { _, v, board ->
                     board.add(v)
                 }, Materialized.with(
-                    Serdes.UUID(), Serdes.serdeFrom
-                        (GameBoard::class.java)
+                    Serdes.UUID(), Serdes.serdeFrom(
+                        GameBoardSerde
+                            .gameBoardSerializer,
+                        GameBoardSerde.gameBoardDeserializer
+                    )
                 )
             ).toStream().map { key, value ->
                 KeyValue(
