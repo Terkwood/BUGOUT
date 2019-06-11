@@ -21,7 +21,7 @@ Produce an event to the Make Move Command topic:
 
 ```sh
 kafka-console-producer.sh --broker-list kafka:9092 --topic bugout-make-move-cmd
-{"gameId":"a0b8d848-7c12-47fd-955f-c61c40d858af","reqId":"a0b8d848-7c12-47fd-955f-c61c40d858af", "player":"BLACK","coord":{"x":0,"y":2}}
+{"gameId":"50b8d848-7c12-47fd-955f-c61c40d858af","reqId":"6706b0e5-a943-491a-938a-19a35677a501", "player":"BLACK","coord":{"x":0,"y":0}}
 ```
 
 Consume an event from the Move Made Event topic:
