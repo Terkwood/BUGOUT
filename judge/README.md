@@ -28,7 +28,7 @@ Consume an event from the Move Made Event topic:
 kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic bugout-move-made-ev --from-beginning
 ```
 
-## kafkacat crib notes
+## kafkacat notes
 
 Note that the IP address of 0.0.0.0 is used as an example of connecting from a host such as a Mac.
 
@@ -40,3 +40,7 @@ kafkacat -b 0.0.0.0:9092 -t bugout-make-move-cmd -P
 ```sh
 kafkacat -b 0.0.0.0:9092 -t bugout-move-made-ev -C
 ```
+
+## Docker + Kafka notes
+
+[Read wurstmeister's connectivity wiki](https://github.com/wurstmeister/kafka-docker/wiki/Connectivity) and [read this article](https://www.kaaproject.org/kafka-docker).
