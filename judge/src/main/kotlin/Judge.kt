@@ -4,7 +4,6 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.Consumed
 import org.apache.kafka.streams.kstream.KStream
-import org.apache.kafka.streams.kstream.KTable
 import org.apache.kafka.streams.kstream.Produced
 import java.util.*
 
@@ -58,6 +57,8 @@ class Judge(private val brokers: String) {
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
+        /*
+        // TODO WOE TO THEE
         val gameStatesTable: KTable<GameId, ArrayList<MoveMadeEv>> =
             moveMadeEventStream.groupByKey().aggregate(
                 { ArrayList<MoveMadeEv>(0) },
@@ -74,6 +75,7 @@ class Judge(private val brokers: String) {
             }
 
         gameStatesJsonTable to GAME_STATES_TOPIC
+         */
 
         val topology = streamsBuilder.build()
 
