@@ -9,7 +9,7 @@ import java.util.*
 
 fun main() {
     println("KAFKA?!")
-    Judge("kafka:9092").process()
+    Judge("0.0.0.0:9092").process()
 }
 
 class Judge(private val brokers: String) {
@@ -30,6 +30,7 @@ class Judge(private val brokers: String) {
         val moveMadeEventStream: KStream<String, String> =
             makeMoveCommandStream.map { _, move ->
                 val eventId = UUID.randomUUID()
+                println("hallo?!")
                 KeyValue(
                     "${move.gameId} $eventId",
                     jsonMapper.writeValueAsString(
