@@ -8,8 +8,8 @@ import org.apache.kafka.streams.kstream.Produced
 import java.util.*
 
 fun main() {
-    println("Hello")
-    Judge("192.168.65.1:9092").process()
+    println("KAFKA?!")
+    Judge("kafka:9092").process()
 }
 
 class Judge(private val brokers: String) {

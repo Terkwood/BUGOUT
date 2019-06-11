@@ -17,4 +17,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
   judge:
     build: judge/.
+    links:
+      - kafka:kafka
+    volumes:
+      - ~/.gradle:/home/gradle/.gradle
 
