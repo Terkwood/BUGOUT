@@ -8,6 +8,7 @@ import org.apache.kafka.streams.kstream.Produced
 import java.util.*
 
 fun main() {
+    println("Hello")
     Judge("kafka:9092").process()
 }
 
