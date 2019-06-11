@@ -15,26 +15,26 @@ class Judge(private val brokers: String) {
     fun process() {
         val streamsBuilder = StreamsBuilder()
 
-        val makeMoveCommandJsonStream: KStream<UUID, String> = streamsBuilder
+        val makeMoveCommandJsonStream: KStream<GameId, String> = streamsBuilder
             .stream<UUID, String>(
                 MAKE_MOVE_CMD_TOPIC,
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
 
-        val makeMoveCommandStream: KStream<UUID, MakeMoveCmd> =
+        val makeMoveCommandStream: KStream<GameId, MakeMoveCmd> =
             makeMoveCommandJsonStream.mapValues { v ->
                 jsonMapper.readValue(v, MakeMoveCmd::class.java)
             }
 
-        val moveMadeEventStream: KStream<String, String> =
+        val moveMadeEventStream: KStream<GameId, String> =
             makeMoveCommandStream.map { _, move ->
                 val eventId = UUID.randomUUID()
                 KeyValue(
-                    "${move.gameId} $eventId",
+                    move.gameId,
                     jsonMapper.writeValueAsString(
                         MoveMadeEv(
                             gameId = move.gameId,
-                            reqId = move.reqId,
+                            replyTo = move.reqId,
                             eventId = eventId,
                             player = move.player,
                             coord = move.coord
@@ -45,7 +45,7 @@ class Judge(private val brokers: String) {
 
         moveMadeEventStream.to(
             MOVE_MODE_EV_TOPIC,
-            Produced.with(Serdes.String(), Serdes.String())
+            Produced.with(Serdes.UUID(), Serdes.String())
         )
 
         // TODO link error
