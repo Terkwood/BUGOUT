@@ -87,7 +87,12 @@ class Judge(private val brokers: String) {
         // TODO experimental
         gameStatesTable
             .toStream()
-            .mapValues { gameBoard -> jsonMapper.writeValueAsString(gameBoard) }
+            .mapValues { gameBoard ->
+                jsonMapper.writeValueAsString(
+                    gameBoard
+                        .board
+                )
+            }
             .to(
                 GAME_STATES_TOPIC,
                 Produced.with(Serdes.UUID(), Serdes.String())
