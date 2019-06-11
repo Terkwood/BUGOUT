@@ -55,14 +55,26 @@ class Judge(private val brokers: String) {
         // ... or else, you may need to use an in-memory store to run this on
         // mac, see
         // https://stackoverflow.com/questions/50572237/error-librocksdbjni6770528225908825804-dll-whil-joining-2-streams-or-while-crea
-        /*val tinkerBoardStream =
+        val tinkerBoardStream =
             makeMoveCommandStream.groupByKey().aggregate<GameBoard>(
                 { GameBoard() },
                 { _, v, board ->
                     board.heedlessAdd(v)
                 }
-            ).toStream().map { key, value -> KeyValue(key, value) }
-        */
+            ).toStream().map { key, value ->
+                KeyValue(
+                    key, jsonMapper
+                        .writeValueAsString(value)
+                )
+            }
+        
+        tinkerBoardStream.to(
+            GAME_STATES_TOPIC, Produced.with(
+                Serdes.UUID(),
+                Serdes.String()
+            )
+        )
+
         val topology = streamsBuilder.build()
 
         val props = Properties()
