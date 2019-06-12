@@ -3,7 +3,6 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.util.StdDateFormat
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import java.io.IOException
 
@@ -27,9 +26,20 @@ val jsonMapper = ObjectMapper().apply {
 }
 
 internal class CoordKeyDeserializer : KeyDeserializer() {
+    private val regex = Regex("(\\d+)_(\\d+)")
+    private fun coordFrom(str: String): Coord? {
+        val rm = regex.matchEntire(str)
+        val x = rm?.destructured?.component1()
+        val y = rm?.destructured?.component2()
+        if (x != null && y != null)
+            return Coord(x = x.toInt(), y = y.toInt())
+
+        return null
+    }
+
     @Throws(IOException::class, JsonProcessingException::class)
     override fun deserializeKey(key: String, ctxt: DeserializationContext):
-            Any? = jsonMapper.readValue<Coord>(key)
+            Any? = coordFrom(key)
 }
 
 internal class CoordKeySerializer : JsonSerializer<Coord>() {
@@ -39,6 +49,6 @@ internal class CoordKeySerializer : JsonSerializer<Coord>() {
         serializers: SerializerProvider?
     ) {
         if (value != null && gen != null)
-            gen.writeFieldName(jsonMapper.writeValueAsString(value))
+            gen.writeFieldName("${value.x}_${value.y}")
     }
 }
