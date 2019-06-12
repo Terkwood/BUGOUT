@@ -21,7 +21,7 @@ class CapturingTests {
         )
 
         val board = Board(pieces = pieces)
-        val expected = hashSetOf(
+        val expected = setOf(
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(0, 1), Player.WHITE),
             Pair(Coord(2, 1), Player.BLACK),

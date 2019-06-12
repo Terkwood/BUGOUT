@@ -2,8 +2,21 @@
 fun liberties(target: Coord, board: Board): Set<Coord> = TODO()
 
 /* Return neighbors on (up to) four sides of the target */
-fun neighbors(target: Coord, board: Board): HashSet<Pair<Player, Coord>> =
-    TODO()
+fun neighbors(target: Coord, board: Board): List<Coord> =
+    listOf(-1, 1).flatMap { x ->
+        listOf(-1, 1).map { y ->
+            Coord(
+                x,
+                y
+            )
+        }
+    }.filterNot {
+        it.x < 0
+                || it.x >= board.size
+                || it.y < 0
+                || it.y >= board.size
+    }
+
 
 fun deadFrom(target: Coord, placement: Coord, board: Board):
         Boolean {
@@ -22,7 +35,7 @@ fun connected(target: Coord, board: Board): Set<Coord> = TODO()
 fun capturesFor(player: Player, placement: Coord, board: Board): Set<Coord> {
     val enemyNeighbors =
         neighbors(placement, board).filter { it.first != player }
-    val someDead = enemyNeighbors.map { (_, target) ->
+    val someDead = enemyNeighbors.map { target ->
         if (deadFrom(target, placement, board)) {
             connected(target, board)
         } else
