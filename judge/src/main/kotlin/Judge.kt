@@ -93,14 +93,15 @@ class Judge(private val brokers: String) {
                         )
                 )
 
+        // TODO This stream can be removed
         // This data will be committed to the stream
         // based on `commit.interval.ms`: 30000 ms by default
         // https://docs.confluent.io/current/streams/developer-guide/config-streams.html
         gameStatesTable
             .toStream()
-            .mapValues { gameBoard ->
+            .mapValues { gameState ->
                 jsonMapper.writeValueAsString(
-                    gameBoard.pieces
+                    gameState
                 )
             }
             .to(
