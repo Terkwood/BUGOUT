@@ -35,11 +35,6 @@ data class MoveRejectedEv(
     val coord: Coord
 )
 
-data class Placement(
-    val player: Player,
-    val turn: Int
-)
-
 data class Move(
     val player: Player,
     val coord: Coord?,
@@ -52,7 +47,7 @@ data class Capture(
 )
 
 data class Captures(
-    val black: List<Capture> = ArrayList(),
-    val white: List<Capture> = ArrayList()
+    var black: Int = 0,
+    var white: Int = 0
 )
 

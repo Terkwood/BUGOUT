@@ -5,59 +5,34 @@ import org.apache.kafka.common.serialization.Serializer
 
 class GameBoard {
     // the pieces are tracked in order
-    val pieces: MutableMap<Coord, Placement> = HashMap()
+    val pieces: MutableMap<Coord, Player> = HashMap()
 
     var captures = Captures()
 
     var turn: Int = 1
 
-    val passedTurns: MutableMap<Int, Player> = HashMap()
+    var playerUp: Player = Player.BLACK
 
     fun add(ev: MoveMadeEv): GameBoard {
         if (ev.coord != null) {
-            pieces[ev.coord] = Placement(ev.player, turn)
-            updateCaptures(ev.player, ev.captured)
-        } else {
-            // passing
-            passedTurns[this.turn] = ev.player
+            pieces[ev.coord] = ev.player
+            ev.captured.forEach { coord ->
+                pieces.remove(coord)
+                when (ev.player) {
+                    Player.BLACK -> captures.black = captures.black + 1
+                    Player.WHITE -> captures.white = captures.white + 1
+                }
+            }
         }
 
         turn++
 
+        playerUp = when (playerUp) {
+            Player.BLACK -> Player.WHITE
+            Player.WHITE -> Player.BLACK
+        }
+
         return this
-    }
-
-    fun isValid(ev: MakeMoveCmd): Boolean =
-        ev.coord == null || TODO()
-
-    fun history(): List<Move> {
-        val piecesByTurn: Map<Int, Pair<Player, Coord>> = TODO()
-        val h: MutableList<Move> = ArrayList()
-        for (t in 1..turn) {
-            val playerPassed = passedTurns[t]
-            if (playerPassed != null)
-                h.add(Move(playerPassed, null))
-            val pieceOnTurn = piecesByTurn[t]
-            if (pieceOnTurn != null)
-                h.add(Move(pieceOnTurn.first, pieceOnTurn.second))
-        }
-        return h
-    }
-
-    private fun updateCaptures(player: Player, captures: List<Coord>) {
-        when (player) {
-            Player.BLACK -> this.captures = Captures(
-                black = this.captures.black
-                    .plus(Capture(turn, captures)),
-                white = this.captures.white
-            )
-            Player.WHITE -> this.captures = Captures(
-                black = this.captures
-                    .black,
-                white = this.captures.white
-                    .plus(Capture(turn, captures))
-            )
-        }
     }
 
     fun asByteArray(): ByteArray {
