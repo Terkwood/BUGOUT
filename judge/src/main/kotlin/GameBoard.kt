@@ -47,13 +47,15 @@ class GameBoard {
     private fun updateCaptures(player: Player, captures: List<Coord>) {
         when (player) {
             Player.BLACK -> this.captures = Captures(
-                black = this.captures
-                    .black + captures.size, white = this.captures.white
+                black = this.captures.black
+                    .plus(Capture(turn, captures)),
+                white = this.captures.white
             )
             Player.WHITE -> this.captures = Captures(
                 black = this.captures
-                    .black, white = this.captures
-                    .white + captures.size
+                    .black,
+                white = this.captures.white
+                    .plus(Capture(turn, captures))
             )
         }
     }
