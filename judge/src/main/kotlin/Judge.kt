@@ -85,6 +85,9 @@ class Judge(private val brokers: String) {
                         .withValueSerde(gameBoardSerde)
                 )
 
+        // This data will be committed to the stream
+        // based on `commit.interval.ms`: 30000 ms by default
+        // https://docs.confluent.io/current/streams/developer-guide/config-streams.html
         gameStatesTable
             .toStream()
             .mapValues { gameBoard ->
@@ -105,8 +108,10 @@ class Judge(private val brokers: String) {
 
         val streams = KafkaStreams(topology, props)
         streams.start()
-
-
+        
+        // Even though the GAME_STATES_TOPIC stream receives
+        // commits infrequently, we can see that the state
+        // store itself is updated much more quickly.
         val testGameId = UUID.fromString("50b8d848-7c12-47fd-955f-c61c40d858af")
 
         kotlin.concurrent.fixedRateTimer(
