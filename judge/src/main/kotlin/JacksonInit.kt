@@ -1,8 +1,6 @@
+import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.KeyDeserializer
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.util.StdDateFormat
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -21,6 +19,10 @@ val jsonMapper = ObjectMapper().apply {
         Coord::class.java,
         CoordKeyDeserializer()
     )
+    simpleModule.addKeySerializer(
+        Coord::class.java,
+        CoordKeySerializer()
+    )
     registerModule(simpleModule)
 }
 
@@ -28,4 +30,15 @@ internal class CoordKeyDeserializer : KeyDeserializer() {
     @Throws(IOException::class, JsonProcessingException::class)
     override fun deserializeKey(key: String, ctxt: DeserializationContext):
             Any? = jsonMapper.readValue<Coord>(key)
+}
+
+internal class CoordKeySerializer : JsonSerializer<Coord>() {
+    override fun serialize(
+        value: Coord?,
+        gen: JsonGenerator?,
+        serializers: SerializerProvider?
+    ) {
+        if (value != null && gen != null)
+            gen.writeFieldName(jsonMapper.writeValueAsString(value))
+    }
 }

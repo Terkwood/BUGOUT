@@ -42,7 +42,8 @@ data class Placement(
 
 data class Move(
     val player: Player,
-    val coord: Coord?
+    val coord: Coord?,
+    val captures: List<Coord> = ArrayList()
 )
 
 data class Capture(
