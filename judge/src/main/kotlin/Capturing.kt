@@ -25,11 +25,8 @@ fun neighbors(target: Coord, board: Board): Set<Pair<Coord, Player>> =
 
 
 fun deadFrom(target: Coord, placement: Coord, board: Board):
-        Boolean {
-    val targetLiberties = liberties(target, board)
-    return targetLiberties.size == 1 && targetLiberties.take(1)[0] ==
-            placement
-}
+        Boolean =
+    liberties(target, board) == setOf(placement)
 
 /** Return all pieces of the same color, connected to the target.  Includes
  * the target itself.
