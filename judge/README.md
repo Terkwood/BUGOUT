@@ -2,7 +2,7 @@
 
 Uses [Kafka Streams](https://kafka.apache.org/22/documentation/streams/quickstart) to calculate game states.  Rejects invalid moves.  Declares the game completed when both parties pass
 
-## streams example
+## stream examples
 
 Here's [a reference example for using Kafka streams](https://github.com/gwenshap/kafka-streams-stockstats/blob/master/src/main/java/com/shapira/examples/streams/stockstats/StockStatsExample.java).
 
@@ -11,6 +11,8 @@ There's [another helpful example in this project](https://github.com/adrien-ben/
 There's [yet another example here](https://github.com/stream1984/kafka-stream-examples/blob/master/src/main/kotlin/cn/leapcloud/watchout/WatchHTTPStatus.kt).
 
 More [inspiration here](https://blog.softwaremill.com/event-sourcing-using-kafka-53dfd72ad45d).
+
+And [some inspiration here](https://medium.com/@abhishek1987/kafka-streams-interactive-queries-9a05ff92d75a).
 
 ## pushing data around by hand
 
