@@ -8,7 +8,7 @@ import java.io.IOException
 
 internal class CoordKeyDeserializer :
     KeyDeserializer() {
-    private val regex = Regex("(\\d+)_(\\d+)")
+    private val regex = Regex("(\\d+),(\\d+)")
     private fun coordFrom(str: String): Coord? {
         val rm = regex.matchEntire(str)
         val x = rm?.destructured?.component1()
