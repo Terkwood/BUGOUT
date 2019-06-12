@@ -1,4 +1,4 @@
-class CalculatorTests {
+/*class CalculatorTests {
 
     @Test
     fun `1 + 1 = 2`() {
@@ -29,3 +29,4 @@ class CalculatorTests {
         assertEquals("Division by Zero", exception.message)
     }
 }
+*/
