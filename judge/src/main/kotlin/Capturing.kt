@@ -2,20 +2,20 @@
 fun liberties(target: Coord, board: Board): Set<Coord> = TODO()
 
 /* Return neighbors on (up to) four sides of the target */
-fun neighbors(target: Coord, board: Board): List<Coord> =
-    listOf(-1, 1).flatMap { x ->
-        listOf(-1, 1).map { y ->
-            Coord(
-                x,
-                y
-            )
-        }
+fun neighbors(target: Coord, board: Board): Set<Pair<Coord, Player?>> =
+    listOf(Pair(-1, 0), Pair(1, 0), Pair(0, -1), Pair(0, 1)).map { (x, y) ->
+
+        Coord(
+            x + target.x,
+            y + target.y
+        )
+
     }.filterNot {
         it.x < 0
                 || it.x >= board.size
                 || it.y < 0
                 || it.y >= board.size
-    }
+    }.map { Pair(it, board.pieces[it]) }.toSet()
 
 
 fun deadFrom(target: Coord, placement: Coord, board: Board):
@@ -34,8 +34,8 @@ fun connected(target: Coord, board: Board): Set<Coord> = TODO()
  * `placement` */
 fun capturesFor(player: Player, placement: Coord, board: Board): Set<Coord> {
     val enemyNeighbors =
-        neighbors(placement, board).filter { it.first != player }
-    val someDead = enemyNeighbors.map { target ->
+        neighbors(placement, board).filter { it.second != player }
+    val someDead = enemyNeighbors.map { (target, _) ->
         if (deadFrom(target, placement, board)) {
             connected(target, board)
         } else
