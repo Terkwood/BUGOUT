@@ -4,16 +4,44 @@ import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.serialization.Serializer
 
 class GameBoard {
+    // the pieces are tracked in order
+    val pieces: MutableMap<Coord, Placement> = HashMap()
 
-    // the moves are tracked in order
-    val moves: MutableList<Move> = ArrayList()
+    var captures = Captures()
+
+    var turn: Int = 1
+
+    val passedTurns: MutableList<Pair<Int, Player>> = ArrayList()
 
     fun add(ev: MoveMadeEv): GameBoard {
-        val move = Move(ev.player, ev.coord)
-        if (!moves.map { it.coord }.contains(move.coord))
-            moves.add(move)
+        if (ev.coord != null) {
+            pieces[ev.coord] = Placement(ev.player, turn)
+            updateCaptures(ev.player, ev.captured)
+        } else {
+            // passing
+            passedTurns.add(Pair(this.turn, ev.player))
+        }
+
+        turn++
 
         return this
+    }
+
+    fun isValid(ev: MakeMoveCmd): Boolean =
+        ev.coord == null || TODO()
+
+    private fun updateCaptures(player: Player, captures: List<Coord>) {
+        when (player) {
+            Player.BLACK -> this.captures = Captures(
+                black = this.captures
+                    .black + captures.size, white = this.captures.white
+            )
+            Player.WHITE -> this.captures = Captures(
+                black = this.captures
+                    .black, white = this.captures
+                    .white + captures.size
+            )
+        }
     }
 
     fun asByteArray(): ByteArray {

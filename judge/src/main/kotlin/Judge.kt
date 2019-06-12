@@ -29,7 +29,7 @@ class Judge(private val brokers: String) {
             }
 
 
-        // transform moves that are successfully made into a queryable KTable
+        // transform pieces that are successfully made into a queryable KTable
         val moveMadeEventStream: KStream<GameId, MoveMadeEv> =
             makeMoveCommandStream.map { _, move ->
                 val eventId = UUID.randomUUID()
@@ -92,7 +92,7 @@ class Judge(private val brokers: String) {
             .toStream()
             .mapValues { gameBoard ->
                 jsonMapper.writeValueAsString(
-                    gameBoard.moves
+                    gameBoard.pieces
                 )
             }
             .to(

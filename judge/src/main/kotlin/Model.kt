@@ -16,9 +16,7 @@ data class MakeMoveCmd(
     val reqId: RequestId,
     val player: Player,
     val coord: Coord?
-) {
-    fun isPassing(): Boolean = coord == null
-}
+)
 
 data class MoveMadeEv(
     val gameId: GameId,
@@ -26,7 +24,7 @@ data class MoveMadeEv(
     val eventId: EventId = UUID.randomUUID(),
     val player: Player,
     val coord: Coord?,
-    val captured: List<Coord>
+    val captured: List<Coord> = ArrayList()
 )
 
 // Signals an invalid move in reply to a client's request
@@ -37,7 +35,12 @@ data class MoveRejectedEv(
     val coord: Coord
 )
 
-data class Move(
+data class Placement(
     val player: Player,
-    val coord: Coord
+    val turn: Int
+)
+
+data class Captures(
+    val black: Int = 0,
+    val white: Int = 0
 )
