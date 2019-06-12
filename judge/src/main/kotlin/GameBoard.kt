@@ -4,7 +4,6 @@ import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.serialization.Serializer
 
 class GameBoard {
-    // the pieces are tracked in order
     val pieces: MutableMap<Coord, Player> = HashMap()
 
     var captures = Captures()

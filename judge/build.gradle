@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'terkwood.farm'
-version '0.0.1-existence'
+version '0.0.1-judgement'
 
 apply plugin: 'kotlin'
 apply plugin: 'application'
