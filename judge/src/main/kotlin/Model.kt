@@ -45,7 +45,13 @@ data class Move(
     val coord: Coord?
 )
 
-data class Captures(
-    val black: Int = 0,
-    val white: Int = 0
+data class Capture(
+    val turn: Int,
+    val pieces: List<Coord>
 )
+
+data class Captures(
+    val black: List<Capture> = ArrayList(),
+    val white: List<Capture> = ArrayList()
+)
+
