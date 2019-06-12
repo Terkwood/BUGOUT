@@ -1,6 +1,9 @@
 import serdes.jsonMapper
 
-class GameBoard {
+/**
+ * Represents a point in time for a game
+ */
+class GameState {
     val pieces: MutableMap<Coord, Player> = HashMap()
 
     var captures = Captures()
@@ -9,7 +12,7 @@ class GameBoard {
 
     var playerUp: Player = Player.BLACK
 
-    fun add(ev: MoveMadeEv): GameBoard {
+    fun add(ev: MoveMadeEv): GameState {
         if (ev.coord != null) {
             pieces[ev.coord] = ev.player
             ev.captured.forEach { coord ->

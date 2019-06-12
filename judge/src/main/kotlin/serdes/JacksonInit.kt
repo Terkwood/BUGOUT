@@ -13,7 +13,7 @@ val jsonMapper = ObjectMapper().apply {
     disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
     dateFormat = StdDateFormat()
 
-    // allow using Coord as key in the GameBoard pieces field
+    // allow using Coord as key in the GameState pieces field
     val simpleModule = SimpleModule()
     simpleModule.addKeyDeserializer(
         Coord::class.java,

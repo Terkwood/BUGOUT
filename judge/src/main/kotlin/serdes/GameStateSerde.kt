@@ -1,16 +1,16 @@
 package serdes
 
-import GameBoard
+import GameState
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serde
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.serialization.Serializer
 
-private val gameBoardSerializer: Serializer<GameBoard> =
-    GameBoardSerializer()
+private val gameBoardSerializer: Serializer<GameState> =
+    GameStateSerializer()
 
-private val gameBoardDeserializer: Deserializer<GameBoard> =
-    GameBoardDeserializer()
+private val gameBoardDeserializer: Deserializer<GameState> =
+    GameStateDeserializer()
 
-val gameBoardSerde: Serde<GameBoard> =
+val gameBoardSerde: Serde<GameState> =
     Serdes.serdeFrom(gameBoardSerializer, gameBoardDeserializer)

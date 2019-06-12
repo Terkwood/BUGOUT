@@ -60,7 +60,7 @@ class Judge(private val brokers: String) {
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
-        val gameStatesTable: KTable<GameId, GameBoard> =
+        val gameStatesTable: KTable<GameId, GameState> =
             moveMadeEventJsonStream.groupByKey(
                 // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
                 Serialized.with(
@@ -69,7 +69,7 @@ class Judge(private val brokers: String) {
                 )
             )
                 .aggregate(
-                    { GameBoard() },
+                    { GameState() },
                     { _, v, list ->
                         list.add(
                             jsonMapper.readValue(
@@ -79,7 +79,7 @@ class Judge(private val brokers: String) {
                         )
                         list
                     },
-                    Materialized.`as`<GameId, GameBoard, KeyValueStore<Bytes,
+                    Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
                             ByteArray>>(
                         GAME_STATES_STORE_NAME
                     )
@@ -123,7 +123,7 @@ class Judge(private val brokers: String) {
                 .store(
                     GAME_STATES_STORE_NAME,
                     QueryableStoreTypes.keyValueStore<UUID,
-                            GameBoard>()
+                            GameState>()
                 )
             store.all().forEach {
                 println("${it.key}: ${jsonMapper.writeValueAsString(it.value)}")
