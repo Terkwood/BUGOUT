@@ -7,6 +7,8 @@ data class Coord(val x: Int, val y: Int) {
     }
 }
 
+typealias Board = Map<Coord, Player>
+
 typealias GameId = UUID
 typealias RequestId = UUID
 typealias EventId = UUID
