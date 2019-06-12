@@ -11,7 +11,7 @@ class GameBoard {
 
     var turn: Int = 1
 
-    val passedTurns: MutableList<Pair<Int, Player>> = ArrayList()
+    val passedTurns: MutableMap<Int, Player> = HashMap()
 
     fun add(ev: MoveMadeEv): GameBoard {
         if (ev.coord != null) {
@@ -19,7 +19,7 @@ class GameBoard {
             updateCaptures(ev.player, ev.captured)
         } else {
             // passing
-            passedTurns.add(Pair(this.turn, ev.player))
+            passedTurns[this.turn] = ev.player
         }
 
         turn++
@@ -29,6 +29,20 @@ class GameBoard {
 
     fun isValid(ev: MakeMoveCmd): Boolean =
         ev.coord == null || TODO()
+
+    fun history(): List<Move> {
+        val piecesByTurn: Map<Int, Pair<Player, Coord>> = TODO()
+        val h: MutableList<Move> = ArrayList()
+        for (t in 1..turn) {
+            val playerPassed = passedTurns[t]
+            if (playerPassed != null)
+                h.add(Move(playerPassed, null))
+            val pieceOnTurn = piecesByTurn[t]
+            if (pieceOnTurn != null)
+                h.add(Move(pieceOnTurn.first, pieceOnTurn.second))
+        }
+        return h
+    }
 
     private fun updateCaptures(player: Player, captures: List<Coord>) {
         when (player) {
