@@ -12,6 +12,7 @@ import serdes.jsonMapper
 import java.util.*
 
 fun main() {
+    println("ANY HELLO")
     Judge("kafka:9092").process()
 }
 
