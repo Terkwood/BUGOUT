@@ -61,37 +61,36 @@ class Judge(private val brokers: String) {
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
-        val gameStatesTable: KTable<GameId, GameState> =
-            moveMadeEventJsonStream.groupByKey(
-                // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
-                Serialized.with(
-                    Serdes.UUID(),
-                    Serdes.String()
-                )
+        moveMadeEventJsonStream.groupByKey(
+            // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
+            Serialized.with(
+                Serdes.UUID(),
+                Serdes.String()
             )
-                .aggregate(
-                    { GameState() },
-                    { _, v, list ->
-                        list.add(
-                            jsonMapper.readValue(
-                                v,
-                                MoveMadeEv::class.java
-                            )
+        )
+            .aggregate(
+                { GameState() },
+                { _, v, list ->
+                    list.add(
+                        jsonMapper.readValue(
+                            v,
+                            MoveMadeEv::class.java
                         )
-                        list
-                    },
-                    Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
-                            ByteArray>>(
-                        GAME_STATES_STORE_NAME
                     )
-                        .withKeySerde(Serdes.UUID())
-                        .withValueSerde(
-                            Serdes.serdeFrom(
-                                GameStateSerializer(),
-                                GameStateDeserializer()
-                            )
-                        )
+                    list
+                },
+                Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
+                        ByteArray>>(
+                    GAME_STATES_STORE_NAME
                 )
+                    .withKeySerde(Serdes.UUID())
+                    .withValueSerde(
+                        Serdes.serdeFrom(
+                            GameStateSerializer(),
+                            GameStateDeserializer()
+                        )
+                    )
+            )
 
         val topology = streamsBuilder.build()
 
