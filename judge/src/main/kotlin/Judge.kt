@@ -5,6 +5,7 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
+import org.apache.kafka.streams.state.QueryableStoreTypes
 import java.util.*
 
 fun main() {
@@ -15,11 +16,12 @@ class Judge(private val brokers: String) {
     fun process() {
         val streamsBuilder = StreamsBuilder()
 
-        val makeMoveCommandJsonStream: KStream<GameId, String> = streamsBuilder
-            .stream<UUID, String>(
-                MAKE_MOVE_CMD_TOPIC,
-                Consumed.with(Serdes.UUID(), Serdes.String())
-            )
+        val makeMoveCommandJsonStream: KStream<GameId, String> =
+            streamsBuilder
+                .stream<UUID, String>(
+                    MAKE_MOVE_CMD_TOPIC,
+                    Consumed.with(Serdes.UUID(), Serdes.String())
+                )
 
         val makeMoveCommandStream: KStream<GameId, MakeMoveCmd> =
             makeMoveCommandJsonStream.mapValues { v ->
@@ -56,7 +58,6 @@ class Judge(private val brokers: String) {
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
-
         val gameStatesTable: KTable<GameId, GameBoard> =
             moveMadeEventJsonStream.groupByKey(
                 // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
@@ -84,6 +85,9 @@ class Judge(private val brokers: String) {
                         .withValueSerde(gameBoardSerde)
                 )
 
+        // This data will be committed to the stream
+        // based on `commit.interval.ms`: 30000 ms by default
+        // https://docs.confluent.io/current/streams/developer-guide/config-streams.html
         gameStatesTable
             .toStream()
             .mapValues { gameBoard ->
@@ -104,5 +108,24 @@ class Judge(private val brokers: String) {
 
         val streams = KafkaStreams(topology, props)
         streams.start()
+
+        // Even though the GAME_STATES_TOPIC stream receives
+        // commits infrequently, we can see that the state
+        // store itself is updated much more quickly.
+        kotlin.concurrent.fixedRateTimer(
+            "query",
+            initialDelay = 60000, // in case kafka stream thread is starting up
+            period = 1000
+        ) {
+            val store = streams
+                .store(
+                    GAME_STATES_STORE_NAME,
+                    QueryableStoreTypes.keyValueStore<UUID,
+                            GameBoard>()
+                )
+            store.all().forEach {
+                println("${it.key}: ${jsonMapper.writeValueAsString(it.value)}")
+            }
+        }
     }
 }
