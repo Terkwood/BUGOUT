@@ -6,6 +6,9 @@ import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.streams.state.QueryableStoreTypes
+import serdes.GameStateDeserializer
+import serdes.GameStateSerializer
+import serdes.jsonMapper
 import java.util.*
 
 fun main() {
@@ -29,7 +32,7 @@ class Judge(private val brokers: String) {
             }
 
 
-        // transform moves that are successfully made into a queryable KTable
+        // transform pieces that are successfully made into a queryable KTable
         val moveMadeEventStream: KStream<GameId, MoveMadeEv> =
             makeMoveCommandStream.map { _, move ->
                 val eventId = UUID.randomUUID()
@@ -58,7 +61,7 @@ class Judge(private val brokers: String) {
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
-        val gameStatesTable: KTable<GameId, GameBoard> =
+        val gameStatesTable: KTable<GameId, GameState> =
             moveMadeEventJsonStream.groupByKey(
                 // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
                 Serialized.with(
@@ -67,7 +70,7 @@ class Judge(private val brokers: String) {
                 )
             )
                 .aggregate(
-                    { GameBoard() },
+                    { GameState() },
                     { _, v, list ->
                         list.add(
                             jsonMapper.readValue(
@@ -77,12 +80,17 @@ class Judge(private val brokers: String) {
                         )
                         list
                     },
-                    Materialized.`as`<GameId, GameBoard, KeyValueStore<Bytes,
+                    Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
                             ByteArray>>(
                         GAME_STATES_STORE_NAME
                     )
                         .withKeySerde(Serdes.UUID())
-                        .withValueSerde(gameBoardSerde)
+                        .withValueSerde(
+                            Serdes.serdeFrom(
+                                GameStateSerializer(),
+                                GameStateDeserializer()
+                            )
+                        )
                 )
 
         // This data will be committed to the stream
@@ -92,7 +100,7 @@ class Judge(private val brokers: String) {
             .toStream()
             .mapValues { gameBoard ->
                 jsonMapper.writeValueAsString(
-                    gameBoard.moves
+                    gameBoard.pieces
                 )
             }
             .to(
@@ -114,14 +122,14 @@ class Judge(private val brokers: String) {
         // store itself is updated much more quickly.
         kotlin.concurrent.fixedRateTimer(
             "query",
-            initialDelay = 60000, // in case kafka stream thread is starting up
+            initialDelay = 45000, // in case kafka stream thread is starting up
             period = 1000
         ) {
             val store = streams
                 .store(
                     GAME_STATES_STORE_NAME,
                     QueryableStoreTypes.keyValueStore<UUID,
-                            GameBoard>()
+                            GameState>()
                 )
             store.all().forEach {
                 println("${it.key}: ${jsonMapper.writeValueAsString(it.value)}")
