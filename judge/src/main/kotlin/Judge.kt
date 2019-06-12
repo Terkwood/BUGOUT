@@ -6,6 +6,8 @@ import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.streams.state.QueryableStoreTypes
+import serdes.gameBoardSerde
+import serdes.jsonMapper
 import java.util.*
 
 fun main() {

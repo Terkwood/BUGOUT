@@ -1,7 +1,4 @@
-import org.apache.kafka.common.serialization.Deserializer
-import org.apache.kafka.common.serialization.Serde
-import org.apache.kafka.common.serialization.Serdes
-import org.apache.kafka.common.serialization.Serializer
+import serdes.jsonMapper
 
 class GameBoard {
     val pieces: MutableMap<Coord, Player> = HashMap()
@@ -38,12 +35,3 @@ class GameBoard {
         return jsonMapper.writeValueAsBytes(this)
     }
 }
-
-private val gameBoardSerializer: Serializer<GameBoard> =
-    GameBoardSerializer()
-
-private val gameBoardDeserializer: Deserializer<GameBoard> =
-    GameBoardDeserializer()
-
-val gameBoardSerde: Serde<GameBoard> =
-    Serdes.serdeFrom(gameBoardSerializer, gameBoardDeserializer)
