@@ -6,7 +6,8 @@ import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.streams.state.QueryableStoreTypes
-import serdes.gameBoardSerde
+import serdes.GameStateDeserializer
+import serdes.GameStateSerializer
 import serdes.jsonMapper
 import java.util.*
 
@@ -84,7 +85,12 @@ class Judge(private val brokers: String) {
                         GAME_STATES_STORE_NAME
                     )
                         .withKeySerde(Serdes.UUID())
-                        .withValueSerde(gameBoardSerde)
+                        .withValueSerde(
+                            Serdes.serdeFrom(
+                                GameStateSerializer(),
+                                GameStateDeserializer()
+                            )
+                        )
                 )
 
         // This data will be committed to the stream
