@@ -117,10 +117,10 @@ class Judge(private val brokers: String) {
                 .store(
                     GAME_STATES_STORE_NAME,
                     QueryableStoreTypes.keyValueStore<UUID,
-                            String>()
+                            GameBoard>()
                 )
             val found = store.get(testGameId)
-            println(found)
+            println(jsonMapper.writeValueAsString(found))
         }
     }
 }
