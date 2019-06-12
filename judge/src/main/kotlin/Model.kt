@@ -40,6 +40,11 @@ data class Placement(
     val turn: Int
 )
 
+data class Move(
+    val player: Player,
+    val coord: Coord?
+)
+
 data class Captures(
     val black: Int = 0,
     val white: Int = 0
