@@ -117,7 +117,13 @@ class Judge(private val brokers: String) {
                             GameState>()
                 )
             store.all().forEach {
-                println("${it.key}: ${jsonMapper.writeValueAsString(it.value)}")
+                println(
+                    "${it.key.toString().take(8)}: ${jsonMapper
+                        .writeValueAsString(
+                            it
+                                .value
+                        )}"
+                )
             }
         }
     }
