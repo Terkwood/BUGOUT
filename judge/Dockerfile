@@ -2,4 +2,4 @@ FROM gradle
 
 COPY . .
 
-CMD ["gradle", "run"]
+CMD ["gradle", "--build-cache", "run"]

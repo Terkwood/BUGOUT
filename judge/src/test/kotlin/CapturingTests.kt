@@ -1,32 +1,37 @@
-/*class CalculatorTests {
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+
+class CapturingTests {
 
     @Test
-    fun `1 + 1 = 2`() {
-        val calculator = Calculator()
-        assertEquals(2, calculator.add(1, 1), "1 + 1 should equal 2")
+    fun correctNeighbors() {
+        val pieces: MutableMap<Coord, Player> = hashMapOf(
+            Pair(Coord(0, 0), Player.BLACK),
+            Pair(Coord(1, 0), Player.BLACK),
+            Pair(Coord(2, 0), Player.BLACK),
+            Pair(Coord(0, 1), Player.WHITE),
+            Pair(Coord(1, 1), Player.WHITE),
+            Pair(Coord(2, 1), Player.BLACK),
+            Pair(Coord(0, 2), Player.BLACK),
+            Pair(Coord(0, 2), Player.WHITE),
+            Pair(Coord(1, 2), Player.WHITE),
+            Pair(Coord(2, 2), Player.WHITE),
+            Pair(Coord(4, 3), Player.BLACK),
+            Pair(Coord(1, 5), Player.WHITE)
+        )
+
+        val board = Board(pieces = pieces)
+        val expected = hashSetOf(
+            Pair(Coord(1, 0), Player.BLACK),
+            Pair(Coord(0, 1), Player.WHITE),
+            Pair(Coord(2, 1), Player.BLACK),
+            Pair(Coord(0, 2), Player.BLACK),
+            Pair(Coord(1, 2), Player.WHITE)
+        )
+
+        assertEquals(
+            expected, neighbors(Coord(1, 1), board), "wrong neighbors"
+        )
     }
 
-    @ParameterizedTest(name = "{0} + {1} = {2}")
-    @CsvSource(
-        "0,    1,   1",
-        "1,    2,   3",
-        "49,  51, 100",
-        "1,  100, 101"
-    )
-    fun add(first: Int, second: Int, expectedResult: Int) {
-        val calculator = Calculator()
-        assertEquals(expectedResult, calculator.add(first, second)) {
-            "$first + $second should equal $expectedResult"
-        }
-    }
-
-    @Test
-    fun divisionByZeroError() {
-        val calculator = Calculator()
-        val exception = assertThrows<AssertionError> {
-            calculator.div(1, 0)
-        }
-        assertEquals("Division by Zero", exception.message)
-    }
 }
-*/

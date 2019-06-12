@@ -6,7 +6,7 @@ data class Coord(val x: Int, val y: Int)
 
 data class Board(
     val pieces: MutableMap<Coord, Player> = HashMap(),
-    val size: Int
+    val size: Int = FULL_BOARD_SIZE
 )
 
 typealias GameId = UUID

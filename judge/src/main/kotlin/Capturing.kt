@@ -2,7 +2,8 @@
 fun liberties(target: Coord, board: Board): Set<Coord> = TODO()
 
 /* Return neighbors on (up to) four sides of the target */
-fun neighbors(target: Coord, board: Board): Set<Pair<Player, Coord>> = TODO()
+fun neighbors(target: Coord, board: Board): HashSet<Pair<Player, Coord>> =
+    TODO()
 
 fun deadFrom(target: Coord, placement: Coord, board: Board):
         Boolean {
