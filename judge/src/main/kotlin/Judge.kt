@@ -114,7 +114,7 @@ class Judge(private val brokers: String) {
         // store itself is updated much more quickly.
         kotlin.concurrent.fixedRateTimer(
             "query",
-            initialDelay = 60000, // in case kafka stream thread is starting up
+            initialDelay = 45000, // in case kafka stream thread is starting up
             period = 1000
         ) {
             val store = streams
