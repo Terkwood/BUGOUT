@@ -124,7 +124,7 @@ class Judge(private val brokers: String) {
                             GameBoard>()
                 )
             store.all().forEach {
-                jsonMapper.writeValueAsString(it.value)
+                println(jsonMapper.writeValueAsString(it.value))
             }
         }
     }
