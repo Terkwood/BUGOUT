@@ -124,6 +124,34 @@ class CapturingTests {
     }
 
     @Test
+    fun soConnectedTest() {
+        val pieces: MutableMap<Coord, Player> = hashMapOf(
+            Pair(Coord(0, 0), Player.BLACK),
+            Pair(Coord(1, 0), Player.BLACK),
+            Pair(Coord(2, 0), Player.BLACK),
+            Pair(Coord(0, 1), Player.WHITE),
+            Pair(Coord(1, 1), Player.WHITE),
+            Pair(Coord(2, 1), Player.BLACK),
+            Pair(Coord(0, 2), Player.WHITE),
+            Pair(Coord(1, 2), Player.WHITE),
+            Pair(Coord(2, 2), Player.WHITE),
+            Pair(Coord(4, 3), Player.BLACK),
+            Pair(Coord(1, 3), Player.WHITE),
+            Pair(Coord(1, 4), Player.WHITE),
+            Pair(Coord(1, 5), Player.WHITE),
+            Pair(Coord(5, 1), Player.WHITE)
+        )
+
+        val board = Board(pieces = pieces)
+        val actual = connected(Coord(1, 0), board)
+
+        val expected = pieces.filter { it.value == Player.BLACK }.toList()
+            .minus(Pair(Coord(4, 3), Player.BLACK)).map { it.first }
+            .toSet()
+        assertEquals(expected, actual, "connections incorrect")
+    }
+
+    @Test
     fun connectionsEmpty() {
         val pieces: MutableMap<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
