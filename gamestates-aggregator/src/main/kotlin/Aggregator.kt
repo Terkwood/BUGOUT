@@ -88,7 +88,7 @@ class Aggregator(private val brokers: String) {
 
         val props = Properties()
         props["bootstrap.servers"] = brokers
-        props["application.id"] = "bugout-judge"
+        props["application.id"] = "bugout-gamestates-aggregator"
         props["processing.guarantee"] = "exactly_once"
 
         val streams = KafkaStreams(topology, props)
