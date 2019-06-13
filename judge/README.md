@@ -65,6 +65,18 @@ Consume an event from the state changelog:
 kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic bugout-game-states --from-beginning
 ```
 
+Or even push to the state changelog to bootstrap your joins:
+
+```sh
+kafka-console-producer.sh --broker-list kafka:9092 --topic bugout-game-states
+```
+
+Changelog records such as:
+
+```json
+{"board":{"pieces":{"0,0":"BLACK"},"size":19},"captures":{"black":0,"white":0},"turn":2,"playerUp":"WHITE"}
+```
+
 ## kafkacat notes
 
 Note that the IP address of 0.0.0.0 is used as an example of connecting from a host such as a Mac.
