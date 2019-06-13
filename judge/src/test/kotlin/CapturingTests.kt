@@ -3,7 +3,7 @@ import org.junit.jupiter.api.Test
 
 class CapturingTests {
     @Test
-    fun correctNeighbors() {
+    fun correctNeighborPieces() {
         val pieces: MutableMap<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
@@ -20,7 +20,7 @@ class CapturingTests {
 
         val board = Board(pieces = pieces)
 
-        val actual = neighbors(Coord(1, 1), board)
+        val actual = neighborPieces(Coord(1, 1), board)
 
         val expected = setOf(
             Pair(Coord(1, 0), Player.BLACK),
@@ -30,12 +30,12 @@ class CapturingTests {
         )
 
         assertEquals(
-            expected, actual, "wrong neighbors"
+            expected, actual, "wrong neighborPieces"
         )
     }
 
     @Test
-    fun edgeNeighbors() {
+    fun edgeNeighborPieces() {
         val pieces: MutableMap<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
@@ -52,7 +52,7 @@ class CapturingTests {
 
         val board = Board(pieces = pieces)
 
-        val actual = neighbors(Coord(0, 1), board)
+        val actual = neighborPieces(Coord(0, 1), board)
 
         val expected = setOf(
             Pair(Coord(0, 0), Player.BLACK),
@@ -61,13 +61,13 @@ class CapturingTests {
         )
 
         assertEquals(
-            expected, actual, "wrong neighbors"
+            expected, actual, "wrong neighborPieces"
         )
     }
 
 
     @Test
-    fun noEmptyNeighbors() {
+    fun noEmptyNeighborPieces() {
         val pieces: MutableMap<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
@@ -84,14 +84,14 @@ class CapturingTests {
 
         val board = Board(pieces = pieces)
 
-        val actual = neighbors(Coord(4, 4), board)
+        val actual = neighborPieces(Coord(4, 4), board)
 
         val expected = setOf(
             Pair(Coord(4, 3), Player.BLACK)
         )
 
         assertEquals(
-            expected, actual, "wrong neighbors"
+            expected, actual, "wrong neighborPieces"
         )
     }
 

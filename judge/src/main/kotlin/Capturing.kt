@@ -1,8 +1,15 @@
 /** Return all open spaces connected to the target piece's formation */
-fun liberties(target: Coord, board: Board): Set<Coord> = TODO()
+fun liberties(target: Coord, board: Board): Set<Coord> {
+    tailrec fun halp(coords: Set<Coord>, acc: Set<Coord>): Set<Coord> {
+        TODO()
+    }
 
-/* Return neighbors on (up to) four sides of the target */
-fun neighbors(target: Coord, board: Board): Set<Pair<Coord, Player>> =
+    val formation = connected(target, board)
+    TODO()
+}
+
+/* Return neighborPieces on (up to) four sides of the target */
+fun neighborPieces(target: Coord, board: Board): Set<Pair<Coord, Player>> =
     listOf(
         Pair(-1, 0),
         Pair(1, 0),
@@ -45,7 +52,7 @@ fun connected(target: Coord, board: Board): Set<Coord> {
         val sameColorNeighbors: Set<Coord> =
             sameColorPieces
                 .flatMap {
-                    neighbors(
+                    neighborPieces(
                         it,
                         board
                     )
@@ -72,7 +79,7 @@ fun connected(target: Coord, board: Board): Set<Coord> {
  * `placement` */
 fun capturesFor(player: Player, placement: Coord, board: Board): Set<Coord> {
     val enemyNeighbors =
-        neighbors(placement, board).filter {
+        neighborPieces(placement, board).filter {
             it.second != player
         }.map { Pair(it.first, it.second) }
     val someDead = enemyNeighbors.map { (target, _) ->
@@ -83,3 +90,4 @@ fun capturesFor(player: Player, placement: Coord, board: Board): Set<Coord> {
     }
     return someDead.flatten().toSet()
 }
+
