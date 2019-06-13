@@ -1,3 +1,7 @@
 fun main() {
-    println("Hello World")
+    Aggregator("kafka:9092").process()
+}
+
+class Aggregator(private val brokers: String) {
+    fun process() {}
 }
