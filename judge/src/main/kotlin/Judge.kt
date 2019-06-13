@@ -69,18 +69,6 @@ class Judge(private val brokers: String) {
                 MoveCommandGameState(leftValue, rightValue)
             }
 
-        if (true) {
-            // see https://kafka.apache.org/20/documentation/streams/developer-guide/dsl-api.html#kstream-globalktable-join
-            val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
-                makeMoveCommandStream.join(gameStates, keyJoiner, valueJoiner)
-
-            makeMoveCommandGameStates.mapValues { v ->
-                println("oh hey ${v.moveCmd.gameId} turn ${v.gameState.turn}")
-            }
-        }
-
-        println("ok games")
-
         // TODO: do some judging
 
         val relaxedJudgement: KStream<GameId, MoveMadeEv> =
@@ -105,6 +93,20 @@ class Judge(private val brokers: String) {
             MOVE_MADE_EV_TOPIC,
             Produced.with(Serdes.UUID(), Serdes.String())
         )
+
+
+        println("ok games")
+
+        if (true) {
+            // see https://kafka.apache.org/20/documentation/streams/developer-guide/dsl-api.html#kstream-globalktable-join
+            val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
+                makeMoveCommandStream.join(gameStates, keyJoiner, valueJoiner)
+
+            makeMoveCommandGameStates.mapValues { v ->
+                println("oh hey ${v.moveCmd.gameId} turn ${v.gameState.turn}")
+            }
+        }
+
 
         val topology = streamsBuilder.build()
 
