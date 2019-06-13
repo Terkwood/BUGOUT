@@ -11,7 +11,7 @@ import serdes.jsonMapper
 import java.util.*
 
 fun main() {
-    Thread.sleep(15)
+    Thread.sleep(40)
     Judge("kafka:9092").process()
 }
 
@@ -82,12 +82,11 @@ class Judge(private val brokers: String) {
 
 
         val keyJoiner: KeyValueMapper<GameId, MakeMoveCmd, GameId> =
-            KeyValueMapper { _leftKey: GameId,
-                             leftValue:
-                             MakeMoveCmd ->
-                leftValue
-                    .gameId
+            KeyValueMapper { _: GameId, // left key
+                             leftValue: MakeMoveCmd ->
+                leftValue.gameId
             }
+
         val valueJoiner: ValueJoiner<MakeMoveCmd, GameState, MoveCommandGameState> =
             ValueJoiner { leftValue:
                           MakeMoveCmd,
