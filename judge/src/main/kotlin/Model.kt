@@ -1,11 +1,13 @@
 import java.util.*
+import kotlin.collections.HashMap
 
 enum class Player { BLACK, WHITE }
-data class Coord(val x: Int, val y: Int) {
-    init {
-        require(x in 0..BOARD_SIZE)
-    }
-}
+data class Coord(val x: Int, val y: Int)
+
+data class Board(
+    val pieces: MutableMap<Coord, Player> = HashMap(),
+    val size: Int = FULL_BOARD_SIZE
+)
 
 typealias GameId = UUID
 typealias RequestId = UUID

@@ -61,51 +61,35 @@ class Judge(private val brokers: String) {
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
-        val gameStatesTable: KTable<GameId, GameState> =
-            moveMadeEventJsonStream.groupByKey(
-                // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
-                Serialized.with(
-                    Serdes.UUID(),
-                    Serdes.String()
-                )
+        moveMadeEventJsonStream.groupByKey(
+            // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
+            Serialized.with(
+                Serdes.UUID(),
+                Serdes.String()
             )
-                .aggregate(
-                    { GameState() },
-                    { _, v, list ->
-                        list.add(
-                            jsonMapper.readValue(
-                                v,
-                                MoveMadeEv::class.java
-                            )
+        )
+            .aggregate(
+                { GameState() },
+                { _, v, list ->
+                    list.add(
+                        jsonMapper.readValue(
+                            v,
+                            MoveMadeEv::class.java
                         )
-                        list
-                    },
-                    Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
-                            ByteArray>>(
-                        GAME_STATES_STORE_NAME
                     )
-                        .withKeySerde(Serdes.UUID())
-                        .withValueSerde(
-                            Serdes.serdeFrom(
-                                GameStateSerializer(),
-                                GameStateDeserializer()
-                            )
+                    list
+                },
+                Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
+                        ByteArray>>(
+                    GAME_STATES_STORE_NAME
+                )
+                    .withKeySerde(Serdes.UUID())
+                    .withValueSerde(
+                        Serdes.serdeFrom(
+                            GameStateSerializer(),
+                            GameStateDeserializer()
                         )
-                )
-
-        // This data will be committed to the stream
-        // based on `commit.interval.ms`: 30000 ms by default
-        // https://docs.confluent.io/current/streams/developer-guide/config-streams.html
-        gameStatesTable
-            .toStream()
-            .mapValues { gameBoard ->
-                jsonMapper.writeValueAsString(
-                    gameBoard.pieces
-                )
-            }
-            .to(
-                GAME_STATES_TOPIC,
-                Produced.with(Serdes.UUID(), Serdes.String())
+                    )
             )
 
         val topology = streamsBuilder.build()
@@ -132,7 +116,13 @@ class Judge(private val brokers: String) {
                             GameState>()
                 )
             store.all().forEach {
-                println("${it.key}: ${jsonMapper.writeValueAsString(it.value)}")
+                println(
+                    "${it.key.toString().take(8)}: ${jsonMapper
+                        .writeValueAsString(
+                            it
+                                .value
+                        )}"
+                )
             }
         }
     }

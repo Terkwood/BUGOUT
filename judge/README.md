@@ -35,12 +35,6 @@ Consume an event from the Move Made Event topic:
 kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic bugout-move-made-ev --from-beginning
 ```
 
-Check the game states stream output:
-
-```sh
-kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic bugout-game-states --from-beginning
-```
-
 ## kafkacat notes
 
 Note that the IP address of 0.0.0.0 is used as an example of connecting from a host such as a Mac.

@@ -3,8 +3,8 @@ import serdes.jsonMapper
 /**
  * Represents a point in time for a game
  */
-class GameState {
-    val pieces: MutableMap<Coord, Player> = HashMap()
+class GameState(boardSize: Int = FULL_BOARD_SIZE) {
+    val board = Board(size = boardSize)
 
     var captures = Captures()
 
@@ -14,9 +14,9 @@ class GameState {
 
     fun add(ev: MoveMadeEv): GameState {
         if (ev.coord != null) {
-            pieces[ev.coord] = ev.player
+            board.pieces[ev.coord] = ev.player
             ev.captured.forEach { coord ->
-                pieces.remove(coord)
+                board.pieces.remove(coord)
                 when (ev.player) {
                     Player.BLACK -> captures.black = captures.black + 1
                     Player.WHITE -> captures.white = captures.white + 1
