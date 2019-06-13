@@ -1,4 +1,4 @@
-/** Return all open spaces connected to the target piece */
+/** Return all open spaces connected to the target piece's formation */
 fun liberties(target: Coord, board: Board): Set<Coord> = TODO()
 
 /* Return neighbors on (up to) four sides of the target */
@@ -31,7 +31,42 @@ fun deadFrom(target: Coord, placement: Coord, board: Board):
 /** Return all pieces of the same color, connected to the target.  Includes
  * the target itself.
  */
-fun connected(target: Coord, board: Board): Set<Coord> = TODO()
+fun connected(target: Coord, board: Board): Set<Coord> {
+    val player = board.pieces[target] ?: return setOf()
+
+    tailrec fun halp(targets: Set<Coord>, acc: Set<Coord>): Set<Coord> {
+        val sameColorPieces = targets.mapNotNull {
+            val found = board.pieces[it]
+            if (found == null) null else {
+                Pair(it, found)
+            }
+        }.filter { it.second == player }.map { it.first }
+
+        val sameColorNeighbors: Set<Coord> =
+            sameColorPieces
+                .flatMap {
+                    neighbors(
+                        it,
+                        board
+                    )
+                }.filter {
+                    it.second ==
+                            player
+                }.map {
+                    it
+                        .first
+                }.toSet()
+
+        return if (acc.containsAll(sameColorNeighbors))
+            acc
+        else {
+            val nextAcc = acc.union(sameColorNeighbors)
+            halp(sameColorNeighbors, nextAcc)
+        }
+    }
+
+    return halp(setOf(target), setOf())
+}
 
 /** Returns a set of all coordinates captured by `player` placing a piece at
  * `placement` */
