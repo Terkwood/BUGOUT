@@ -3,6 +3,7 @@ import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.Consumed
+import org.apache.kafka.streams.kstream.GlobalKTable
 import org.apache.kafka.streams.kstream.KStream
 import org.apache.kafka.streams.kstream.Produced
 import serdes.jsonMapper
@@ -35,6 +36,16 @@ class Judge(private val brokers: String) {
                 )
                 v
             }
+
+        val gameStatesJsonGlobalTable: GlobalKTable<GameId, String> =
+            streamsBuilder.globalTable<GameId, String>(
+                GAME_STATES_CHANGELOG_TOPIC
+            )
+        /*
+        val testJoin = makeMoveCommandStream.leftJoin(
+            gameStatesJsonGlobalTable,
+            { b, a -> b })
+*/
 
         // TODO: do some judging
 
