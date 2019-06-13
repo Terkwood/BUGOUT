@@ -23,16 +23,45 @@ Produce an event to the Make Move Command topic:
 
 ```sh
 kafka-console-producer.sh --broker-list kafka:9092 --topic bugout-make-move-cmd
+```
+
+```json
 {"gameId":"a0b8d848-7c12-47fd-955f-c61c40d858af","reqId":"0000b0e5-a943-491a-938a-19a35677a501", "player":"BLACK","coord":{"x":0,"y":0}}
 {"gameId":"a0b8d848-7c12-47fd-955f-c61c40d858af","reqId":"1000b0e5-a943-491a-938a-19a35677a501", "player":"WHITE","coord":{"x":1,"y":0}}
 {"gameId":"a0b8d848-7c12-47fd-955f-c61c40d858af","reqId":"2000b0e5-a943-491a-938a-19a35677a501", "player":"BLACK","coord":{"x":0,"y":1}}
 {"gameId":"a0b8d848-7c12-47fd-955f-c61c40d858af","reqId":"3000b0e5-a943-491a-938a-19a35677a501", "player":"WHITE","coord":{"x":1,"y":1}}
 ```
 
+```json
+{"gameId":"deadbeef-aaaa-47fd-955f-c61c40d858af","reqId":"0000b0e5-a943-491a-938a-19a35677a501", "player":"BLACK","coord":{"x":0,"y":0}}
+{"gameId":"deadbeef-aaaa-47fd-955f-c61c40d858af","reqId":"1000b0e5-a943-491a-938a-19a35677a501", "player":"WHITE","coord":{"x":1,"y":0}}
+{"gameId":"deadbeef-aaaa-47fd-955f-c61c40d858af","reqId":"2000b0e5-a943-491a-938a-19a35677a501", "player":"BLACK","coord":{"x":0,"y":1}}
+{"gameId":"deadbeef-aaaa-47fd-955f-c61c40d858af","reqId":"3000b0e5-a943-491a-938a-19a35677a501", "player":"WHITE","coord":{"x":1,"y":1}}
+```
+
 Consume an event from the Move Made Event topic:
 
 ```sh
 kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic bugout-move-made-ev --from-beginning
+```
+
+Or produce to Move Made Event topic:
+
+```sh
+kafka-console-producer.sh --broker-list kafka:9092 --topic bugout-move-made-ev
+```
+
+Examples of moves made
+
+```json
+{"gameId":"a0b8d848-7c12-47fd-955f-c61c40d858af","replyTo":"0000b0e5-a943-491a-938a-19a35677a501", "player":"BLACK","captured": [],"coord":{"x":0,"y":0}}
+{"gameId":"a0b8d848-7c12-47fd-955f-c61c40d858af","replyTo":"1000b0e5-a943-491a-938a-19a35677a501", "player":"WHITE","captured": [],"coord":{"x":1,"y":0}}
+```
+
+Consume an event from the state changelog:
+
+```sh
+kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic bugout-game-states --from-beginning
 ```
 
 ## kafkacat notes

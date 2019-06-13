@@ -3,12 +3,12 @@ plugins {
 }
 
 group 'terkwood.farm'
-version '0.0.1-relaxed'
+version '0.0.1-MITOSIS'
 
 apply plugin: 'kotlin'
 apply plugin: 'application'
 
-mainClassName = 'JudgeKt'
+mainClassName = 'AggregatorKt'
 
 defaultTasks 'run'
 
@@ -51,7 +51,7 @@ compileTestKotlin {
 
 // fat jar
 jar {
-    manifest { attributes 'Main-Class': 'Judge' }
+    manifest { attributes 'Main-Class': 'AggregatorKt' }
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
