@@ -59,7 +59,7 @@ class Judge(private val brokers: String) {
             MOVE_MADE_EV_TOPIC,
             Produced.with(Serdes.UUID(), Serdes.String())
         )
-        
+
         val topology = streamsBuilder.build()
 
         val props = Properties()
