@@ -12,7 +12,7 @@ import serdes.jsonMapper
 import java.util.*
 
 fun main() {
-    Thread.sleep(10)
+    Thread.sleep(10000)
     Aggregator("kafka:9092").process()
 }
 
@@ -54,10 +54,7 @@ class Aggregator(private val brokers: String) {
                             GameStateDeserializer()
                         )
                     )
-            ).mapValues{ v ->
-                println("state store ${v.toString().take(8)}: Turn ${v.turn} PlayerUp: ${v.playerUp} Pieces: ${v.board.pieces.size} ")
-                v
-            }
+            )
 
         gameStates
             .toStream()
