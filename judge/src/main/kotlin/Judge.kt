@@ -38,7 +38,7 @@ class Judge(private val brokers: String) {
                 v
             }
 
-        val gameStatesJsonGlobalTable: GlobalKTable<GameId, GameState> =
+        val gameStates: GlobalKTable<GameId, GameState> =
             streamsBuilder
                 .globalTable(
                     GAME_STATES_CHANGELOG_TOPIC,
@@ -54,11 +54,19 @@ class Judge(private val brokers: String) {
                         )
                 )
         println("ok games")
-        /*
-        val testJoin = makeMoveCommandStream.leftJoin(
-            gameStatesJsonGlobalTable,
-            { b, a -> b })
-*/
+
+        val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
+            makeMoveCommandStream
+                .join(
+                    gameStates,
+                    { gameId: UUID, makeMoveCommand: MakeMoveCmd ->
+                        makeMoveCommand
+                            .gameId
+                    },
+                    { makeMoveCommand: MakeMoveCmd, gameState: GameState ->
+                        MoveCommandGameState(makeMoveCommand, gameState)
+                    })
+
 
         // TODO: do some judging
 
@@ -98,3 +106,8 @@ class Judge(private val brokers: String) {
 
     }
 }
+
+data class MoveCommandGameState(
+    val moveCmd: MakeMoveCmd,
+    val gameState: GameState
+)
