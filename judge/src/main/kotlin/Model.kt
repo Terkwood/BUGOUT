@@ -16,13 +16,22 @@ data class Captures(
 
 typealias GameId = UUID
 typealias RequestId = UUID
-
+typealias EventId = UUID
 
 data class MakeMoveCmd(
     val gameId: GameId,
     val reqId: RequestId,
     val player: Player,
     val coord: Coord?
+)
+
+data class MoveMadeEv(
+    val gameId: GameId,
+    val replyTo: RequestId,
+    val eventId: EventId = UUID.randomUUID(),
+    val player: Player,
+    val coord: Coord?,
+    val captured: List<Coord> = ArrayList()
 )
 
 

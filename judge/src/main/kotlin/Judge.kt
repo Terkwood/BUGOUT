@@ -1,8 +1,10 @@
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.KafkaStreams
+import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.Consumed
 import org.apache.kafka.streams.kstream.KStream
+import org.apache.kafka.streams.kstream.Produced
 import serdes.jsonMapper
 import java.util.*
 
@@ -35,17 +37,29 @@ class Judge(private val brokers: String) {
 
         // TODO: do some judging
 
-        // TODO
-        /*
+        val relaxedJudgement: KStream<GameId, MoveMadeEv> =
+            makeMoveCommandStream.map { _, move ->
+                val eventId = UUID.randomUUID()
+                KeyValue(
+                    move.gameId,
+                    MoveMadeEv(
+                        gameId = move.gameId,
+                        replyTo = move.reqId,
+                        eventId = eventId,
+                        player = move.player,
+                        coord = move.coord
+                    )
+                )
+            }
 
 
-        moveMadeEventJsonStream.to(
+        relaxedJudgement.mapValues { v ->
+            jsonMapper.writeValueAsString(v)
+        }.to(
             MOVE_MADE_EV_TOPIC,
             Produced.with(Serdes.UUID(), Serdes.String())
         )
-         */
-
-
+        
         val topology = streamsBuilder.build()
 
         val props = Properties()
