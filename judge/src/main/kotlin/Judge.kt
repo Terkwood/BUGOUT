@@ -55,10 +55,13 @@ class Judge(private val brokers: String) {
                 )
         println("ok games")
 
-        val keyJoiner = { _leftKey: GameId, leftValue: MakeMoveCmd ->
-            leftValue
-                .gameId
-        }
+        val keyJoiner: KeyValueMapper<GameId, MakeMoveCmd, GameId> =
+            KeyValueMapper { _leftKey: GameId,
+                             leftValue:
+                             MakeMoveCmd ->
+                leftValue
+                    .gameId
+            }
         val valueJoiner: ValueJoiner<MakeMoveCmd, GameState, MoveCommandGameState> =
             ValueJoiner { leftValue:
                           MakeMoveCmd,
@@ -66,16 +69,14 @@ class Judge(private val brokers: String) {
                           GameState ->
                 MoveCommandGameState(leftValue, rightValue)
             }
+
         // see https://kafka.apache.org/20/documentation/streams/developer-guide/dsl-api.html#kstream-globalktable-join
         val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
-            makeMoveCommandStream.join(gameStates, TODO(), valueJoiner)
-        /*val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
-            makeMoveCommandStream.join(
-                gameStates,
-                keyJoiner,
-                valueJoiner
-            )*/
+            makeMoveCommandStream.join(gameStates, keyJoiner, valueJoiner)
 
+        makeMoveCommandGameStates.mapValues { v ->
+            println("oh hey ${v.moveCmd.gameId} turn ${v.gameState.turn}")
+        }
 
         // TODO: do some judging
 
