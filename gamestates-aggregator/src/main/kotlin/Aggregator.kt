@@ -85,7 +85,7 @@ class Aggregator(private val brokers: String) {
         kotlin.concurrent.fixedRateTimer(
             "query",
             initialDelay = 45000, // in case kafka stream thread is starting up
-            period = 1000
+            period = 15000
         ) {
             val store = streams
                 .store(

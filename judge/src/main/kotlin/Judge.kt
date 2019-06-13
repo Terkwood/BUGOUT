@@ -82,7 +82,7 @@ class Judge(private val brokers: String) {
 
         println("ok games")
 
-        if (false) {
+        if (true) {
 
             val keyJoiner: KeyValueMapper<GameId, MakeMoveCmd, GameId> =
                 KeyValueMapper { _leftKey: GameId,
