@@ -24,6 +24,13 @@ class Judge(private val brokers: String) {
         val makeMoveCommandStream: KStream<GameId, MakeMoveCmd> =
             makeMoveCommandJsonStream.mapValues { v ->
                 jsonMapper.readValue(v, MakeMoveCmd::class.java)
+            }.mapValues { v ->
+                println(
+                    "MAKE MOVE CMD ${v.gameId.toString().take(8)} ${v
+                        .player} ${v
+                        .coord}"
+                )
+                v
             }
 
         // TODO: do some judging

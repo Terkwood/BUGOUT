@@ -4,4 +4,4 @@ COPY . .
 
 RUN gradle build
 
-CMD ["gradle", "--build-cache", "run"]
+CMD ["gradle", "run"]
