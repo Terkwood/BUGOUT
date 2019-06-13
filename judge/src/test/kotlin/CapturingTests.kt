@@ -287,4 +287,41 @@ class CapturingTests {
 
         assertEquals(expected, actual, "too greedy")
     }
+
+    @Test
+    fun captureOtherSide() {
+        val pieces: MutableMap<Coord, Player> = hashMapOf(
+            Pair(Coord(0, 0), Player.BLACK),
+            Pair(Coord(1, 0), Player.BLACK),
+            Pair(Coord(2, 0), Player.BLACK),
+            Pair(Coord(0, 1), Player.WHITE),
+            Pair(Coord(1, 1), Player.WHITE),
+            Pair(Coord(2, 1), Player.BLACK),
+            Pair(Coord(0, 2), Player.WHITE),
+            Pair(Coord(1, 2), Player.WHITE),
+            Pair(Coord(1, 3), Player.WHITE),
+            Pair(Coord(1, 4), Player.WHITE),
+            Pair(Coord(1, 5), Player.WHITE),
+            Pair(Coord(2, 2), Player.WHITE),
+            Pair(Coord(4, 3), Player.BLACK),
+            Pair(Coord(3, 2), Player.BLACK),
+            Pair(Coord(0, 3), Player.BLACK),
+            Pair(Coord(2, 3), Player.BLACK),
+            Pair(Coord(0, 4), Player.BLACK),
+            Pair(Coord(2, 4), Player.BLACK),
+            Pair(Coord(0, 5), Player.BLACK),
+            Pair(Coord(2, 5), Player.BLACK)
+        )
+
+        val board = Board(pieces)
+
+        val actual = capturesFor(Player.BLACK, Coord(1, 6), board)
+
+        val expected: Set<Coord> = pieces.filterNot {
+            it.value == Player.BLACK
+                    || it.key == Coord(5, 1)
+        }.map { it.key }.toSet()
+
+        assertEquals(expected, actual, "erroneous aggression")
+    }
 }
