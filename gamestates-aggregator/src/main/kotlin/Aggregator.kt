@@ -24,21 +24,6 @@ class Aggregator(private val brokers: String) {
             Consumed.with(Serdes.UUID(), Serdes.String())
         )
 
-        moveMadeEventJsonStream.mapValues { v ->
-            println("Hello JSON stream $v")
-            v
-        }
-
-        // transform pieces that are successfully made into a queryable KTable
-        val moveMadeEventStream: KStream<GameId, MoveMadeEv> =
-            moveMadeEventJsonStream.mapValues {  move ->
-                jsonMapper.readValue(move, MoveMadeEv::class.java)
-            }.mapValues { v ->
-                println("move made in ${v.gameId}: ${v.player} @ ${v.coord} with captures: ${v.captured.joinToString { "," }}")
-                v
-            }
-
-
         val gameStates = moveMadeEventJsonStream.groupByKey(
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
             Serialized.with(
@@ -69,15 +54,15 @@ class Aggregator(private val brokers: String) {
                         )
                     )
             ).mapValues{ v ->
-                println("state store: PlayerUp ${v.playerUp}, ${v.board.pieces.size} pieces, turn ${v.turn})")
+                println("state store ${v.toString().take(8)}: Turn ${v.turn} PlayerUp: ${v.playerUp} Pieces: ${v.board.pieces.size} ")
                 v
             }
 
         gameStates
             .toStream()
-            .mapValues { v ->
-                println("game-states changelog $v")
-                jsonMapper.writeValueAsString(v)
+            .map { k, v ->
+                println("changelog   ${k?.toString()?.take(8)}: Turn ${v.turn} PlayerUp: ${v.playerUp} Pieces: ${v.board.pieces.size} ")
+                KeyValue(k,jsonMapper.writeValueAsString(v))
             }.to(
                 GAME_STATES_CHANGELOG_TOPIC,
                 Produced.with(Serdes.UUID(), Serdes.String())

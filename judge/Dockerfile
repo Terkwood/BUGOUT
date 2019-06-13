@@ -1,7 +1,7 @@
 FROM gradle
 
-COPY . .
+# You must build this outside of docker
+# So that development productivity doesn't plummet
+COPY "bugout.judge.jar" .
 
-RUN gradle build
-
-CMD ["gradle", "--build-cache", "run"]
+CMD ["java", "-jar", "bugout.judge.jar"]

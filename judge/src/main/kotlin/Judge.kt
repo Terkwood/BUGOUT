@@ -14,6 +14,7 @@ fun main() {
 
 class Judge(private val brokers: String) {
     fun process() {
+
         val streamsBuilder = StreamsBuilder()
 
         val makeMoveCommandJsonStream: KStream<GameId, String> =

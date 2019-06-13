@@ -51,7 +51,7 @@ compileTestKotlin {
 
 // fat jar
 jar {
-    manifest { attributes 'Main-Class': 'Judge' }
+    manifest { attributes 'Main-Class': 'JudgeKt' }
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
