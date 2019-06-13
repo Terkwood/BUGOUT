@@ -8,8 +8,7 @@ fun liberties(target: Coord, board: Board): Set<Coord> {
     TODO()
 }
 
-/* Return neighborPieces on (up to) four sides of the target */
-fun neighborPieces(target: Coord, board: Board): Set<Pair<Coord, Player>> =
+fun neighbors(target: Coord, board: Board): Set<Pair<Coord, Player?>> =
     listOf(
         Pair(-1, 0),
         Pair(1, 0),
@@ -25,10 +24,20 @@ fun neighborPieces(target: Coord, board: Board): Set<Pair<Coord, Player>> =
                 || it.x >= board.size
                 || it.y < 0
                 || it.y >= board.size
-    }.map {
-        val c = board.pieces[it]
-        if (c == null) null else Pair(it, c)
-    }.filterNotNull().toSet()
+    }.map { Pair(it, board.pieces[it]) }.toSet()
+
+/** Return neighboring empty spaces */
+fun neighborSpaces(target: Coord, board: Board): Set<Coord> =
+    neighbors(target, board).mapNotNull {
+        if (it.second != null) null else it.first
+    }.toSet()
+
+/* Return neighborPieces on (up to) four sides of the target */
+fun neighborPieces(target: Coord, board: Board): Set<Pair<Coord, Player>> =
+    neighbors(target, board).mapNotNull {
+        val p = it.second
+        if (p == null) null else Pair(it.first, p)
+    }.toSet()
 
 
 fun deadFrom(target: Coord, placement: Coord, board: Board):
