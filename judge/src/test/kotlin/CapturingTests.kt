@@ -231,4 +231,35 @@ class CapturingTests {
 
         assertEquals(expected, actual, "freedom broken")
     }
+
+    @Test
+    fun takeOverTheWorld() {
+        val pieces: MutableMap<Coord, Player> = hashMapOf(
+            Pair(Coord(0, 0), Player.BLACK),
+            Pair(Coord(1, 0), Player.BLACK),
+            Pair(Coord(2, 0), Player.BLACK),
+            Pair(Coord(3, 0), Player.WHITE),
+            Pair(Coord(0, 1), Player.WHITE),
+            Pair(Coord(1, 1), Player.WHITE),
+            Pair(Coord(2, 1), Player.BLACK),
+            Pair(Coord(0, 2), Player.WHITE),
+            Pair(Coord(1, 2), Player.WHITE),
+            Pair(Coord(2, 2), Player.WHITE),
+            Pair(Coord(4, 3), Player.BLACK),
+            Pair(Coord(1, 5), Player.WHITE)
+        )
+
+        val board = Board(pieces)
+
+        val actual = capturesFor(Player.WHITE, Coord(3, 1), board)
+
+        val expected = setOf(
+            Coord(0, 0),
+            Coord(1, 0),
+            Coord(2, 0),
+            Coord(2, 1)
+        )
+
+        assertEquals(expected, actual, "not greedy enough")
+    }
 }
