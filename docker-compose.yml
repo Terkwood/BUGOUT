@@ -29,8 +29,7 @@ services:
       - "kafka"
     volumes:
       - ~/.gradle:/home/gradle/.gradle
-  cat:
-    image: confluentinc/cp-kafkacat
+  kafkacat:
+    build: kafkacat/.
     links:
       - "kafka"
-    command: tail -f /dev/null
