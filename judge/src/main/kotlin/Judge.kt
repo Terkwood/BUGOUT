@@ -11,6 +11,7 @@ import serdes.jsonMapper
 import java.util.*
 
 fun main() {
+    Thread.sleep(15)
     Judge("kafka:9092").process()
 }
 

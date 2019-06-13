@@ -12,6 +12,7 @@ import serdes.jsonMapper
 import java.util.*
 
 fun main() {
+    Thread.sleep(10)
     Aggregator("kafka:9092").process()
 }
 
