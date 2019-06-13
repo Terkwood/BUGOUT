@@ -61,7 +61,7 @@ class Judge(private val brokers: String) {
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
-        moveMadeEventJsonStream.groupByKey(
+        val gameStates = moveMadeEventJsonStream.groupByKey(
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
             Serialized.with(
                 Serdes.UUID(),
@@ -92,11 +92,22 @@ class Judge(private val brokers: String) {
                     )
             )
 
+        gameStates
+            .toStream()
+            .mapValues { v ->
+                println("game-states changelog $v")
+                jsonMapper.writeValueAsString(v)
+            }.to(
+                GAME_STATES_CHANGELOG_TOPIC,
+                Produced.with(Serdes.UUID(), Serdes.String())
+            )
+
         val topology = streamsBuilder.build()
 
         val props = Properties()
         props["bootstrap.servers"] = brokers
         props["application.id"] = "bugout-judge"
+        props["processing.guarantee"] = "exactly_once"
 
         val streams = KafkaStreams(topology, props)
         streams.start()
