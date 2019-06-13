@@ -1,11 +1,12 @@
 import org.apache.kafka.common.serialization.Serdes
+import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
-import org.apache.kafka.streams.kstream.Consumed
-import org.apache.kafka.streams.kstream.GlobalKTable
-import org.apache.kafka.streams.kstream.KStream
-import org.apache.kafka.streams.kstream.Produced
+import org.apache.kafka.streams.kstream.*
+import org.apache.kafka.streams.state.KeyValueStore
+import serdes.GameStateDeserializer
+import serdes.GameStateSerializer
 import serdes.jsonMapper
 import java.util.*
 
@@ -37,10 +38,22 @@ class Judge(private val brokers: String) {
                 v
             }
 
-        val gameStatesJsonGlobalTable: GlobalKTable<GameId, String> =
-            streamsBuilder.globalTable<GameId, String>(
-                GAME_STATES_CHANGELOG_TOPIC
-            )
+        val gameStatesJsonGlobalTable: GlobalKTable<GameId, GameState> =
+            streamsBuilder
+                .globalTable(
+                    GAME_STATES_CHANGELOG_TOPIC,
+                    Materialized
+                        .`as`<GameId, GameState, KeyValueStore<Bytes,
+                                ByteArray>>(GAME_STATES_STORE)
+                        .withKeySerde(Serdes.UUID())
+                        .withValueSerde(
+                            Serdes.serdeFrom(
+                                GameStateSerializer(),
+                                GameStateDeserializer()
+                            )
+                        )
+                )
+        println("ok games")
         /*
         val testJoin = makeMoveCommandStream.leftJoin(
             gameStatesJsonGlobalTable,
