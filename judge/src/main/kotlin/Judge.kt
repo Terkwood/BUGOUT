@@ -54,21 +54,6 @@ class Judge(private val brokers: String) {
                         )
                 )
 
-        val keyJoiner: KeyValueMapper<GameId, MakeMoveCmd, GameId> =
-            KeyValueMapper { _leftKey: GameId,
-                             leftValue:
-                             MakeMoveCmd ->
-                leftValue
-                    .gameId
-            }
-        val valueJoiner: ValueJoiner<MakeMoveCmd, GameState, MoveCommandGameState> =
-            ValueJoiner { leftValue:
-                          MakeMoveCmd,
-                          rightValue:
-                          GameState ->
-                MoveCommandGameState(leftValue, rightValue)
-            }
-
         // TODO: do some judging
 
         val relaxedJudgement: KStream<GameId, MoveMadeEv> =
@@ -98,15 +83,35 @@ class Judge(private val brokers: String) {
         println("ok games")
 
         if (true) {
+
+            val keyJoiner: KeyValueMapper<GameId, MakeMoveCmd, GameId> =
+                KeyValueMapper { _leftKey: GameId,
+                                 leftValue:
+                                 MakeMoveCmd ->
+                    leftValue
+                        .gameId
+                }
+            val valueJoiner: ValueJoiner<MakeMoveCmd, GameState, MoveCommandGameState> =
+                ValueJoiner { leftValue:
+                              MakeMoveCmd,
+                              rightValue:
+                              GameState ->
+                    MoveCommandGameState(leftValue, rightValue)
+                }
+
             // see https://kafka.apache.org/20/documentation/streams/developer-guide/dsl-api.html#kstream-globalktable-join
             val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
-                makeMoveCommandStream.join(gameStates, keyJoiner, valueJoiner)
+                makeMoveCommandStream.leftJoin(
+                    gameStates, keyJoiner,
+                    valueJoiner
+                )
 
             makeMoveCommandGameStates.mapValues { v ->
                 println("oh hey ${v.moveCmd.gameId} turn ${v.gameState.turn}")
             }
         }
 
+        println("make that topo")
 
         val topology = streamsBuilder.build()
 
