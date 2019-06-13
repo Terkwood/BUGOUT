@@ -1,7 +1,5 @@
 FROM gradle
 
-COPY . .
+COPY "./build/libs/bugout.gamestates.aggregator-0.0.1-MITOSIS.jar" .
 
-RUN gradle build
-
-CMD ["gradle", "run"]
+CMD ["java", "-jar", "bugout.gamestates.aggregator-0.0.1-MITOSIS.jar"]

@@ -51,7 +51,7 @@ compileTestKotlin {
 
 // fat jar
 jar {
-    manifest { attributes 'Main-Class': 'Aggregator' }
+    manifest { attributes 'Main-Class': 'AggregatorKt' }
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
