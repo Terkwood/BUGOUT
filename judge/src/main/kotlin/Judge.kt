@@ -3,7 +3,6 @@ import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.Consumed
 import org.apache.kafka.streams.kstream.KStream
-import org.apache.kafka.streams.state.QueryableStoreTypes
 import serdes.jsonMapper
 import java.util.*
 
@@ -27,6 +26,18 @@ class Judge(private val brokers: String) {
                 jsonMapper.readValue(v, MakeMoveCmd::class.java)
             }
 
+        // TODO: do some judging
+
+        // TODO
+        /*
+
+
+        moveMadeEventJsonStream.to(
+            MOVE_MADE_EV_TOPIC,
+            Produced.with(Serdes.UUID(), Serdes.String())
+        )
+         */
+
 
         val topology = streamsBuilder.build()
 
@@ -38,29 +49,6 @@ class Judge(private val brokers: String) {
         val streams = KafkaStreams(topology, props)
         streams.start()
 
-        // Even though the GAME_STATES_TOPIC stream receives
-        // commits infrequently, we can see that the state
-        // store itself is updated much more quickly.
-        kotlin.concurrent.fixedRateTimer(
-            "query",
-            initialDelay = 45000, // in case kafka stream thread is starting up
-            period = 1000
-        ) {
-            val store = streams
-                .store(
-                    GAME_STATES_STORE_NAME,
-                    QueryableStoreTypes.keyValueStore<UUID,
-                            GameState>()
-                )
-            store.all().forEach {
-                println(
-                    "${it.key.toString().take(8)}: ${jsonMapper
-                        .writeValueAsString(
-                            it
-                                .value
-                        )}"
-                )
-            }
-        }
+
     }
 }
