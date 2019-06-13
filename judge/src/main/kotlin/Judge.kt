@@ -80,38 +80,32 @@ class Judge(private val brokers: String) {
         )
 
 
-        println("ok games")
-
-        if (true) {
-
-            val keyJoiner: KeyValueMapper<GameId, MakeMoveCmd, GameId> =
-                KeyValueMapper { _leftKey: GameId,
-                                 leftValue:
-                                 MakeMoveCmd ->
-                    leftValue
-                        .gameId
-                }
-            val valueJoiner: ValueJoiner<MakeMoveCmd, GameState, MoveCommandGameState> =
-                ValueJoiner { leftValue:
-                              MakeMoveCmd,
-                              rightValue:
-                              GameState ->
-                    MoveCommandGameState(leftValue, rightValue)
-                }
-
-            // see https://kafka.apache.org/20/documentation/streams/developer-guide/dsl-api.html#kstream-globalktable-join
-            val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
-                makeMoveCommandStream.leftJoin(
-                    gameStates, keyJoiner,
-                    valueJoiner
-                )
-
-            makeMoveCommandGameStates.mapValues { v ->
-                println("oh hey ${v.moveCmd.gameId} turn ${v.gameState.turn}")
+        val keyJoiner: KeyValueMapper<GameId, MakeMoveCmd, GameId> =
+            KeyValueMapper { _leftKey: GameId,
+                             leftValue:
+                             MakeMoveCmd ->
+                leftValue
+                    .gameId
             }
+        val valueJoiner: ValueJoiner<MakeMoveCmd, GameState, MoveCommandGameState> =
+            ValueJoiner { leftValue:
+                          MakeMoveCmd,
+                          rightValue:
+                          GameState ->
+                MoveCommandGameState(leftValue, rightValue)
+            }
+
+        // see https://kafka.apache.org/20/documentation/streams/developer-guide/dsl-api.html#kstream-globalktable-join
+        val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
+            makeMoveCommandStream.leftJoin(
+                gameStates, keyJoiner,
+                valueJoiner
+            )
+
+        makeMoveCommandGameStates.mapValues { v ->
+            println("oh hey ${v.moveCmd.gameId} turn ${v.gameState.turn}")
         }
 
-        println("make that topo")
 
         val topology = streamsBuilder.build()
 
@@ -123,11 +117,6 @@ class Judge(private val brokers: String) {
         val streams = KafkaStreams(topology, props)
         streams.start()
 
-
+        println("Judge started")
     }
 }
-
-data class MoveCommandGameState(
-    val moveCmd: MakeMoveCmd,
-    val gameState: GameState
-)

@@ -49,4 +49,7 @@ data class Move(
     val captures: List<Coord> = ArrayList()
 )
 
-
+data class MoveCommandGameState(
+    val moveCmd: MakeMoveCmd,
+    val gameState: GameState
+)
