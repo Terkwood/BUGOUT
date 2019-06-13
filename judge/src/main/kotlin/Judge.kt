@@ -1,14 +1,17 @@
 import org.apache.kafka.common.serialization.Serdes
+import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
-import org.apache.kafka.streams.kstream.Consumed
-import org.apache.kafka.streams.kstream.KStream
-import org.apache.kafka.streams.kstream.Produced
+import org.apache.kafka.streams.kstream.*
+import org.apache.kafka.streams.state.KeyValueStore
+import serdes.GameStateDeserializer
+import serdes.GameStateSerializer
 import serdes.jsonMapper
 import java.util.*
 
 fun main() {
+    Thread.sleep(33000)
     Judge("kafka:9092").process()
 }
 
@@ -36,6 +39,22 @@ class Judge(private val brokers: String) {
                 v
             }
 
+        val gameStates: GlobalKTable<GameId, GameState> =
+            streamsBuilder
+                .globalTable(
+                    GAME_STATES_CHANGELOG_TOPIC,
+                    Materialized
+                        .`as`<GameId, GameState, KeyValueStore<Bytes,
+                                ByteArray>>(GAME_STATES_STORE)
+                        .withKeySerde(Serdes.UUID())
+                        .withValueSerde(
+                            Serdes.serdeFrom(
+                                GameStateSerializer(),
+                                GameStateDeserializer()
+                            )
+                        )
+                )
+
         // TODO: do some judging
 
         val relaxedJudgement: KStream<GameId, MoveMadeEv> =
@@ -61,6 +80,33 @@ class Judge(private val brokers: String) {
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
+
+        val keyJoiner: KeyValueMapper<GameId, MakeMoveCmd, GameId> =
+            KeyValueMapper { _: GameId, // left key
+                             leftValue: MakeMoveCmd ->
+                leftValue.gameId
+            }
+
+        val valueJoiner: ValueJoiner<MakeMoveCmd, GameState, MoveCommandGameState> =
+            ValueJoiner { leftValue:
+                          MakeMoveCmd,
+                          rightValue:
+                          GameState ->
+                MoveCommandGameState(leftValue, rightValue)
+            }
+
+        // see https://kafka.apache.org/20/documentation/streams/developer-guide/dsl-api.html#kstream-globalktable-join
+        val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
+            makeMoveCommandStream.leftJoin(
+                gameStates, keyJoiner,
+                valueJoiner
+            )
+
+        makeMoveCommandGameStates.mapValues { v ->
+            println("oh hey ${v.moveCmd.gameId} turn ${v.gameState.turn}")
+        }
+
+
         val topology = streamsBuilder.build()
 
         val props = Properties()
@@ -71,6 +117,6 @@ class Judge(private val brokers: String) {
         val streams = KafkaStreams(topology, props)
         streams.start()
 
-
+        println("Judge started")
     }
 }

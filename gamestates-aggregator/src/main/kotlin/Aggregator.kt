@@ -12,6 +12,7 @@ import serdes.jsonMapper
 import java.util.*
 
 fun main() {
+    Thread.sleep(10000)
     Aggregator("kafka:9092").process()
 }
 
@@ -53,10 +54,7 @@ class Aggregator(private val brokers: String) {
                             GameStateDeserializer()
                         )
                     )
-            ).mapValues{ v ->
-                println("state store ${v.toString().take(8)}: Turn ${v.turn} PlayerUp: ${v.playerUp} Pieces: ${v.board.pieces.size} ")
-                v
-            }
+            )
 
         gameStates
             .toStream()
@@ -85,7 +83,7 @@ class Aggregator(private val brokers: String) {
         kotlin.concurrent.fixedRateTimer(
             "query",
             initialDelay = 45000, // in case kafka stream thread is starting up
-            period = 1000
+            period = 15000
         ) {
             val store = streams
                 .store(

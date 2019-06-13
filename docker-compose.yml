@@ -29,4 +29,7 @@ services:
       - "kafka"
     volumes:
       - ~/.gradle:/home/gradle/.gradle
-
+  kafkacat:
+    build: kafkacat/.
+    links:
+      - "kafka"
