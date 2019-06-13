@@ -130,9 +130,14 @@ class CapturingTests {
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(2, 0), Player.BLACK)
         )
-        val board = Board()
+        val board = Board(pieces)
         val actual = connected(Coord(4, 4), board)
         val expected: Set<Coord> = setOf()
         assertEquals(expected, actual, "non empty isn't so good")
+    }
+
+    @Test
+    fun basicLiberties() {
+
     }
 }
