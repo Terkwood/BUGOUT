@@ -138,6 +138,38 @@ class CapturingTests {
 
     @Test
     fun basicLiberties() {
+        val pieces: MutableMap<Coord, Player> = hashMapOf(
+            Pair(Coord(0, 0), Player.BLACK),
+            Pair(Coord(1, 0), Player.BLACK),
+            Pair(Coord(2, 0), Player.BLACK),
+            Pair(Coord(0, 1), Player.WHITE),
+            Pair(Coord(1, 1), Player.WHITE),
+            Pair(Coord(2, 1), Player.BLACK),
+            Pair(Coord(0, 2), Player.WHITE),
+            Pair(Coord(1, 2), Player.WHITE),
+            Pair(Coord(2, 2), Player.WHITE),
+            Pair(Coord(4, 3), Player.BLACK),
+            Pair(Coord(1, 3), Player.WHITE),
+            Pair(Coord(1, 4), Player.WHITE),
+            Pair(Coord(1, 5), Player.WHITE),
+            Pair(Coord(5, 1), Player.WHITE)
+        )
 
+        val board = Board(pieces)
+
+        val actual = liberties(Coord(1, 3), board)
+
+        val expected = setOf(
+            Coord(3, 2),
+            Coord(0, 3),
+            Coord(2, 3),
+            Coord(0, 4),
+            Coord(2, 4),
+            Coord(0, 5),
+            Coord(2, 5),
+            Coord(1, 6)
+        )
+
+        assertEquals(expected, actual, "wrong freedoms")
     }
 }

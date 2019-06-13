@@ -1,18 +1,7 @@
 /** Return all open spaces connected to the target piece's formation */
-fun liberties(target: Coord, board: Board): Set<Coord> {
-    tailrec fun halp(coords: List<Coord>, acc: Set<Coord>): Set<Coord> {
-        val freeNeighbors =
-            coords.flatMap { neighborSpaces(it, board) }.distinct()
+fun liberties(target: Coord, board: Board): Set<Coord> =
+    connected(target, board).flatMap { neighborSpaces(it, board) }.toSet()
 
-        return if (acc.containsAll(freeNeighbors)) acc else {
-            val nextAcc = acc.union(freeNeighbors)
-            halp(freeNeighbors, nextAcc)
-        }
-    }
-
-    val formation = connected(target, board)
-    return halp(formation.toList(), setOf())
-}
 
 fun neighbors(target: Coord, board: Board): Set<Pair<Coord, Player?>> =
     listOf(
