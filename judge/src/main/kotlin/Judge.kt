@@ -55,17 +55,22 @@ class Judge(private val brokers: String) {
                 )
         println("ok games")
 
+        val keyJoiner = { _leftKey: GameId, leftValue: MakeMoveCmd ->
+            leftValue
+                .gameId
+        }
+        val valueJoiner = { leftValue: MakeMoveCmd, rightValue: GameState ->
+            MoveCommandGameState(leftValue, rightValue)
+        }
+        // see https://kafka.apache.org/20/documentation/streams/developer-guide/dsl-api.html#kstream-globalktable-join
         val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
-            makeMoveCommandStream
-                .join(
-                    gameStates,
-                    { gameId: UUID, makeMoveCommand: MakeMoveCmd ->
-                        makeMoveCommand
-                            .gameId
-                    },
-                    { makeMoveCommand: MakeMoveCmd, gameState: GameState ->
-                        MoveCommandGameState(makeMoveCommand, gameState)
-                    })
+            makeMoveCommandStream.join(gameStates, TODO(), TODO())
+        /*val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
+            makeMoveCommandStream.join(
+                gameStates,
+                keyJoiner,
+                valueJoiner
+            )*/
 
 
         // TODO: do some judging
