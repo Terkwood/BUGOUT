@@ -1,13 +1,9 @@
 import org.apache.kafka.common.serialization.Serdes
-import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
-import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
-import org.apache.kafka.streams.kstream.*
-import org.apache.kafka.streams.state.KeyValueStore
+import org.apache.kafka.streams.kstream.Consumed
+import org.apache.kafka.streams.kstream.KStream
 import org.apache.kafka.streams.state.QueryableStoreTypes
-import serdes.GameStateDeserializer
-import serdes.GameStateSerializer
 import serdes.jsonMapper
 import java.util.*
 
@@ -31,76 +27,6 @@ class Judge(private val brokers: String) {
                 jsonMapper.readValue(v, MakeMoveCmd::class.java)
             }
 
-
-        // transform pieces that are successfully made into a queryable KTable
-        val moveMadeEventStream: KStream<GameId, MoveMadeEv> =
-            makeMoveCommandStream.map { _, move ->
-                val eventId = UUID.randomUUID()
-                KeyValue(
-                    move.gameId,
-                    MoveMadeEv(
-                        gameId = move.gameId,
-                        replyTo = move.reqId,
-                        eventId = eventId,
-                        player = move.player,
-                        coord = move.coord
-                    )
-                )
-
-            }
-
-        val moveMadeEventJsonStream: KStream<GameId, String> =
-            moveMadeEventStream.mapValues { move ->
-                jsonMapper.writeValueAsString(
-                    move
-                )
-            }
-
-        moveMadeEventJsonStream.to(
-            MOVE_MODE_EV_TOPIC,
-            Produced.with(Serdes.UUID(), Serdes.String())
-        )
-
-        val gameStates = moveMadeEventJsonStream.groupByKey(
-            // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
-            Serialized.with(
-                Serdes.UUID(),
-                Serdes.String()
-            )
-        )
-            .aggregate(
-                { GameState() },
-                { _, v, list ->
-                    list.add(
-                        jsonMapper.readValue(
-                            v,
-                            MoveMadeEv::class.java
-                        )
-                    )
-                    list
-                },
-                Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
-                        ByteArray>>(
-                    GAME_STATES_STORE_NAME
-                )
-                    .withKeySerde(Serdes.UUID())
-                    .withValueSerde(
-                        Serdes.serdeFrom(
-                            GameStateSerializer(),
-                            GameStateDeserializer()
-                        )
-                    )
-            )
-
-        gameStates
-            .toStream()
-            .mapValues { v ->
-                println("game-states changelog $v")
-                jsonMapper.writeValueAsString(v)
-            }.to(
-                GAME_STATES_CHANGELOG_TOPIC,
-                Produced.with(Serdes.UUID(), Serdes.String())
-            )
 
         val topology = streamsBuilder.build()
 
