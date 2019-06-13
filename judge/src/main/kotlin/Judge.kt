@@ -1,4 +1,3 @@
-import mu.KotlinLogging
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
@@ -12,9 +11,7 @@ import serdes.GameStateSerializer
 import serdes.jsonMapper
 import java.util.*
 
-private val logger = KotlinLogging.logger {}
 fun main() {
-    logger.warn("ANY HELLO")
     Judge("kafka:9092").process()
 }
 
