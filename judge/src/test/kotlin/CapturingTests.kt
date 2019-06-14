@@ -340,4 +340,20 @@ class CapturingTests {
 
         assertEquals(expected, actual, "mind the corners")
     }
+
+    @Test
+    fun cornerLiberty() {
+        val pieces = hashMapOf(
+            Pair(Coord(18, 18), Player.BLACK),
+            Pair(Coord(18, 17), Player.WHITE)
+        )
+
+        val board = Board(pieces)
+
+        val actual = liberties(Coord(18, 18), board)
+
+        val expected: Set<Coord> = setOf(Coord(17, 18))
+
+        assertEquals(expected, actual, "cornered")
+    }
 }
