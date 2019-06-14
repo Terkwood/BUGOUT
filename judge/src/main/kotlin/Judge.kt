@@ -82,7 +82,7 @@ class Judge(private val brokers: String) {
         }
 
         val branches = makeMoveCommandGameStates
-            .kbranch({ _, _ -> true })
+            .kbranch({ _, moveGameState -> moveGameState.isValid() })
 
         val validMakeMoveCommandStream = branches[0]
 
@@ -117,7 +117,7 @@ class Judge(private val brokers: String) {
         )
 
         val topology = streamsBuilder.build()
-        
+
         println(topology.describe())
 
         val props = Properties()
