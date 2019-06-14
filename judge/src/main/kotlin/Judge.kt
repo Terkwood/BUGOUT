@@ -106,7 +106,10 @@ class Judge(private val brokers: String) {
 
 
         relaxedJudgement.mapValues { v ->
-            println("relaxed judgement ${v.gameId.short()}")
+            println(
+                "relaxed judgement ${v.gameId.short()}: ${v.player} @ ${v
+                    .coord} capturing ${v.captured.joinToString { "," }}"
+            )
             jsonMapper.writeValueAsString(v)
         }.to(
             MOVE_MADE_EV_TOPIC,
@@ -114,6 +117,8 @@ class Judge(private val brokers: String) {
         )
 
         val topology = streamsBuilder.build()
+        
+        println(topology.describe())
 
         val props = Properties()
         props["bootstrap.servers"] = brokers
