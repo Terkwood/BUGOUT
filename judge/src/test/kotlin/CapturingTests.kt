@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 class CapturingTests {
     @Test
     fun correctNeighborPieces() {
-        val pieces: MutableMap<Coord, Player> = hashMapOf(
+        val pieces: Map<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(2, 0), Player.BLACK),
@@ -36,7 +36,7 @@ class CapturingTests {
 
     @Test
     fun edgeNeighborPieces() {
-        val pieces: MutableMap<Coord, Player> = hashMapOf(
+        val pieces: Map<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(2, 0), Player.BLACK),
@@ -68,7 +68,7 @@ class CapturingTests {
 
     @Test
     fun noEmptyNeighborPieces() {
-        val pieces: MutableMap<Coord, Player> = hashMapOf(
+        val pieces: Map<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(2, 0), Player.BLACK),
@@ -97,7 +97,7 @@ class CapturingTests {
 
     @Test
     fun connectedTest() {
-        val pieces: MutableMap<Coord, Player> = hashMapOf(
+        val pieces: Map<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(2, 0), Player.BLACK),
@@ -125,7 +125,7 @@ class CapturingTests {
 
     @Test
     fun soConnectedTest() {
-        val pieces: MutableMap<Coord, Player> = hashMapOf(
+        val pieces: Map<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(2, 0), Player.BLACK),
@@ -153,7 +153,7 @@ class CapturingTests {
 
     @Test
     fun connectionsEmpty() {
-        val pieces: MutableMap<Coord, Player> = hashMapOf(
+        val pieces: Map<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(2, 0), Player.BLACK)
@@ -166,7 +166,7 @@ class CapturingTests {
 
     @Test
     fun basicLiberties() {
-        val pieces: MutableMap<Coord, Player> = hashMapOf(
+        val pieces: Map<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(2, 0), Player.BLACK),
@@ -203,7 +203,7 @@ class CapturingTests {
 
     @Test
     fun moreFreedoms() {
-        val pieces: MutableMap<Coord, Player> = hashMapOf(
+        val pieces: Map<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(2, 0), Player.BLACK),
@@ -234,7 +234,7 @@ class CapturingTests {
 
     @Test
     fun takeOverTheWorld() {
-        val pieces: MutableMap<Coord, Player> = hashMapOf(
+        val pieces: Map<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(2, 0), Player.BLACK),
@@ -265,7 +265,7 @@ class CapturingTests {
 
     @Test
     fun notTooGreedy() {
-        val pieces: MutableMap<Coord, Player> = hashMapOf(
+        val pieces: Map<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(2, 0), Player.BLACK),
@@ -290,7 +290,7 @@ class CapturingTests {
 
     @Test
     fun captureOtherSide() {
-        val pieces: MutableMap<Coord, Player> = hashMapOf(
+        val pieces: Map<Coord, Player> = hashMapOf(
             Pair(Coord(0, 0), Player.BLACK),
             Pair(Coord(1, 0), Player.BLACK),
             Pair(Coord(2, 0), Player.BLACK),
@@ -323,5 +323,53 @@ class CapturingTests {
         }.map { it.key }.toSet()
 
         assertEquals(expected, actual, "erroneous aggression")
+    }
+
+    @Test
+    fun cornerCaptureFullSizeBoard() {
+        val pieces = hashMapOf(
+            Pair(Coord(18, 18), Player.BLACK),
+            Pair(Coord(18, 17), Player.WHITE)
+        )
+
+        val board = Board(pieces)
+
+        val actual = capturesFor(Player.WHITE, Coord(17, 18), board)
+
+        val expected: Set<Coord> = setOf(Coord(18, 18))
+
+        assertEquals(expected, actual, "mind the corners")
+    }
+
+    @Test
+    fun cornerLiberty() {
+        val pieces = hashMapOf(
+            Pair(Coord(18, 18), Player.BLACK),
+            Pair(Coord(18, 17), Player.WHITE)
+        )
+
+        val board = Board(pieces)
+
+        val actual = liberties(Coord(18, 18), board)
+
+        val expected: Set<Coord> = setOf(Coord(17, 18))
+
+        assertEquals(expected, actual, "cornered")
+    }
+
+    @Test
+    fun connectedIncludesSelf() {
+        val pieces = hashMapOf(
+            Pair(Coord(18, 18), Player.BLACK),
+            Pair(Coord(18, 17), Player.WHITE)
+        )
+
+        val board = Board(pieces)
+
+        val actual = connected(Coord(18, 18), board)
+
+        val expected: Set<Coord> = setOf(Coord(18, 18))
+
+        assertEquals(expected, actual, "confused")
     }
 }

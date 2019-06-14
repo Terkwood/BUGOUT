@@ -11,7 +11,7 @@ import serdes.jsonMapper
 import java.util.*
 
 fun main() {
-    Thread.sleep(33000)
+    Thread.sleep(STARTUP_WAIT_MS)
     Judge("kafka:9092").process()
 }
 
@@ -32,7 +32,7 @@ class Judge(private val brokers: String) {
                 jsonMapper.readValue(v, MakeMoveCmd::class.java)
             }.mapValues { v ->
                 println(
-                    "MAKE MOVE CMD ${v.gameId.toString().take(8)} ${v
+                    "MAKE MOVE CMD ${v.gameId.short()} ${v
                         .player} ${v
                         .coord}"
                 )
@@ -54,31 +54,6 @@ class Judge(private val brokers: String) {
                             )
                         )
                 )
-
-        // TODO: do some judging
-
-        val relaxedJudgement: KStream<GameId, MoveMadeEv> =
-            makeMoveCommandStream.map { _, move ->
-                val eventId = UUID.randomUUID()
-                KeyValue(
-                    move.gameId,
-                    MoveMadeEv(
-                        gameId = move.gameId,
-                        replyTo = move.reqId,
-                        eventId = eventId,
-                        player = move.player,
-                        coord = move.coord
-                    )
-                )
-            }
-
-
-        relaxedJudgement.mapValues { v ->
-            jsonMapper.writeValueAsString(v)
-        }.to(
-            MOVE_MADE_EV_TOPIC,
-            Produced.with(Serdes.UUID(), Serdes.String())
-        )
 
 
         val keyJoiner: KeyValueMapper<GameId, MakeMoveCmd, GameId> =
@@ -106,8 +81,46 @@ class Judge(private val brokers: String) {
             println("oh hey ${v.moveCmd.gameId} turn ${v.gameState.turn}")
         }
 
+        val branches = makeMoveCommandGameStates
+            .kbranch({ _, moveGameState -> moveGameState.isValid() })
+
+        val validMoveGameState = branches[0]
+
+        val validMoveMadeEventStream: KStream<GameId, MoveMadeEv> =
+            validMoveGameState.map { _, moveCmdGameState ->
+                val eventId = UUID.randomUUID()
+                val move = moveCmdGameState.moveCmd
+                val game = moveCmdGameState.gameState
+                val captured: List<Coord> = if (move.coord != null) {
+                    capturesFor(move.player, move.coord, game.board).toList()
+                } else listOf()
+                KeyValue(
+                    move.gameId,
+                    MoveMadeEv(
+                        gameId = move.gameId,
+                        replyTo = move.reqId,
+                        eventId = eventId,
+                        player = move.player,
+                        coord = move.coord,
+                        captured = captured
+                    )
+                )
+            }
+
+        validMoveMadeEventStream.mapValues { v ->
+            println(
+                "move made ${v.gameId.short()}: ${v.player} @ ${v
+                    .coord} capturing ${v.captured.joinToString(",")}"
+            )
+            jsonMapper.writeValueAsString(v)
+        }.to(
+            MOVE_MADE_EV_TOPIC,
+            Produced.with(Serdes.UUID(), Serdes.String())
+        )
 
         val topology = streamsBuilder.build()
+
+        println(topology.describe())
 
         val props = Properties()
         props["bootstrap.servers"] = brokers
