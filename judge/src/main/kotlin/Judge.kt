@@ -11,7 +11,7 @@ import serdes.jsonMapper
 import java.util.*
 
 fun main() {
-    Thread.sleep(33000)
+    Thread.sleep(STARTUP_WAIT_MS)
     Judge("kafka:9092").process()
 }
 
@@ -84,14 +84,16 @@ class Judge(private val brokers: String) {
         val branches = makeMoveCommandGameStates
             .kbranch({ _, moveGameState -> moveGameState.isValid() })
 
-        val validMakeMoveCommandStream = branches[0]
+        val validMoveGameState = branches[0]
 
-        // TODO: do some judging
-
-        val relaxedJudgement: KStream<GameId, MoveMadeEv> =
-            validMakeMoveCommandStream.map { _, moveCmdGameState ->
+        val validMoveMadeEventStream: KStream<GameId, MoveMadeEv> =
+            validMoveGameState.map { _, moveCmdGameState ->
                 val eventId = UUID.randomUUID()
                 val move = moveCmdGameState.moveCmd
+                val game = moveCmdGameState.gameState
+                val captured: List<Coord> = if (move.coord != null) {
+                    capturesFor(move.player, move.coord, game.board).toList()
+                } else listOf()
                 KeyValue(
                     move.gameId,
                     MoveMadeEv(
@@ -99,15 +101,15 @@ class Judge(private val brokers: String) {
                         replyTo = move.reqId,
                         eventId = eventId,
                         player = move.player,
-                        coord = move.coord
+                        coord = move.coord,
+                        captured = captured
                     )
                 )
             }
 
-
-        relaxedJudgement.mapValues { v ->
+        validMoveMadeEventStream.mapValues { v ->
             println(
-                "relaxed judgement ${v.gameId.short()}: ${v.player} @ ${v
+                "move made ${v.gameId.short()}: ${v.player} @ ${v
                     .coord} capturing ${v.captured.joinToString { "," }}"
             )
             jsonMapper.writeValueAsString(v)
