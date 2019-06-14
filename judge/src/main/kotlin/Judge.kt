@@ -110,7 +110,7 @@ class Judge(private val brokers: String) {
         validMoveMadeEventStream.mapValues { v ->
             println(
                 "move made ${v.gameId.short()}: ${v.player} @ ${v
-                    .coord} capturing ${v.captured.joinToString { "," }}"
+                    .coord} capturing ${v.captured.joinToString(",")}"
             )
             jsonMapper.writeValueAsString(v)
         }.to(
