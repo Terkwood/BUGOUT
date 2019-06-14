@@ -32,7 +32,7 @@ class Judge(private val brokers: String) {
                 jsonMapper.readValue(v, MakeMoveCmd::class.java)
             }.mapValues { v ->
                 println(
-                    "MAKE MOVE CMD ${v.gameId.toString().take(8)} ${v
+                    "MAKE MOVE CMD ${v.gameId.short()} ${v
                         .player} ${v
                         .coord}"
                 )
@@ -83,7 +83,7 @@ class Judge(private val brokers: String) {
 
         val branches = makeMoveCommandGameStates
             .kbranch({ _, _ -> true })
-        
+
         val validMakeMoveCommandStream = branches[0]
 
         // TODO: do some judging
@@ -106,6 +106,7 @@ class Judge(private val brokers: String) {
 
 
         relaxedJudgement.mapValues { v ->
+            println("relaxed judgement ${v.gameId.short()}")
             jsonMapper.writeValueAsString(v)
         }.to(
             MOVE_MADE_EV_TOPIC,
