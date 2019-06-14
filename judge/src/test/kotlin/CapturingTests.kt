@@ -356,4 +356,20 @@ class CapturingTests {
 
         assertEquals(expected, actual, "cornered")
     }
+
+    @Test
+    fun connectedIncludesSelf() {
+        val pieces = hashMapOf(
+            Pair(Coord(18, 18), Player.BLACK),
+            Pair(Coord(18, 17), Player.WHITE)
+        )
+
+        val board = Board(pieces)
+
+        val actual = connected(Coord(18, 18), board)
+
+        val expected: Set<Coord> = setOf(Coord(18, 18))
+
+        assertEquals(expected, actual, "confused")
+    }
 }

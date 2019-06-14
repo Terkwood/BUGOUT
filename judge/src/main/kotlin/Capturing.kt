@@ -76,7 +76,7 @@ fun connected(target: Coord, board: Board): Set<Coord> {
         }
     }
 
-    return halp(setOf(target), setOf())
+    return halp(setOf(target), setOf(target))
 }
 
 /** Returns a set of all coordinates captured by `player` placing a piece at
