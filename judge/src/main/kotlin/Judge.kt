@@ -55,31 +55,6 @@ class Judge(private val brokers: String) {
                         )
                 )
 
-        // TODO: do some judging
-
-        val relaxedJudgement: KStream<GameId, MoveMadeEv> =
-            makeMoveCommandStream.map { _, move ->
-                val eventId = UUID.randomUUID()
-                KeyValue(
-                    move.gameId,
-                    MoveMadeEv(
-                        gameId = move.gameId,
-                        replyTo = move.reqId,
-                        eventId = eventId,
-                        player = move.player,
-                        coord = move.coord
-                    )
-                )
-            }
-
-
-        relaxedJudgement.mapValues { v ->
-            jsonMapper.writeValueAsString(v)
-        }.to(
-            MOVE_MADE_EV_TOPIC,
-            Produced.with(Serdes.UUID(), Serdes.String())
-        )
-
 
         val keyJoiner: KeyValueMapper<GameId, MakeMoveCmd, GameId> =
             KeyValueMapper { _: GameId, // left key
@@ -106,6 +81,36 @@ class Judge(private val brokers: String) {
             println("oh hey ${v.moveCmd.gameId} turn ${v.gameState.turn}")
         }
 
+        val branches = makeMoveCommandGameStates
+            .kbranch({ _, _ -> true })
+        
+        val validMakeMoveCommandStream = branches[0]
+
+        // TODO: do some judging
+
+        val relaxedJudgement: KStream<GameId, MoveMadeEv> =
+            validMakeMoveCommandStream.map { _, moveCmdGameState ->
+                val eventId = UUID.randomUUID()
+                val move = moveCmdGameState.moveCmd
+                KeyValue(
+                    move.gameId,
+                    MoveMadeEv(
+                        gameId = move.gameId,
+                        replyTo = move.reqId,
+                        eventId = eventId,
+                        player = move.player,
+                        coord = move.coord
+                    )
+                )
+            }
+
+
+        relaxedJudgement.mapValues { v ->
+            jsonMapper.writeValueAsString(v)
+        }.to(
+            MOVE_MADE_EV_TOPIC,
+            Produced.with(Serdes.UUID(), Serdes.String())
+        )
 
         val topology = streamsBuilder.build()
 
