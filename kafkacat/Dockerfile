@@ -2,4 +2,4 @@ FROM confluentinc/cp-kafkacat
 
 COPY . .
 
-CMD ["sh","feed.sh"]
+CMD ["sh", "feed.sh"]

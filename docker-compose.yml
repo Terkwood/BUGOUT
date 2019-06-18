@@ -32,6 +32,9 @@ services:
       - "kafka"
     volumes:
       - ~/.gradle:/home/gradle/.gradle
+    depends_on:
+      - "kafka"
+    command: ["./wait-for-it.sh", "kafka:9092", "-s", "--",  "java", "-jar", "bugout.gamestates.aggregator.jar"]
   kafkacat:
     build: kafkacat/.
     links:
