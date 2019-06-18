@@ -75,31 +75,5 @@ class Aggregator(private val brokers: String) {
 
         val streams = KafkaStreams(topology, props)
         streams.start()
-
-        // Even though the GAME_STATES_TOPIC stream receives
-        // commits infrequently, we can see that the state
-        // store itself is updated much more quickly.
-        kotlin.concurrent.fixedRateTimer(
-            "query",
-            initialDelay = 45000, // in case kafka stream thread is starting up
-            period = 15000
-        ) {
-            val store = streams
-                .store(
-                    GAME_STATES_STORE_NAME,
-                    QueryableStoreTypes.keyValueStore<UUID,
-                            GameState>()
-                )
-            store.all().forEach {
-                println(
-                    "${it.key.toString().take(8)}: ${jsonMapper
-                        .writeValueAsString(
-                            it
-                                .value
-                        )}"
-                )
-            }
-        }
-
     }
 }
