@@ -11,7 +11,10 @@ import serdes.GameStateSerializer
 import serdes.jsonMapper
 import java.util.*
 
+const val WAIT_SLEEP_MS = 10000L
+
 fun main() {
+    Thread.sleep(WAIT_SLEEP_MS)
     Aggregator("kafka:9092").process()
 }
 
