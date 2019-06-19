@@ -25,7 +25,6 @@ services:
       - ~/.gradle:/home/gradle/.gradle
     depends_on:
       - "kafka"
-    command: ["./wait-for-it.sh", "kafka:9092", "-s", "--",  "java", "-jar", "bugout.judge.jar"]
   gamestates-aggregator:
     build: gamestates-aggregator/.
     links:
@@ -34,7 +33,6 @@ services:
       - ~/.gradle:/home/gradle/.gradle
     depends_on:
       - "kafka"
-    command: ["./wait-for-it.sh", "kafka:9092", "-s", "--",  "java", "-jar", "bugout.gamestates.aggregator.jar"]
   kafkacat:
     build: kafkacat/.
     links:

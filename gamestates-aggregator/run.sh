@@ -1,5 +1,4 @@
 #!/bin/bash
 
-sleep 20
-echo "oh"
+./wait-for-it.sh kafka:9092 -s -- sleep 10 
 java -jar bugout.gamestates.aggregator.jar
