@@ -1,4 +1,4 @@
 #!/bin/bash
 
-sleep 10
+sleep 20
 java -jar bugout.judge.jar

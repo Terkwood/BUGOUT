@@ -1,4 +1,5 @@
 #!/bin/bash
 
-sleep 10
+sleep 20
+echo "oh"
 java -jar bugout.gamestates.aggregator.jar
