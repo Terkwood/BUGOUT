@@ -23,12 +23,16 @@ services:
       - "kafka"
     volumes:
       - ~/.gradle:/home/gradle/.gradle
+    depends_on:
+      - "kafka"
   gamestates-aggregator:
     build: gamestates-aggregator/.
     links:
       - "kafka"
     volumes:
       - ~/.gradle:/home/gradle/.gradle
+    depends_on:
+      - "kafka"
   kafkacat:
     build: kafkacat/.
     links:
