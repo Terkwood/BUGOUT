@@ -1,6 +1,6 @@
 [package]
 name = "gateway"
-version = "0.1.0-anything"
+version = "0.1.0-protocol"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
@@ -8,5 +8,9 @@ edition = "2018"
 env_logger = "0.6"
 mio-extras = "2.0"
 rdkafka = "~0.21"
+serde = "*"
+serde_derive = "*"
+serde_json = "*"
 time = "0.1.39"
+uuid = { version =  "*", features = ["v4", "serde"] }
 ws = "0.8.1"
