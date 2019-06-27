@@ -5,7 +5,7 @@ extern crate env_logger;
 /// so will allow you to see more details about the connection by using the RUST_LOG env variable.
 extern crate ws;
 
-use ws::{connect, CloseCode};
+use ws::connect;
 
 fn main() {
     // Setup logging
