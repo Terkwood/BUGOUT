@@ -14,19 +14,17 @@ fn main() {
     // Connect to the url and call the closure
     if let Err(error) = connect("ws://127.0.0.1:3012", |out| {
         // Queue a message to be sent when the WebSocket is open
-        if out.send("Hello WebSocket").is_err() {
+        if out.send("ARE WE THERE YET?").is_err() {
             println!("Websocket couldn't queue an initial message.")
         } else {
-            println!("Client sent message 'Hello WebSocket'. ")
+            println!("Client sent message")
         }
 
         // The handler needs to take ownership of out, so we use move
         move |msg| {
             // Handle messages received on this connection
             println!("Client got message '{}'. ", msg);
-
-            // Close the connection
-            out.close(CloseCode::Normal)
+            Ok(())
         }
     }) {
         // Inform the user of failure

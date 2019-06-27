@@ -15,6 +15,7 @@ use ws::{listen, CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message
 
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
+const PLAYER_MOVE: Token = Token(3);
 
 fn main() {
     // Setup logging
@@ -25,6 +26,7 @@ fn main() {
         out,
         ping_timeout: None,
         expire_timeout: None,
+        player_move_timeout: None,
     }).unwrap();
 }
 
@@ -33,10 +35,13 @@ struct Server {
     out: Sender,
     ping_timeout: Option<Timeout>,
     expire_timeout: Option<Timeout>,
+    player_move_timeout: Option<Timeout>,
 }
 
 impl Handler for Server {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
+        // schedule a timeout to simulate a player move in 1 second
+        self.out.timeout(1_000, PLAYER_MOVE)?;
         // schedule a timeout to send a ping every 5 seconds
         self.out.timeout(5_000, PING)?;
         // schedule a timeout to close the connection if there is no activity for 30 seconds
@@ -58,6 +63,9 @@ impl Handler for Server {
         if let Some(t) = self.expire_timeout.take() {
             self.out.cancel(t).unwrap();
         }
+        if let Some(t) = self.player_move_timeout.take() {
+            self.out.cancel(t).unwrap();
+        }
     }
 
     fn on_error(&mut self, err: Error) {
@@ -76,6 +84,12 @@ impl Handler for Server {
             }
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
             EXPIRE => self.out.close(CloseCode::Away),
+            PLAYER_MOVE => {
+                println!("Player move timeout");
+                self.out.send("PLAYER MOVES")?;
+                self.player_move_timeout.take();
+                self.out.timeout(1_000, PLAYER_MOVE)
+            },
             // No other timeouts are possible
             _ => Err(Error::new(
                 ErrorKind::Internal,
@@ -91,12 +105,18 @@ impl Handler for Server {
                 self.out.cancel(t)?
             }
             self.expire_timeout = Some(timeout)
-        } else {
+        } else if event == PING {
             // This ensures there is only one ping timeout at a time
             if let Some(t) = self.ping_timeout.take() {
                 self.out.cancel(t)?
             }
             self.ping_timeout = Some(timeout)
+        } else {
+            // Ensures there is only one player move timeout at a time
+            if let Some(t) = self.player_move_timeout.take() {
+                self.out.cancel(t)?
+            }
+            self.player_move_timeout = Some(timeout)
         }
 
         Ok(())
