@@ -2,6 +2,8 @@
 extern crate env_logger;
 extern crate mio_extras;
 extern crate serde;
+extern crate serde_derive;
+extern crate serde_json;
 extern crate time;
 /// An example demonstrating how to send and recieve a custom ping/pong frame.
 extern crate ws;
