@@ -17,6 +17,12 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+  gateway:
+    build: gateway/.
+    links:
+      - "kafka"
+    depends_on:
+      - "kafka"
   judge:
     build: judge/.
     links:
