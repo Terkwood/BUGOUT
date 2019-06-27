@@ -1,3 +1,7 @@
+pub fn anything() -> bool {
+    true
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
