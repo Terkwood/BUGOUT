@@ -10,7 +10,7 @@ WORKDIR /var/BUGOUT/gateway
 RUN git submodule update --init
 
 RUN apt-get update -y 
-RUN apt-get install -y libclang-dev
+RUN apt-get install -y clang
 
 RUN cargo install --path .
 
