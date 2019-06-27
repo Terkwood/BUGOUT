@@ -50,7 +50,7 @@ impl Handler for Server {
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
         println!("Server got message '{}'. ", msg);
-        self.out.send(msg)
+        self.out.send(format!("{} has length {}",msg,msg.len()))
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
