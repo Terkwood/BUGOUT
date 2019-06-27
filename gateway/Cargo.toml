@@ -5,5 +5,8 @@ authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+env_logger = "0.6"
+mio-extras = "2.0"
 rdkafka = "~0.21"
+time = "0.1.39"
 ws = "0.8.1"
