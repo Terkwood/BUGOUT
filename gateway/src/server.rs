@@ -30,8 +30,13 @@ impl Handler for Server {
         println!("Server got message '{}'. ", msg);
         let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
-        self.out
-            .send(format!("Command deserialized {:?}", deserialized))
+        match deserialized {
+            Ok(command) => self.out.send(format!("Command deserialized {:?}", command)),
+            Err(e) => {
+                println!("Error deserializing {:?}", e);
+                Ok(())
+            }
+        }
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {

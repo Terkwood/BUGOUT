@@ -12,6 +12,7 @@ mod server;
 use ws::listen;
 
 use server::Server;
+
 fn main() {
     // Setup logging
     env_logger::init();
