@@ -4,21 +4,20 @@ use std::str::from_utf8;
 use mio_extras::timer::Timeout;
 
 use ws::util::Token;
-use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result,
-         Sender};
+use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
 const PING: Token = Token(1);
-const EXPIRE: Token = Token(2); 
+const EXPIRE: Token = Token(2);
 
 // Server WebSocket handler
 pub struct Server {
     pub out: Sender,
     pub ping_timeout: Option<Timeout>,
-    pub expire_timeout: Option<Timeout>, 
+    pub expire_timeout: Option<Timeout>,
 }
 
 impl Handler for Server {
-    fn on_open(&mut self, _: Handshake) -> Result<()> { 
+    fn on_open(&mut self, _: Handshake) -> Result<()> {
         // schedule a timeout to send a ping every 5 seconds
         self.out.timeout(5_000, PING)?;
         // schedule a timeout to close the connection if there is no activity for 30 seconds
@@ -27,7 +26,7 @@ impl Handler for Server {
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
         println!("Server got message '{}'. ", msg);
-        self.out.send(format!("{} has length {}",msg,msg.len()))
+        self.out.send(format!("{} has length {}", msg, msg.len()))
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
@@ -39,7 +38,7 @@ impl Handler for Server {
         }
         if let Some(t) = self.expire_timeout.take() {
             self.out.cancel(t).unwrap();
-        } 
+        }
     }
 
     fn on_error(&mut self, err: Error) {
@@ -57,7 +56,7 @@ impl Handler for Server {
                 self.out.timeout(5_000, PING)
             }
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
-            EXPIRE => self.out.close(CloseCode::Away), 
+            EXPIRE => self.out.close(CloseCode::Away),
             // No other timeouts are possible
             _ => Err(Error::new(
                 ErrorKind::Internal,
@@ -79,7 +78,7 @@ impl Handler for Server {
                 self.out.cancel(t)?
             }
             self.ping_timeout = Some(timeout)
-        } 
+        }
 
         Ok(())
     }

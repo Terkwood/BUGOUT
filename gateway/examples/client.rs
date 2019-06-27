@@ -1,5 +1,4 @@
 /// Adapted from https://raw.githubusercontent.com/housleyjk/ws-rs/master/examples/client.rs
-
 extern crate env_logger;
 /// Simple WebSocket client with error handling. It is not necessary to setup logging, but doing
 /// so will allow you to see more details about the connection by using the RUST_LOG env variable.
