@@ -1,6 +1,3 @@
 # BUGOUT gateway
 
-Simple node.js/TS server using socket IO
-
-Provides [Rooms](
-https://socket.io/docs/rooms-and-namespaces/) for games running in the Kafka Streams app
+websocket server which negotiates between BUGOUT frontend and an internal kafka cluster serving the [judge](../judge/README.md).
