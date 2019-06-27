@@ -6,4 +6,4 @@ edition = "2018"
 
 [dependencies]
 rdkafka = "~0.21"
-rocket = "0.4.1"
+ws = "0.8.1"
