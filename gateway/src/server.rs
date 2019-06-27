@@ -6,6 +6,8 @@ use mio_extras::timer::Timeout;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
+use crate::model::Commands;
+
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
 
@@ -26,7 +28,10 @@ impl Handler for Server {
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
         println!("Server got message '{}'. ", msg);
-        self.out.send(format!("{} has length {}", msg, msg.len()))
+        let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
+            .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
+        self.out
+            .send(format!("Command deserialized {:?}", deserialized))
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {

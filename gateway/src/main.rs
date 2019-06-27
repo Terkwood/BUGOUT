@@ -6,12 +6,12 @@ extern crate time;
 /// An example demonstrating how to send and recieve a custom ping/pong frame.
 extern crate ws;
 
-mod lib;
-mod model;
+pub mod model;
+mod server;
 
 use ws::listen;
 
-use lib::Server;
+use server::Server;
 fn main() {
     // Setup logging
     env_logger::init();
