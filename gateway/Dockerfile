@@ -1,7 +1,5 @@
 FROM rust
 
-RUN rustup default nightly
-
 WORKDIR /var/
 RUN git clone https://github.com/Terkwood/BUGOUT
 WORKDIR /var/BUGOUT/gateway
