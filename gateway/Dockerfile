@@ -1,5 +1,7 @@
 FROM rust
 
+RUN rustup default nightly
+
 WORKDIR /var/gateway
 COPY . .
 
