@@ -1,6 +1,9 @@
 # BUGOUT gateway
 
-Simple node.js/TS server using socket IO
+rust/rocket web server which authorizes BUGOUT requests and forwards them to an internal kafka cluster serving the [judge](../judge/README.md).
 
-Provides [Rooms](
-https://socket.io/docs/rooms-and-namespaces/) for games running in the Kafka Streams app
+## Potential JWT auth
+
+Prototype efforts lack any authorization or authentication ability whatsoever.
+
+In the event that we want to authenticate players, use[jsonwebtoken](https://github.com/Keats/jsonwebtoken) or [frank_jwt](https://github.com/GildedHonour/frank_jwt).
