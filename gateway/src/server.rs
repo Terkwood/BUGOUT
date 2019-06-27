@@ -56,7 +56,7 @@ impl Handler for Server {
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
-        println!("WebSocket closing for ({:?}) {}", code, reason);
+        println!("WebSocket closing ({:?}) {}", code, reason);
 
         // Clean up timeouts when connections close
         if let Some(t) = self.ping_timeout.take() {
