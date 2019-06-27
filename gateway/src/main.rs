@@ -1,3 +1,4 @@
+/// Adapted from https://github.com/housleyjk/ws-rs/blob/master/examples/pong.rs
 extern crate env_logger;
 extern crate mio_extras;
 extern crate time;
