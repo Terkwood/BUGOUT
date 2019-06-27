@@ -1,4 +1,4 @@
-/// Taken from https://raw.githubusercontent.com/housleyjk/ws-rs/master/examples/client.rs
+/// Adapted from https://raw.githubusercontent.com/housleyjk/ws-rs/master/examples/client.rs
 
 extern crate env_logger;
 /// Simple WebSocket client with error handling. It is not necessary to setup logging, but doing
