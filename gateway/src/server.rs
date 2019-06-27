@@ -3,10 +3,11 @@ use std::str::from_utf8;
 
 use mio_extras::timer::Timeout;
 
+use uuid::Uuid;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
-use crate::model::Commands;
+use crate::model::{Commands, Events};
 
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
@@ -31,7 +32,22 @@ impl Handler for Server {
         let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
         match deserialized {
-            Ok(command) => self.out.send(format!("Command deserialized {:?}", command)),
+            Ok(Commands::MakeMove {
+                game_id,
+                req_id,
+                player,
+                coord,
+            }) => self.out.send(
+                serde_json::to_string(&Events::MoveMade {
+                    game_id,
+                    reply_to: req_id,
+                    player,
+                    coord,
+                    event_id: Uuid::new_v4(),
+                    captured: vec![],
+                })
+                .unwrap(),
+            ),
             Err(e) => {
                 println!("Error deserializing {:?}", e);
                 Ok(())
