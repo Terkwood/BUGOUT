@@ -9,6 +9,9 @@ RUN git checkout feature/gateway
 WORKDIR /var/BUGOUT/gateway
 RUN git submodule update --init
 
+RUN apt-get update -y 
+RUN apt-get install -y libclang-dev
+
 RUN cargo install --path .
 
 CMD ["gateway"]
