@@ -1,3 +1,4 @@
+use futures::stream::Stream;
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
@@ -17,4 +18,17 @@ fn consume_and_forward(brokers: &str, group_id: &str, topics: &[&str]) {
         .set_log_level(RDKafkaLogLevel::Debug)
         .create()
         .expect("Consumer creation failed");
+
+    consumer
+        .subscribe(topics)
+        .expect("Can't subscribe to topics");
+
+    let message_stream = consumer.start();
+    for message in message_stream.wait() {
+        match message {
+            Err(_) => unimplemented!(),
+            Ok(Err(e)) => unimplemented!(),
+            Ok(Ok(msg)) => unimplemented!(),
+        }
+    }
 }
