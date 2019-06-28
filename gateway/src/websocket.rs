@@ -14,6 +14,7 @@ const EXPIRE: Token = Token(2);
 
 // WebSocket handler
 pub struct WsSession {
+    pub client_id: Uuid,
     pub out: Sender,
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,

@@ -7,7 +7,7 @@ use rdkafka::message::{Headers, Message};
 use rdkafka::util::get_rdkafka_version;
 
 /// Adapted from https://github.com/fede1024/rust-rdkafka/blob/master/examples/simple_consumer.rs
-fn consume_and_print(brokers: &str, group_id: &str, topics: &[&str]) {
+fn consume_and_forward(brokers: &str, group_id: &str, topics: &[&str]) {
     let consumer: StreamConsumer = ClientConfig::new()
         .set("group.id", group_id)
         .set("bootstrap.servers", brokers)

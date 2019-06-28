@@ -49,6 +49,11 @@ pub enum Events {
     },
 }
 
+pub enum Message {
+    Command { client_id: Uuid, command: Commands },
+    Event(Events),
+}
+
 #[cfg(test)]
 mod tests {
     use uuid::Uuid;
