@@ -17,15 +17,27 @@ mod websocket;
 use crossbeam_channel::bounded;
 use ws::listen;
 
-use model::Message;
+use model::BugoutMessage;
 use websocket::WsSession;
 
 fn main() {
     env_logger::init();
 
-    let (kafka_in, kafka_out): (crossbeam::Sender<Message>, crossbeam::Receiver<Message>) =
-        bounded(100);
-    let (_, router_out): (crossbeam::Sender<Message>, crossbeam::Receiver<Message>) = bounded(100);
+    let (kafka_in, kafka_out): (
+        crossbeam::Sender<BugoutMessage>,
+        crossbeam::Receiver<BugoutMessage>,
+    ) = bounded(100);
+    let (router_in, router_out): (
+        crossbeam::Sender<BugoutMessage>,
+        crossbeam::Receiver<BugoutMessage>,
+    ) = bounded(100);
+
+    kafka::consume_and_forward(
+        "localhost:9092",
+        "gateway",
+        &["bugout-make-move-cmd", "bugout-move-made-ev"],
+        router_in,
+    );
 
     // Run the WebSocket
     listen("127.0.0.1:3012", |out| WsSession {

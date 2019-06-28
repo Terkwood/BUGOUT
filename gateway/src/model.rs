@@ -49,7 +49,7 @@ pub enum Events {
     },
 }
 
-pub enum Message {
+pub enum BugoutMessage {
     Command { client_id: Uuid, command: Commands },
     Event(Events),
 }

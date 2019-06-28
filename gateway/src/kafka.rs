@@ -1,3 +1,4 @@
+use crossbeam_channel::Sender;
 use futures::stream::Stream;
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
@@ -7,8 +8,15 @@ use rdkafka::error::KafkaResult;
 use rdkafka::message::{Headers, Message};
 use rdkafka::util::get_rdkafka_version;
 
+use crate::model::BugoutMessage;
+
 /// Adapted from https://github.com/fede1024/rust-rdkafka/blob/master/examples/simple_consumer.rs
-fn consume_and_forward(brokers: &str, group_id: &str, topics: &[&str]) {
+pub fn consume_and_forward(
+    brokers: &str,
+    group_id: &str,
+    topics: &[&str],
+    router_in: Sender<BugoutMessage>,
+) {
     let consumer: StreamConsumer = ClientConfig::new()
         .set("group.id", group_id)
         .set("bootstrap.servers", brokers)
