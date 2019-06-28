@@ -45,6 +45,8 @@ fn main() {
         out,
         ping_timeout: None,
         expire_timeout: None,
+        kafka_in: kafka_in.clone(),
+        router_out: router_out.clone(),
     })
     .unwrap();
 }
