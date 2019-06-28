@@ -8,6 +8,7 @@ extern crate time;
 /// An example demonstrating how to send and recieve a custom ping/pong frame.
 extern crate ws;
 
+mod kafka;
 pub mod model;
 mod websocket;
 

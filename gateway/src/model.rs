@@ -40,7 +40,6 @@ pub enum Events {
         coord: Option<Coord>,
         captured: Vec<Coord>,
     },
-    #[serde(rename_all = "camelCase")]
     MoveRejected {
         game_id: Uuid,
         reply_to: Uuid,
