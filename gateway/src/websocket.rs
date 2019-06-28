@@ -12,14 +12,14 @@ use crate::model::{Commands, Events};
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
 
-// Server WebSocket handler
-pub struct Server {
+// WebSocket handler
+pub struct WsSession {
     pub out: Sender,
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
 }
 
-impl Handler for Server {
+impl Handler for WsSession {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
         // schedule a timeout to send a ping every 5 seconds
         self.out.timeout(5_000, PING)?;
@@ -28,7 +28,7 @@ impl Handler for Server {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
-        println!("Server got message '{}'. ", msg);
+        println!("WsSession got message '{}'. ", msg);
         let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
         match deserialized {
@@ -69,7 +69,7 @@ impl Handler for Server {
 
     fn on_error(&mut self, err: Error) {
         // Shutdown on any error
-        println!("Shutting down server for error: {}", err);
+        println!("Shutting down WsSession for error: {}", err);
         self.out.shutdown().unwrap();
     }
 

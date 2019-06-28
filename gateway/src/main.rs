@@ -9,18 +9,18 @@ extern crate time;
 extern crate ws;
 
 pub mod model;
-mod server;
+mod websocket;
 
 use ws::listen;
 
-use server::Server;
+use websocket::WsSession;
 
 fn main() {
     // Setup logging
     env_logger::init();
 
     // Run the WebSocket
-    listen("127.0.0.1:3012", |out| Server {
+    listen("127.0.0.1:3012", |out| WsSession {
         out,
         ping_timeout: None,
         expire_timeout: None,
