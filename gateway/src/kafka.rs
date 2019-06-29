@@ -35,8 +35,20 @@ pub fn consume_and_forward(
     for message in message_stream.wait() {
         match message {
             Err(_) => unimplemented!(),
-            Ok(Err(e)) => unimplemented!(),
-            Ok(Ok(msg)) => unimplemented!(),
+            Ok(Err(_e)) => unimplemented!(),
+            Ok(Ok(msg)) => {
+                let payload = match msg.payload_view::<str>() {
+                    None => "",
+                    Some(Ok(s)) => s,
+                    Some(Err(_)) => unimplemented!(),
+                };
+
+                println!(
+                    "key: '{:?}', payload: '{}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
+                    msg.key(), payload, msg.topic(), msg.partition(),
+                    msg.offset(), msg.timestamp());
+                unimplemented!()
+            }
         }
     }
 }

@@ -23,7 +23,7 @@ use websocket::WsSession;
 fn main() {
     env_logger::init();
 
-    let (kafka_in, kafka_out): (
+    let (kafka_in, _kafka_out): (
         crossbeam::Sender<BugoutMessage>,
         crossbeam::Receiver<BugoutMessage>,
     ) = bounded(100);
