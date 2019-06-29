@@ -20,7 +20,7 @@ fn main() {
         let game_id = Uuid::new_v4();
         let request_id = Uuid::new_v4();
         let msg = format!("{{\"type\":\"MakeMove\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\",\"player\":\"BLACK\",\"coord\":{{\"x\":0,\"y\":0}}}}", game_id, request_id).to_string();
-        
+
         if out.send(msg).is_err() {
             println!("Websocket couldn't queue an initial message.")
         } else {

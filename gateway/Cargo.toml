@@ -1,11 +1,13 @@
 [package]
 name = "gateway"
-version = "0.1.0-protocol"
+version = "0.1.0-kafka"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-env_logger = "0.6"
+crossbeam = "*"
+crossbeam-channel = "*"
+futures = "*"
 mio-extras = "2.0"
 rdkafka = "~0.21"
 serde = "*"

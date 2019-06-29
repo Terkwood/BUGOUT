@@ -7,16 +7,19 @@ use uuid::Uuid;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
-use crate::model::{Commands, Events};
+use crate::model::{BugoutMessage, Commands, Events};
 
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
 
 // WebSocket handler
 pub struct WsSession {
+    pub client_id: Uuid,
     pub out: Sender,
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
+    pub kafka_in: crossbeam_channel::Sender<BugoutMessage>,
+    pub router_out: crossbeam_channel::Receiver<BugoutMessage>,
 }
 
 impl Handler for WsSession {
