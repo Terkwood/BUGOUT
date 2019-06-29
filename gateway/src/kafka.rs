@@ -47,7 +47,15 @@ pub fn consume_and_forward(
                     "key: '{:?}', payload: '{}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
                     msg.key(), payload, msg.topic(), msg.partition(),
                     msg.offset(), msg.timestamp());
-                unimplemented!()
+
+                if let Some(headers) = msg.headers() {
+                    for i in 0..headers.count() {
+                        let header = headers.get(i).unwrap();
+                        println!("  Header {:#?}: {:?}", header.0, header.1);
+                    }
+                }
+
+                consumer.commit_message(&msg, CommitMode::Async).unwrap();
             }
         }
     }
