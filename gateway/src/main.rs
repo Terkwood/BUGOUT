@@ -40,7 +40,7 @@ fn main() {
     );
 
     // Run the WebSocket
-    listen("127.0.0.1:3012", |out| WsSession {
+    listen("0.0.0.0:3012", |out| WsSession {
         client_id: uuid::Uuid::new_v4(),
         out,
         ping_timeout: None,

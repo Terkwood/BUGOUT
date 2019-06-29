@@ -19,6 +19,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
   gateway:
     build: gateway/.
+    ports:
+      - "3012:3012"
     links:
       - "kafka"
     depends_on:
