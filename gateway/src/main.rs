@@ -33,7 +33,7 @@ fn main() {
     ) = bounded(100);
 
     kafka::consume_and_forward(
-        "localhost:9092",
+        "kafka:9092",
         "gateway",
         &["bugout-make-move-cmd", "bugout-move-made-ev"],
         router_in,
