@@ -7,7 +7,6 @@ edition = "2018"
 [dependencies]
 crossbeam = "*"
 crossbeam-channel = "*"
-env_logger = "0.6"
 futures = "*"
 mio-extras = "2.0"
 rdkafka = "~0.21"

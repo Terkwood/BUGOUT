@@ -1,7 +1,6 @@
 /// Adapted from https://github.com/housleyjk/ws-rs/blob/master/examples/pong.rs
 extern crate crossbeam;
 extern crate crossbeam_channel;
-extern crate env_logger;
 extern crate mio_extras;
 extern crate serde;
 extern crate serde_derive;
@@ -21,8 +20,6 @@ use model::BugoutMessage;
 use websocket::WsSession;
 
 fn main() {
-    env_logger::init();
-
     let (kafka_in, _kafka_out): (
         crossbeam::Sender<BugoutMessage>,
         crossbeam::Receiver<BugoutMessage>,

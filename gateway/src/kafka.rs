@@ -1,12 +1,10 @@
 use crossbeam_channel::Sender;
 use futures::stream::Stream;
-use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
-use rdkafka::consumer::{CommitMode, Consumer, ConsumerContext, Rebalance};
-use rdkafka::error::KafkaResult;
+use rdkafka::consumer::{CommitMode, Consumer};
+
 use rdkafka::message::{Headers, Message};
-use rdkafka::util::get_rdkafka_version;
 
 use crate::model::BugoutMessage;
 
@@ -15,7 +13,7 @@ pub fn consume_and_forward(
     brokers: &str,
     group_id: &str,
     topics: &[&str],
-    router_in: Sender<BugoutMessage>,
+    _router_in: Sender<BugoutMessage>,
 ) {
     let consumer: StreamConsumer = ClientConfig::new()
         .set("group.id", group_id)
