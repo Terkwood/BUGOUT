@@ -17,12 +17,14 @@ const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
 const CONSUME_TOPICS: &[&str] = &[MAKE_MOVE_CMD_TOPIC, MOVE_MADE_EV_TOPIC];
 
 pub fn start(router_in: crossbeam_channel::Sender<BugoutMessage>) {
+    println!("kafka::start");
     producer_example();
 
     consume_and_forward(BROKERS, APP_NAME, CONSUME_TOPICS, router_in);
 }
 
 fn producer_example() {
+    println!("In producer example");
     let producer = configure_producer(BROKERS);
 
     let example_req_id = Uuid::new_v4();
@@ -111,4 +113,3 @@ fn consume_and_forward(
         }
     }
 }
-
