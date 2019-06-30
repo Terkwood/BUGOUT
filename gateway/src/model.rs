@@ -27,30 +27,37 @@ pub enum Commands {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "type")]
-pub enum Events {
-    MoveMade {
-        #[serde(rename = "gameId")]
-        game_id: Uuid,
-        #[serde(rename = "replyTo")]
-        reply_to: Uuid,
-        #[serde(rename = "eventId")]
-        event_id: Uuid,
-        player: Player,
-        coord: Option<Coord>,
-        captured: Vec<Coord>,
-    },
-    MoveRejected {
-        game_id: Uuid,
-        reply_to: Uuid,
-        event_id: Uuid,
-        player: Player,
-        coord: Coord,
-    },
+pub struct MoveMadeEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: Uuid,
+    #[serde(rename = "replyTo")]
+    pub reply_to: Uuid,
+    #[serde(rename = "eventId")]
+    pub event_id: Uuid,
+    pub player: Player,
+    pub coord: Option<Coord>,
+    pub captured: Vec<Coord>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MoveRejectedEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: Uuid,
+    #[serde(rename = "replyTo")]
+    pub reply_to: Uuid,
+    #[serde(rename = "eventId")]
+    pub event_id: Uuid,
+    pub player: Player,
+    pub coord: Coord,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
+pub enum Events {
+    MoveMade(MoveMadeEvent),
+    MoveRejected,
+}
+
 pub enum BugoutMessage {
     Command { client_id: Uuid, command: Commands },
     Event(Events),

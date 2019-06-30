@@ -28,15 +28,11 @@ pub fn start(router_in: crossbeam_channel::Sender<BugoutMessage>) {
         coord: Some(Coord { x: 0, y: 0 }),
         player: Player::BLACK,
     };
-    let example_message = BugoutMessage::Command {
-        client_id: Uuid::new_v4(),
-        command: example_command,
-    };
 
     let send_future = producer
         .send(
             FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
-                .payload(&serde_json::to_string(&example_message).unwrap())
+                .payload(&serde_json::to_string(&example_command).unwrap())
                 .key(&example_req_id.to_string()),
             0,
         )

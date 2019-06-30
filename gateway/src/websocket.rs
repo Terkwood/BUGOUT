@@ -7,7 +7,7 @@ use uuid::Uuid;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
-use crate::model::{BugoutMessage, Commands, Events};
+use crate::model::{BugoutMessage, Commands, MoveMadeEvent};
 
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
@@ -41,7 +41,7 @@ impl Handler for WsSession {
                 player,
                 coord,
             }) => self.out.send(
-                serde_json::to_string(&Events::MoveMade {
+                serde_json::to_string(&MoveMadeEvent {
                     game_id,
                     reply_to: req_id,
                     player,
