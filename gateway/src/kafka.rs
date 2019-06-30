@@ -29,6 +29,7 @@ pub fn start(router_in: crossbeam_channel::Sender<BugoutMessage>) {
         player: Player::BLACK,
     };
 
+    println!("Sending command to kafka with req_id {}", example_req_id);
     let send_future = producer
         .send(
             FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
