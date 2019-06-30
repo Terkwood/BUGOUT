@@ -3,8 +3,8 @@ use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Coord {
-    x: u16,
-    y: u16,
+    pub x: u16,
+    pub y: u16,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

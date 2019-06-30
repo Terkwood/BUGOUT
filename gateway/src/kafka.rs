@@ -5,17 +5,28 @@ use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::{CommitMode, Consumer};
 use rdkafka::message::{Headers, Message};
 use rdkafka::producer::{FutureProducer, FutureRecord};
+use uuid::Uuid;
 
-use crate::model::BugoutMessage;
+use crate::model::{BugoutMessage, Commands, Coord, Player};
 
 const BROKERS: &str = "kafka:9092";
 const APP_NAME: &str = "gateway";
 const CONSUME_TOPICS: &[&str] = &["bugout-make-move-cmd", "bugout-move-made-ev"];
 
-pub fn start(router_in: crossbeam_channel::Sender<crate::model::BugoutMessage>) {
+pub fn start(router_in: crossbeam_channel::Sender<BugoutMessage>) {
     consume_and_forward(BROKERS, APP_NAME, CONSUME_TOPICS, router_in);
 
     let _kafka_producer = configure_producer(BROKERS);
+
+    let _example_commands = vec![BugoutMessage::Command {
+        client_id: Uuid::new_v4(),
+        command: Commands::MakeMove {
+            game_id: Uuid::new_v4(),
+            req_id: Uuid::new_v4(),
+            coord: Some(Coord { x: 0, y: 0 }),
+            player: Player::BLACK,
+        },
+    }];
 }
 
 /// Adapted from https://github.com/fede1024/rust-rdkafka/blob/master/examples/simple_consumer.rs
