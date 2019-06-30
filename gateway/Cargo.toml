@@ -1,6 +1,6 @@
 [package]
 name = "gateway"
-version = "0.1.0-kafka"
+version = "0.1.0-pigeons"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
