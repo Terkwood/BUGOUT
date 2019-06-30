@@ -49,6 +49,8 @@ pub enum Events {
     },
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type")]
 pub enum BugoutMessage {
     Command { client_id: Uuid, command: Commands },
     Event(Events),
