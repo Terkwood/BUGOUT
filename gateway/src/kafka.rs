@@ -8,7 +8,7 @@ use rdkafka::message::{Headers, Message};
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use uuid::Uuid;
 
-use crate::json::{BoardJson, GameStateJson};
+use crate::json::GameStateJson;
 use crate::model::{BugoutMessage, Coord, MakeMoveCommand, Player};
 
 const BROKERS: &str = "kafka:9092";
@@ -33,14 +33,25 @@ fn producer_example() {
         premade_game_ids.push(Uuid::new_v4());
     }
 
-    let setup_game_futures = premade_game_ids.iter().map(|game_id| {
-        producer.send(
-            FutureRecord::to(GAME_STATES_TOPIC)
-                .payload(&serde_json::to_string(&GameStateJson::default()).unwrap())
-                .key(&game_id.to_string()),
-            0,
-        )
-    });
+    // Log empty game states for several games with arbitrary game IDs
+    let setup_game_futures = premade_game_ids
+        .iter()
+        .map(|game_id| {
+            producer.send(
+                FutureRecord::to(GAME_STATES_TOPIC)
+                    .payload(&serde_json::to_string(&GameStateJson::default()).unwrap())
+                    .key(&game_id.to_string()),
+                0,
+            )
+        })
+        .collect::<Vec<_>>();
+
+    for future in setup_game_futures {
+        println!(
+            "Blocked until game state message sent. Result: {:?}",
+            future.wait()
+        );
+    }
 
     let mut initial_move_cmds = vec![];
     for i in 0..NUM_PREMADE_GAMES {
