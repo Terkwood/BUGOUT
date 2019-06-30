@@ -3,8 +3,8 @@ use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Coord {
-    x: u16,
-    y: u16,
+    pub x: u16,
+    pub y: u16,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -14,39 +14,51 @@ pub enum Player {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct MakeMoveCommand {
+    #[serde(rename = "gameId")]
+    pub game_id: Uuid,
+    #[serde(rename = "reqId")]
+    pub req_id: Uuid,
+    pub player: Player,
+    pub coord: Option<Coord>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 pub enum Commands {
-    MakeMove {
-        #[serde(rename = "gameId")]
-        game_id: Uuid,
-        #[serde(rename = "reqId")]
-        req_id: Uuid,
-        player: Player,
-        coord: Option<Coord>,
-    },
+    MakeMove(MakeMoveCommand),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MoveMadeEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: Uuid,
+    #[serde(rename = "replyTo")]
+    pub reply_to: Uuid,
+    #[serde(rename = "eventId")]
+    pub event_id: Uuid,
+    pub player: Player,
+    pub coord: Option<Coord>,
+    pub captured: Vec<Coord>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MoveRejectedEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: Uuid,
+    #[serde(rename = "replyTo")]
+    pub reply_to: Uuid,
+    #[serde(rename = "eventId")]
+    pub event_id: Uuid,
+    pub player: Player,
+    pub coord: Coord,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 pub enum Events {
-    MoveMade {
-        #[serde(rename = "gameId")]
-        game_id: Uuid,
-        #[serde(rename = "replyTo")]
-        reply_to: Uuid,
-        #[serde(rename = "eventId")]
-        event_id: Uuid,
-        player: Player,
-        coord: Option<Coord>,
-        captured: Vec<Coord>,
-    },
-    MoveRejected {
-        game_id: Uuid,
-        reply_to: Uuid,
-        event_id: Uuid,
-        player: Player,
-        coord: Coord,
-    },
+    MoveMade(MoveMadeEvent),
+    MoveRejected,
 }
 
 pub enum BugoutMessage {
