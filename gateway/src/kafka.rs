@@ -52,6 +52,15 @@ fn producer_example() {
     );
 }
 
+fn configure_producer(brokers: &str) -> FutureProducer {
+    ClientConfig::new()
+        .set("bootstrap.servers", brokers)
+        .set("produce.offset.report", "true")
+        .set("message.timeout.ms", "5000")
+        .create()
+        .expect("Producer creation error")
+}
+
 /// Adapted from https://github.com/fede1024/rust-rdkafka/blob/master/examples/simple_consumer.rs
 fn consume_and_forward(
     brokers: &str,
@@ -103,11 +112,3 @@ fn consume_and_forward(
     }
 }
 
-fn configure_producer(brokers: &str) -> FutureProducer {
-    ClientConfig::new()
-        .set("bootstrap.servers", brokers)
-        .set("produce.offset.report", "true")
-        .set("message.timeout.ms", "5000")
-        .create()
-        .expect("Producer creation error")
-}
