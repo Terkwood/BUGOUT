@@ -7,6 +7,7 @@ extern crate serde_json;
 extern crate time;
 extern crate ws;
 
+mod json;
 mod kafka;
 pub mod model;
 mod websocket;
