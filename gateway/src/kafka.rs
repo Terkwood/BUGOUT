@@ -12,6 +12,7 @@ use crate::model::{BugoutMessage, Coord, MakeMoveCommand, Player};
 
 const BROKERS: &str = "kafka:9092";
 const APP_NAME: &str = "gateway";
+const GAME_STATES_TOPIC: &str = "bugout-game-states";
 const MAKE_MOVE_CMD_TOPIC: &str = "bugout-make-move-cmd";
 const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
 const CONSUME_TOPICS: &[&str] = &[MAKE_MOVE_CMD_TOPIC, MOVE_MADE_EV_TOPIC];
@@ -31,6 +32,15 @@ fn producer_example() {
         premade_game_ids.push(Uuid::new_v4());
     }
 
+    let setup_game_futures = premade_game_ids.iter().map(
+        |game_id| unimplemented!(), /*producer.send(
+                                        FutureRecord::to(GAME_STATES_TOPIC)
+                                            .payload(&serde_json::to_string(unimplemented!()).unwrap())
+                                            .key(unimplemented!()),
+                                        0,
+                                    )*/
+    );
+
     let mut initial_move_cmds = vec![];
     for i in 0..NUM_PREMADE_GAMES {
         let example_req_id = Uuid::new_v4();
@@ -43,30 +53,24 @@ fn producer_example() {
         initial_move_cmds.push(example_command);
     }
 
-    let send_futures = (0..NUM_PREMADE_GAMES)
+    let send_command_futures = (0..NUM_PREMADE_GAMES)
         .map(|i| {
             println!(
                 "Sending command to kafka with req_id {}",
                 &initial_move_cmds[i].req_id
             );
-            producer
-                .send(
-                    FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
-                        .payload(&serde_json::to_string(&initial_move_cmds[i]).unwrap())
-                        .key(&initial_move_cmds[i].req_id.to_string()),
-                    0,
-                )
-                .map(move |delivery_status| {
-                    println!("Delivery status for message received");
-                    delivery_status
-                })
+            producer.send(
+                FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
+                    .payload(&serde_json::to_string(&initial_move_cmds[i]).unwrap())
+                    .key(&initial_move_cmds[i].req_id.to_string()),
+                0,
+            )
         })
         .collect::<Vec<_>>();
-    ;
 
-    for future in send_futures {
+    for future in send_command_futures {
         println!(
-            "Blocked until kafka send future completed. Result: {:?}",
+            "Blocked until kafka send completed. Result: {:?}",
             future.wait()
         );
     }
