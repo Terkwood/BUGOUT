@@ -49,7 +49,7 @@ fn producer_example() {
         });
 
     println!(
-        "Kafka send future completed. Result: {:?}",
+        "Blocked until kafka send future completed. Result: {:?}",
         send_future.wait()
     );
 }
