@@ -66,6 +66,12 @@ pub enum BugoutMessage {
     Event(Events),
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Captures {
+    pub black: u16,
+    pub white: u16,
+}
+
 #[cfg(test)]
 mod tests {
     use uuid::Uuid;
