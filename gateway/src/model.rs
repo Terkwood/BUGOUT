@@ -1,6 +1,8 @@
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub const DEFAULT_BOARD_SIZE: usize = 19;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Coord {
     pub x: u16,
@@ -70,6 +72,12 @@ pub enum BugoutMessage {
 pub struct Captures {
     pub black: u16,
     pub white: u16,
+}
+
+impl Default for Captures {
+    fn default() -> Captures {
+        Captures { black: 0, white: 0 }
+    }
 }
 
 #[cfg(test)]

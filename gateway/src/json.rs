@@ -1,4 +1,4 @@
-use crate::model::{Captures, Player};
+use crate::model::{Captures, Player, DEFAULT_BOARD_SIZE};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -13,6 +13,15 @@ pub struct BoardJson {
     pub size: usize,
 }
 
+impl Default for BoardJson {
+    fn default() -> BoardJson {
+        BoardJson {
+            pieces: HashMap::new(),
+            size: DEFAULT_BOARD_SIZE,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GameStateJson {
     pub board: BoardJson,
@@ -20,4 +29,15 @@ pub struct GameStateJson {
     pub turn: u32,
     #[serde(rename = "playerUp")]
     pub player_up: Player,
+}
+
+impl Default for GameStateJson {
+    fn default() -> GameStateJson {
+        GameStateJson {
+            board: BoardJson::default(),
+            turn: 0,
+            player_up: Player::BLACK,
+            captures: Captures::default(),
+        }
+    }
 }
