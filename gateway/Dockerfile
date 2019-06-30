@@ -12,9 +12,7 @@ RUN curl -O https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-
 
 RUN chmod 755 wait-for-it.sh
 
-RUN echo "...."
-RUN git fetch
-RUN git checkout feature/gateway-kafka-producer
+RUN git fetch && git pull
 RUN git rev-parse HEAD
 
 RUN cargo install --path .
