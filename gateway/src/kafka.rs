@@ -86,6 +86,11 @@ fn producer_example() {
             future.wait()
         );
     }
+
+    println!("Available game IDs:");
+    for game_id in premade_game_ids.iter() {
+        println!("\t{}", game_id);
+    }
 }
 
 fn configure_producer(brokers: &str) -> FutureProducer {
