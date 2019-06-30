@@ -22,34 +22,54 @@ pub fn start(router_in: crossbeam_channel::Sender<BugoutMessage>) {
     consume_and_forward(BROKERS, APP_NAME, CONSUME_TOPICS, router_in);
 }
 
+const NUM_PREMADE_GAMES: usize = 10;
 fn producer_example() {
     let producer = configure_producer(BROKERS);
 
-    let example_req_id = Uuid::new_v4();
-    let example_command = MakeMoveCommand {
-        game_id: Uuid::new_v4(),
-        req_id: example_req_id,
-        coord: Some(Coord { x: 0, y: 0 }),
-        player: Player::BLACK,
-    };
+    let mut premade_game_ids = vec![];
+    for _ in 0..NUM_PREMADE_GAMES {
+        premade_game_ids.push(Uuid::new_v4());
+    }
 
-    println!("Sending command to kafka with req_id {}", example_req_id);
-    let send_future = producer
-        .send(
-            FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
-                .payload(&serde_json::to_string(&example_command).unwrap())
-                .key(&example_req_id.to_string()),
-            0,
-        )
-        .map(move |delivery_status| {
-            println!("Delivery status for message received");
-            delivery_status
-        });
+    let mut initial_move_cmds = vec![];
+    for i in 0..NUM_PREMADE_GAMES {
+        let example_req_id = Uuid::new_v4();
+        let example_command = MakeMoveCommand {
+            game_id: premade_game_ids[i],
+            req_id: example_req_id,
+            coord: Some(Coord { x: 0, y: 0 }),
+            player: Player::BLACK,
+        };
+        initial_move_cmds.push(example_command);
+    }
 
-    println!(
-        "Blocked until kafka send future completed. Result: {:?}",
-        send_future.wait()
-    );
+    let send_futures = (0..NUM_PREMADE_GAMES)
+        .map(|i| {
+            println!(
+                "Sending command to kafka with req_id {}",
+                &initial_move_cmds[i].req_id
+            );
+            producer
+                .send(
+                    FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
+                        .payload(&serde_json::to_string(&initial_move_cmds[i]).unwrap())
+                        .key(&initial_move_cmds[i].req_id.to_string()),
+                    0,
+                )
+                .map(move |delivery_status| {
+                    println!("Delivery status for message received");
+                    delivery_status
+                })
+        })
+        .collect::<Vec<_>>();
+    ;
+
+    for future in send_futures {
+        println!(
+            "Blocked until kafka send future completed. Result: {:?}",
+            future.wait()
+        );
+    }
 }
 
 fn configure_producer(brokers: &str) -> FutureProducer {
