@@ -1,6 +1,6 @@
 [package]
 name = "gateway"
-version = "0.1.0-giantrock"
+version = "0.1.0-warble"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
