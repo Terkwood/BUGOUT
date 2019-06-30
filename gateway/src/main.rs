@@ -21,17 +21,13 @@ fn main() {
         crossbeam::Sender<BugoutMessage>,
         crossbeam::Receiver<BugoutMessage>,
     ) = unbounded();
+
     let (router_in, router_out): (
         crossbeam::Sender<BugoutMessage>,
         crossbeam::Receiver<BugoutMessage>,
     ) = unbounded();
 
-    kafka::consume_and_forward(
-        "kafka:9092",
-        "gateway",
-        &["bugout-make-move-cmd", "bugout-move-made-ev"],
-        router_in,
-    );
+    kafka::start(router_in);
 
     ws::listen("0.0.0.0:3012", |out| WsSession {
         client_id: uuid::Uuid::new_v4(),

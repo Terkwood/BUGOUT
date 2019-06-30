@@ -3,10 +3,20 @@ use futures::stream::Stream;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::{CommitMode, Consumer};
-
 use rdkafka::message::{Headers, Message};
+use rdkafka::producer::{FutureProducer, FutureRecord};
 
 use crate::model::BugoutMessage;
+
+const BROKERS: &str = "kafka:9092";
+const APP_NAME: &str = "gateway";
+const CONSUME_TOPICS: &[&str] = &["bugout-make-move-cmd", "bugout-move-made-ev"];
+
+pub fn start(router_in: crossbeam_channel::Sender<crate::model::BugoutMessage>) {
+    consume_and_forward(BROKERS, APP_NAME, CONSUME_TOPICS, router_in);
+
+    let _kafka_producer = configure_producer(BROKERS);
+}
 
 /// Adapted from https://github.com/fede1024/rust-rdkafka/blob/master/examples/simple_consumer.rs
 pub fn consume_and_forward(
@@ -57,4 +67,13 @@ pub fn consume_and_forward(
             }
         }
     }
+}
+
+pub fn configure_producer(brokers: &str) -> FutureProducer {
+    ClientConfig::new()
+        .set("bootstrap.servers", brokers)
+        .set("produce.offset.report", "true")
+        .set("message.timeout.ms", "5000")
+        .create()
+        .expect("Producer creation error")
 }
