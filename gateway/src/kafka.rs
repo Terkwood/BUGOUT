@@ -8,7 +8,7 @@ use rdkafka::message::{Headers, Message};
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use uuid::Uuid;
 
-use crate::model::{BugoutMessage, Commands, Coord, Player};
+use crate::model::{BugoutMessage, Coord, MakeMoveCommand, Player};
 
 const BROKERS: &str = "kafka:9092";
 const APP_NAME: &str = "gateway";
@@ -17,18 +17,16 @@ const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
 const CONSUME_TOPICS: &[&str] = &[MAKE_MOVE_CMD_TOPIC, MOVE_MADE_EV_TOPIC];
 
 pub fn start(router_in: crossbeam_channel::Sender<BugoutMessage>) {
-    println!("kafka::start");
     producer_example();
 
     consume_and_forward(BROKERS, APP_NAME, CONSUME_TOPICS, router_in);
 }
 
 fn producer_example() {
-    println!("In producer example");
     let producer = configure_producer(BROKERS);
 
     let example_req_id = Uuid::new_v4();
-    let example_command = Commands::MakeMove {
+    let example_command = MakeMoveCommand {
         game_id: Uuid::new_v4(),
         req_id: example_req_id,
         coord: Some(Coord { x: 0, y: 0 }),
@@ -63,7 +61,6 @@ fn configure_producer(brokers: &str) -> FutureProducer {
         .expect("Producer creation error")
 }
 
-/// Adapted from https://github.com/fede1024/rust-rdkafka/blob/master/examples/simple_consumer.rs
 fn consume_and_forward(
     brokers: &str,
     group_id: &str,

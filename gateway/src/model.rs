@@ -14,16 +14,19 @@ pub enum Player {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct MakeMoveCommand {
+    #[serde(rename = "gameId")]
+    pub game_id: Uuid,
+    #[serde(rename = "reqId")]
+    pub req_id: Uuid,
+    pub player: Player,
+    pub coord: Option<Coord>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 pub enum Commands {
-    MakeMove {
-        #[serde(rename = "gameId")]
-        game_id: Uuid,
-        #[serde(rename = "reqId")]
-        req_id: Uuid,
-        player: Player,
-        coord: Option<Coord>,
-    },
+    MakeMove(MakeMoveCommand),
 }
 
 #[derive(Serialize, Deserialize, Debug)]

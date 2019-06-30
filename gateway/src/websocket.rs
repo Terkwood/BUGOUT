@@ -7,7 +7,7 @@ use uuid::Uuid;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
-use crate::model::{BugoutMessage, Commands, MoveMadeEvent};
+use crate::model::{BugoutMessage, Commands, MakeMoveCommand, MoveMadeEvent};
 
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
@@ -35,12 +35,12 @@ impl Handler for WsSession {
         let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
         match deserialized {
-            Ok(Commands::MakeMove {
+            Ok(Commands::MakeMove(MakeMoveCommand {
                 game_id,
                 req_id,
                 player,
                 coord,
-            }) => self.out.send(
+            })) => self.out.send(
                 serde_json::to_string(&MoveMadeEvent {
                     game_id,
                     reply_to: req_id,
