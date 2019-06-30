@@ -17,8 +17,12 @@ const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
 const CONSUME_TOPICS: &[&str] = &[MAKE_MOVE_CMD_TOPIC, MOVE_MADE_EV_TOPIC];
 
 pub fn start(router_in: crossbeam_channel::Sender<BugoutMessage>) {
-    consume_and_forward(BROKERS, APP_NAME, CONSUME_TOPICS, router_in);
+    producer_example();
 
+    consume_and_forward(BROKERS, APP_NAME, CONSUME_TOPICS, router_in);
+}
+
+fn producer_example() {
     let producer = configure_producer(BROKERS);
 
     let example_req_id = Uuid::new_v4();
@@ -49,7 +53,7 @@ pub fn start(router_in: crossbeam_channel::Sender<BugoutMessage>) {
 }
 
 /// Adapted from https://github.com/fede1024/rust-rdkafka/blob/master/examples/simple_consumer.rs
-pub fn consume_and_forward(
+fn consume_and_forward(
     brokers: &str,
     group_id: &str,
     topics: &[&str],
@@ -99,7 +103,7 @@ pub fn consume_and_forward(
     }
 }
 
-pub fn configure_producer(brokers: &str) -> FutureProducer {
+fn configure_producer(brokers: &str) -> FutureProducer {
     ClientConfig::new()
         .set("bootstrap.servers", brokers)
         .set("produce.offset.report", "true")
