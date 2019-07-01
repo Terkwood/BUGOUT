@@ -12,8 +12,9 @@ RUN curl -O https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-
 
 RUN chmod 755 wait-for-it.sh
 
-RUN echo "(:"
-RUN git fetch && git pull
+RUN echo ">:-D"
+RUN git fetch
+RUN git checkout feature/gateway-router
 RUN git rev-parse HEAD
 
 RUN cargo install --path .
