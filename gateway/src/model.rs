@@ -1,6 +1,11 @@
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub type GameId = Uuid;
+pub type ReqId = Uuid;
+pub type EventId = Uuid;
+pub type ClientId = Uuid;
+
 pub const DEFAULT_BOARD_SIZE: usize = 19;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -18,9 +23,9 @@ pub enum Player {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MakeMoveCommand {
     #[serde(rename = "gameId")]
-    pub game_id: Uuid,
+    pub game_id: GameId,
     #[serde(rename = "reqId")]
-    pub req_id: Uuid,
+    pub req_id: ReqId,
     pub player: Player,
     pub coord: Option<Coord>,
 }
@@ -34,9 +39,9 @@ pub enum Commands {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MoveMadeEvent {
     #[serde(rename = "gameId")]
-    pub game_id: Uuid,
+    pub game_id: GameId,
     #[serde(rename = "replyTo")]
-    pub reply_to: Uuid,
+    pub reply_to: ReqId,
     #[serde(rename = "eventId")]
     pub event_id: Uuid,
     pub player: Player,
