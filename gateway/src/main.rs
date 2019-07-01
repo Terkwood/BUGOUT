@@ -19,19 +19,14 @@ use model::BugoutMessage;
 use websocket::WsSession;
 
 fn main() {
-    let (_kafka_in, _kafka_out): (
+    let (kafka_in, kafka_out): (
         crossbeam::Sender<BugoutMessage>,
         crossbeam::Receiver<BugoutMessage>,
     ) = unbounded();
 
-    let (router_in, router_out): (
-        crossbeam::Sender<BugoutMessage>,
-        crossbeam::Receiver<BugoutMessage>,
-    ) = unbounded();
-
-    let kafka_router_in = router_in.clone();
+    let kic = kafka_in.clone();
     thread::spawn(move || {
-        kafka::start(kafka_router_in);
+        kafka::start(kic);
     });
 
     ws::listen("0.0.0.0:3012", |out| WsSession {
@@ -39,8 +34,8 @@ fn main() {
         out,
         ping_timeout: None,
         expire_timeout: None,
-        router_in: router_in.clone(),
-        router_out: router_out.clone(),
+        kafka_in: kafka_in.clone(),
+        kafka_out: kafka_out.clone(),
     })
     .unwrap();
 }

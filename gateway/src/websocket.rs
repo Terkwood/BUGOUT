@@ -18,8 +18,8 @@ pub struct WsSession {
     pub out: Sender,
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
-    pub router_in: crossbeam_channel::Sender<BugoutMessage>,
-    pub router_out: crossbeam_channel::Receiver<BugoutMessage>,
+    pub kafka_in: crossbeam_channel::Sender<BugoutMessage>,
+    pub kafka_out: crossbeam_channel::Receiver<BugoutMessage>,
 }
 
 impl Handler for WsSession {
