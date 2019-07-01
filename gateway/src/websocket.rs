@@ -7,19 +7,39 @@ use uuid::Uuid;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
-use crate::model::{BugoutMessage, Commands, MakeMoveCommand, MoveMadeEvent};
+use crate::model::{BugoutMessage, ClientId, Commands, GameId, MakeMoveCommand, MoveMadeEvent};
 
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
 
 // WebSocket handler
 pub struct WsSession {
-    pub client_id: Uuid,
+    pub client_id: ClientId,
     pub out: Sender,
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
     pub kafka_in: crossbeam_channel::Sender<BugoutMessage>,
     pub kafka_out: crossbeam_channel::Receiver<BugoutMessage>,
+    current_game: Option<GameId>,
+}
+
+impl WsSession {
+    pub fn new(
+        client_id: ClientId,
+        out: ws::Sender,
+        kafka_in: crossbeam_channel::Sender<BugoutMessage>,
+        kafka_out: crossbeam_channel::Receiver<BugoutMessage>,
+    ) -> WsSession {
+        WsSession {
+            client_id,
+            out,
+            ping_timeout: None,
+            expire_timeout: None,
+            kafka_in,
+            kafka_out,
+            current_game: None,
+        }
+    }
 }
 
 impl Handler for WsSession {
@@ -40,17 +60,32 @@ impl Handler for WsSession {
                 req_id,
                 player,
                 coord,
-            })) => self.out.send(
-                serde_json::to_string(&MoveMadeEvent {
-                    game_id,
-                    reply_to: req_id,
-                    player,
-                    coord,
-                    event_id: Uuid::new_v4(),
-                    captured: vec![],
-                })
-                .unwrap(),
-            ),
+            })) => {
+                // For now, set the current game id to
+                // the first one that we try to send a
+                // command to
+                if self.current_game.is_none() {
+                    self.current_game = Some(game_id);
+                }
+
+                if let Some(c) = self.current_game {
+                    if c == game_id {
+                        return self.out.send(
+                            serde_json::to_string(&MoveMadeEvent {
+                                game_id,
+                                reply_to: req_id,
+                                player,
+                                coord,
+                                event_id: Uuid::new_v4(),
+                                captured: vec![],
+                            })
+                            .unwrap(),
+                        );
+                    }
+                }
+
+                Ok(())
+            }
             Err(e) => {
                 println!("Error deserializing {:?}", e);
                 Ok(())

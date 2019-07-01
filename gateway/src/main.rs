@@ -29,13 +29,13 @@ fn main() {
         kafka::start(kic);
     });
 
-    ws::listen("0.0.0.0:3012", |out| WsSession {
-        client_id: uuid::Uuid::new_v4(),
-        out,
-        ping_timeout: None,
-        expire_timeout: None,
-        kafka_in: kafka_in.clone(),
-        kafka_out: kafka_out.clone(),
+    ws::listen("0.0.0.0:3012", |out| {
+        WsSession::new(
+            uuid::Uuid::new_v4(),
+            out,
+            kafka_in.clone(),
+            kafka_out.clone(),
+        )
     })
     .unwrap();
 }
