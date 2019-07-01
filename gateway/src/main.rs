@@ -29,10 +29,10 @@ fn main() {
         kafka::start(kic);
     });
 
-    ws::listen("0.0.0.0:3012", |out| {
+    ws::listen("0.0.0.0:3012", |ws_out| {
         WsSession::new(
             uuid::Uuid::new_v4(),
-            out,
+            ws_out,
             kafka_in.clone(),
             kafka_out.clone(),
         )

@@ -15,7 +15,7 @@ const EXPIRE: Token = Token(2);
 // WebSocket handler
 pub struct WsSession {
     pub client_id: ClientId,
-    pub out: Sender,
+    pub ws_out: Sender,
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
     pub kafka_in: crossbeam_channel::Sender<BugoutMessage>,
@@ -26,13 +26,13 @@ pub struct WsSession {
 impl WsSession {
     pub fn new(
         client_id: ClientId,
-        out: ws::Sender,
+        ws_out: ws::Sender,
         kafka_in: crossbeam_channel::Sender<BugoutMessage>,
         kafka_out: crossbeam_channel::Receiver<BugoutMessage>,
     ) -> WsSession {
         WsSession {
             client_id,
-            out,
+            ws_out,
             ping_timeout: None,
             expire_timeout: None,
             kafka_in,
@@ -45,9 +45,9 @@ impl WsSession {
 impl Handler for WsSession {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
         // schedule a timeout to send a ping every 5 seconds
-        self.out.timeout(5_000, PING)?;
+        self.ws_out.timeout(5_000, PING)?;
         // schedule a timeout to close the connection if there is no activity for 30 seconds
-        self.out.timeout(30_000, EXPIRE)
+        self.ws_out.timeout(30_000, EXPIRE)
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
@@ -70,7 +70,7 @@ impl Handler for WsSession {
 
                 if let Some(c) = self.current_game {
                     if c == game_id {
-                        return self.out.send(
+                        return self.ws_out.send(
                             serde_json::to_string(&MoveMadeEvent {
                                 game_id,
                                 reply_to: req_id,
@@ -98,29 +98,30 @@ impl Handler for WsSession {
 
         // Clean up timeouts when connections close
         if let Some(t) = self.ping_timeout.take() {
-            self.out.cancel(t).unwrap();
+            self.ws_out.cancel(t).unwrap();
         }
         if let Some(t) = self.expire_timeout.take() {
-            self.out.cancel(t).unwrap();
+            self.ws_out.cancel(t).unwrap();
         }
     }
 
     fn on_error(&mut self, err: Error) {
         // Shutdown on any error
         println!("Shutting down WsSession for error: {}", err);
-        self.out.shutdown().unwrap();
+        self.ws_out.shutdown().unwrap();
     }
 
     fn on_timeout(&mut self, event: Token) -> Result<()> {
         match event {
             // PING timeout has occured, send a ping and reschedule
             PING => {
-                self.out.ping(time::precise_time_ns().to_string().into())?;
+                self.ws_out
+                    .ping(time::precise_time_ns().to_string().into())?;
                 self.ping_timeout.take();
-                self.out.timeout(5_000, PING)
+                self.ws_out.timeout(5_000, PING)
             }
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
-            EXPIRE => self.out.close(CloseCode::Away),
+            EXPIRE => self.ws_out.close(CloseCode::Away),
             // No other timeouts are possible
             _ => Err(Error::new(
                 ErrorKind::Internal,
@@ -133,13 +134,13 @@ impl Handler for WsSession {
         // Cancel the old timeout and replace.
         if event == EXPIRE {
             if let Some(t) = self.expire_timeout.take() {
-                self.out.cancel(t)?
+                self.ws_out.cancel(t)?
             }
             self.expire_timeout = Some(timeout)
         } else if event == PING {
             // This ensures there is only one ping timeout at a time
             if let Some(t) = self.ping_timeout.take() {
-                self.out.cancel(t)?
+                self.ws_out.cancel(t)?
             }
             self.ping_timeout = Some(timeout)
         }
@@ -160,7 +161,7 @@ impl Handler for WsSession {
         }
 
         // Some activity has occured, so reset the expiration
-        self.out.timeout(30_000, EXPIRE)?;
+        self.ws_out.timeout(30_000, EXPIRE)?;
 
         // Run default frame validation
         DefaultHandler.on_frame(frame)
