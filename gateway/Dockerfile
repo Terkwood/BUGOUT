@@ -14,10 +14,13 @@ RUN chmod 755 wait-for-it.sh
 
 RUN echo ">>"
 RUN git fetch && git pull
-#TODO
+# TODO remove
 RUN git checkout feature/producer-channel
 RUN git rev-parse HEAD
 
-RUN cargo install --path .
+# TODO restore
+#RUN cargo install --path .
+#CMD ["sh", "run.sh"]
 
-CMD ["sh", "run.sh"]
+# TODO remove
+CMD ["tail", "-f", "/dev/null"]
