@@ -12,15 +12,8 @@ RUN curl -O https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-
 
 RUN chmod 755 wait-for-it.sh
 
-RUN echo ">>>>"
 RUN git fetch && git pull
-# TODO remove
-RUN git checkout feature/producer-channel
 RUN git rev-parse HEAD
 
-# TODO restore
-#RUN cargo install --path .
-#CMD ["sh", "run.sh"]
-
-# TODO remove
-CMD ["tail", "-f", "/dev/null"]
+RUN cargo install --path .
+CMD ["sh", "run.sh"]
