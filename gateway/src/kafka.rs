@@ -59,10 +59,7 @@ fn create_premade_games(producer: &FutureProducer) -> Vec<GameId> {
         .collect::<Vec<_>>();
 
     for future in setup_game_futures {
-        println!(
-            "Blocked until game state message sent. Result: {:?}",
-            future.wait()
-        );
+        future.wait().unwrap().unwrap();
     }
 
     println!("Available game IDs:");
