@@ -153,13 +153,13 @@ fn start_consumer(brokers: &str, group_id: &str, topics: &[&str]) {
     let message_stream = consumer.start();
     for message in message_stream.wait() {
         match message {
-            Err(_) => unimplemented!(),
-            Ok(Err(_e)) => unimplemented!(),
+            Err(e) => panic!("Error waiting on kafka stream: {:?}", e),
+            Ok(Err(e)) => panic!("Nested error (!) waiting on kafka stream: {:?}", e),
             Ok(Ok(msg)) => {
                 let payload = match msg.payload_view::<str>() {
                     None => "",
                     Some(Ok(s)) => s,
-                    Some(Err(_)) => unimplemented!(),
+                    Some(Err(e)) => panic!("Error viewing kafka payload {:?}", e),
                 };
 
                 println!(
