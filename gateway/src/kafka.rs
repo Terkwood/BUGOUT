@@ -31,6 +31,8 @@ fn start_producer() {
     let producer = configure_producer(BROKERS);
 
     create_premade_games(&producer);
+
+    // TODO select! channel
 }
 
 fn create_premade_games(producer: &FutureProducer) -> Vec<GameId> {
