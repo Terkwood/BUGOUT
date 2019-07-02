@@ -12,7 +12,10 @@ fn main() {
     if let Err(error) = connect("ws://127.0.0.1:3012", |out| {
         // Queue a message to be sent when the WebSocket is open
 
-        let game_id = Uuid::new_v4();
+        // This game_id needs to match one that is currently available in the system,
+        // or judge will crash.
+        let game_id: Uuid = Uuid::parse_str("7335be5f-468d-4bf1-9d33-1c582b26ec5a").unwrap();
+
         let request_id = Uuid::new_v4();
         let msg = format!("{{\"type\":\"MakeMove\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\",\"player\":\"BLACK\",\"coord\":{{\"x\":0,\"y\":0}}}}", game_id, request_id).to_string();
 
