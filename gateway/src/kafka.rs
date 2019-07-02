@@ -16,7 +16,7 @@ use crate::model::*;
 const BROKERS: &str = "kafka:9092";
 const APP_NAME: &str = "gateway";
 const GAME_STATES_TOPIC: &str = "bugout-game-states";
-const _MAKE_MOVE_CMD_TOPIC: &str = "bugout-make-move-cmd";
+const MAKE_MOVE_CMD_TOPIC: &str = "bugout-make-move-cmd";
 const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
 const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_EV_TOPIC];
 const NUM_PREMADE_GAMES: usize = 10;
@@ -36,7 +36,13 @@ fn start_producer(kafka_out: crossbeam::Receiver<Commands>) {
         select! {
             recv(kafka_out) -> command =>
                 match command {
-                    Ok(Commands::MakeMove(c)) => println!("Please push to kafka: {:?}", c),
+                    Ok(Commands::MakeMove(c)) => {
+                        producer.send(FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
+                            .payload(&serde_json::to_string(&c).unwrap())
+                            .key(&c.game_id.to_string()), 0);
+                        // Fire and forget
+                        ()
+                    }       ,
                     Err(e) => panic!("Unable to receive command via channel: {:?}", e),
                 }
         }
@@ -99,7 +105,7 @@ fn producer_example() {
                 &initial_move_cmds[i].req_id
             );
             producer.send(
-                FutureRecord::to(_MAKE_MOVE_CMD_TOPIC)
+                FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
                     .payload(&serde_json::to_string(&initial_move_cmds[i]).unwrap())
                     .key(&initial_move_cmds[i].req_id.to_string()),
                 0,
