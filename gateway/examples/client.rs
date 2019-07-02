@@ -9,7 +9,7 @@ use ws::{connect, CloseCode};
 
 /// This game_id needs to match one that is currently available in the system,
 /// or judge will crash.  See https://github.com/Terkwood/BUGOUT/issues/22
-const GAME_ID_STR: &str = "38015db8-716d-4692-a9d5-08d6916136d2";
+const GAME_ID_STR: &str = "e94fc887-caa4-41e8-8f57-52f94af91385";
 
 fn main() {
     // Connect to the url and call the closure
