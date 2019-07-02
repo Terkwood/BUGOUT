@@ -34,7 +34,8 @@ fn start_producer(kafka_out: crossbeam::Receiver<Commands>) {
 
     loop {
         select! {
-            recv(kafka_out) -> _command => unimplemented!()
+            recv(kafka_out) -> command =>
+                println!("Kafka producer needs to process this crossbeam message: {:?}", command)
         }
     }
 }
