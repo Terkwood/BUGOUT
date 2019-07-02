@@ -12,7 +12,7 @@ RUN curl -O https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-
 
 RUN chmod 755 wait-for-it.sh
 
-RUN echo ">>>"
+RUN echo ">>>>"
 RUN git fetch && git pull
 # TODO remove
 RUN git checkout feature/producer-channel
