@@ -80,52 +80,6 @@ fn create_premade_games(producer: &FutureProducer) -> Vec<GameId> {
     premade_game_ids
 }
 
-// TODO delete on merge
-fn producer_example() {
-    let producer = configure_producer(BROKERS);
-
-    let premade_game_ids = create_premade_games(&producer);
-
-    let mut initial_move_cmds = vec![];
-    for i in 0..NUM_PREMADE_GAMES {
-        let example_req_id = Uuid::new_v4();
-        let example_command = MakeMoveCommand {
-            game_id: premade_game_ids[i],
-            req_id: example_req_id,
-            coord: Some(Coord { x: 0, y: 0 }),
-            player: Player::BLACK,
-        };
-        initial_move_cmds.push(example_command);
-    }
-
-    let send_command_futures = (0..NUM_PREMADE_GAMES)
-        .map(|i| {
-            println!(
-                "Sending command to kafka with req_id {}",
-                &initial_move_cmds[i].req_id
-            );
-            producer.send(
-                FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
-                    .payload(&serde_json::to_string(&initial_move_cmds[i]).unwrap())
-                    .key(&initial_move_cmds[i].req_id.to_string()),
-                0,
-            )
-        })
-        .collect::<Vec<_>>();
-
-    for future in send_command_futures {
-        println!(
-            "Blocked until kafka send completed. Result: {:?}",
-            future.wait()
-        );
-    }
-
-    println!("Available game IDs:");
-    for game_id in premade_game_ids.iter() {
-        println!("\t{}", game_id);
-    }
-}
-
 fn configure_producer(brokers: &str) -> FutureProducer {
     ClientConfig::new()
         .set("bootstrap.servers", brokers)
