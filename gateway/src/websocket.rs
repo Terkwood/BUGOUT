@@ -7,7 +7,7 @@ use uuid::Uuid;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
-use crate::model::{BugoutMessage, ClientId, Commands, GameId, MakeMoveCommand, MoveMadeEvent};
+use crate::model::*;
 
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
@@ -70,17 +70,18 @@ impl Handler for WsSession {
 
                 if let Some(c) = self.current_game {
                     if c == game_id {
-                        return self.ws_out.send(
-                            serde_json::to_string(&MoveMadeEvent {
-                                game_id,
-                                reply_to: req_id,
-                                player,
-                                coord,
-                                event_id: Uuid::new_v4(),
-                                captured: vec![],
+                        return self
+                            .kafka_in
+                            .send(BugoutMessage::Command {
+                                client_id: self.client_id,
+                                command: Commands::MakeMove(MakeMoveCommand {
+                                    game_id,
+                                    req_id,
+                                    player,
+                                    coord,
+                                }),
                             })
-                            .unwrap(),
-                        );
+                            .map_err(|e| ws::Error::from(Box::new(e)));
                     }
                 }
 
