@@ -16,9 +16,9 @@ use crate::model::*;
 const BROKERS: &str = "kafka:9092";
 const APP_NAME: &str = "gateway";
 const GAME_STATES_TOPIC: &str = "bugout-game-states";
-const MAKE_MOVE_CMD_TOPIC: &str = "bugout-make-move-cmd";
+const _MAKE_MOVE_CMD_TOPIC: &str = "bugout-make-move-cmd";
 const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
-const CONSUME_TOPICS: &[&str] = &[MAKE_MOVE_CMD_TOPIC, MOVE_MADE_EV_TOPIC];
+const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_EV_TOPIC];
 const NUM_PREMADE_GAMES: usize = 10;
 
 pub fn start(commands_out: crossbeam::Receiver<Commands>) {
@@ -95,7 +95,7 @@ fn producer_example() {
                 &initial_move_cmds[i].req_id
             );
             producer.send(
-                FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
+                FutureRecord::to(_MAKE_MOVE_CMD_TOPIC)
                     .payload(&serde_json::to_string(&initial_move_cmds[i]).unwrap())
                     .key(&initial_move_cmds[i].req_id.to_string()),
                 0,
