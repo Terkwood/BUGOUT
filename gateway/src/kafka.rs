@@ -1,4 +1,6 @@
-use crossbeam_channel::Sender;
+use std::thread;
+
+use crossbeam_channel::select;
 use futures::stream::Stream;
 use futures::*;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
@@ -9,25 +11,45 @@ use rdkafka::producer::{FutureProducer, FutureRecord};
 use uuid::Uuid;
 
 use crate::json::GameStateJson;
-use crate::model::{BugoutMessage, Coord, MakeMoveCommand, Player};
+use crate::model::*;
 
 const BROKERS: &str = "kafka:9092";
 const APP_NAME: &str = "gateway";
 const GAME_STATES_TOPIC: &str = "bugout-game-states";
 const MAKE_MOVE_CMD_TOPIC: &str = "bugout-make-move-cmd";
 const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
-const CONSUME_TOPICS: &[&str] = &[MAKE_MOVE_CMD_TOPIC, MOVE_MADE_EV_TOPIC];
+const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_EV_TOPIC];
+const NUM_PREMADE_GAMES: usize = 10;
 
-pub fn start(router_in: crossbeam_channel::Sender<BugoutMessage>) {
-    producer_example();
+pub fn start(commands_out: crossbeam::Receiver<Commands>) {
+    thread::spawn(move || start_producer(commands_out));
 
-    consume_and_forward(BROKERS, APP_NAME, CONSUME_TOPICS, router_in);
+    thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS));
 }
 
-const NUM_PREMADE_GAMES: usize = 10;
-fn producer_example() {
+fn start_producer(kafka_out: crossbeam::Receiver<Commands>) {
     let producer = configure_producer(BROKERS);
 
+    create_premade_games(&producer);
+
+    loop {
+        select! {
+            recv(kafka_out) -> command =>
+                match command {
+                    Ok(Commands::MakeMove(c)) => {
+                        producer.send(FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
+                            .payload(&serde_json::to_string(&c).unwrap())
+                            .key(&c.game_id.to_string()), 0);
+                        // Fire and forget
+                        ()
+                    }       ,
+                    Err(e) => panic!("Unable to receive command via channel: {:?}", e),
+                }
+        }
+    }
+}
+
+fn create_premade_games(producer: &FutureProducer) -> Vec<GameId> {
     let mut premade_game_ids = vec![];
     for _ in 0..NUM_PREMADE_GAMES {
         premade_game_ids.push(Uuid::new_v4());
@@ -47,50 +69,15 @@ fn producer_example() {
         .collect::<Vec<_>>();
 
     for future in setup_game_futures {
-        println!(
-            "Blocked until game state message sent. Result: {:?}",
-            future.wait()
-        );
-    }
-
-    let mut initial_move_cmds = vec![];
-    for i in 0..NUM_PREMADE_GAMES {
-        let example_req_id = Uuid::new_v4();
-        let example_command = MakeMoveCommand {
-            game_id: premade_game_ids[i],
-            req_id: example_req_id,
-            coord: Some(Coord { x: 0, y: 0 }),
-            player: Player::BLACK,
-        };
-        initial_move_cmds.push(example_command);
-    }
-
-    let send_command_futures = (0..NUM_PREMADE_GAMES)
-        .map(|i| {
-            println!(
-                "Sending command to kafka with req_id {}",
-                &initial_move_cmds[i].req_id
-            );
-            producer.send(
-                FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
-                    .payload(&serde_json::to_string(&initial_move_cmds[i]).unwrap())
-                    .key(&initial_move_cmds[i].req_id.to_string()),
-                0,
-            )
-        })
-        .collect::<Vec<_>>();
-
-    for future in send_command_futures {
-        println!(
-            "Blocked until kafka send completed. Result: {:?}",
-            future.wait()
-        );
+        future.wait().unwrap().unwrap();
     }
 
     println!("Available game IDs:");
     for game_id in premade_game_ids.iter() {
         println!("\t{}", game_id);
     }
+
+    premade_game_ids
 }
 
 fn configure_producer(brokers: &str) -> FutureProducer {
@@ -102,12 +89,7 @@ fn configure_producer(brokers: &str) -> FutureProducer {
         .expect("Producer creation error")
 }
 
-fn consume_and_forward(
-    brokers: &str,
-    group_id: &str,
-    topics: &[&str],
-    _router_in: Sender<BugoutMessage>,
-) {
+fn start_consumer(brokers: &str, group_id: &str, topics: &[&str]) {
     let consumer: StreamConsumer = ClientConfig::new()
         .set("group.id", group_id)
         .set("bootstrap.servers", brokers)
@@ -125,18 +107,18 @@ fn consume_and_forward(
     let message_stream = consumer.start();
     for message in message_stream.wait() {
         match message {
-            Err(_) => unimplemented!(),
-            Ok(Err(_e)) => unimplemented!(),
+            Err(e) => panic!("Error waiting on kafka stream: {:?}", e),
+            Ok(Err(e)) => panic!("Nested error (!) waiting on kafka stream: {:?}", e),
             Ok(Ok(msg)) => {
                 let payload = match msg.payload_view::<str>() {
                     None => "",
                     Some(Ok(s)) => s,
-                    Some(Err(_)) => unimplemented!(),
+                    Some(Err(e)) => panic!("Error viewing kafka payload {:?}", e),
                 };
 
                 println!(
-                    "key: '{:?}', payload: '{}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
-                    msg.key(), payload, msg.topic(), msg.partition(),
+                    "Kafka consumer: payload: '{}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
+                    payload, msg.topic(), msg.partition(),
                     msg.offset(), msg.timestamp());
 
                 if let Some(headers) = msg.headers() {

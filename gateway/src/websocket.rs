@@ -3,11 +3,10 @@ use std::str::from_utf8;
 
 use mio_extras::timer::Timeout;
 
-use uuid::Uuid;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
-use crate::model::{BugoutMessage, ClientId, Commands, GameId, MakeMoveCommand, MoveMadeEvent};
+use crate::model::*;
 
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
@@ -18,8 +17,7 @@ pub struct WsSession {
     pub ws_out: Sender,
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
-    pub kafka_in: crossbeam_channel::Sender<BugoutMessage>,
-    pub kafka_out: crossbeam_channel::Receiver<BugoutMessage>,
+    pub command_in: crossbeam_channel::Sender<Commands>,
     current_game: Option<GameId>,
 }
 
@@ -27,16 +25,14 @@ impl WsSession {
     pub fn new(
         client_id: ClientId,
         ws_out: ws::Sender,
-        kafka_in: crossbeam_channel::Sender<BugoutMessage>,
-        kafka_out: crossbeam_channel::Receiver<BugoutMessage>,
+        command_in: crossbeam_channel::Sender<Commands>,
     ) -> WsSession {
         WsSession {
             client_id,
             ws_out,
             ping_timeout: None,
             expire_timeout: None,
-            kafka_in,
-            kafka_out,
+            command_in,
             current_game: None,
         }
     }
@@ -70,17 +66,15 @@ impl Handler for WsSession {
 
                 if let Some(c) = self.current_game {
                     if c == game_id {
-                        return self.ws_out.send(
-                            serde_json::to_string(&MoveMadeEvent {
+                        return self
+                            .command_in
+                            .send(Commands::MakeMove(MakeMoveCommand {
                                 game_id,
-                                reply_to: req_id,
+                                req_id,
                                 player,
                                 coord,
-                                event_id: Uuid::new_v4(),
-                                captured: vec![],
-                            })
-                            .unwrap(),
-                        );
+                            }))
+                            .map_err(|e| ws::Error::from(Box::new(e)));
                     }
                 }
 

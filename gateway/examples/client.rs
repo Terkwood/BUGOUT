@@ -7,12 +7,16 @@ extern crate ws;
 use uuid::Uuid;
 use ws::{connect, CloseCode};
 
+/// This game_id needs to match one that is currently available in the system,
+/// or judge will crash.  See https://github.com/Terkwood/BUGOUT/issues/22
+const GAME_ID_STR: &str = "2d383e32-4085-49df-8a61-8fccd10ffdb7";
+
 fn main() {
     // Connect to the url and call the closure
     if let Err(error) = connect("ws://127.0.0.1:3012", |out| {
         // Queue a message to be sent when the WebSocket is open
 
-        let game_id = Uuid::new_v4();
+        let game_id: Uuid = Uuid::parse_str(GAME_ID_STR).unwrap();
         let request_id = Uuid::new_v4();
         let msg = format!("{{\"type\":\"MakeMove\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\",\"player\":\"BLACK\",\"coord\":{{\"x\":0,\"y\":0}}}}", game_id, request_id).to_string();
 
