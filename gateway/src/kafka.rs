@@ -1,6 +1,6 @@
 use std::thread;
 
-use crossbeam_channel::Sender;
+use crossbeam_channel::select;
 use futures::stream::Stream;
 use futures::*;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
@@ -21,18 +21,22 @@ const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
 const CONSUME_TOPICS: &[&str] = &[MAKE_MOVE_CMD_TOPIC, MOVE_MADE_EV_TOPIC];
 const NUM_PREMADE_GAMES: usize = 10;
 
-pub fn start(router_in: crossbeam_channel::Sender<BugoutMessage>) {
-    thread::spawn(move || start_producer());
+pub fn start(commands_out: crossbeam::Receiver<Commands>) {
+    thread::spawn(move || start_producer(commands_out));
 
-    thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS, router_in));
+    thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS));
 }
 
-fn start_producer() {
+fn start_producer(kafka_out: crossbeam::Receiver<Commands>) {
     let producer = configure_producer(BROKERS);
 
     create_premade_games(&producer);
 
-    // TODO select! channel
+    loop {
+        select! {
+            recv(kafka_out) -> _command => unimplemented!()
+        }
+    }
 }
 
 fn create_premade_games(producer: &FutureProducer) -> Vec<GameId> {
@@ -124,12 +128,7 @@ fn configure_producer(brokers: &str) -> FutureProducer {
         .expect("Producer creation error")
 }
 
-fn start_consumer(
-    brokers: &str,
-    group_id: &str,
-    topics: &[&str],
-    _router_in: Sender<BugoutMessage>,
-) {
+fn start_consumer(brokers: &str, group_id: &str, topics: &[&str]) {
     let consumer: StreamConsumer = ClientConfig::new()
         .set("group.id", group_id)
         .set("bootstrap.servers", brokers)

@@ -14,24 +14,19 @@ mod websocket;
 
 use crossbeam_channel::unbounded;
 
-use model::BugoutMessage;
+use model::Commands;
 use websocket::WsSession;
 
 fn main() {
-    let (kafka_in, kafka_out): (
-        crossbeam::Sender<BugoutMessage>,
-        crossbeam::Receiver<BugoutMessage>,
+    let (commands_in, commands_out): (
+        crossbeam::Sender<Commands>,
+        crossbeam::Receiver<Commands>,
     ) = unbounded();
 
-    kafka::start(kafka_in.clone());
+    kafka::start(commands_out);
 
     ws::listen("0.0.0.0:3012", |ws_out| {
-        WsSession::new(
-            uuid::Uuid::new_v4(),
-            ws_out,
-            kafka_in.clone(),
-            kafka_out.clone(),
-        )
+        WsSession::new(uuid::Uuid::new_v4(), ws_out, commands_in.clone())
     })
     .unwrap();
 }

@@ -17,8 +17,7 @@ pub struct WsSession {
     pub ws_out: Sender,
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
-    pub kafka_in: crossbeam_channel::Sender<BugoutMessage>,
-    pub kafka_out: crossbeam_channel::Receiver<BugoutMessage>,
+    pub command_in: crossbeam_channel::Sender<Commands>,
     current_game: Option<GameId>,
 }
 
@@ -26,16 +25,14 @@ impl WsSession {
     pub fn new(
         client_id: ClientId,
         ws_out: ws::Sender,
-        kafka_in: crossbeam_channel::Sender<BugoutMessage>,
-        kafka_out: crossbeam_channel::Receiver<BugoutMessage>,
+        command_in: crossbeam_channel::Sender<Commands>,
     ) -> WsSession {
         WsSession {
             client_id,
             ws_out,
             ping_timeout: None,
             expire_timeout: None,
-            kafka_in,
-            kafka_out,
+            command_in,
             current_game: None,
         }
     }
@@ -70,16 +67,13 @@ impl Handler for WsSession {
                 if let Some(c) = self.current_game {
                     if c == game_id {
                         return self
-                            .kafka_in
-                            .send(BugoutMessage::Command {
-                                client_id: self.client_id,
-                                command: Commands::MakeMove(MakeMoveCommand {
-                                    game_id,
-                                    req_id,
-                                    player,
-                                    coord,
-                                }),
-                            })
+                            .command_in
+                            .send(Commands::MakeMove(MakeMoveCommand {
+                                game_id,
+                                req_id,
+                                player,
+                                coord,
+                            }))
                             .map_err(|e| ws::Error::from(Box::new(e)));
                     }
                 }
