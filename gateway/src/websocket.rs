@@ -18,6 +18,7 @@ pub struct WsSession {
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
     pub command_in: crossbeam_channel::Sender<Commands>,
+    pub events_in: crossbeam_channel::Receiver<Events>,
     current_game: Option<GameId>,
 }
 
@@ -26,6 +27,7 @@ impl WsSession {
         client_id: ClientId,
         ws_out: ws::Sender,
         command_in: crossbeam_channel::Sender<Commands>,
+        events_in: crossbeam_channel::Receiver<Events>,
     ) -> WsSession {
         WsSession {
             client_id,
@@ -33,6 +35,7 @@ impl WsSession {
             ping_timeout: None,
             expire_timeout: None,
             command_in,
+            events_in,
             current_game: None,
         }
     }

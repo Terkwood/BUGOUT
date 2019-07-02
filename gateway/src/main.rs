@@ -14,13 +14,18 @@ mod websocket;
 
 use crossbeam_channel::unbounded;
 
-use model::Commands;
+use model::{Commands, Events};
 use websocket::WsSession;
 
 fn main() {
     let (commands_in, commands_out): (
         crossbeam::Sender<Commands>,
         crossbeam::Receiver<Commands>,
+    ) = unbounded();
+
+    let (events_in, events_out): (
+        crossbeam::Sender<Events>,
+        crossbeam::Receiver<Events>,
     ) = unbounded();
 
     kafka::start(commands_out);
