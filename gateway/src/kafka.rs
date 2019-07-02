@@ -163,8 +163,8 @@ fn start_consumer(brokers: &str, group_id: &str, topics: &[&str]) {
                 };
 
                 println!(
-                    "key: '{:?}', payload: '{}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
-                    msg.key(), payload, msg.topic(), msg.partition(),
+                    "Kafka consumer: payload: '{}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
+                    payload, msg.topic(), msg.partition(),
                     msg.offset(), msg.timestamp());
 
                 if let Some(headers) = msg.headers() {
