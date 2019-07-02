@@ -13,7 +13,6 @@ pub mod model;
 mod websocket;
 
 use crossbeam_channel::unbounded;
-use std::thread;
 
 use model::BugoutMessage;
 use websocket::WsSession;
@@ -24,10 +23,7 @@ fn main() {
         crossbeam::Receiver<BugoutMessage>,
     ) = unbounded();
 
-    let kic = kafka_in.clone();
-    thread::spawn(move || {
-        kafka::start(kic);
-    });
+    kafka::start(kafka_in.clone());
 
     ws::listen("0.0.0.0:3012", |ws_out| {
         WsSession::new(
