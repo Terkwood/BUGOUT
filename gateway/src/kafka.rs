@@ -35,7 +35,10 @@ fn start_producer(kafka_out: crossbeam::Receiver<Commands>) {
     loop {
         select! {
             recv(kafka_out) -> command =>
-                println!("Kafka producer needs to process this crossbeam message: {:?}", command)
+                match command {
+                    Ok(Commands::MakeMove(c)) => println!("Please push to kafka: {:?}", c),
+                    Err(e) => panic!("Unable to receive command via channel: {:?}", e),
+                }
         }
     }
 }
