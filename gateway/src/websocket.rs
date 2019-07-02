@@ -3,7 +3,6 @@ use std::str::from_utf8;
 
 use mio_extras::timer::Timeout;
 
-use uuid::Uuid;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
