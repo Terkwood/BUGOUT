@@ -16,7 +16,10 @@ fn main() {
     let game_id_parsed = Uuid::parse_str(&args[1]);
 
     if let Err(parse_fail) = game_id_parsed {
-        panic!("Couldn't parse a UUID game ID on command line: {:?}", parse_fail)
+        panic!(
+            "Couldn't parse a UUID game ID on command line: {:?}",
+            parse_fail
+        )
     }
 
     // Connect to the url and call the closure

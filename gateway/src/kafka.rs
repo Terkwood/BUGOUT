@@ -6,7 +6,7 @@ use futures::*;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::{CommitMode, Consumer};
-use rdkafka::message::{Headers, Message};
+use rdkafka::message::Message;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use uuid::Uuid;
 
@@ -121,24 +121,10 @@ fn start_consumer(
                     Some(Err(e)) => panic!("Error viewing kafka payload {:?}", e),
                 };
 
-                println!(
-                    "Kafka consumer: payload: '{}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
-                    payload, msg.topic(), msg.partition(),
-                    msg.offset(), msg.timestamp());
-
-                if let Some(headers) = msg.headers() {
-                    for i in 0..headers.count() {
-                        let header = headers.get(i).unwrap();
-                        println!("  Header {:#?}: {:?}", header.0, header.1);
-                    }
-                }
-
                 consumer.commit_message(&msg, CommitMode::Async).unwrap();
                 if let Ok(move_made) = serde_json::from_str(payload) {
                     events_in.send(Events::MoveMade(move_made)).unwrap()
                 }
-
-                println!("Sent down channel")
             }
         }
     }

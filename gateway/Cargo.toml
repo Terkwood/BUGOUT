@@ -1,6 +1,6 @@
 [package]
 name = "gateway"
-version = "0.1.0-wires"
+version = "0.1.0"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
