@@ -14,11 +14,7 @@ RUN chmod 755 wait-for-it.sh
 
 RUN git fetch 
 RUN git pull
-# TODO remove
-RUN git checkout feature/gateway-consumer-channel
-
 RUN git rev-parse HEAD
 
-# TODO restore
-#RUN cargo install --path .
+RUN cargo install --path .
 CMD ["sh", "no_run.sh"]
