@@ -17,4 +17,4 @@ RUN git pull
 RUN git rev-parse HEAD
 
 RUN cargo install --path .
-CMD ["sh", "no_run.sh"]
+CMD ["sh", "run.sh"]
