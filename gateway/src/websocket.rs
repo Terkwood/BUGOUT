@@ -10,6 +10,11 @@ use crate::model::*;
 
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
+const CHANNEL_RECV: Token = Token(3);
+
+const PING_TIMEOUT_MS: u64 = 5_000;
+const EXPIRE_TIMEOUT_MS: u64 = 30_000;
+const CHANNEL_RECV_TIMEOUT_MS: u64 = 10;
 
 // WebSocket handler
 pub struct WsSession {
@@ -17,6 +22,7 @@ pub struct WsSession {
     pub ws_out: Sender,
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
+    pub channel_recv_timeout: Option<Timeout>,
     pub command_in: crossbeam_channel::Sender<Commands>,
     pub events_in: crossbeam_channel::Receiver<Events>,
     current_game: Option<GameId>,
@@ -34,6 +40,7 @@ impl WsSession {
             ws_out,
             ping_timeout: None,
             expire_timeout: None,
+            channel_recv_timeout: None,
             command_in,
             events_in,
             current_game: None,
@@ -44,9 +51,12 @@ impl WsSession {
 impl Handler for WsSession {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
         // schedule a timeout to send a ping every 5 seconds
-        self.ws_out.timeout(5_000, PING)?;
+        self.ws_out.timeout(PING_TIMEOUT_MS, PING)?;
         // schedule a timeout to close the connection if there is no activity for 30 seconds
-        self.ws_out.timeout(30_000, EXPIRE)
+        self.ws_out.timeout(EXPIRE_TIMEOUT_MS, EXPIRE)?;
+        // schedule a timeout to poll for kafka originated
+        // events on the crossbeam channel
+        self.ws_out.timeout(CHANNEL_RECV_TIMEOUT_MS, CHANNEL_RECV)
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
@@ -100,6 +110,9 @@ impl Handler for WsSession {
         if let Some(t) = self.expire_timeout.take() {
             self.ws_out.cancel(t).unwrap();
         }
+        if let Some(t) = self.channel_recv_timeout.take() {
+            self.ws_out.cancel(t).unwrap();
+        }
     }
 
     fn on_error(&mut self, err: Error) {
@@ -115,10 +128,17 @@ impl Handler for WsSession {
                 self.ws_out
                     .ping(time::precise_time_ns().to_string().into())?;
                 self.ping_timeout.take();
-                self.ws_out.timeout(5_000, PING)
+                self.ws_out.timeout(PING_TIMEOUT_MS, PING)
             }
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
             EXPIRE => self.ws_out.close(CloseCode::Away),
+            CHANNEL_RECV => {
+                while let Ok(event) = self.events_in.try_recv() {
+                    self.ws_out.send(serde_json::to_string(&event).unwrap())?;
+                }
+                self.channel_recv_timeout.take();
+                self.ws_out.timeout(CHANNEL_RECV_TIMEOUT_MS, CHANNEL_RECV)
+            }
             // No other timeouts are possible
             _ => Err(Error::new(
                 ErrorKind::Internal,
@@ -140,6 +160,10 @@ impl Handler for WsSession {
                 self.ws_out.cancel(t)?
             }
             self.ping_timeout = Some(timeout)
+        } else if event == CHANNEL_RECV {
+            if let Some(t) = self.channel_recv_timeout.take() {
+                self.ws_out.cancel(t)?
+            }
         }
 
         Ok(())
@@ -158,7 +182,7 @@ impl Handler for WsSession {
         }
 
         // Some activity has occured, so reset the expiration
-        self.ws_out.timeout(30_000, EXPIRE)?;
+        self.ws_out.timeout(EXPIRE_TIMEOUT_MS, EXPIRE)?;
 
         // Run default frame validation
         DefaultHandler.on_frame(frame)
