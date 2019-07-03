@@ -7,16 +7,26 @@ extern crate ws;
 use uuid::Uuid;
 use ws::{connect, CloseCode};
 
-/// This game_id needs to match one that is currently available in the system,
-/// or judge will crash.  See https://github.com/Terkwood/BUGOUT/issues/22
-const GAME_ID_STR: &str = "2d383e32-4085-49df-8a61-8fccd10ffdb7";
-
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() < 2 {
+        panic!("You must specify a game ID as a command line argument")
+    }
+
+    let game_id_parsed = Uuid::parse_str(&args[1]);
+
+    if let Err(parse_fail) = game_id_parsed {
+        panic!(
+            "Couldn't parse a UUID game ID on command line: {:?}",
+            parse_fail
+        )
+    }
+
     // Connect to the url and call the closure
     if let Err(error) = connect("ws://127.0.0.1:3012", |out| {
         // Queue a message to be sent when the WebSocket is open
 
-        let game_id: Uuid = Uuid::parse_str(GAME_ID_STR).unwrap();
+        let game_id: Uuid = game_id_parsed.unwrap();
         let request_id = Uuid::new_v4();
         let msg = format!("{{\"type\":\"MakeMove\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\",\"player\":\"BLACK\",\"coord\":{{\"x\":0,\"y\":0}}}}", game_id, request_id).to_string();
 

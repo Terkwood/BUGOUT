@@ -12,21 +12,25 @@ mod kafka;
 pub mod model;
 mod websocket;
 
-use crossbeam_channel::unbounded;
+use crossbeam_channel::{unbounded, Receiver, Sender};
 
-use model::Commands;
+use model::{Commands, Events};
 use websocket::WsSession;
 
 fn main() {
-    let (commands_in, commands_out): (
-        crossbeam::Sender<Commands>,
-        crossbeam::Receiver<Commands>,
-    ) = unbounded();
+    let (commands_in, commands_out): (Sender<Commands>, Receiver<Commands>) = unbounded();
 
-    kafka::start(commands_out);
+    let (events_in, events_out): (Sender<Events>, Receiver<Events>) = unbounded();
+
+    kafka::start(events_in, commands_out);
 
     ws::listen("0.0.0.0:3012", |ws_out| {
-        WsSession::new(uuid::Uuid::new_v4(), ws_out, commands_in.clone())
+        WsSession::new(
+            uuid::Uuid::new_v4(),
+            ws_out,
+            commands_in.clone(),
+            events_out.clone(),
+        )
     })
     .unwrap();
 }

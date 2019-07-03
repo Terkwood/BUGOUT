@@ -65,7 +65,7 @@ pub struct MoveRejectedEvent {
 #[serde(tag = "type")]
 pub enum Events {
     MoveMade(MoveMadeEvent),
-    MoveRejected,
+    MoveRejected(MoveRejectedEvent),
 }
 
 pub enum BugoutMessage {

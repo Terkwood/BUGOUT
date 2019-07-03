@@ -6,7 +6,7 @@ use futures::*;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::{CommitMode, Consumer};
-use rdkafka::message::{Headers, Message};
+use rdkafka::message::Message;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use uuid::Uuid;
 
@@ -21,10 +21,10 @@ const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
 const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_EV_TOPIC];
 const NUM_PREMADE_GAMES: usize = 10;
 
-pub fn start(commands_out: crossbeam::Receiver<Commands>) {
+pub fn start(events_in: crossbeam::Sender<Events>, commands_out: crossbeam::Receiver<Commands>) {
     thread::spawn(move || start_producer(commands_out));
 
-    thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS));
+    thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS, events_in));
 }
 
 fn start_producer(kafka_out: crossbeam::Receiver<Commands>) {
@@ -89,7 +89,12 @@ fn configure_producer(brokers: &str) -> FutureProducer {
         .expect("Producer creation error")
 }
 
-fn start_consumer(brokers: &str, group_id: &str, topics: &[&str]) {
+fn start_consumer(
+    brokers: &str,
+    group_id: &str,
+    topics: &[&str],
+    events_in: crossbeam::Sender<Events>,
+) {
     let consumer: StreamConsumer = ClientConfig::new()
         .set("group.id", group_id)
         .set("bootstrap.servers", brokers)
@@ -116,19 +121,10 @@ fn start_consumer(brokers: &str, group_id: &str, topics: &[&str]) {
                     Some(Err(e)) => panic!("Error viewing kafka payload {:?}", e),
                 };
 
-                println!(
-                    "Kafka consumer: payload: '{}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
-                    payload, msg.topic(), msg.partition(),
-                    msg.offset(), msg.timestamp());
-
-                if let Some(headers) = msg.headers() {
-                    for i in 0..headers.count() {
-                        let header = headers.get(i).unwrap();
-                        println!("  Header {:#?}: {:?}", header.0, header.1);
-                    }
-                }
-
                 consumer.commit_message(&msg, CommitMode::Async).unwrap();
+                if let Ok(move_made) = serde_json::from_str(payload) {
+                    events_in.send(Events::MoveMade(move_made)).unwrap()
+                }
             }
         }
     }
