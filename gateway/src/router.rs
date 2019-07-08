@@ -23,14 +23,12 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                     },
                 recv(kafka_events_out) -> event =>
                     match event {
-                        Ok(Events::MoveMade(m)) =>
-                            if let Some(client_senders) = router.clients_by_game.get(&m.game_id) {
+                        Ok(e) =>
+                            if let Some(client_senders) = router.clients_by_game.get(&e.game_id()) {
                                 for cs in client_senders {
-                                    cs.events_in.send(Events::MoveMade(m.clone())).expect("send error")
+                                    cs.events_in.send(e.clone()).expect("send error")
                                 }
                             },
-                        Ok(Events::MoveRejected(_m)) =>
-                            unimplemented!(),
                         Err(e) =>
                             panic!("Unable to receive kafka event via router channel: {:?}", e),
                     }

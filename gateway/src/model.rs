@@ -61,11 +61,20 @@ pub struct MoveRejectedEvent {
     pub coord: Coord,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum Events {
     MoveMade(MoveMadeEvent),
     MoveRejected(MoveRejectedEvent),
+}
+
+impl Events {
+    pub fn game_id(&self) -> GameId {
+        match self {
+            Events::MoveMade(e) => e.game_id,
+            Events::MoveRejected(e) => e.game_id,
+        }
+    }
 }
 
 pub enum BugoutMessage {
