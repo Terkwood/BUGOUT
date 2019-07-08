@@ -1,6 +1,6 @@
 [package]
 name = "gateway"
-version = "0.2.0-routing"
+version = "0.2.0"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
@@ -16,3 +16,6 @@ serde_json = "*"
 time = "0.1.39"
 uuid = { version =  "*", features = ["v4", "serde"] }
 ws = "0.8.1"
+
+[dev-dependencies]
+rand = "*"
