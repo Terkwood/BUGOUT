@@ -24,7 +24,7 @@ pub struct WsSession {
     pub expire_timeout: Option<Timeout>,
     pub channel_recv_timeout: Option<Timeout>,
     pub command_in: crossbeam_channel::Sender<Commands>,
-    pub events_in: crossbeam_channel::Receiver<Events>,
+    pub events_out: crossbeam_channel::Receiver<Events>,
     current_game: Option<GameId>,
 }
 
@@ -33,7 +33,7 @@ impl WsSession {
         client_id: ClientId,
         ws_out: ws::Sender,
         command_in: crossbeam_channel::Sender<Commands>,
-        events_in: crossbeam_channel::Receiver<Events>,
+        events_out: crossbeam_channel::Receiver<Events>,
     ) -> WsSession {
         WsSession {
             client_id,
@@ -42,7 +42,7 @@ impl WsSession {
             expire_timeout: None,
             channel_recv_timeout: None,
             command_in,
-            events_in,
+            events_out,
             current_game: None,
         }
     }
@@ -133,7 +133,7 @@ impl Handler for WsSession {
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
             EXPIRE => self.ws_out.close(CloseCode::Away),
             CHANNEL_RECV => {
-                while let Ok(event) = self.events_in.try_recv() {
+                while let Ok(event) = self.events_out.try_recv() {
                     self.ws_out.send(serde_json::to_string(&event).unwrap())?;
                 }
                 self.channel_recv_timeout.take();

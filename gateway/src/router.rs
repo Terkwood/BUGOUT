@@ -1,9 +1,22 @@
-use crossbeam_channel::Sender;
+use crossbeam::Sender;
 use std::collections::HashMap;
 
-use crate::model::GameId;
+use crate::model::{Events, GameId};
+
+pub struct AddEventsListener {
+    game_id: GameId,
+    events_in: Sender<Events>,
+}
 
 /// responsible for sending kafka messages to relevant websocket clients
 pub struct Router {
-    websocket_clients_by_game_id: HashMap<GameId, Vec<Sender<bool>>>,
+    event_listeners: HashMap<GameId, Vec<Sender<Events>>>,
+}
+
+impl Router {
+    pub fn start() -> Router {
+        Router {
+            event_listeners: HashMap::new(),
+        }
+    }
 }
