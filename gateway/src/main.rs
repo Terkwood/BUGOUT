@@ -40,7 +40,7 @@ fn main() {
             uuid::Uuid::new_v4(),
             ws_out,
             bugout_commands_in.clone(),
-            unimplemented!(),
+            router_commands_in.clone(),
         )
     })
     .unwrap();
