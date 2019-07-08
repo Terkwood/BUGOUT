@@ -11,7 +11,7 @@ RUN apt-get install -y clang
 RUN curl -O https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
 
 RUN chmod 755 wait-for-it.sh
-RUN echo "hi there3"
+RUN echo "hi there4"
 RUN git fetch && git pull
 
 # TODO

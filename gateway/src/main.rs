@@ -10,6 +10,7 @@ extern crate ws;
 mod json;
 mod kafka;
 pub mod model;
+mod router;
 mod websocket;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
