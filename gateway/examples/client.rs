@@ -32,7 +32,7 @@ fn main() {
         let game_id: Uuid = game_id_parsed.unwrap();
         let request_id = Uuid::new_v4();
 
-        let (x, y) = (rng.gen_range(0,19), rng.gen_range(0,19)); 
+        let (x, y) = (rng.gen_range(0, 19), rng.gen_range(0, 19));
         let msg = format!("{{\"type\":\"MakeMove\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\",\"player\":\"WHITE\",\"coord\":{{\"x\":{},\"y\":{}}}}}", game_id, request_id, x, y).to_string();
 
         if out.send(msg).is_err() {

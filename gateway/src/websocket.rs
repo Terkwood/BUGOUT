@@ -51,6 +51,17 @@ impl WsSession {
             current_game: None,
         }
     }
+
+    fn notify_router_close(&mut self) {
+        if let Some(game_id) = self.current_game {
+            self.router_commands_in
+                .send(RouterCommand::DeleteClient {
+                    client_id: self.client_id,
+                    game_id,
+                })
+                .expect("error sending delete client message")
+        }
+    }
 }
 
 impl Handler for WsSession {
@@ -125,6 +136,8 @@ impl Handler for WsSession {
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!("WebSocket closing ({:?}) {}", code, reason);
 
+        self.notify_router_close();
+
         // Clean up timeouts when connections close
         if let Some(t) = self.ping_timeout.take() {
             self.ws_out.cancel(t).unwrap();
@@ -154,14 +167,7 @@ impl Handler for WsSession {
             }
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
             EXPIRE => {
-                if let Some(game_id) = self.current_game {
-                    self.router_commands_in
-                        .send(RouterCommand::DeleteClient {
-                            client_id: self.client_id,
-                            game_id,
-                        })
-                        .expect("error sending delete client message")
-                }
+                self.notify_router_close();
                 self.ws_out.close(CloseCode::Away)
             }
             CHANNEL_RECV => {
