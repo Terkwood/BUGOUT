@@ -8,13 +8,13 @@ pub type ClientId = Uuid;
 
 pub const DEFAULT_BOARD_SIZE: usize = 19;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Coord {
     pub x: u16,
     pub y: u16,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Player {
     BLACK,
     WHITE,
@@ -36,7 +36,7 @@ pub enum Commands {
     MakeMove(MakeMoveCommand),
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MoveMadeEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
@@ -49,7 +49,7 @@ pub struct MoveMadeEvent {
     pub captured: Vec<Coord>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MoveRejectedEvent {
     #[serde(rename = "gameId")]
     pub game_id: Uuid,

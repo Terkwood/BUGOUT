@@ -31,7 +31,7 @@ fn main() {
         Receiver<router::RouterCommand>,
     ) = unbounded();
 
-    router::start(router_commands_out);
+    router::start(router_commands_out, kafka_events_out);
 
     // TODO routing and such
 
@@ -40,7 +40,7 @@ fn main() {
             uuid::Uuid::new_v4(),
             ws_out,
             bugout_commands_in.clone(),
-            kafka_events_out.clone(),
+            unimplemented!(),
         )
     })
     .unwrap();
