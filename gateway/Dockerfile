@@ -11,13 +11,9 @@ RUN apt-get install -y clang
 RUN curl -O https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
 
 RUN chmod 755 wait-for-it.sh
-RUN echo "hi there4"
 RUN git fetch && git pull
-
-# TODO
-RUN git checkout feature/gateway-routing
 
 RUN git rev-parse HEAD
 
-#RUN cargo install --path .
+RUN cargo install --path .
 CMD ["sh", "no_run.sh"]
