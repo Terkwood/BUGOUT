@@ -33,8 +33,6 @@ fn main() {
 
     router::start(router_commands_out, kafka_events_out);
 
-    // TODO routing and such
-
     ws::listen("0.0.0.0:3012", |ws_out| {
         WsSession::new(
             uuid::Uuid::new_v4(),
