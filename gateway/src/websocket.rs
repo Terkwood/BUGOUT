@@ -3,10 +3,13 @@ use std::str::from_utf8;
 
 use mio_extras::timer::Timeout;
 
+use crossbeam_channel::unbounded;
+
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
 use crate::model::*;
+use crate::router::RouterCommand;
 
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
@@ -23,8 +26,9 @@ pub struct WsSession {
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
     pub channel_recv_timeout: Option<Timeout>,
-    pub command_in: crossbeam_channel::Sender<Commands>,
-    pub events_in: crossbeam_channel::Receiver<Events>,
+    pub bugout_commands_in: crossbeam_channel::Sender<Commands>,
+    pub events_out: Option<crossbeam_channel::Receiver<Events>>,
+    pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     current_game: Option<GameId>,
 }
 
@@ -32,8 +36,8 @@ impl WsSession {
     pub fn new(
         client_id: ClientId,
         ws_out: ws::Sender,
-        command_in: crossbeam_channel::Sender<Commands>,
-        events_in: crossbeam_channel::Receiver<Events>,
+        bugout_commands_in: crossbeam_channel::Sender<Commands>,
+        router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     ) -> WsSession {
         WsSession {
             client_id,
@@ -41,9 +45,21 @@ impl WsSession {
             ping_timeout: None,
             expire_timeout: None,
             channel_recv_timeout: None,
-            command_in,
-            events_in,
+            bugout_commands_in,
+            events_out: None,
+            router_commands_in,
             current_game: None,
+        }
+    }
+
+    fn notify_router_close(&mut self) {
+        if let Some(game_id) = self.current_game {
+            self.router_commands_in
+                .send(RouterCommand::DeleteClient {
+                    client_id: self.client_id,
+                    game_id,
+                })
+                .expect("error sending delete client message")
         }
     }
 }
@@ -75,12 +91,29 @@ impl Handler for WsSession {
                 // command to
                 if self.current_game.is_none() {
                     self.current_game = Some(game_id);
+                    let (events_in, events_out): (
+                        crossbeam_channel::Sender<Events>,
+                        crossbeam_channel::Receiver<Events>,
+                    ) = unbounded();
+
+                    // ..and let the router know we're interested in it,
+                    // so that we can receive updates
+                    self.router_commands_in
+                        .send(RouterCommand::AddClient {
+                            client_id: self.client_id,
+                            game_id,
+                            events_in,
+                        })
+                        .expect("error sending router command to add client");
+
+                    //.. and track the out-channel so we can select! on it
+                    self.events_out = Some(events_out);
                 }
 
                 if let Some(c) = self.current_game {
                     if c == game_id {
                         return self
-                            .command_in
+                            .bugout_commands_in
                             .send(Commands::MakeMove(MakeMoveCommand {
                                 game_id,
                                 req_id,
@@ -102,6 +135,8 @@ impl Handler for WsSession {
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!("WebSocket closing ({:?}) {}", code, reason);
+
+        self.notify_router_close();
 
         // Clean up timeouts when connections close
         if let Some(t) = self.ping_timeout.take() {
@@ -131,10 +166,15 @@ impl Handler for WsSession {
                 self.ws_out.timeout(PING_TIMEOUT_MS, PING)
             }
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
-            EXPIRE => self.ws_out.close(CloseCode::Away),
+            EXPIRE => {
+                self.notify_router_close();
+                self.ws_out.close(CloseCode::Away)
+            }
             CHANNEL_RECV => {
-                while let Ok(event) = self.events_in.try_recv() {
-                    self.ws_out.send(serde_json::to_string(&event).unwrap())?;
+                if let Some(eo) = &self.events_out {
+                    while let Ok(event) = eo.try_recv() {
+                        self.ws_out.send(serde_json::to_string(&event).unwrap())?;
+                    }
                 }
                 self.channel_recv_timeout.take();
                 self.ws_out.timeout(CHANNEL_RECV_TIMEOUT_MS, CHANNEL_RECV)
