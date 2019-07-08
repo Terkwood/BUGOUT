@@ -24,6 +24,8 @@ fn main() {
 
     kafka::start(events_in, commands_out);
 
+    // TODO routing and such
+
     ws::listen("0.0.0.0:3012", |ws_out| {
         WsSession::new(
             uuid::Uuid::new_v4(),
