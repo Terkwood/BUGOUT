@@ -43,7 +43,7 @@ fn start_producer(kafka_out: crossbeam::Receiver<Commands>) {
                         // Fire and forget
                         ()
                     }       ,
-                    Err(e) => panic!("Unable to receive command via channel: {:?}", e),
+                    Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
         }
     }

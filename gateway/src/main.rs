@@ -19,11 +19,19 @@ use model::{Commands, Events};
 use websocket::WsSession;
 
 fn main() {
-    let (commands_in, commands_out): (Sender<Commands>, Receiver<Commands>) = unbounded();
+    let (bugout_commands_in, bugout_commands_out): (Sender<Commands>, Receiver<Commands>) =
+        unbounded();
 
-    let (events_in, events_out): (Sender<Events>, Receiver<Events>) = unbounded();
+    let (kafka_events_in, kafka_events_out): (Sender<Events>, Receiver<Events>) = unbounded();
 
-    kafka::start(events_in, commands_out);
+    kafka::start(kafka_events_in, bugout_commands_out);
+
+    let (router_commands_in, router_commands_out): (
+        Sender<router::RouterCommand>,
+        Receiver<router::RouterCommand>,
+    ) = unbounded();
+
+    router::start(router_commands_out);
 
     // TODO routing and such
 
@@ -31,8 +39,8 @@ fn main() {
         WsSession::new(
             uuid::Uuid::new_v4(),
             ws_out,
-            commands_in.clone(),
-            events_out.clone(),
+            bugout_commands_in.clone(),
+            kafka_events_out.clone(),
         )
     })
     .unwrap();
