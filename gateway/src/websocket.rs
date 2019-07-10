@@ -222,6 +222,8 @@ impl Handler for WsSession {
         }
 
         // Some activity has occured, so reset the expiration
+        println!("Reset EXPIRE");
+        self.expire_timeout.take();
         self.ws_out.timeout(EXPIRE_TIMEOUT_MS, EXPIRE)?;
 
         // Run default frame validation
