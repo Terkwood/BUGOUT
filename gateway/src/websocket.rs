@@ -129,7 +129,7 @@ impl Handler for WsSession {
                 Ok(())
             }
             Ok(Commands::Beep) => {
-                println!("beep from {}", short_uuid(self.client_id));
+                println!("{} BEEP", short_uuid(self.client_id));
                 Ok(())
             }
             Err(e) => {
