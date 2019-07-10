@@ -78,7 +78,7 @@ impl Handler for WsSession {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
-        println!("{} MESSAGE {}", short_uuid(self.client_id), msg);
+        println!("{} RECV {}", short_uuid(self.client_id), msg);
         let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
         match deserialized {
