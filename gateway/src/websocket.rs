@@ -78,8 +78,6 @@ impl Handler for WsSession {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
-
-
         println!("{} got message '{}' ", short_uuid(self.client_id), msg);
         let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
@@ -130,6 +128,10 @@ impl Handler for WsSession {
 
                 Ok(())
             }
+            Ok(Commands::Beep) => {
+                println!("beep from {}", short_uuid(self.client_id));
+                Ok(())
+            }
             Err(e) => {
                 println!("Error deserializing {:?}", e);
                 Ok(())
@@ -138,7 +140,12 @@ impl Handler for WsSession {
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
-        println!("{} closing ({:?}) {}", short_uuid(self.client_id), code, reason);
+        println!(
+            "{} closing ({:?}) {}",
+            short_uuid(self.client_id),
+            code,
+            reason
+        );
 
         self.notify_router_close();
 
@@ -220,7 +227,11 @@ impl Handler for WsSession {
         if frame.opcode() == OpCode::Pong {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
                 let now = time::precise_time_ns();
-                println!("{} ping RTT: {:.3}ms", short_uuid(self.client_id), (now - pong) as f64 / 1_000_000f64);
+                println!(
+                    "{} PONG ({:.3}ms)",
+                    short_uuid(self.client_id),
+                    (now - pong) as f64 / 1_000_000f64
+                );
             } else {
                 println!("Received bad pong.");
             }

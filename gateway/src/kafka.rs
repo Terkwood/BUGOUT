@@ -42,7 +42,8 @@ fn start_producer(kafka_out: crossbeam::Receiver<Commands>) {
                             .key(&c.game_id.to_string()), 0);
                         // Fire and forget
                         ()
-                    }       ,
+                    },
+                    Ok(Commands::Beep) => (),
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
         }
