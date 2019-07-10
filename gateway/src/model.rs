@@ -34,6 +34,7 @@ pub struct MakeMoveCommand {
 #[serde(tag = "type")]
 pub enum Commands {
     MakeMove(MakeMoveCommand),
+    Beep,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -103,12 +104,12 @@ mod tests {
         let req_id = Uuid::new_v4();
 
         assert_eq!(
-            serde_json::to_string(&super::Commands::MakeMove {
+            serde_json::to_string(&super::Commands::MakeMove (super::MakeMoveCommand{
                 game_id,
                 req_id,
                 player: super::Player::BLACK,
                 coord: Some(super::Coord { x: 0, y: 0 })
-            })
+            }))
             .unwrap(),
             format!("{{\"type\":\"MakeMove\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\",\"player\":\"BLACK\",\"coord\":{{\"x\":0,\"y\":0}}}}", game_id, req_id)
         )

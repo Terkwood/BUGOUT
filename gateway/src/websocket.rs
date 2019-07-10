@@ -8,6 +8,8 @@ use crossbeam_channel::unbounded;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
+use uuid::Uuid;
+
 use crate::model::*;
 use crate::router::RouterCommand;
 
@@ -16,7 +18,7 @@ const EXPIRE: Token = Token(2);
 const CHANNEL_RECV: Token = Token(3);
 
 const PING_TIMEOUT_MS: u64 = 5_000;
-const EXPIRE_TIMEOUT_MS: u64 = 30_000;
+const EXPIRE_TIMEOUT_MS: u64 = 55_000;
 const CHANNEL_RECV_TIMEOUT_MS: u64 = 10;
 
 // WebSocket handler
@@ -66,6 +68,8 @@ impl WsSession {
 
 impl Handler for WsSession {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
+        println!("{} OPEN", short_uuid(self.client_id));
+
         // schedule a timeout to send a ping every 5 seconds
         self.ws_out.timeout(PING_TIMEOUT_MS, PING)?;
         // schedule a timeout to close the connection if there is no activity for 30 seconds
@@ -76,7 +80,6 @@ impl Handler for WsSession {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
-        println!("WsSession got message '{}'. ", msg);
         let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
         match deserialized {
@@ -86,6 +89,13 @@ impl Handler for WsSession {
                 player,
                 coord,
             })) => {
+                println!(
+                    "{} MOVE  {} {:?} {:?}",
+                    short_uuid(self.client_id),
+                    short_uuid(game_id),
+                    player,
+                    coord
+                );
                 // For now, set the current game id to
                 // the first one that we try to send a
                 // command to
@@ -126,15 +136,25 @@ impl Handler for WsSession {
 
                 Ok(())
             }
+            Ok(Commands::Beep) => {
+                println!("{} BEEP  ", short_uuid(self.client_id));
+
+                Ok(())
+            }
             Err(e) => {
-                println!("Error deserializing {:?}", e);
+                println!("{} ERROR deserializing {:?}", short_uuid(self.client_id), e);
                 Ok(())
             }
         }
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
-        println!("WebSocket closing ({:?}) {}", code, reason);
+        println!(
+            "{} CLOSE ({:?}) {}",
+            short_uuid(self.client_id),
+            code,
+            reason
+        );
 
         self.notify_router_close();
 
@@ -195,7 +215,7 @@ impl Handler for WsSession {
             }
             self.expire_timeout = Some(timeout)
         } else if event == PING {
-            // This ensures there is only one ping timeout at a time
+            // This ensures there is only one timeout at a time
             if let Some(t) = self.ping_timeout.take() {
                 self.ws_out.cancel(t)?
             }
@@ -204,6 +224,7 @@ impl Handler for WsSession {
             if let Some(t) = self.channel_recv_timeout.take() {
                 self.ws_out.cancel(t)?
             }
+            self.channel_recv_timeout = Some(timeout)
         }
 
         Ok(())
@@ -215,7 +236,11 @@ impl Handler for WsSession {
         if frame.opcode() == OpCode::Pong {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
                 let now = time::precise_time_ns();
-                println!("RTT is {:.3}ms.", (now - pong) as f64 / 1_000_000f64);
+                println!(
+                    "{} PONG ({:.3}ms)",
+                    short_uuid(self.client_id),
+                    (now - pong) as f64 / 1_000_000f64
+                );
             } else {
                 println!("Received bad pong.");
             }
@@ -233,3 +258,7 @@ impl Handler for WsSession {
 struct DefaultHandler;
 
 impl Handler for DefaultHandler {}
+
+fn short_uuid(uuid: Uuid) -> String {
+    uuid.to_string()[..8].to_string()
+}
