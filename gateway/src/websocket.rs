@@ -224,6 +224,8 @@ impl Handler for WsSession {
             } else {
                 println!("Received bad pong.");
             }
+        } else {
+            println!("Frame opcode {}", frame.opcode())
         }
 
         // Some activity has occured, so reset the expiration
