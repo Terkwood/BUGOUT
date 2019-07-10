@@ -78,7 +78,7 @@ impl Handler for WsSession {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
-        println!("{} got message '{}' ", short_uuid(self.client_id), msg);
+        println!("{} MESSAGE {}", short_uuid(self.client_id), msg);
         let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
         match deserialized {
@@ -141,7 +141,7 @@ impl Handler for WsSession {
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!(
-            "{} closing ({:?}) {}",
+            "{} CLOSING ({:?}) {}",
             short_uuid(self.client_id),
             code,
             reason
@@ -235,8 +235,6 @@ impl Handler for WsSession {
             } else {
                 println!("Received bad pong.");
             }
-        } else {
-            println!("Frame opcode {}", frame.opcode())
         }
 
         // Some activity has occured, so reset the expiration
