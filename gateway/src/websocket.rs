@@ -170,6 +170,7 @@ impl Handler for WsSession {
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
             EXPIRE => {
                 self.notify_router_close();
+                println!("{} closing: away", self.client_id);
                 self.ws_out.close(CloseCode::Away)
             }
             CHANNEL_RECV => {
@@ -218,7 +219,7 @@ impl Handler for WsSession {
         if frame.opcode() == OpCode::Pong {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
                 let now = time::precise_time_ns();
-                println!("RTT is {:.3}ms.", (now - pong) as f64 / 1_000_000f64);
+                println!("{} ping RTT: {:.3}ms", self.client_id, (now - pong) as f64 / 1_000_000f64);
             } else {
                 println!("Received bad pong.");
             }
