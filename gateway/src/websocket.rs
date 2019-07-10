@@ -210,6 +210,11 @@ impl Handler for WsSession {
     fn on_new_timeout(&mut self, event: Token, timeout: Timeout) -> Result<()> {
         // Cancel the old timeout and replace.
         if event == EXPIRE {
+            println!(
+                "{} EXPIRE {:?}",
+                short_uuid(self.client_id),
+                time::now_utc().to_timespec().sec % 10_000
+            );
             if let Some(t) = self.expire_timeout.take() {
                 self.ws_out.cancel(t)?
             }
