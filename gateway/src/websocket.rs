@@ -21,6 +21,8 @@ const PING_TIMEOUT_MS: u64 = 5_000;
 const EXPIRE_TIMEOUT_MS: u64 = 15_000;
 const CHANNEL_RECV_TIMEOUT_MS: u64 = 10;
 
+const PRINT_PINGS_BEEPS: bool = false;
+
 // WebSocket handler
 pub struct WsSession {
     pub client_id: ClientId,
@@ -68,6 +70,8 @@ impl WsSession {
 
 impl Handler for WsSession {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
+        println!("{} OPEN", short_uuid(self.client_id));
+
         // schedule a timeout to send a ping every 5 seconds
         self.ws_out.timeout(PING_TIMEOUT_MS, PING)?;
         // schedule a timeout to close the connection if there is no activity for 30 seconds
@@ -88,7 +92,7 @@ impl Handler for WsSession {
                 coord,
             })) => {
                 println!(
-                    "{} MOVE {} {:?} {:?}",
+                    "{} MOVE  {} {:?} {:?}",
                     short_uuid(self.client_id),
                     short_uuid(game_id),
                     player,
@@ -135,7 +139,9 @@ impl Handler for WsSession {
                 Ok(())
             }
             Ok(Commands::Beep) => {
-                println!("{} BEEP ", short_uuid(self.client_id));
+                if PRINT_PINGS_BEEPS {
+                    println!("{} BEEP  ", short_uuid(self.client_id));
+                }
                 Ok(())
             }
             Err(e) => {
@@ -147,7 +153,7 @@ impl Handler for WsSession {
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!(
-            "{} CLOSING ({:?}) {}",
+            "{} CLOSE ({:?}) {}",
             short_uuid(self.client_id),
             code,
             reason
@@ -233,11 +239,13 @@ impl Handler for WsSession {
         if frame.opcode() == OpCode::Pong {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
                 let now = time::precise_time_ns();
-                println!(
-                    "{} PONG ({:.3}ms)",
-                    short_uuid(self.client_id),
-                    (now - pong) as f64 / 1_000_000f64
-                );
+                if PRINT_PINGS_BEEPS {
+                    println!(
+                        "{} PONG ({:.3}ms)",
+                        short_uuid(self.client_id),
+                        (now - pong) as f64 / 1_000_000f64
+                    );
+                }
             } else {
                 println!("Received bad pong.");
             }
