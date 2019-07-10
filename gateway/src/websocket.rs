@@ -90,7 +90,7 @@ impl Handler for WsSession {
                 coord,
             })) => {
                 println!(
-                    "{} MOVE  {} {:?} {:?}",
+                    "{} MOVE   {} {:?} {:?}",
                     short_uuid(self.client_id),
                     short_uuid(game_id),
                     player,
@@ -137,12 +137,12 @@ impl Handler for WsSession {
                 Ok(())
             }
             Ok(Commands::Beep) => {
-                println!("{} BEEP  ", short_uuid(self.client_id));
+                println!("{} BEEP   ", short_uuid(self.client_id));
 
                 Ok(())
             }
             Err(e) => {
-                println!("{} ERROR deserializing {:?}", short_uuid(self.client_id), e);
+                println!("{} ERROR  deserializing {:?}", short_uuid(self.client_id), e);
                 Ok(())
             }
         }
@@ -150,7 +150,8 @@ impl Handler for WsSession {
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!(
-            "{} CLOSE ({:?}) {}",
+            "{} CLOSE  {} ({:?}) {}",
+            short_time(),
             short_uuid(self.client_id),
             code,
             reason
@@ -210,11 +211,7 @@ impl Handler for WsSession {
     fn on_new_timeout(&mut self, event: Token, timeout: Timeout) -> Result<()> {
         // Cancel the old timeout and replace.
         if event == EXPIRE {
-            println!(
-                "{} EXPIRE {:?}",
-                short_uuid(self.client_id),
-                time::now_utc().to_timespec().sec % 10_000
-            );
+            println!("{} EXPIRE {:?}", short_uuid(self.client_id), short_time());
             if let Some(t) = self.expire_timeout.take() {
                 self.ws_out.cancel(t)?
             }
@@ -242,7 +239,7 @@ impl Handler for WsSession {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
                 let now = time::precise_time_ns();
                 println!(
-                    "{} PONG ({:.3}ms)",
+                    "{} PONG   ({:.3}ms)",
                     short_uuid(self.client_id),
                     (now - pong) as f64 / 1_000_000f64
                 );
@@ -266,4 +263,8 @@ impl Handler for DefaultHandler {}
 
 fn short_uuid(uuid: Uuid) -> String {
     uuid.to_string()[..8].to_string()
+}
+
+fn short_time() -> i64 {
+    time::now_utc().to_timespec().sec % 10_000
 }
