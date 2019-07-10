@@ -78,7 +78,6 @@ impl Handler for WsSession {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
-        println!("{} RECV {}", short_uuid(self.client_id), msg);
         let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
         match deserialized {
@@ -88,6 +87,13 @@ impl Handler for WsSession {
                 player,
                 coord,
             })) => {
+                println!(
+                    "{} MAKE MOVE {} {:?} {:?}",
+                    short_uuid(self.client_id),
+                    short_uuid(game_id),
+                    player,
+                    coord
+                );
                 // For now, set the current game id to
                 // the first one that we try to send a
                 // command to
@@ -129,11 +135,11 @@ impl Handler for WsSession {
                 Ok(())
             }
             Ok(Commands::Beep) => {
-                println!("{} BEEP", short_uuid(self.client_id));
+                println!("{} BEEP ", short_uuid(self.client_id));
                 Ok(())
             }
             Err(e) => {
-                println!("Error deserializing {:?}", e);
+                println!("{} ERROR deserializing {:?}", short_uuid(self.client_id), e);
                 Ok(())
             }
         }
