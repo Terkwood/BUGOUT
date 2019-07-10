@@ -16,7 +16,7 @@ const EXPIRE: Token = Token(2);
 const CHANNEL_RECV: Token = Token(3);
 
 const PING_TIMEOUT_MS: u64 = 5_000;
-const EXPIRE_TIMEOUT_MS: u64 = 30_000;
+const EXPIRE_TIMEOUT_MS: u64 = 15_000;
 const CHANNEL_RECV_TIMEOUT_MS: u64 = 10;
 
 // WebSocket handler
