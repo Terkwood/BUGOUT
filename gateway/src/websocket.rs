@@ -151,8 +151,8 @@ impl Handler for WsSession {
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!(
             "{} CLOSE  {} ({:?}) {}",
-            short_time(),
             short_uuid(self.client_id),
+            short_time(),
             code,
             reason
         );
