@@ -8,6 +8,8 @@ use crossbeam_channel::unbounded;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
+use uuid::Uuid;
+
 use crate::model::*;
 use crate::router::RouterCommand;
 
@@ -78,7 +80,7 @@ impl Handler for WsSession {
     fn on_message(&mut self, msg: Message) -> Result<()> {
 
 
-        println!("WsSession got message '{}'. ", msg);
+        println!("{} got message '{}' ", short_uuid(self.client_id), msg);
         let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
         match deserialized {
@@ -136,7 +138,7 @@ impl Handler for WsSession {
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
-        println!("WebSocket closing ({:?}) {}", code, reason);
+        println!("{} closing ({:?}) {}", short_uuid(self.client_id), code, reason);
 
         self.notify_router_close();
 
@@ -170,7 +172,6 @@ impl Handler for WsSession {
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
             EXPIRE => {
                 self.notify_router_close();
-                println!("{} closing: away", self.client_id);
                 self.ws_out.close(CloseCode::Away)
             }
             CHANNEL_RECV => {
@@ -219,7 +220,7 @@ impl Handler for WsSession {
         if frame.opcode() == OpCode::Pong {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
                 let now = time::precise_time_ns();
-                println!("{} ping RTT: {:.3}ms", self.client_id, (now - pong) as f64 / 1_000_000f64);
+                println!("{} ping RTT: {:.3}ms", short_uuid(self.client_id), (now - pong) as f64 / 1_000_000f64);
             } else {
                 println!("Received bad pong.");
             }
@@ -237,3 +238,7 @@ impl Handler for WsSession {
 struct DefaultHandler;
 
 impl Handler for DefaultHandler {}
+
+fn short_uuid(uuid: Uuid) -> String {
+    uuid.to_string()[..8].to_string()
+}
