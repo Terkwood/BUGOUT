@@ -88,7 +88,7 @@ impl Handler for WsSession {
                 coord,
             })) => {
                 println!(
-                    "{} MAKE MOVE {} {:?} {:?}",
+                    "{} MOVE {} {:?} {:?}",
                     short_uuid(self.client_id),
                     short_uuid(game_id),
                     player,
