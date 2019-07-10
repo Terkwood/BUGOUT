@@ -76,6 +76,8 @@ impl Handler for WsSession {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
+
+
         println!("WsSession got message '{}'. ", msg);
         let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
@@ -195,7 +197,7 @@ impl Handler for WsSession {
             }
             self.expire_timeout = Some(timeout)
         } else if event == PING {
-            // This ensures there is only one ping timeout at a time
+            // This ensures there is only one timeout at a time
             if let Some(t) = self.ping_timeout.take() {
                 self.ws_out.cancel(t)?
             }
@@ -204,6 +206,7 @@ impl Handler for WsSession {
             if let Some(t) = self.channel_recv_timeout.take() {
                 self.ws_out.cancel(t)?
             }
+            self.channel_recv_timeout = Some(timeout)
         }
 
         Ok(())
@@ -222,8 +225,6 @@ impl Handler for WsSession {
         }
 
         // Some activity has occured, so reset the expiration
-        println!("Reset EXPIRE");
-        self.expire_timeout.take();
         self.ws_out.timeout(EXPIRE_TIMEOUT_MS, EXPIRE)?;
 
         // Run default frame validation
