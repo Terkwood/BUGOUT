@@ -1,5 +1,5 @@
 https://your.host.here
 
-proxy /bugout gateway:3012 {
+proxy /gateway gateway:3012 {
     websocket
 }
