@@ -33,6 +33,14 @@ services:
     #  - ~/.gradle:/home/gradle/.gradle
     depends_on:
       - "kafka"
+  reverse-proxy:
+    image: abiosoft/caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/volumes/bugout-reverse-proxy/Caddyfile:/etc/Caddyfile
+      - /var/volumes/bugout-reverse-proxy/.caddy:/root/.caddy
   gamestates-aggregator:
     build: gamestates-aggregator/.
     links:
