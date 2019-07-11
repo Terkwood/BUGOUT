@@ -39,8 +39,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /var/volumes/reverse-proxy/Caddyfile:/etc/Caddyfile
-      - /var/volumes/reverse-proxy/.caddy:/root/.caddy
+      - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile
+      - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy
   gamestates-aggregator:
     build: gamestates-aggregator/.
     links:
