@@ -1,3 +1,7 @@
+# docker volume mounts
+bugout-reverse-proxy/*
+
+
 .DS_Store
 .idea/shelf
 /android.tests.dependencies
