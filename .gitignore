@@ -1,5 +1,5 @@
 # docker volume mounts
-bugout-reverse-proxy/*
+reverse-proxy/volume
 
 
 .DS_Store
