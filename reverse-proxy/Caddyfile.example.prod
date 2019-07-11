@@ -1,0 +1,5 @@
+https://your.host.here
+
+proxy /gateway gateway:3012 {
+    websocket
+}

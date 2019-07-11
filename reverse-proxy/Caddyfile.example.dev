@@ -1,0 +1,5 @@
+localhost
+
+proxy /gateway gateway:3012 {
+    websocket
+}
