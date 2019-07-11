@@ -1,7 +1,3 @@
-# docker volume mounts
-reverse-proxy/volume
-
-
 .DS_Store
 .idea/shelf
 /android.tests.dependencies
