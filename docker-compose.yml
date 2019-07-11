@@ -39,8 +39,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./reverse-proxy/volume/Caddyfile:/etc/Caddyfile
-      - ./reverse-proxy/volume/.caddy:/root/.caddy
+      - caddy/Caddyfile:/etc/Caddyfile
+      - caddy/.caddy:/root/.caddy
   gamestates-aggregator:
     build: gamestates-aggregator/.
     links:
@@ -53,3 +53,6 @@ services:
     build: kafkacat/.
     links:
       - "kafka"
+volumes:
+  caddy:
+    - ./reverse-proxy/volume
