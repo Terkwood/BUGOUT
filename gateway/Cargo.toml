@@ -1,6 +1,6 @@
 [package]
 name = "gateway"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
@@ -9,6 +9,7 @@ crossbeam = "*"
 crossbeam-channel = "*"
 futures = "*"
 mio-extras = "2.0"
+rand = "*"
 rdkafka = "~0.21"
 serde = "*"
 serde_derive = "*"

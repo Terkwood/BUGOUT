@@ -10,6 +10,7 @@ use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode
 
 use uuid::Uuid;
 
+use crate::logging::emoji;
 use crate::model::*;
 use crate::router::RouterCommand;
 
@@ -68,7 +69,7 @@ impl WsSession {
 
 impl Handler for WsSession {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
-        println!("{} OPEN", short_uuid(self.client_id));
+        println!("🎫 {} OPEN", short_uuid(self.client_id));
 
         // schedule a timeout to send a ping every 5 seconds
         self.ws_out.timeout(PING_TIMEOUT_MS, PING)?;
@@ -90,7 +91,8 @@ impl Handler for WsSession {
                 coord,
             })) => {
                 println!(
-                    "{} MOVE   {} {:?} {:?}",
+                    "{} {} MOVE   {} {:?} {:?}",
+                    emoji(&player),
                     short_uuid(self.client_id),
                     short_uuid(game_id),
                     player,
@@ -137,12 +139,15 @@ impl Handler for WsSession {
                 Ok(())
             }
             Ok(Commands::Beep) => {
-                println!("{} BEEP   ", short_uuid(self.client_id));
+                println!("🤖 {} BEEP   ", short_uuid(self.client_id));
 
                 Ok(())
             }
-            Err(e) => {
-                println!("{} ERROR  deserializing {:?}", short_uuid(self.client_id), e);
+            Err(_err) => {
+                println!(
+                    "💥 {} ERROR  message deserialization failed",
+                    short_uuid(self.client_id)
+                );
                 Ok(())
             }
         }
@@ -150,7 +155,7 @@ impl Handler for WsSession {
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!(
-            "{} CLOSE  {} ({:?}) {}",
+            "🚪 {} CLOSE  {} ({:?}) {}",
             short_uuid(self.client_id),
             short_time(),
             code,
@@ -172,9 +177,8 @@ impl Handler for WsSession {
     }
 
     fn on_error(&mut self, err: Error) {
-        // Shutdown on any error
-        println!("Shutting down WsSession for error: {}", err);
-        self.ws_out.shutdown().unwrap();
+        // Log any error
+        println!("🔥 {} ERROR  {:?}", short_uuid(self.client_id), err,)
     }
 
     fn on_timeout(&mut self, event: Token) -> Result<()> {
@@ -211,7 +215,6 @@ impl Handler for WsSession {
     fn on_new_timeout(&mut self, event: Token, timeout: Timeout) -> Result<()> {
         // Cancel the old timeout and replace.
         if event == EXPIRE {
-            println!("{} EXPIRE {:?}", short_uuid(self.client_id), short_time());
             if let Some(t) = self.expire_timeout.take() {
                 self.ws_out.cancel(t)?
             }
@@ -239,12 +242,12 @@ impl Handler for WsSession {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
                 let now = time::precise_time_ns();
                 println!(
-                    "{} PONG   ({:.3}ms)",
+                    "🏓 {} PING   PONG   ({:.3}ms)",
                     short_uuid(self.client_id),
                     (now - pong) as f64 / 1_000_000f64
                 );
             } else {
-                println!("Received bad pong.");
+                println!("😐 {} PONG gone wrong", short_uuid(self.client_id));
             }
         }
 
