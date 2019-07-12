@@ -10,6 +10,7 @@ extern crate ws;
 
 mod json;
 mod kafka;
+mod logging;
 pub mod model;
 mod router;
 mod websocket;

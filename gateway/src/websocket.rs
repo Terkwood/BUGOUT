@@ -10,6 +10,7 @@ use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode
 
 use uuid::Uuid;
 
+use crate::logging::emoji;
 use crate::model::*;
 use crate::router::RouterCommand;
 
@@ -68,7 +69,7 @@ impl WsSession {
 
 impl Handler for WsSession {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
-        println!("  {} OPEN", short_uuid(self.client_id));
+        println!("🎫 {} OPEN", short_uuid(self.client_id));
 
         // schedule a timeout to send a ping every 5 seconds
         self.ws_out.timeout(PING_TIMEOUT_MS, PING)?;
@@ -91,7 +92,7 @@ impl Handler for WsSession {
             })) => {
                 println!(
                     "{} {} MOVE   {} {:?} {:?}",
-                    player.emoji(),
+                    emoji(&player),
                     short_uuid(self.client_id),
                     short_uuid(game_id),
                     player,
