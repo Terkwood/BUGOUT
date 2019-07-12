@@ -1,6 +1,7 @@
 extern crate crossbeam;
 extern crate crossbeam_channel;
 extern crate mio_extras;
+extern crate rand;
 extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;

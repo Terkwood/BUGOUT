@@ -1,3 +1,4 @@
+use rand::seq::SliceRandom;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -18,6 +19,21 @@ pub struct Coord {
 pub enum Player {
     BLACK,
     WHITE,
+}
+
+impl Player {
+    pub fn emoji(&self) -> String {
+        match self {
+            Player::BLACK => vec!["♚", "♛", "♜", "♝", "♞", "♟"]
+                .choose(&mut rand::thread_rng())
+                .map(|s| s.to_string())
+                .unwrap_or("♚".to_owned()),
+            Player::WHITE => vec!["♔", "♕", "♖", "♗", "♘", "♙"]
+                .choose(&mut rand::thread_rng())
+                .map(|s| s.to_string())
+                .unwrap_or("♔".to_owned()),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
