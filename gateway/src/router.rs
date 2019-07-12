@@ -4,7 +4,7 @@ use std::thread;
 use crossbeam::{Receiver, Sender};
 use crossbeam_channel::select;
 
-use crate::model::{ClientId, Events, GameId};
+use crate::model::{ClientId, Events, GameId, RequestGameIdCommand};
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
@@ -19,6 +19,10 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                             router.add_client(client_id , game_id , events_in),
                         Ok(RouterCommand::DeleteClient{client_id, game_id}) =>
                             router.delete_client(client_id, game_id),
+                        Ok(RouterCommand::RegisterOpenGame{game_id}) =>
+                            router.register_open_game(game_id),
+                        Ok(RouterCommand::RequestGameId(client_id, RequestGameIdCommand{ req_id})) =>
+                            unimplemented!(),
                         Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                     },
                 recv(kafka_events_out) -> event =>
@@ -41,12 +45,14 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
 /// Each client has an associated crossbeam Sender for BUGOUT events
 struct Router {
     pub clients_by_game: HashMap<GameId, Vec<ClientSender>>,
+    pub available_games: Vec<GameId>,
 }
 
 impl Router {
     pub fn new() -> Router {
         Router {
             clients_by_game: HashMap::new(),
+            available_games: vec![],
         }
     }
 
@@ -74,6 +80,15 @@ impl Router {
             *self.clients_by_game.get_mut(&game_id).unwrap() = without;
         }
     }
+
+    /// This is a big fat hack...
+    /// We want the game IDs to be data driven via kafka.
+    /// But this is better than having the game IDs hardcoded.
+    pub fn register_open_game(&mut self, game_id: GameId) {
+        // Register duplicates as we'll plan to consume two at a time
+        self.available_games.push(game_id);
+        self.available_games.push(game_id)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -93,4 +108,8 @@ pub enum RouterCommand {
         client_id: ClientId,
         game_id: GameId,
     },
+    RegisterOpenGame {
+        game_id: GameId,
+    },
+    RequestGameId(ClientId, RequestGameIdCommand),
 }

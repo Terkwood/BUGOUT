@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::json::GameStateJson;
 use crate::model::*;
+use crate::router::RouterCommand;
 
 const BROKERS: &str = "kafka:9092";
 const APP_NAME: &str = "gateway";
@@ -21,16 +22,23 @@ const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
 const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_EV_TOPIC];
 const NUM_PREMADE_GAMES: usize = 10;
 
-pub fn start(events_in: crossbeam::Sender<Events>, commands_out: crossbeam::Receiver<Commands>) {
-    thread::spawn(move || start_producer(commands_out));
+pub fn start(
+    events_in: crossbeam::Sender<Events>,
+    router_commands_in: crossbeam::Sender<RouterCommand>,
+    commands_out: crossbeam::Receiver<Commands>,
+) {
+    thread::spawn(move || start_producer(router_commands_in, commands_out));
 
     thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS, events_in));
 }
 
-fn start_producer(kafka_out: crossbeam::Receiver<Commands>) {
+fn start_producer(
+    router_commands_in: crossbeam::Sender<RouterCommand>,
+    kafka_out: crossbeam::Receiver<Commands>,
+) {
     let producer = configure_producer(BROKERS);
 
-    create_premade_games(&producer);
+    create_premade_games(&producer, router_commands_in);
 
     loop {
         select! {
@@ -43,14 +51,17 @@ fn start_producer(kafka_out: crossbeam::Receiver<Commands>) {
                         // Fire and forget
                         ()
                     },
-                    Ok(Commands::Beep) => (),
+                    Ok(_) => (),
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
         }
     }
 }
 
-fn create_premade_games(producer: &FutureProducer) -> Vec<GameId> {
+fn create_premade_games(
+    producer: &FutureProducer,
+    router_commands_in: crossbeam::Sender<RouterCommand>,
+) -> Vec<GameId> {
     let mut premade_game_ids = vec![];
     for _ in 0..NUM_PREMADE_GAMES {
         premade_game_ids.push(Uuid::new_v4());
@@ -73,9 +84,14 @@ fn create_premade_games(producer: &FutureProducer) -> Vec<GameId> {
         future.wait().unwrap().unwrap();
     }
 
+    // THIS IS A BIG FAT HACK
+    // (but it's less bad than hardcoding these IDs in the browser app)
     println!("Available game IDs:");
     for game_id in premade_game_ids.iter() {
         println!("\t{}", game_id);
+        router_commands_in
+            .send(RouterCommand::RegisterOpenGame { game_id: *game_id })
+            .expect("couldnt send open game id")
     }
 
     premade_game_ids
