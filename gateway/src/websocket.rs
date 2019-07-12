@@ -141,11 +141,10 @@ impl Handler for WsSession {
 
                 Ok(())
             }
-            Err(e) => {
+            Err(_err) => {
                 println!(
-                    "{} ERROR  deserializing {:?}",
-                    short_uuid(self.client_id),
-                    e
+                    "{} ERROR  message deserialization failed",
+                    short_uuid(self.client_id)
                 );
                 Ok(())
             }
@@ -177,7 +176,7 @@ impl Handler for WsSession {
 
     fn on_error(&mut self, err: Error) {
         // Log any error
-        println!("WebSocket error: {}", err);
+        println!("{} ERROR  {:?}", short_uuid(self.client_id), err,)
     }
 
     fn on_timeout(&mut self, event: Token) -> Result<()> {
