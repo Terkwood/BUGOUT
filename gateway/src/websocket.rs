@@ -142,7 +142,11 @@ impl Handler for WsSession {
                 Ok(())
             }
             Err(e) => {
-                println!("{} ERROR  deserializing {:?}", short_uuid(self.client_id), e);
+                println!(
+                    "{} ERROR  deserializing {:?}",
+                    short_uuid(self.client_id),
+                    e
+                );
                 Ok(())
             }
         }
@@ -172,9 +176,8 @@ impl Handler for WsSession {
     }
 
     fn on_error(&mut self, err: Error) {
-        // Shutdown on any error
-        println!("Shutting down WsSession for error: {}", err);
-        self.ws_out.shutdown().unwrap();
+        // Log any error
+        println!("WebSocket error: {}", err);
     }
 
     fn on_timeout(&mut self, event: Token) -> Result<()> {
