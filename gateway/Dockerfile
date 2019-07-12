@@ -15,4 +15,7 @@ RUN git fetch && git pull
 RUN git rev-parse HEAD
 
 RUN cargo install --path .
-CMD ["sh", "run.sh"]
+#TODO
+RUN git fetch && git checkout fix/gateway-wimpiness
+#TODO
+CMD ["sh", "no_run.sh"]
