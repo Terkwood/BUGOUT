@@ -27,7 +27,7 @@ pub struct WsSession {
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
     pub channel_recv_timeout: Option<Timeout>,
-    pub bugout_commands_in: crossbeam_channel::Sender<Commands>,
+    pub bugout_commands_in: crossbeam_channel::Sender<ClientCommands>,
     pub events_out: Option<crossbeam_channel::Receiver<Events>>,
     pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     current_game: Option<GameId>,
@@ -37,7 +37,7 @@ impl WsSession {
     pub fn new(
         client_id: ClientId,
         ws_out: ws::Sender,
-        bugout_commands_in: crossbeam_channel::Sender<Commands>,
+        bugout_commands_in: crossbeam_channel::Sender<ClientCommands>,
         router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     ) -> WsSession {
         WsSession {
@@ -79,10 +79,10 @@ impl Handler for WsSession {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
-        let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
+        let deserialized: Result<ClientCommands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
         match deserialized {
-            Ok(Commands::MakeMove(MakeMoveCommand {
+            Ok(ClientCommands::MakeMove(MakeMoveCommand {
                 game_id,
                 req_id,
                 player,
@@ -101,7 +101,7 @@ impl Handler for WsSession {
                     if c == game_id {
                         return self
                             .bugout_commands_in
-                            .send(Commands::MakeMove(MakeMoveCommand {
+                            .send(ClientCommands::MakeMove(MakeMoveCommand {
                                 game_id,
                                 req_id,
                                 player,
@@ -113,12 +113,12 @@ impl Handler for WsSession {
 
                 Ok(())
             }
-            Ok(Commands::Beep) => {
+            Ok(ClientCommands::Beep) => {
                 println!("🤖 {} BEEP   ", short_uuid(self.client_id));
 
                 Ok(())
             }
-            Ok(Commands::RequestOpenGame(req)) => {
+            Ok(ClientCommands::RequestOpenGame(req)) => {
                 // For now, set the current game id to
                 // the first one that we try to send a
                 // command to
@@ -143,7 +143,7 @@ impl Handler for WsSession {
                 }
                 Ok(())
             }
-            Ok(Commands::Reconnect(req)) => unimplemented!(),
+            Ok(ClientCommands::Reconnect(req)) => unimplemented!(),
             Err(_err) => {
                 println!(
                     "💥 {} ERROR  message deserialization failed",

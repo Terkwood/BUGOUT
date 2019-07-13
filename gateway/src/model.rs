@@ -46,7 +46,7 @@ pub struct ReconnectCommand {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
-pub enum Commands {
+pub enum ClientCommands {
     MakeMove(MakeMoveCommand),
     Beep,
     RequestOpenGame(RequestGameIdCommand),
@@ -107,7 +107,10 @@ impl Events {
 }
 
 pub enum BugoutMessage {
-    Command { client_id: Uuid, command: Commands },
+    Command {
+        client_id: Uuid,
+        command: ClientCommands,
+    },
     Event(Events),
 }
 
@@ -132,7 +135,7 @@ mod tests {
         let req_id = Uuid::new_v4();
 
         assert_eq!(
-            serde_json::to_string(&super::Commands::MakeMove (super::MakeMoveCommand{
+            serde_json::to_string(&super::ClientCommands::MakeMove (super::MakeMoveCommand{
                 game_id,
                 req_id,
                 player: super::Player::BLACK,
