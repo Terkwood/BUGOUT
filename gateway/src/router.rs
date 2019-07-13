@@ -93,7 +93,7 @@ impl Router {
         self.available_games.push(game_id);
         self.available_games.push(game_id);
 
-        println!("📝 Registered open game {}", short_uuid(game_id))
+        println!("📝 Registered open game {}", game_id)
     }
 
     pub fn pop_open_game_reply(&mut self, client_id: ClientId, reply_to: ReqId) {
