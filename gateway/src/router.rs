@@ -6,7 +6,6 @@ use crossbeam_channel::select;
 
 use uuid::Uuid;
 
-use crate::logging::short_uuid;
 use crate::model::{ClientId, Events, GameId, GameIdReplyEvent, ReqId, RequestGameIdCommand};
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
