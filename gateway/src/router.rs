@@ -4,7 +4,9 @@ use std::thread;
 use crossbeam::{Receiver, Sender};
 use crossbeam_channel::select;
 
-use crate::model::{ClientId, Events, GameId, RequestGameIdCommand};
+use uuid::Uuid;
+
+use crate::model::{ClientId, Events, GameId, GameIdReplyEvent, ReqId, RequestGameIdCommand};
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
@@ -21,8 +23,9 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                             router.delete_client(client_id, game_id),
                         Ok(RouterCommand::RegisterOpenGame{game_id}) =>
                             router.register_open_game(game_id),
-                        Ok(RouterCommand::RequestGameId(client_id, RequestGameIdCommand{ req_id})) =>
-                            unimplemented!(),
+                        Ok(RouterCommand::RequestGameId(client_id,
+                            RequestGameIdCommand{ req_id})) =>
+                            router.pop_open_game_reply(client_id, req_id),
                         Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                     },
                 recv(kafka_events_out) -> event =>
@@ -88,6 +91,27 @@ impl Router {
         // Register duplicates as we'll plan to consume two at a time
         self.available_games.push(game_id);
         self.available_games.push(game_id)
+    }
+
+    pub fn pop_open_game_reply(&mut self, client_id: ClientId, reply_to: ReqId) {
+        let cc = self.clients_by_game.clone();
+        let clients = cc.iter().map(|(_, v)| v).flatten();
+        let mut ccc = clients.clone();
+        if let Some(client_sender) = ccc.find(|cs| cs.client_id == client_id) {
+            let popped = self.available_games.pop();
+            if let Some(open_game_id) = popped {
+                client_sender
+                    .events_in
+                    .send(Events::GameIdReply(GameIdReplyEvent {
+                        game_id: open_game_id,
+                        reply_to,
+                        event_id: Uuid::new_v4(),
+                    }))
+                    .expect("could not send game id reply from router")
+            } else {
+                panic!("Out of game IDs! ")
+            }
+        }
     }
 }
 
