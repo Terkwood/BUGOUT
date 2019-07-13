@@ -6,7 +6,7 @@ use crossbeam_channel::select;
 
 use uuid::Uuid;
 
-use crate::model::{ClientId, Events, GameId, GameIdReplyEvent, ReqId, RequestGameIdCommand};
+use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, ReqId, RequestGameIdCommand};
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
@@ -104,7 +104,7 @@ impl Router {
             if let Some(open_game_id) = popped {
                 client_sender
                     .events_in
-                    .send(Events::GameIdReply(GameIdReplyEvent {
+                    .send(Events::OpenGameReply(OpenGameReplyEvent {
                         game_id: open_game_id,
                         reply_to,
                         event_id: Uuid::new_v4(),

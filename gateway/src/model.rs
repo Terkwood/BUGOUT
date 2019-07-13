@@ -70,7 +70,7 @@ pub struct MoveRejectedEvent {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GameIdReplyEvent {
+pub struct OpenGameReplyEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
     #[serde(rename = "replyTo")]
@@ -84,7 +84,7 @@ pub struct GameIdReplyEvent {
 pub enum Events {
     MoveMade(MoveMadeEvent),
     MoveRejected(MoveRejectedEvent),
-    GameIdReply(GameIdReplyEvent),
+    OpenGameReply(OpenGameReplyEvent),
 }
 
 impl Events {
@@ -92,7 +92,7 @@ impl Events {
         match self {
             Events::MoveMade(e) => e.game_id,
             Events::MoveRejected(e) => e.game_id,
-            Events::GameIdReply(e) => e.game_id,
+            Events::OpenGameReply(e) => e.game_id,
         }
     }
 }
