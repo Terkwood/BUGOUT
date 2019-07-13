@@ -118,14 +118,6 @@ impl Events {
     }
 }
 
-pub enum BugoutMessage {
-    Command {
-        client_id: Uuid,
-        command: ClientCommands,
-    },
-    Event(Events),
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Captures {
     pub black: u16,
