@@ -6,7 +6,7 @@ use crossbeam_channel::select;
 
 use uuid::Uuid;
 
-use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, ReqId, RequestGameIdCommand};
+use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, ReqId};
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
@@ -17,15 +17,14 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
             select! {
                 recv(router_commands_out) -> command =>
                     match command {
-                        Ok(RouterCommand::AddClient{client_id, game_id, events_in}) =>
-                            router.add_client(client_id , game_id , events_in),
+                        Ok(RouterCommand::AddClient{client_id, events_in, req_id}) => {
+                            let game_id = router.add_client(client_id, events_in.clone());
+                            events_in.send(Events::OpenGameReply(OpenGameReplyEvent{game_id, reply_to:req_id, event_id: Uuid::new_v4()})).expect("could not send open game reply")
+                        },
                         Ok(RouterCommand::DeleteClient{client_id, game_id}) =>
                             router.delete_client(client_id, game_id),
                         Ok(RouterCommand::RegisterOpenGame{game_id}) =>
                             router.register_open_game(game_id),
-                        Ok(RouterCommand::RequestGameId(client_id,
-                            RequestGameIdCommand{ req_id})) =>
-                            router.pop_open_game_reply(client_id, req_id),
                         Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                     },
                 recv(kafka_events_out) -> event =>
@@ -59,17 +58,21 @@ impl Router {
         }
     }
 
-    pub fn add_client(&mut self, client_id: ClientId, game_id: GameId, events_in: Sender<Events>) {
+    pub fn add_client(&mut self, client_id: ClientId, events_in: Sender<Events>) -> GameId {
         let newbie = ClientSender {
             client_id,
             events_in,
         };
+
+        let game_id = self.pop_open_game_id();
         match self.clients_by_game.get_mut(&game_id) {
             Some(client_senders) => client_senders.push(newbie),
             None => {
                 self.clients_by_game.insert(game_id, vec![newbie]);
             }
         }
+
+        game_id
     }
 
     pub fn delete_client(&mut self, client_id: ClientId, game_id: GameId) {
@@ -95,26 +98,22 @@ impl Router {
         println!("📝 Registered open game {}", game_id)
     }
 
-    pub fn pop_open_game_reply(&mut self, client_id: ClientId, reply_to: ReqId) {
-        let cc = self.clients_by_game.clone();
-        let clients = cc.iter().map(|(_, v)| v).flatten();
-        let mut ccc = clients.clone();
-        if let Some(client_sender) = ccc.find(|cs| cs.client_id == client_id) {
-            println!("....... POP ! .......");
+    fn pop_open_game_id(&mut self) -> GameId {
+        println!("....... POP ! .......");
 
-            let popped = self.available_games.pop();
-            if let Some(open_game_id) = popped {
-                client_sender
-                    .events_in
-                    .send(Events::OpenGameReply(OpenGameReplyEvent {
-                        game_id: open_game_id,
-                        reply_to,
-                        event_id: Uuid::new_v4(),
-                    }))
-                    .expect("could not send game id reply from router")
-            } else {
-                panic!("⚰️ Out of game IDs! ⚰️")
-            }
+        let popped = self.available_games.pop();
+        if let Some(open_game_id) = popped {
+            /*client_sender
+            .events_in
+            .send(Events::OpenGameReply(OpenGameReplyEvent {
+                game_id: open_game_id,
+                reply_to,
+                event_id: Uuid::new_v4(),
+            }))
+            .expect("could not send game id reply from router")*/
+            open_game_id
+        } else {
+            panic!("⚰️ Out of game IDs! ⚰️")
         }
     }
 }
@@ -129,8 +128,8 @@ struct ClientSender {
 pub enum RouterCommand {
     AddClient {
         client_id: ClientId,
-        game_id: GameId,
         events_in: Sender<Events>,
+        req_id: ReqId,
     },
     DeleteClient {
         client_id: ClientId,
@@ -139,5 +138,4 @@ pub enum RouterCommand {
     RegisterOpenGame {
         game_id: GameId,
     },
-    RequestGameId(ClientId, RequestGameIdCommand),
 }

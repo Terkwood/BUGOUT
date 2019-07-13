@@ -96,29 +96,6 @@ impl Handler for WsSession {
                     player,
                     coord
                 );
-                // For now, set the current game id to
-                // the first one that we try to send a
-                // command to
-                if self.current_game.is_none() {
-                    self.current_game = Some(game_id);
-                    let (events_in, events_out): (
-                        crossbeam_channel::Sender<Events>,
-                        crossbeam_channel::Receiver<Events>,
-                    ) = unbounded();
-
-                    // ..and let the router know we're interested in it,
-                    // so that we can receive updates
-                    self.router_commands_in
-                        .send(RouterCommand::AddClient {
-                            client_id: self.client_id,
-                            game_id,
-                            events_in,
-                        })
-                        .expect("error sending router command to add client");
-
-                    //.. and track the out-channel so we can select! on it
-                    self.events_out = Some(events_out);
-                }
 
                 if let Some(c) = self.current_game {
                     if c == game_id {
@@ -141,10 +118,31 @@ impl Handler for WsSession {
 
                 Ok(())
             }
-            Ok(Commands::RequestOpenGame(req)) => Ok(self
-                .router_commands_in
-                .send(RouterCommand::RequestGameId(self.client_id, req))
-                .expect("couldnt send router command for requesting game id")),
+            Ok(Commands::RequestOpenGame(req)) => {
+                // For now, set the current game id to
+                // the first one that we try to send a
+                // command to
+                if self.current_game.is_none() {
+                    let (events_in, events_out): (
+                        crossbeam_channel::Sender<Events>,
+                        crossbeam_channel::Receiver<Events>,
+                    ) = unbounded();
+
+                    // ..and let the router know we're interested in it,
+                    // so that we can receive updates
+                    self.router_commands_in
+                        .send(RouterCommand::AddClient {
+                            client_id: self.client_id,
+                            events_in,
+                            req_id: req.req_id,
+                        })
+                        .expect("error sending router command to add client");
+
+                    //.. and track the out-channel so we can select! on it
+                    self.events_out = Some(events_out);
+                }
+                Ok(())
+            }
             Err(_err) => {
                 println!(
                     "💥 {} ERROR  message deserialization failed",
@@ -200,6 +198,14 @@ impl Handler for WsSession {
             CHANNEL_RECV => {
                 if let Some(eo) = &self.events_out {
                     while let Ok(event) = eo.try_recv() {
+                        match event {
+                            Events::OpenGameReply(OpenGameReplyEvent {
+                                game_id,
+                                reply_to: _,
+                                event_id: _,
+                            }) => self.current_game = Some(game_id),
+                            _ => (),
+                        }
                         self.ws_out.send(serde_json::to_string(&event).unwrap())?;
                     }
                 }
