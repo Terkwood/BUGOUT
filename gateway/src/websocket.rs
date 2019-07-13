@@ -30,7 +30,7 @@ pub struct WsSession {
     pub bugout_commands_in: crossbeam_channel::Sender<ClientCommands>,
     pub events_out: Option<crossbeam_channel::Receiver<Events>>,
     pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
-    current_game: Option<GameId>,
+    pub current_game: Option<GameId>,
 }
 
 impl WsSession {
@@ -67,7 +67,7 @@ impl WsSession {
 
 impl Handler for WsSession {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
-        println!("🎫 {} OPEN", short_uuid(self.client_id));
+        println!("🎫 {} OPEN", session_code(self));
 
         // schedule a timeout to send a ping every 5 seconds
         self.ws_out.timeout(PING_TIMEOUT_MS, PING)?;
@@ -89,10 +89,9 @@ impl Handler for WsSession {
                 coord,
             })) => {
                 println!(
-                    "{} {} MOVE   {} {:?} {:?}",
+                    "{} MOVE   {} {:?} {:?}",
                     emoji(&player),
-                    short_uuid(self.client_id),
-                    short_uuid(game_id),
+                    session_code(self),
                     player,
                     coord
                 );
@@ -114,7 +113,11 @@ impl Handler for WsSession {
                 Ok(())
             }
             Ok(ClientCommands::Beep) => {
-                println!("🤖 {} BEEP   ", short_uuid(self.client_id));
+                println!(
+                    "🤖 {} BEEP   {:?}",
+                    session_code(self),
+                    self.current_game.map(|gid| short_uuid(gid))
+                );
 
                 Ok(())
             }
@@ -161,7 +164,7 @@ impl Handler for WsSession {
             Err(_err) => {
                 println!(
                     "💥 {} ERROR  message deserialization failed",
-                    short_uuid(self.client_id)
+                    session_code(self)
                 );
                 Ok(())
             }
@@ -171,7 +174,7 @@ impl Handler for WsSession {
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!(
             "🚪 {} CLOSE  {} ({:?}) {}",
-            short_uuid(self.client_id),
+            session_code(self),
             short_time(),
             code,
             reason
@@ -193,7 +196,7 @@ impl Handler for WsSession {
 
     fn on_error(&mut self, err: Error) {
         // Log any error
-        println!("🔥 {} ERROR  {:?}", short_uuid(self.client_id), err,)
+        println!("🔥 {} ERROR  {:?}", session_code(self), err,)
     }
 
     fn on_timeout(&mut self, event: Token) -> Result<()> {
@@ -266,11 +269,11 @@ impl Handler for WsSession {
                 let now = time::precise_time_ns();
                 println!(
                     "🏓 {} PING   PONG   ({:.3}ms)",
-                    short_uuid(self.client_id),
+                    session_code(self),
                     (now - pong) as f64 / 1_000_000f64
                 );
             } else {
-                println!("😐 {} PONG gone wrong", short_uuid(self.client_id));
+                println!("😐 {} PONG gone wrong", session_code(self));
             }
         }
 
