@@ -96,6 +96,7 @@ impl Router {
     }
 
     pub fn pop_open_game_reply(&mut self, client_id: ClientId, reply_to: ReqId) {
+        println!("....... POP ! .......");
         let cc = self.clients_by_game.clone();
         let clients = cc.iter().map(|(_, v)| v).flatten();
         let mut ccc = clients.clone();
@@ -111,7 +112,7 @@ impl Router {
                     }))
                     .expect("could not send game id reply from router")
             } else {
-                panic!("Out of game IDs! ")
+                panic!("⚰️ Out of game IDs! ⚰️")
             }
         }
     }
