@@ -99,18 +99,8 @@ impl Router {
     }
 
     fn pop_open_game_id(&mut self) -> GameId {
-        println!("....... POP ! .......");
-
         let popped = self.available_games.pop();
         if let Some(open_game_id) = popped {
-            /*client_sender
-            .events_in
-            .send(Events::OpenGameReply(OpenGameReplyEvent {
-                game_id: open_game_id,
-                reply_to,
-                event_id: Uuid::new_v4(),
-            }))
-            .expect("could not send game id reply from router")*/
             open_game_id
         } else {
             panic!("⚰️ Out of game IDs! ⚰️")
