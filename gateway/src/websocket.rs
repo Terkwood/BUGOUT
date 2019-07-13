@@ -89,7 +89,7 @@ impl Handler for WsSession {
                 coord,
             })) => {
                 println!(
-                    "{} MOVE   {} {:?} {:?}",
+                    "{} {} MOVE   {:?} {:?}",
                     emoji(&player),
                     session_code(self),
                     player,
