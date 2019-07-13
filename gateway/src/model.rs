@@ -30,11 +30,18 @@ pub struct MakeMoveCommand {
     pub coord: Option<Coord>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RequestGameIdCommand {
+    #[serde(rename = "reqId")]
+    pub req_id: ReqId,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 pub enum Commands {
     MakeMove(MakeMoveCommand),
     Beep,
+    RequestOpenGame(RequestGameIdCommand),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -44,7 +51,7 @@ pub struct MoveMadeEvent {
     #[serde(rename = "replyTo")]
     pub reply_to: ReqId,
     #[serde(rename = "eventId")]
-    pub event_id: Uuid,
+    pub event_id: EventId,
     pub player: Player,
     pub coord: Option<Coord>,
     pub captured: Vec<Coord>,
@@ -53,13 +60,23 @@ pub struct MoveMadeEvent {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MoveRejectedEvent {
     #[serde(rename = "gameId")]
-    pub game_id: Uuid,
+    pub game_id: GameId,
     #[serde(rename = "replyTo")]
-    pub reply_to: Uuid,
+    pub reply_to: ReqId,
     #[serde(rename = "eventId")]
-    pub event_id: Uuid,
+    pub event_id: EventId,
     pub player: Player,
     pub coord: Coord,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct OpenGameReplyEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    #[serde(rename = "replyTo")]
+    pub reply_to: ReqId,
+    #[serde(rename = "eventId")]
+    pub event_id: EventId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -67,6 +84,7 @@ pub struct MoveRejectedEvent {
 pub enum Events {
     MoveMade(MoveMadeEvent),
     MoveRejected(MoveRejectedEvent),
+    OpenGameReply(OpenGameReplyEvent),
 }
 
 impl Events {
@@ -74,6 +92,7 @@ impl Events {
         match self {
             Events::MoveMade(e) => e.game_id,
             Events::MoveRejected(e) => e.game_id,
+            Events::OpenGameReply(e) => e.game_id,
         }
     }
 }

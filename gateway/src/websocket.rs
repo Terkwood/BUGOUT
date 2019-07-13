@@ -8,9 +8,7 @@ use crossbeam_channel::unbounded;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
-use uuid::Uuid;
-
-use crate::logging::emoji;
+use crate::logging::*;
 use crate::model::*;
 use crate::router::RouterCommand;
 
@@ -98,29 +96,6 @@ impl Handler for WsSession {
                     player,
                     coord
                 );
-                // For now, set the current game id to
-                // the first one that we try to send a
-                // command to
-                if self.current_game.is_none() {
-                    self.current_game = Some(game_id);
-                    let (events_in, events_out): (
-                        crossbeam_channel::Sender<Events>,
-                        crossbeam_channel::Receiver<Events>,
-                    ) = unbounded();
-
-                    // ..and let the router know we're interested in it,
-                    // so that we can receive updates
-                    self.router_commands_in
-                        .send(RouterCommand::AddClient {
-                            client_id: self.client_id,
-                            game_id,
-                            events_in,
-                        })
-                        .expect("error sending router command to add client");
-
-                    //.. and track the out-channel so we can select! on it
-                    self.events_out = Some(events_out);
-                }
 
                 if let Some(c) = self.current_game {
                     if c == game_id {
@@ -141,6 +116,31 @@ impl Handler for WsSession {
             Ok(Commands::Beep) => {
                 println!("🤖 {} BEEP   ", short_uuid(self.client_id));
 
+                Ok(())
+            }
+            Ok(Commands::RequestOpenGame(req)) => {
+                // For now, set the current game id to
+                // the first one that we try to send a
+                // command to
+                if self.current_game.is_none() {
+                    let (events_in, events_out): (
+                        crossbeam_channel::Sender<Events>,
+                        crossbeam_channel::Receiver<Events>,
+                    ) = unbounded();
+
+                    // ..and let the router know we're interested in it,
+                    // so that we can receive updates
+                    self.router_commands_in
+                        .send(RouterCommand::AddClient {
+                            client_id: self.client_id,
+                            events_in,
+                            req_id: req.req_id,
+                        })
+                        .expect("error sending router command to add client");
+
+                    //.. and track the out-channel so we can select! on it
+                    self.events_out = Some(events_out);
+                }
                 Ok(())
             }
             Err(_err) => {
@@ -198,6 +198,14 @@ impl Handler for WsSession {
             CHANNEL_RECV => {
                 if let Some(eo) = &self.events_out {
                     while let Ok(event) = eo.try_recv() {
+                        match event {
+                            Events::OpenGameReply(OpenGameReplyEvent {
+                                game_id,
+                                reply_to: _,
+                                event_id: _,
+                            }) => self.current_game = Some(game_id),
+                            _ => (),
+                        }
                         self.ws_out.send(serde_json::to_string(&event).unwrap())?;
                     }
                 }
@@ -263,11 +271,3 @@ impl Handler for WsSession {
 struct DefaultHandler;
 
 impl Handler for DefaultHandler {}
-
-fn short_uuid(uuid: Uuid) -> String {
-    uuid.to_string()[..8].to_string()
-}
-
-fn short_time() -> i64 {
-    time::now_utc().to_timespec().sec % 10_000
-}
