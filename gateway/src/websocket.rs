@@ -139,6 +139,7 @@ impl Handler for WsSession {
                 Ok(())
             }
             Ok(ClientCommands::Reconnect(ReconnectCommand { game_id, req_id })) => {
+                println!("🔌 {} RECONN ", session_code(self));
                 let (events_in, events_out) = client_event_channels();
 
                 // ..and let the router know we're interested in it,
@@ -154,6 +155,9 @@ impl Handler for WsSession {
 
                 //.. and track the out-channel so we can select! on it
                 self.events_out = Some(events_out);
+
+                // accept whatever game_id the client shares with us
+                self.current_game = Some(game_id);
 
                 Ok(())
             }
