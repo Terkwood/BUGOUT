@@ -25,7 +25,7 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                             router.delete_client(client_id, game_id),
                         Ok(RouterCommand::RegisterOpenGame{game_id}) =>
                             router.register_open_game(game_id),
-                        Ok(RouterCommand::Reconnect{client_id, game_id, events_in}) =>
+                        Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) =>
                             unimplemented!(),
                         Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                     },
@@ -134,5 +134,6 @@ pub enum RouterCommand {
         client_id: ClientId,
         game_id: GameId,
         events_in: Sender<Events>,
+        req_id: ReqId,
     },
 }

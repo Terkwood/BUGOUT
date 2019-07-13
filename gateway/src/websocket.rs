@@ -119,14 +119,10 @@ impl Handler for WsSession {
                 Ok(())
             }
             Ok(ClientCommands::RequestOpenGame(req)) => {
-                // For now, set the current game id to
-                // the first one that we try to send a
-                // command to
+                // Tentatively ignore this request if we already have a game
+                // in progress.  Not sure this is perfect, though.
                 if self.current_game.is_none() {
-                    let (events_in, events_out): (
-                        crossbeam_channel::Sender<Events>,
-                        crossbeam_channel::Receiver<Events>,
-                    ) = unbounded();
+                    let (events_in, events_out) = client_event_channels();
 
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
@@ -143,7 +139,25 @@ impl Handler for WsSession {
                 }
                 Ok(())
             }
-            Ok(ClientCommands::Reconnect(req)) => unimplemented!(),
+            Ok(ClientCommands::Reconnect(ReconnectCommand { game_id, req_id })) => {
+                let (events_in, events_out) = client_event_channels();
+
+                // ..and let the router know we're interested in it,
+                // so that we can receive updates
+                self.router_commands_in
+                    .send(RouterCommand::Reconnect {
+                        client_id: self.client_id,
+                        game_id,
+                        events_in,
+                        req_id,
+                    })
+                    .expect("error sending router command to reconnect client");
+
+                //.. and track the out-channel so we can select! on it
+                self.events_out = Some(events_out);
+
+                Ok(())
+            }
             Err(_err) => {
                 println!(
                     "💥 {} ERROR  message deserialization failed",
@@ -272,3 +286,10 @@ impl Handler for WsSession {
 struct DefaultHandler;
 
 impl Handler for DefaultHandler {}
+
+fn client_event_channels() -> (
+    crossbeam_channel::Sender<Events>,
+    crossbeam_channel::Receiver<Events>,
+) {
+    unbounded()
+}
