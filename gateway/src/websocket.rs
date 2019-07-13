@@ -114,9 +114,8 @@ impl Handler for WsSession {
             }
             Ok(ClientCommands::Beep) => {
                 println!(
-                    "🤖 {} BEEP   {:?}",
-                    session_code(self),
-                    self.current_game.map(|gid| short_uuid(gid))
+                    "🤖 {} BEEP   ",
+                    session_code(self)
                 );
 
                 Ok(())

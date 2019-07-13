@@ -28,7 +28,7 @@ pub fn short_time() -> i64 {
 pub fn session_code(ws_session: &WsSession) -> String {
     let empty_short_uuid = "        ";
     format!(
-        "{} {:?}",
+        "{} {}",
         short_uuid(ws_session.client_id),
         ws_session
             .current_game
