@@ -17,7 +17,7 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
             select! {
                 recv(router_commands_out) -> command =>
                     match command {
-                        Ok(RouterCommand::AddClient{client_id, events_in, req_id}) => {
+                        Ok(RouterCommand::RequestOpenGame{client_id, events_in, req_id}) => {
                             let game_id = router.add_client(client_id, events_in.clone());
                             events_in.send(Events::OpenGameReply(OpenGameReplyEvent{game_id, reply_to:req_id, event_id: Uuid::new_v4()})).expect("could not send open game reply")
                         },
@@ -25,6 +25,8 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                             router.delete_client(client_id, game_id),
                         Ok(RouterCommand::RegisterOpenGame{game_id}) =>
                             router.register_open_game(game_id),
+                        Ok(RouterCommand::Reconnect{client_id, game_id, events_in}) =>
+                            unimplemented!(),
                         Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                     },
                 recv(kafka_events_out) -> event =>
@@ -116,7 +118,7 @@ struct ClientSender {
 
 #[derive(Debug, Clone)]
 pub enum RouterCommand {
-    AddClient {
+    RequestOpenGame {
         client_id: ClientId,
         events_in: Sender<Events>,
         req_id: ReqId,
@@ -127,5 +129,10 @@ pub enum RouterCommand {
     },
     RegisterOpenGame {
         game_id: GameId,
+    },
+    Reconnect {
+        client_id: ClientId,
+        game_id: GameId,
+        events_in: Sender<Events>,
     },
 }

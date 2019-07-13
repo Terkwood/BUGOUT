@@ -131,7 +131,7 @@ impl Handler for WsSession {
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
                     self.router_commands_in
-                        .send(RouterCommand::AddClient {
+                        .send(RouterCommand::RequestOpenGame {
                             client_id: self.client_id,
                             events_in,
                             req_id: req.req_id,
