@@ -36,12 +36,21 @@ pub struct RequestGameIdCommand {
     pub req_id: ReqId,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ReconnectCommand {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    #[serde(rename = "reqId")]
+    pub req_id: ReqId,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 pub enum Commands {
     MakeMove(MakeMoveCommand),
     Beep,
     RequestOpenGame(RequestGameIdCommand),
+    Reconnect(ReconnectCommand),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

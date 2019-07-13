@@ -143,6 +143,7 @@ impl Handler for WsSession {
                 }
                 Ok(())
             }
+            Ok(Commands::Reconnect(req)) => unimplemented!(),
             Err(_err) => {
                 println!(
                     "💥 {} ERROR  message deserialization failed",
