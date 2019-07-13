@@ -141,7 +141,7 @@ impl Handler for WsSession {
 
                 Ok(())
             }
-            Ok(Commands::RequestGameId(req)) => Ok(self
+            Ok(Commands::RequestOpenGame(req)) => Ok(self
                 .router_commands_in
                 .send(RouterCommand::RequestGameId(self.client_id, req))
                 .expect("couldnt send router command for requesting game id")),

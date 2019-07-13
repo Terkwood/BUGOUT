@@ -41,7 +41,7 @@ pub struct RequestGameIdCommand {
 pub enum Commands {
     MakeMove(MakeMoveCommand),
     Beep,
-    RequestGameId(RequestGameIdCommand),
+    RequestOpenGame(RequestGameIdCommand),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

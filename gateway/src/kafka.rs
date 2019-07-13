@@ -86,9 +86,7 @@ fn create_premade_games(
 
     // THIS IS A BIG FAT HACK
     // (but it's less bad than hardcoding these IDs in the browser app)
-    println!("Available game IDs:");
     for game_id in premade_game_ids.iter() {
-        println!("\t{}", game_id);
         router_commands_in
             .send(RouterCommand::RegisterOpenGame { game_id: *game_id })
             .expect("couldnt send open game id")
