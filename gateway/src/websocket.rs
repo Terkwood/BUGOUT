@@ -113,10 +113,7 @@ impl Handler for WsSession {
                 Ok(())
             }
             Ok(ClientCommands::Beep) => {
-                println!(
-                    "🤖 {} BEEP   ",
-                    session_code(self)
-                );
+                println!("🤖 {} BEEP   ", session_code(self));
 
                 Ok(())
             }
