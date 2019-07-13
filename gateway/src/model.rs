@@ -89,11 +89,22 @@ pub struct OpenGameReplyEvent {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ReconnectedEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    #[serde(rename = "replyTo")]
+    pub reply_to: ReqId,
+    #[serde(rename = "eventId")]
+    pub event_id: EventId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum Events {
     MoveMade(MoveMadeEvent),
     MoveRejected(MoveRejectedEvent),
     OpenGameReply(OpenGameReplyEvent),
+    Reconnected(ReconnectedEvent),
 }
 
 impl Events {
@@ -102,6 +113,7 @@ impl Events {
             Events::MoveMade(e) => e.game_id,
             Events::MoveRejected(e) => e.game_id,
             Events::OpenGameReply(e) => e.game_id,
+            Events::Reconnected(e) => e.game_id,
         }
     }
 }

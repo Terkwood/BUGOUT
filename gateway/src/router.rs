@@ -6,7 +6,7 @@ use crossbeam_channel::select;
 
 use uuid::Uuid;
 
-use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, ReqId};
+use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, ReconnectedEvent, ReqId};
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
@@ -27,8 +27,8 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                             router.register_open_game(game_id),
                         Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
                             router.reconnect_client(client_id, game_id, events_in.clone());
-                            events_in.send(unimplemented!()).expect("could not send reconnect reply")
-                        }
+                            events_in.send(Events::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4()})).expect("could not send reconnect reply")
+                        },
                         Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                     },
                 recv(kafka_events_out) -> event =>
