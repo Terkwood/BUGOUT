@@ -25,8 +25,10 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                             router.delete_client(client_id, game_id),
                         Ok(RouterCommand::RegisterOpenGame{game_id}) =>
                             router.register_open_game(game_id),
-                        Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) =>
-                            unimplemented!(),
+                        Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
+                            router.reconnect_client(client_id, game_id, events_in.clone());
+                            events_in.send(unimplemented!()).expect("could not send reconnect reply")
+                        }
                         Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                     },
                 recv(kafka_events_out) -> event =>
@@ -75,6 +77,25 @@ impl Router {
         }
 
         game_id
+    }
+
+    pub fn reconnect_client(
+        &mut self,
+        client_id: ClientId,
+        game_id: GameId,
+        events_in: Sender<Events>,
+    ) {
+        let cs = ClientSender {
+            client_id,
+            events_in,
+        };
+
+        match self.clients_by_game.get_mut(&game_id) {
+            Some(client_senders) => client_senders.push(cs),
+            None => {
+                self.clients_by_game.insert(game_id, vec![cs]);
+            }
+        }
     }
 
     pub fn delete_client(&mut self, client_id: ClientId, game_id: GameId) {
