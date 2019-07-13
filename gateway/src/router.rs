@@ -96,11 +96,12 @@ impl Router {
     }
 
     pub fn pop_open_game_reply(&mut self, client_id: ClientId, reply_to: ReqId) {
-        println!("....... POP ! .......");
         let cc = self.clients_by_game.clone();
         let clients = cc.iter().map(|(_, v)| v).flatten();
         let mut ccc = clients.clone();
         if let Some(client_sender) = ccc.find(|cs| cs.client_id == client_id) {
+            println!("....... POP ! .......");
+
             let popped = self.available_games.pop();
             if let Some(open_game_id) = popped {
                 client_sender
