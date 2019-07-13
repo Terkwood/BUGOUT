@@ -8,9 +8,7 @@ use crossbeam_channel::unbounded;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
-use uuid::Uuid;
-
-use crate::logging::emoji;
+use crate::logging::*;
 use crate::model::*;
 use crate::router::RouterCommand;
 
@@ -267,11 +265,3 @@ impl Handler for WsSession {
 struct DefaultHandler;
 
 impl Handler for DefaultHandler {}
-
-fn short_uuid(uuid: Uuid) -> String {
-    uuid.to_string()[..8].to_string()
-}
-
-fn short_time() -> i64 {
-    time::now_utc().to_timespec().sec % 10_000
-}

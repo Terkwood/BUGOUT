@@ -6,6 +6,7 @@ use crossbeam_channel::select;
 
 use uuid::Uuid;
 
+use crate::logging::short_uuid;
 use crate::model::{ClientId, Events, GameId, GameIdReplyEvent, ReqId, RequestGameIdCommand};
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
@@ -90,7 +91,9 @@ impl Router {
     pub fn register_open_game(&mut self, game_id: GameId) {
         // Register duplicates as we'll plan to consume two at a time
         self.available_games.push(game_id);
-        self.available_games.push(game_id)
+        self.available_games.push(game_id);
+
+        println!("📝 Registered open game {}", short_uuid(game_id))
     }
 
     pub fn pop_open_game_reply(&mut self, client_id: ClientId, reply_to: ReqId) {
