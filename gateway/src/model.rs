@@ -96,6 +96,8 @@ pub struct ReconnectedEvent {
     pub reply_to: ReqId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
+    #[serde(rename = "playerUp")]
+    pub player_up: Player,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

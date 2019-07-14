@@ -7,7 +7,7 @@ use crossbeam_channel::select;
 use uuid::Uuid;
 
 use crate::logging::short_uuid;
-use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, ReconnectedEvent, ReqId};
+use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, Player, ReconnectedEvent, ReqId};
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
@@ -28,18 +28,19 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                             router.register_open_game(game_id),
                         Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
                             router.reconnect_client(client_id, game_id, events_in.clone());
-                            events_in.send(Events::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4()})).expect("could not send reconnect reply")
+                            events_in.send(Events::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})).expect("could not send reconnect reply")
                         },
                         Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                     },
                 recv(kafka_events_out) -> event =>
                     match event {
+                        Ok(Events::MoveMade(m)) => {
+                            let u = m.clone();
+                            router.set_playerup(u.game_id, u.player);
+                            router.forward_event(Events::MoveMade(m))
+                        }
                         Ok(e) =>
-                            if let Some(client_senders) = router.clients_by_game.get(&e.game_id()) {
-                                for cs in client_senders {
-                                    cs.events_in.send(e.clone()).expect("send error")
-                                }
-                            },
+                            router.forward_event(e),
                         Err(e) =>
                             panic!("Unable to receive kafka event via router channel: {:?}", e),
                     }
@@ -53,6 +54,7 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
 struct Router {
     pub clients_by_game: HashMap<GameId, Vec<ClientSender>>,
     pub available_games: Vec<GameId>,
+    pub playerup_by_game: HashMap<GameId, Player>,
 }
 
 impl Router {
@@ -60,7 +62,28 @@ impl Router {
         Router {
             clients_by_game: HashMap::new(),
             available_games: vec![],
+            playerup_by_game: HashMap::new(), // TODO This is never cleaned up
         }
+    }
+
+    pub fn forward_event(&self, e: Events) {
+        if let Some(client_senders) = self.clients_by_game.get(&e.game_id()) {
+            for cs in client_senders {
+                cs.events_in.send(e.clone()).expect("send error")
+            }
+        }
+    }
+
+    pub fn playerup(&self, game_id: GameId) -> Player {
+        self.playerup_by_game
+            .get(&game_id)
+            .unwrap_or(&Player::BLACK)
+            .clone()
+    }
+
+    // TODO This is never cleaned up
+    pub fn set_playerup(&mut self, game_id: GameId, player: Player) {
+        self.playerup_by_game.entry(game_id).or_insert(player);
     }
 
     pub fn add_client(&mut self, client_id: ClientId, events_in: Sender<Events>) -> GameId {
@@ -74,6 +97,7 @@ impl Router {
             Some(client_senders) => client_senders.push(newbie),
             None => {
                 self.clients_by_game.insert(game_id, vec![newbie]);
+                self.playerup_by_game.insert(game_id, Player::BLACK);
             }
         }
 
@@ -95,6 +119,7 @@ impl Router {
             Some(client_senders) => client_senders.push(cs),
             None => {
                 self.clients_by_game.insert(game_id, vec![cs]);
+                self.playerup_by_game.insert(game_id, Player::BLACK);
             }
         }
     }
