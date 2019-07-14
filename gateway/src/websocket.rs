@@ -27,17 +27,17 @@ pub struct WsSession {
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
     pub channel_recv_timeout: Option<Timeout>,
-    pub bugout_commands_in: crossbeam_channel::Sender<Commands>,
+    pub bugout_commands_in: crossbeam_channel::Sender<ClientCommands>,
     pub events_out: Option<crossbeam_channel::Receiver<Events>>,
     pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
-    current_game: Option<GameId>,
+    pub current_game: Option<GameId>,
 }
 
 impl WsSession {
     pub fn new(
         client_id: ClientId,
         ws_out: ws::Sender,
-        bugout_commands_in: crossbeam_channel::Sender<Commands>,
+        bugout_commands_in: crossbeam_channel::Sender<ClientCommands>,
         router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     ) -> WsSession {
         WsSession {
@@ -67,7 +67,7 @@ impl WsSession {
 
 impl Handler for WsSession {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
-        println!("🎫 {} OPEN", short_uuid(self.client_id));
+        println!("🎫 {} OPEN", session_code(self));
 
         // schedule a timeout to send a ping every 5 seconds
         self.ws_out.timeout(PING_TIMEOUT_MS, PING)?;
@@ -79,20 +79,19 @@ impl Handler for WsSession {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
-        let deserialized: Result<Commands> = serde_json::from_str(&msg.into_text()?)
+        let deserialized: Result<ClientCommands> = serde_json::from_str(&msg.into_text()?)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
         match deserialized {
-            Ok(Commands::MakeMove(MakeMoveCommand {
+            Ok(ClientCommands::MakeMove(MakeMoveCommand {
                 game_id,
                 req_id,
                 player,
                 coord,
             })) => {
                 println!(
-                    "{} {} MOVE   {} {:?} {:?}",
+                    "{} {} MOVE   {:?} {:?}",
                     emoji(&player),
-                    short_uuid(self.client_id),
-                    short_uuid(game_id),
+                    session_code(self),
                     player,
                     coord
                 );
@@ -101,7 +100,7 @@ impl Handler for WsSession {
                     if c == game_id {
                         return self
                             .bugout_commands_in
-                            .send(Commands::MakeMove(MakeMoveCommand {
+                            .send(ClientCommands::MakeMove(MakeMoveCommand {
                                 game_id,
                                 req_id,
                                 player,
@@ -113,25 +112,21 @@ impl Handler for WsSession {
 
                 Ok(())
             }
-            Ok(Commands::Beep) => {
-                println!("🤖 {} BEEP   ", short_uuid(self.client_id));
+            Ok(ClientCommands::Beep) => {
+                println!("🤖 {} BEEP   ", session_code(self));
 
                 Ok(())
             }
-            Ok(Commands::RequestOpenGame(req)) => {
-                // For now, set the current game id to
-                // the first one that we try to send a
-                // command to
+            Ok(ClientCommands::RequestOpenGame(req)) => {
+                // Tentatively ignore this request if we already have a game
+                // in progress.  Not sure this is perfect, though.
                 if self.current_game.is_none() {
-                    let (events_in, events_out): (
-                        crossbeam_channel::Sender<Events>,
-                        crossbeam_channel::Receiver<Events>,
-                    ) = unbounded();
+                    let (events_in, events_out) = client_event_channels();
 
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
                     self.router_commands_in
-                        .send(RouterCommand::AddClient {
+                        .send(RouterCommand::RequestOpenGame {
                             client_id: self.client_id,
                             events_in,
                             req_id: req.req_id,
@@ -143,10 +138,33 @@ impl Handler for WsSession {
                 }
                 Ok(())
             }
+            Ok(ClientCommands::Reconnect(ReconnectCommand { game_id, req_id })) => {
+                // accept whatever game_id the client shares with us
+                self.current_game = Some(game_id);
+
+                println!("🔌 {} RECONN ", session_code(self));
+                let (events_in, events_out) = client_event_channels();
+
+                // ..and let the router know we're interested in it,
+                // so that we can receive updates
+                self.router_commands_in
+                    .send(RouterCommand::Reconnect {
+                        client_id: self.client_id,
+                        game_id,
+                        events_in,
+                        req_id,
+                    })
+                    .expect("error sending router command to reconnect client");
+
+                //.. and track the out-channel so we can select! on it
+                self.events_out = Some(events_out);
+
+                Ok(())
+            }
             Err(_err) => {
                 println!(
                     "💥 {} ERROR  message deserialization failed",
-                    short_uuid(self.client_id)
+                    session_code(self)
                 );
                 Ok(())
             }
@@ -156,7 +174,7 @@ impl Handler for WsSession {
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!(
             "🚪 {} CLOSE  {} ({:?}) {}",
-            short_uuid(self.client_id),
+            session_code(self),
             short_time(),
             code,
             reason
@@ -178,7 +196,7 @@ impl Handler for WsSession {
 
     fn on_error(&mut self, err: Error) {
         // Log any error
-        println!("🔥 {} ERROR  {:?}", short_uuid(self.client_id), err,)
+        println!("🔥 {} ERROR  {:?}", session_code(self), err,)
     }
 
     fn on_timeout(&mut self, event: Token) -> Result<()> {
@@ -251,11 +269,11 @@ impl Handler for WsSession {
                 let now = time::precise_time_ns();
                 println!(
                     "🏓 {} PING   PONG   ({:.3}ms)",
-                    short_uuid(self.client_id),
+                    session_code(self),
                     (now - pong) as f64 / 1_000_000f64
                 );
             } else {
-                println!("😐 {} PONG gone wrong", short_uuid(self.client_id));
+                println!("😐 {} PONG gone wrong", session_code(self));
             }
         }
 
@@ -271,3 +289,10 @@ impl Handler for WsSession {
 struct DefaultHandler;
 
 impl Handler for DefaultHandler {}
+
+fn client_event_channels() -> (
+    crossbeam_channel::Sender<Events>,
+    crossbeam_channel::Receiver<Events>,
+) {
+    unbounded()
+}

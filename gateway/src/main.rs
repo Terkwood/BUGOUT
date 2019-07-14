@@ -17,13 +17,15 @@ mod websocket;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
-use model::{Commands, Events};
+use model::{ClientCommands, Events};
 use router::RouterCommand;
 use websocket::WsSession;
 
 fn main() {
-    let (bugout_commands_in, bugout_commands_out): (Sender<Commands>, Receiver<Commands>) =
-        unbounded();
+    let (bugout_commands_in, bugout_commands_out): (
+        Sender<ClientCommands>,
+        Receiver<ClientCommands>,
+    ) = unbounded();
 
     let (kafka_events_in, kafka_events_out): (Sender<Events>, Receiver<Events>) = unbounded();
 

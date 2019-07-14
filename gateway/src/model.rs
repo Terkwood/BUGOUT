@@ -20,6 +20,15 @@ pub enum Player {
     WHITE,
 }
 
+impl Player {
+    pub fn other(&self) -> Player {
+        match self {
+            Player::BLACK => Player::WHITE,
+            Player::WHITE => Player::BLACK,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MakeMoveCommand {
     #[serde(rename = "gameId")]
@@ -36,12 +45,21 @@ pub struct RequestGameIdCommand {
     pub req_id: ReqId,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ReconnectCommand {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    #[serde(rename = "reqId")]
+    pub req_id: ReqId,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
-pub enum Commands {
+pub enum ClientCommands {
     MakeMove(MakeMoveCommand),
     Beep,
     RequestOpenGame(RequestGameIdCommand),
+    Reconnect(ReconnectCommand),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -80,11 +98,24 @@ pub struct OpenGameReplyEvent {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ReconnectedEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    #[serde(rename = "replyTo")]
+    pub reply_to: ReqId,
+    #[serde(rename = "eventId")]
+    pub event_id: EventId,
+    #[serde(rename = "playerUp")]
+    pub player_up: Player,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum Events {
     MoveMade(MoveMadeEvent),
     MoveRejected(MoveRejectedEvent),
     OpenGameReply(OpenGameReplyEvent),
+    Reconnected(ReconnectedEvent),
 }
 
 impl Events {
@@ -93,13 +124,9 @@ impl Events {
             Events::MoveMade(e) => e.game_id,
             Events::MoveRejected(e) => e.game_id,
             Events::OpenGameReply(e) => e.game_id,
+            Events::Reconnected(e) => e.game_id,
         }
     }
-}
-
-pub enum BugoutMessage {
-    Command { client_id: Uuid, command: Commands },
-    Event(Events),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -123,7 +150,7 @@ mod tests {
         let req_id = Uuid::new_v4();
 
         assert_eq!(
-            serde_json::to_string(&super::Commands::MakeMove (super::MakeMoveCommand{
+            serde_json::to_string(&super::ClientCommands::MakeMove (super::MakeMoveCommand{
                 game_id,
                 req_id,
                 player: super::Player::BLACK,

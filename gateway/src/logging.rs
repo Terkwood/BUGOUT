@@ -2,6 +2,7 @@ use rand::seq::SliceRandom;
 use uuid::Uuid;
 
 use crate::model::Player;
+use crate::websocket::WsSession;
 
 pub fn emoji(player: &Player) -> String {
     match player {
@@ -22,4 +23,17 @@ pub fn short_uuid(uuid: Uuid) -> String {
 
 pub fn short_time() -> i64 {
     time::now_utc().to_timespec().sec % 10_000
+}
+
+pub fn session_code(ws_session: &WsSession) -> String {
+    let empty_short_uuid = "        ";
+    format!(
+        "{} {}",
+        short_uuid(ws_session.client_id),
+        ws_session
+            .current_game
+            .map(|gid| short_uuid(gid))
+            .unwrap_or(empty_short_uuid.to_string())
+    )
+    .to_string()
 }

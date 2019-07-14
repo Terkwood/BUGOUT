@@ -20,12 +20,12 @@ const GAME_STATES_TOPIC: &str = "bugout-game-states";
 const MAKE_MOVE_CMD_TOPIC: &str = "bugout-make-move-cmd";
 const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
 const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_EV_TOPIC];
-const NUM_PREMADE_GAMES: usize = 32;
+const NUM_PREMADE_GAMES: usize = 64;
 
 pub fn start(
     events_in: crossbeam::Sender<Events>,
     router_commands_in: crossbeam::Sender<RouterCommand>,
-    commands_out: crossbeam::Receiver<Commands>,
+    commands_out: crossbeam::Receiver<ClientCommands>,
 ) {
     thread::spawn(move || start_producer(router_commands_in, commands_out));
 
@@ -34,7 +34,7 @@ pub fn start(
 
 fn start_producer(
     router_commands_in: crossbeam::Sender<RouterCommand>,
-    kafka_out: crossbeam::Receiver<Commands>,
+    kafka_out: crossbeam::Receiver<ClientCommands>,
 ) {
     let producer = configure_producer(BROKERS);
 
@@ -44,7 +44,7 @@ fn start_producer(
         select! {
             recv(kafka_out) -> command =>
                 match command {
-                    Ok(Commands::MakeMove(c)) => {
+                    Ok(ClientCommands::MakeMove(c)) => {
                         producer.send(FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
                             .key(&c.game_id.to_string()), 0);
