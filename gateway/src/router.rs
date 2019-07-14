@@ -36,7 +36,7 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                     match event {
                         Ok(Events::MoveMade(m)) => {
                             let u = m.clone();
-                            router.set_playerup(u.game_id, u.player);
+                            router.set_playerup(u.game_id, u.player.other());
                             router.forward_event(Events::MoveMade(m))
                         }
                         Ok(e) =>

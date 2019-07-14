@@ -20,6 +20,15 @@ pub enum Player {
     WHITE,
 }
 
+impl Player {
+    pub fn other(&self) -> Player {
+        match self {
+            Player::BLACK => Player::WHITE,
+            Player::WHITE => Player::BLACK,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MakeMoveCommand {
     #[serde(rename = "gameId")]
