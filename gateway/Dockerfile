@@ -15,7 +15,4 @@ RUN git fetch && git pull
 RUN git rev-parse HEAD
 
 RUN cargo install --path .
-#TODO
-RUN git fetch && git checkout feature/websocket-reconnect
-#TODO
-CMD ["sh", "no_run.sh"]
+CMD ["sh", "run.sh"]
