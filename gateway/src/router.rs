@@ -83,7 +83,8 @@ impl Router {
 
     // TODO This is never cleaned up
     pub fn set_playerup(&mut self, game_id: GameId, player: Player) {
-        self.playerup_by_game.entry(game_id).or_insert(player);
+        let c = player.clone();
+        *self.playerup_by_game.entry(game_id).or_insert(c) = player;
     }
 
     pub fn add_client(&mut self, client_id: ClientId, events_in: Sender<Events>) -> GameId {
