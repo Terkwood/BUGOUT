@@ -92,6 +92,8 @@ fn create_premade_games(
             .expect("couldnt send open game id")
     }
 
+    println!("📝 {:<8} {}", "PREMADES", premade_game_ids.len());
+
     premade_game_ids
 }
 

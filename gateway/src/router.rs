@@ -6,7 +6,7 @@ use crossbeam_channel::select;
 
 use uuid::Uuid;
 
-use crate::logging::{short_uuid, EMPTY_SHORT_UUID};
+use crate::logging::{short_uuid, EMPTY_SHORT_UUID, MEGA_DEATH_STRING};
 use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, Player, ReconnectedEvent, ReqId};
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
@@ -21,8 +21,8 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                         Ok(RouterCommand::RequestOpenGame{client_id, events_in, req_id}) => {
                             let game_id = router.add_client(client_id, events_in.clone());
                             if let Err(err) = events_in.send(Events::OpenGameReply(OpenGameReplyEvent{game_id, reply_to:req_id, event_id: Uuid::new_v4()})) {
-                                println!("😯 {} {} ERROR  could not send open game reply {}",
-                                    short_uuid(client_id), EMPTY_SHORT_UUID, err)
+                                println!("😯 {} {} {:<8} could not send open game reply {}",
+                                    short_uuid(client_id), EMPTY_SHORT_UUID, "ERROR", err)
                             }
                         },
                         Ok(RouterCommand::DeleteClient{client_id, game_id}) =>
@@ -32,7 +32,11 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                         Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
                             router.reconnect_client(client_id, game_id, events_in.clone());
                             if let Err(err) = events_in.send(Events::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
-                                println!("😦 {} {} ERROR could not send reconnect reply {}", short_uuid(client_id), short_uuid(game_id), err)
+                                println!(
+                                    "😦 {} {} {:<8} could not send reconnect reply {}",
+                                    short_uuid(client_id),
+                                    short_uuid(game_id),
+                                    "ERROR", err)
                             }
                         },
                         Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
@@ -76,9 +80,10 @@ impl Router {
             for cs in client_senders {
                 if let Err(err) = cs.events_in.send(ev.clone()) {
                     println!(
-                        "😑 {} {} ERROR  forwarding event {}",
+                        "😑 {} {} {:<8} forwarding event {}",
                         short_uuid(cs.client_id),
                         short_uuid(ev.game_id()),
+                        "ERROR",
                         err
                     )
                 }
@@ -156,8 +161,6 @@ impl Router {
         // Register duplicates as we'll plan to consume two at a time
         self.available_games.push(game_id);
         self.available_games.push(game_id);
-
-        println!("📝 GAME {}", short_uuid(game_id))
     }
 
     fn pop_open_game_id(&mut self) -> GameId {
@@ -165,7 +168,10 @@ impl Router {
         if let Some(open_game_id) = popped {
             open_game_id
         } else {
-            panic!("⚰️ Out of game IDs! ⚰️")
+            panic!(
+                "☠️ {} {} {:<8} Out of game IDs!",
+                MEGA_DEATH_STRING, MEGA_DEATH_STRING, "UBERFAIL"
+            )
         }
     }
 }
