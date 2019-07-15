@@ -156,8 +156,6 @@ impl Router {
         // Register duplicates as we'll plan to consume two at a time
         self.available_games.push(game_id);
         self.available_games.push(game_id);
-
-        println!("📝 GAME {}", short_uuid(game_id))
     }
 
     fn pop_open_game_id(&mut self) -> GameId {

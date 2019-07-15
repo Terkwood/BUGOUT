@@ -22,7 +22,12 @@ use model::{ClientCommands, Events};
 use router::RouterCommand;
 use websocket::WsSession;
 
+const NAME: &'static str = env!("CARGO_PKG_NAME");
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 fn main() {
+    println!("🔢 {} {}", NAME, VERSION);
+
     let (bugout_commands_in, bugout_commands_out): (
         Sender<ClientCommands>,
         Receiver<ClientCommands>,
