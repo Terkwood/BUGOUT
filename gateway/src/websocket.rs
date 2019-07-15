@@ -267,7 +267,6 @@ impl Handler for WsSession {
         // Cancel the old timeout and replace.
         if event == EXPIRE {
             if let Some(t) = self.expire_timeout.take() {
-                println!("🚫 {} CANCEL expire timeout", session_code(self));
                 self.ws_out.cancel(t)?
             }
             self.expire_timeout = Some(timeout);
