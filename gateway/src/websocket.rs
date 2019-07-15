@@ -315,7 +315,7 @@ impl Handler for WsSession {
                     (now - pong) as f64 / 1_000_000f64
                 );
             } else {
-                println!("😐 {} {:<8} gone wrong", session_code(self), "ERROR");
+                println!("😐 {} {:<8} gOnE wRoNg", session_code(self), "PINGPONG");
             }
         }
 
