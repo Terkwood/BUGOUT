@@ -14,6 +14,10 @@ RUN chmod 755 wait-for-it.sh
 RUN git fetch && git pull
 RUN git rev-parse HEAD
 
-RUN cargo install --path .
+# checked_duration_since feature requires nightly
+RUN rustup default nightly   
+
+# TODO re-add cargo install
+# RUN cargo install --path .
 RUN git fetch && git checkout tinker/gateway-away
 CMD ["sh", "no_run.sh"]
