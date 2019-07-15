@@ -1,5 +1,6 @@
-/// Adapted from https://github.com/housleyjk/ws-rs/blob/master/examples/pong.rs
+use std::ops::Add;
 use std::str::from_utf8;
+use std::time::{Duration, Instant};
 
 use mio_extras::timer::Timeout;
 
@@ -31,6 +32,7 @@ pub struct WsSession {
     pub events_out: Option<crossbeam_channel::Receiver<Events>>,
     pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     pub current_game: Option<GameId>,
+    pub expire_after: std::time::Instant,
 }
 
 impl WsSession {
@@ -50,6 +52,7 @@ impl WsSession {
             events_out: None,
             router_commands_in,
             current_game: None,
+            expire_after: next_expiry(),
         }
     }
 
@@ -224,9 +227,14 @@ impl Handler for WsSession {
             }
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
             EXPIRE => {
-                println!("⌛️ {} EXPIRE CONN", session_code(self));
-                self.notify_router_close();
-                self.ws_out.close(CloseCode::Away)
+                if self.expire_after.elapsed().as_millis() >= EXPIRE_TIMEOUT_MS.into() {
+                    println!("⌛️ {} EXPIRE CONN", session_code(self));
+                    self.notify_router_close();
+                    self.ws_out.close(CloseCode::Away)
+                } else {
+                    println!("🤐 {} IGNORED  expire timeout", session_code(self));
+                    Ok(())
+                }
             }
             CHANNEL_RECV => {
                 if let Some(eo) = &self.events_out {
@@ -260,7 +268,8 @@ impl Handler for WsSession {
                 println!("🚫 {} CANCEL expire timeout", session_code(self));
                 self.ws_out.cancel(t)?
             }
-            self.expire_timeout = Some(timeout)
+            self.expire_timeout = Some(timeout);
+            self.expire_after = next_expiry()
         } else if event == PING {
             // This ensures there is only one timeout at a time
             if let Some(t) = self.ping_timeout.take() {
@@ -305,6 +314,10 @@ impl Handler for WsSession {
 struct DefaultHandler;
 
 impl Handler for DefaultHandler {}
+
+fn next_expiry() -> Instant {
+    Instant::now().add(Duration::from_millis(EXPIRE_TIMEOUT_MS))
+}
 
 fn client_event_channels() -> (
     crossbeam_channel::Sender<Events>,
