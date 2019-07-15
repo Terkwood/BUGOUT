@@ -1,3 +1,4 @@
+#![feature(checked_duration_since)]
 extern crate crossbeam;
 extern crate crossbeam_channel;
 extern crate mio_extras;

@@ -227,14 +227,16 @@ impl Handler for WsSession {
             }
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
             EXPIRE => {
-                if self.expire_after.elapsed().as_millis() >= EXPIRE_TIMEOUT_MS.into() {
-                    println!("⌛️ {} EXPIRE CONN", session_code(self));
-                    self.notify_router_close();
-                    self.ws_out.close(CloseCode::Away)
-                } else {
-                    println!("🤐 {} IGNORED  expire timeout", session_code(self));
-                    Ok(())
+                if let Some(dur) = self.expire_after.checked_duration_since(Instant::now()) {
+                    if dur.as_millis() >= EXPIRE_TIMEOUT_MS.into() {
+                        println!("⌛️ {} EXPIRE CONN", session_code(self));
+                        self.notify_router_close();
+                        return self.ws_out.close(CloseCode::Away);
+                    }
                 }
+
+                println!("🤐 {} IGNORED  expire timeout", session_code(self));
+                Ok(())
             }
             CHANNEL_RECV => {
                 if let Some(eo) = &self.events_out {
