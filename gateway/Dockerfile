@@ -19,5 +19,4 @@ RUN rustup default nightly
 
 RUN cargo install --path .
 
-RUN git fetch && git checkout tinker/version-on-startup
-CMD ["sh", "no_run.sh"]
+CMD ["sh", "run.sh"]
