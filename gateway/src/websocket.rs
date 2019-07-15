@@ -309,9 +309,9 @@ impl Handler for WsSession {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
                 let now = time::precise_time_ns();
                 println!(
-                    "🏓 {} {:<8} PONG   ({:.3}ms)",
+                    "🏓 {} {:<8} {:.3}ms",
                     session_code(self),
-                    "PING",
+                    "PINGPONG",
                     (now - pong) as f64 / 1_000_000f64
                 );
             } else {
