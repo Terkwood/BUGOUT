@@ -21,8 +21,8 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                         Ok(RouterCommand::RequestOpenGame{client_id, events_in, req_id}) => {
                             let game_id = router.add_client(client_id, events_in.clone());
                             if let Err(err) = events_in.send(Events::OpenGameReply(OpenGameReplyEvent{game_id, reply_to:req_id, event_id: Uuid::new_v4()})) {
-                                println!("😯 {} {} ERROR  could not send open game reply {}",
-                                    short_uuid(client_id), EMPTY_SHORT_UUID, err)
+                                println!("😯 {} {} {:<8} could not send open game reply {}",
+                                    short_uuid(client_id), EMPTY_SHORT_UUID, "ERROR", err)
                             }
                         },
                         Ok(RouterCommand::DeleteClient{client_id, game_id}) =>
@@ -32,7 +32,11 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                         Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
                             router.reconnect_client(client_id, game_id, events_in.clone());
                             if let Err(err) = events_in.send(Events::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
-                                println!("😦 {} {} ERROR could not send reconnect reply {}", short_uuid(client_id), short_uuid(game_id), err)
+                                println!(
+                                    "😦 {} {} {:<8} could not send reconnect reply {}",
+                                    short_uuid(client_id),
+                                    short_uuid(game_id),
+                                    "ERROR", err)
                             }
                         },
                         Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
