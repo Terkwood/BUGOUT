@@ -19,7 +19,4 @@ RUN rustup default nightly
 
 RUN cargo install --path .
 
-# TODO remove
-RUN git fetch && git checkout tinker/gateway-away
-# TODO CMD ["sh", "run.sh"]
-CMD ["sh", "no_run.sh"]
+CMD ["sh", "run.sh"]
