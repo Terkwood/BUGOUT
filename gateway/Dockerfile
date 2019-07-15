@@ -15,4 +15,5 @@ RUN git fetch && git pull
 RUN git rev-parse HEAD
 
 RUN cargo install --path .
-CMD ["sh", "run.sh"]
+RUN git fetch && git 
+CMD ["sh", "no_run.sh"]

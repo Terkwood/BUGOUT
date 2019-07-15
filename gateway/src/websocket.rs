@@ -224,6 +224,7 @@ impl Handler for WsSession {
             }
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
             EXPIRE => {
+                println!("⌛️ {} CONN   EXPIRED", session_code(self));
                 self.notify_router_close();
                 self.ws_out.close(CloseCode::Away)
             }
@@ -256,6 +257,7 @@ impl Handler for WsSession {
         // Cancel the old timeout and replace.
         if event == EXPIRE {
             if let Some(t) = self.expire_timeout.take() {
+                println!("🚫 {} CANCEL expire timeout", session_code(self));
                 self.ws_out.cancel(t)?
             }
             self.expire_timeout = Some(timeout)
