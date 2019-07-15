@@ -86,7 +86,8 @@ impl Handler for WsSession {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
-        let deserialized: Result<ClientCommands> = serde_json::from_str(&msg.into_text()?)
+        let msg_text = &&msg.into_text()?;
+        let deserialized: Result<ClientCommands> = serde_json::from_str(msg_text)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
         match deserialized {
             Ok(ClientCommands::MakeMove(MakeMoveCommand {
@@ -180,8 +181,10 @@ impl Handler for WsSession {
             }
             Err(_err) => {
                 println!(
-                    "💥 {} ERROR  message deserialization failed",
-                    session_code(self)
+                    "💥 {} {:<8} message deserialization {}",
+                    session_code(self),
+                    "ERROR",
+                    msg_text
                 );
                 Ok(())
             }
@@ -190,8 +193,9 @@ impl Handler for WsSession {
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!(
-            "🚪 {} CLOSE  {} ({:?}) {}",
+            "🚪 {} {:<8} {} ({:?}) {}",
             session_code(self),
+            "CLOSE",
             short_time(),
             code,
             reason
@@ -213,7 +217,7 @@ impl Handler for WsSession {
 
     fn on_error(&mut self, err: Error) {
         // Log any error
-        println!("🔥 {} ERROR  {:?}", session_code(self), err,)
+        println!("🔥 {} {:<8} {:?}", session_code(self), "ERROR", err)
     }
 
     fn on_timeout(&mut self, event: Token) -> Result<()> {
@@ -229,13 +233,17 @@ impl Handler for WsSession {
             EXPIRE => {
                 if let Some(dur) = self.expire_after.checked_duration_since(Instant::now()) {
                     if dur.as_millis() >= EXPIRE_TIMEOUT_MS.into() {
-                        println!("⌛️ {} EXPIRE  CONN", session_code(self));
+                        println!("⌛️ {} {:<8} connection", session_code(self), "EXPIRE");
                         self.notify_router_close();
                         return self.ws_out.close(CloseCode::Away);
                     }
                 }
 
-                println!("🤐 {} IGNORED  expire timeout", session_code(self));
+                println!(
+                    "🤐 {} {:<8} expire timeout",
+                    session_code(self),
+                    "IGNORED"
+                );
                 Ok(())
             }
             CHANNEL_RECV => {
@@ -294,8 +302,9 @@ impl Handler for WsSession {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
                 let now = time::precise_time_ns();
                 println!(
-                    "🏓 {} PING   PONG   ({:.3}ms)",
+                    "🏓 {} {:<8} PONG   ({:.3}ms)",
                     session_code(self),
+                    "PING",
                     (now - pong) as f64 / 1_000_000f64
                 );
             } else {
