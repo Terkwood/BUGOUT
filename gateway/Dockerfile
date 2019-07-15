@@ -15,5 +15,5 @@ RUN git fetch && git pull
 RUN git rev-parse HEAD
 
 RUN cargo install --path .
-RUN git fetch && git 
+RUN git fetch && git checkout tinker/gateway-away
 CMD ["sh", "no_run.sh"]
