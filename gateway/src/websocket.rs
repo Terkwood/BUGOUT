@@ -97,9 +97,10 @@ impl Handler for WsSession {
                 coord,
             })) => {
                 println!(
-                    "{} {} MOVE   {:?} {:?}",
+                    "{} {} {:<8} {:?} {:?}",
                     emoji(&player),
                     session_code(self),
+                    "MOVE",
                     player,
                     coord
                 );
@@ -141,8 +142,9 @@ impl Handler for WsSession {
                             req_id: req.req_id,
                         }) {
                         println!(
-                            "😠 {} ERROR  sending router command to add client {}",
+                            "😠 {} {:<8} sending router command to add client {}",
                             session_code(self),
+                            "ERROR",
                             e
                         )
                     }
@@ -156,7 +158,7 @@ impl Handler for WsSession {
                 // accept whatever game_id the client shares with us
                 self.current_game = Some(game_id);
 
-                println!("🔌 {} RECONN ", session_code(self));
+                println!("🔌 {} RECONN", session_code(self));
                 let (events_in, events_out) = client_event_channels();
 
                 // ..and let the router know we're interested in it,
@@ -168,8 +170,9 @@ impl Handler for WsSession {
                     req_id,
                 }) {
                     println!(
-                        "😫 {} ERROR   sending router command to reconnect client {:?}",
+                        "😫 {} {:<8} sending router command to reconnect client {:?}",
                         session_code(self),
+                        "ERROR",
                         e
                     )
                 }
@@ -308,7 +311,7 @@ impl Handler for WsSession {
                     (now - pong) as f64 / 1_000_000f64
                 );
             } else {
-                println!("😐 {} PONG gone wrong", session_code(self));
+                println!("😐 {} {:<8} gone wrong", session_code(self), "ERROR");
             }
         }
 
