@@ -97,12 +97,16 @@ impl Handler for WsSession {
                 coord,
             })) => {
                 println!(
-                    "{} {} {:<8} {:?} {:?}",
+                    "{} {} {:<8} {:?} {}",
                     emoji(&player),
                     session_code(self),
                     "MOVE",
                     player,
-                    coord
+                    if let Some(Coord { x, y }) = coord {
+                        format!("{},{}", x, y)
+                    } else {
+                        "PASS".to_string()
+                    }
                 );
 
                 if let Some(c) = self.current_game {
