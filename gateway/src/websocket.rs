@@ -224,7 +224,7 @@ impl Handler for WsSession {
             }
             // EXPIRE timeout has occured, this means that the connection is inactive, let's close
             EXPIRE => {
-                println!("⌛️ {} CONN   EXPIRED", session_code(self));
+                println!("⌛️ {} EXPIRE CONN", session_code(self));
                 self.notify_router_close();
                 self.ws_out.close(CloseCode::Away)
             }
