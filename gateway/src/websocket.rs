@@ -55,12 +55,16 @@ impl WsSession {
 
     fn notify_router_close(&mut self) {
         if let Some(game_id) = self.current_game {
-            self.router_commands_in
-                .send(RouterCommand::DeleteClient {
-                    client_id: self.client_id,
-                    game_id,
-                })
-                .expect("error sending delete client message")
+            if let Err(e) = self.router_commands_in.send(RouterCommand::DeleteClient {
+                client_id: self.client_id,
+                game_id,
+            }) {
+                println!(
+                    "😤 {} ERROR  send router command delete client {}",
+                    session_code(self),
+                    e
+                )
+            }
         }
     }
 }
@@ -125,13 +129,19 @@ impl Handler for WsSession {
 
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
-                    self.router_commands_in
+                    if let Err(e) = self
+                        .router_commands_in
                         .send(RouterCommand::RequestOpenGame {
                             client_id: self.client_id,
                             events_in,
                             req_id: req.req_id,
-                        })
-                        .expect("error sending router command to add client");
+                        }) {
+                        println!(
+                            "😠 {} ERROR  sending router command to add client {}",
+                            session_code(self),
+                            e
+                        )
+                    }
 
                     //.. and track the out-channel so we can select! on it
                     self.events_out = Some(events_out);
@@ -147,14 +157,18 @@ impl Handler for WsSession {
 
                 // ..and let the router know we're interested in it,
                 // so that we can receive updates
-                self.router_commands_in
-                    .send(RouterCommand::Reconnect {
-                        client_id: self.client_id,
-                        game_id,
-                        events_in,
-                        req_id,
-                    })
-                    .expect("error sending router command to reconnect client");
+                if let Err(e) = self.router_commands_in.send(RouterCommand::Reconnect {
+                    client_id: self.client_id,
+                    game_id,
+                    events_in,
+                    req_id,
+                }) {
+                    println!(
+                        "😫 {} ERROR   sending router command to reconnect client {:?}",
+                        session_code(self),
+                        e
+                    )
+                }
 
                 //.. and track the out-channel so we can select! on it
                 self.events_out = Some(events_out);
