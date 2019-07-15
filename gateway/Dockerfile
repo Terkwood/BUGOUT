@@ -14,5 +14,9 @@ RUN chmod 755 wait-for-it.sh
 RUN git fetch && git pull
 RUN git rev-parse HEAD
 
+# checked_duration_since feature requires nightly
+RUN rustup default nightly   
+
 RUN cargo install --path .
+
 CMD ["sh", "run.sh"]
