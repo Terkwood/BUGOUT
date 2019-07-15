@@ -18,6 +18,7 @@ pub fn emoji(player: &Player) -> String {
 }
 
 pub const EMPTY_SHORT_UUID: &str = "        ";
+pub const MEGA_DEATH_STRING: &str = "⚰️⚰️⚰️⚰️⚰️⚰️⚰️⚰️";
 pub fn short_uuid(uuid: Uuid) -> String {
     uuid.to_string()[..8].to_string()
 }

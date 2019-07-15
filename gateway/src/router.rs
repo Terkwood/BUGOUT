@@ -6,7 +6,7 @@ use crossbeam_channel::select;
 
 use uuid::Uuid;
 
-use crate::logging::{short_uuid, EMPTY_SHORT_UUID};
+use crate::logging::{short_uuid, EMPTY_SHORT_UUID, MEGA_DEATH_STRING};
 use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, Player, ReconnectedEvent, ReqId};
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
@@ -80,9 +80,10 @@ impl Router {
             for cs in client_senders {
                 if let Err(err) = cs.events_in.send(ev.clone()) {
                     println!(
-                        "😑 {} {} ERROR  forwarding event {}",
+                        "😑 {} {} {:<8} forwarding event {}",
                         short_uuid(cs.client_id),
                         short_uuid(ev.game_id()),
+                        "ERROR",
                         err
                     )
                 }
@@ -167,7 +168,10 @@ impl Router {
         if let Some(open_game_id) = popped {
             open_game_id
         } else {
-            panic!("⚰️ Out of game IDs! ⚰️")
+            panic!(
+                "☠️ {} {} {:<8} Out of game IDs!",
+                MEGA_DEATH_STRING, MEGA_DEATH_STRING, "UBERFAIL"
+            )
         }
     }
 }
