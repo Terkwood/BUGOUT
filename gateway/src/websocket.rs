@@ -229,7 +229,7 @@ impl Handler for WsSession {
             EXPIRE => {
                 if let Some(dur) = self.expire_after.checked_duration_since(Instant::now()) {
                     if dur.as_millis() >= EXPIRE_TIMEOUT_MS.into() {
-                        println!("⌛️ {} EXPIRE CONN", session_code(self));
+                        println!("⌛️ {} EXPIRE  CONN", session_code(self));
                         self.notify_router_close();
                         return self.ws_out.close(CloseCode::Away);
                     }
