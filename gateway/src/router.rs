@@ -190,11 +190,12 @@ impl Router {
 
         for (game_id, game_state) in self.game_states.iter() {
             if game_state.clients.len() == 0 {
-                if let Some(_) = game_state
+                let since = game_state
                     .modified_at
                     .add(Duration::from_millis(GAME_STATE_CLEANUP_PERIOD_MS))
-                    .checked_duration_since(Instant::now())
-                {
+                    .checked_duration_since(Instant::now());
+                println!("SINCE {:?}", since);
+                if let Some(_) = since {
                     // we will destroy the game state if there are
                     // no clients connected to it
                     to_delete.push(*game_id);
