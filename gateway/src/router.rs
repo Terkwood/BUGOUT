@@ -211,8 +211,6 @@ impl Router {
 
                 if let Some(dur) = since {
                     if dur.as_millis() > GAME_STATE_CLEANUP_PERIOD_MS.into() {
-                        // we will destroy the game state if there are
-                        // no clients connected to it
                         to_delete.push(*game_id);
                     }
                 }
