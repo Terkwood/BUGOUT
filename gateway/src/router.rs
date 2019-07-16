@@ -58,30 +58,46 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
     });
 }
 
+struct GameState {
+    pub clients: Vec<ClientSender>,
+    pub playerup: Player,
+}
+
+impl Default for GameState {
+    fn default() -> GameState {
+        GameState {
+            clients: vec![],
+            playerup: Player::BLACK,
+        }
+    }
+}
+
 /// Keeps track of clients interested in various games
 /// Each client has an associated crossbeam Sender for BUGOUT events
 struct Router {
-    pub clients_by_game: HashMap<GameId, Vec<ClientSender>>,
     pub available_games: Vec<GameId>,
-    pub playerup_by_game: HashMap<GameId, Player>,
+    pub game_states: HashMap<GameId, GameState>,
 }
 
 impl Router {
     pub fn new() -> Router {
         Router {
-            clients_by_game: HashMap::new(),
             available_games: vec![],
-            playerup_by_game: HashMap::new(), // TODO This is never cleaned up
+            game_states: HashMap::new(),
         }
     }
 
     pub fn forward_event(&self, ev: Events) {
-        if let Some(client_senders) = self.clients_by_game.get(&ev.game_id()) {
-            for cs in client_senders {
-                if let Err(err) = cs.events_in.send(ev.clone()) {
+        if let Some(GameState {
+            clients,
+            playerup: _,
+        }) = self.game_states.get(&ev.game_id())
+        {
+            for c in clients {
+                if let Err(err) = c.events_in.send(ev.clone()) {
                     println!(
                         "😑 {} {} {:<8} forwarding event {}",
-                        short_uuid(cs.client_id),
+                        short_uuid(c.client_id),
                         short_uuid(ev.game_id()),
                         "ERROR",
                         err
@@ -92,8 +108,9 @@ impl Router {
     }
 
     pub fn playerup(&self, game_id: GameId) -> Player {
-        self.playerup_by_game
+        self.game_states
             .get(&game_id)
+            .map(|game_state| &game_state.playerup)
             .unwrap_or(&Player::BLACK)
             .clone()
     }
@@ -101,7 +118,19 @@ impl Router {
     // TODO This is never cleaned up
     pub fn set_playerup(&mut self, game_id: GameId, player: Player) {
         let c = player.clone();
-        *self.playerup_by_game.entry(game_id).or_insert(c) = player;
+        let default = GameState {
+            clients: vec![],
+            playerup: c,
+        };
+        let gs = self.game_states.get_mut(&game_id);
+        match gs {
+            None => {
+                self.game_states.insert(game_id, default);
+            }
+            Some(gs) => {
+                gs.playerup = player;
+            }
+        }
     }
 
     pub fn add_client(&mut self, client_id: ClientId, events_in: Sender<Events>) -> GameId {
@@ -111,11 +140,14 @@ impl Router {
         };
 
         let game_id = self.pop_open_game_id();
-        match self.clients_by_game.get_mut(&game_id) {
-            Some(client_senders) => client_senders.push(newbie),
+        match self.game_states.get_mut(&game_id) {
+            Some(gs) => gs.clients.push(newbie),
             None => {
-                self.clients_by_game.insert(game_id, vec![newbie]);
-                self.playerup_by_game.insert(game_id, Player::BLACK);
+                let with_newbie = GameState {
+                    clients: vec![newbie],
+                    playerup: Player::BLACK,
+                };
+                self.game_states.insert(game_id, with_newbie);
             }
         }
 
@@ -133,24 +165,23 @@ impl Router {
             events_in,
         };
 
-        match self.clients_by_game.get_mut(&game_id) {
-            Some(client_senders) => client_senders.push(cs),
+        match self.game_states.get_mut(&game_id) {
+            Some(gs) => gs.clients.push(cs),
             None => {
-                self.clients_by_game.insert(game_id, vec![cs]);
-                self.playerup_by_game.insert(game_id, Player::BLACK);
+                self.game_states.insert(
+                    game_id,
+                    GameState {
+                        clients: vec![cs],
+                        playerup: Player::BLACK,
+                    },
+                );
             }
         }
     }
 
     pub fn delete_client(&mut self, client_id: ClientId, game_id: GameId) {
-        if let Some(client_senders) = self.clients_by_game.get(&game_id) {
-            let mut without: Vec<ClientSender> = vec![];
-            for cs in client_senders {
-                if cs.client_id != client_id {
-                    without.push(cs.clone());
-                }
-            }
-            *self.clients_by_game.get_mut(&game_id).unwrap() = without;
+        if let Some(game_state) = self.game_states.get_mut(&game_id) {
+            game_state.clients.retain(|c| c.client_id != client_id);
         }
     }
 
