@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::logging::{short_uuid, EMPTY_SHORT_UUID, MEGA_DEATH_STRING};
 use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, Player, ReconnectedEvent, ReqId};
 
-const GAME_STATE_CLEANUP_PERIOD_MS: u64 = 1_000;
+const GAME_STATE_CLEANUP_PERIOD_MS: u64 = 10_000;
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
@@ -226,7 +226,11 @@ impl Router {
 
                     // ...and make sure no one else can wander
                     // into this game, since it's no longer playable
-                    match self.available_games.get_mut(0) {
+                    let num_game_ids_avail = self.available_games.len();
+                    match self
+                        .available_games
+                        .get_mut(usize::max(0, num_game_ids_avail - 1))
+                    {
                         Some(gid) if gid == &game_id => {
                             self.available_games.pop();
                             println!("POP");
