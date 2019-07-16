@@ -18,5 +18,4 @@ RUN git rev-parse HEAD
 RUN rustup default nightly   
 
 RUN cargo install --path .
-RUN git fetch && git checkout fix/refactor-gateway-gamestate
-CMD ["sh", "no_run.sh"]
+CMD ["sh", "run.sh"]
