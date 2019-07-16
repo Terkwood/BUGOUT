@@ -23,10 +23,6 @@ pub fn short_uuid(uuid: Uuid) -> String {
     uuid.to_string()[..8].to_string()
 }
 
-pub fn short_time() -> i64 {
-    time::now_utc().to_timespec().sec % 10_000
-}
-
 pub fn session_code(ws_session: &WsSession) -> String {
     format!(
         "{} {}",

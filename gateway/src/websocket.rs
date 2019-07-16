@@ -200,10 +200,9 @@ impl Handler for WsSession {
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!(
-            "🚪 {} {:<8} {} ({:?}) {}",
+            "🚪 {} {:<8} {:?} {}",
             session_code(self),
             "CLOSE",
-            short_time(),
             code,
             reason
         );
@@ -309,7 +308,7 @@ impl Handler for WsSession {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
                 let now = time::precise_time_ns();
                 println!(
-                    "🏓 {} {:<8} {:.3}ms",
+                    "🏓 {} {:<8} {:.0}ms",
                     session_code(self),
                     "PINGPONG",
                     (now - pong) as f64 / 1_000_000f64
