@@ -207,12 +207,7 @@ impl Router {
                         .modified_at
                         .add(Duration::from_millis(GAME_STATE_CLEANUP_PERIOD_MS)),
                 );
-                println!(
-                    "...NOW  {:?}\tGS MOD_AT {:?}",
-                    Instant::now(),
-                    game_state.modified_at
-                );
-                println!("SINCE {:?}", since);
+
                 if let Some(dur) = since {
                     if dur.as_millis() > GAME_STATE_CLEANUP_PERIOD_MS.into() {
                         // we will destroy the game state if there are
@@ -244,11 +239,7 @@ impl Router {
                         EMPTY_SHORT_UUID, EMPTY_SHORT_UUID, "CLEANUP", count
                     )
                 }
-            } else {
-                println!("wait")
             }
-        } else {
-            println!("wait")
         }
     }
 
