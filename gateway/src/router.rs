@@ -209,6 +209,7 @@ impl Router {
         to_delete
     }
     fn cleanup_game_states(&mut self) {
+        println!("NOW {:?}", Instant::now());
         let since = self.last_cleanup.checked_duration_since(Instant::now());
         println!("LAST CLEANUP {:?} BIG SINCE {:?}", self.last_cleanup, since);
         if let Some(dur) = since {
