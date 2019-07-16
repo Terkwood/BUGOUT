@@ -209,7 +209,7 @@ impl Router {
         to_delete
     }
     fn cleanup_game_states(&mut self) {
-        if let Some(dur) = Instant::now().checked_duration_since(self.last_cleanup) {
+        if let Some(dur) = self.last_cleanup.checked_duration_since(Instant::now()) {
             if dur.as_millis() > GAME_STATE_CLEANUP_PERIOD_MS.into() {
                 let to_delete = self.find_dead_game_states();
                 let mut count = 0;
