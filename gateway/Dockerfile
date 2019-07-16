@@ -18,4 +18,5 @@ RUN git rev-parse HEAD
 RUN rustup default nightly   
 
 RUN cargo install --path .
+
 CMD ["sh", "run.sh"]
