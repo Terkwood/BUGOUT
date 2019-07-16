@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::logging::{short_uuid, EMPTY_SHORT_UUID, MEGA_DEATH_STRING};
 use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, Player, ReconnectedEvent, ReqId};
 
-const GAME_STATE_CLEANUP_PERIOD_MS: u64 = 10_000;
+const GAME_STATE_CLEANUP_PERIOD_MS: u64 = 300_000;
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
@@ -52,8 +52,9 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                             router.set_playerup(u.game_id, u.player.other());
                             router.forward_event(Events::MoveMade(m))
                         }
-                        Ok(e) =>
-                            router.forward_event(e),
+                        Ok(e) => {
+                            router.observed(e.game_id());
+                            router.forward_event(e)},
                         Err(e) =>
                             panic!("Unable to receive kafka event via router channel: {:?}", e),
                     }
@@ -79,6 +80,10 @@ impl GameState {
 
     pub fn add_client(&mut self, client: ClientSender) {
         self.clients.push(client);
+        self.modified_at = Instant::now()
+    }
+
+    pub fn observed(&mut self) {
         self.modified_at = Instant::now()
     }
 }
@@ -129,6 +134,12 @@ impl Router {
             .clone()
     }
 
+    /// Note that the game state somehow changed, so that
+    /// we don't purge it prematurely in cleanup_game_states()
+    pub fn observed(&mut self, game_id: GameId) {
+        self.game_states.get_mut(&game_id).map(|gs| gs.observed());
+    }
+
     pub fn set_playerup(&mut self, game_id: GameId, player: Player) {
         let c = player.clone();
         let default = GameState {
@@ -143,7 +154,7 @@ impl Router {
             }
             Some(gs) => {
                 gs.playerup = player;
-                gs.modified_at = Instant::now();
+                gs.observed();
             }
         }
     }
@@ -242,10 +253,12 @@ impl Router {
                 }
 
                 self.last_cleanup = Instant::now();
-                println!(
-                    "🗑 {} {} {:<8} {:<4} entries",
-                    EMPTY_SHORT_UUID, EMPTY_SHORT_UUID, "CLEANUP", count
-                )
+                if count > 0 {
+                    println!(
+                        "🗑 {} {} {:<8} {:<4} entries",
+                        EMPTY_SHORT_UUID, EMPTY_SHORT_UUID, "CLEANUP", count
+                    )
+                }
             } else {
                 println!("wait")
             }
