@@ -70,6 +70,12 @@ impl WsSession {
             }
         }
     }
+
+    fn observe(&mut self) {
+        if let Some(gid)=self.current_game {
+            self.router_commands_in.send(RouterCommand::Observe(gid));
+        }
+    }
 }
 
 impl Handler for WsSession {
@@ -122,13 +128,12 @@ impl Handler for WsSession {
                             .map_err(|e| ws::Error::from(Box::new(e)));
                     }
                 }
-
-                Ok(())
+                Ok(self.observe())
             }
             Ok(ClientCommands::Beep) => {
                 println!("🤖 {} BEEP   ", session_code(self));
-
-                Ok(())
+                
+                Ok(self.observe())
             }
             Ok(ClientCommands::RequestOpenGame(req)) => {
                 // Tentatively ignore this request if we already have a game
@@ -156,7 +161,7 @@ impl Handler for WsSession {
                     //.. and track the out-channel so we can select! on it
                     self.events_out = Some(events_out);
                 }
-                Ok(())
+                Ok(self.observe())
             }
             Ok(ClientCommands::Reconnect(ReconnectCommand { game_id, req_id })) => {
                 // accept whatever game_id the client shares with us
@@ -184,7 +189,7 @@ impl Handler for WsSession {
                 //.. and track the out-channel so we can select! on it
                 self.events_out = Some(events_out);
 
-                Ok(())
+                Ok(self.observe())
             }
             Err(_err) => {
                 println!(
@@ -306,6 +311,7 @@ impl Handler for WsSession {
         // The pong should contain data from out ping, but it isn't guaranteed to.
         if frame.opcode() == OpCode::Pong {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
+                self.observe();
                 let now = time::precise_time_ns();
                 println!(
                     "🏓 {} {:<8} {:.0}ms",

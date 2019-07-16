@@ -22,6 +22,7 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
             select! {
                 recv(router_commands_out) -> command =>
                     match command {
+                        Ok(RouterCommand::Observe(game_id)) => router.observed(game_id),
                         Ok(RouterCommand::RequestOpenGame{client_id, events_in, req_id}) => {
                             let game_id = router.add_client(client_id, events_in.clone());
                             if let Err(err) = events_in.send(Events::OpenGameReply(OpenGameReplyEvent{game_id, reply_to:req_id, event_id: Uuid::new_v4()})) {
@@ -305,6 +306,7 @@ struct ClientSender {
 
 #[derive(Debug, Clone)]
 pub enum RouterCommand {
+    Observe(GameId),
     RequestOpenGame {
         client_id: ClientId,
         events_in: Sender<Events>,
