@@ -1,3 +1,4 @@
+#![feature(bind_by_move_pattern_guards)]
 #![feature(checked_duration_since)]
 extern crate crossbeam;
 extern crate crossbeam_channel;

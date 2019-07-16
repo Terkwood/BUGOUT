@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use std::ops::Add;
 use std::thread;
+use std::time::{Duration, Instant};
 
 use crossbeam::{Receiver, Sender};
 use crossbeam_channel::select;
@@ -8,6 +10,8 @@ use uuid::Uuid;
 
 use crate::logging::{short_uuid, EMPTY_SHORT_UUID, MEGA_DEATH_STRING};
 use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, Player, ReconnectedEvent, ReqId};
+
+const GAME_STATE_CLEANUP_PERIOD_MS: u64 = 60_000;
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
@@ -61,6 +65,17 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
 struct GameState {
     pub clients: Vec<ClientSender>,
     pub playerup: Player,
+    pub modified_at: Instant,
+}
+
+impl GameState {
+    pub fn new(client: ClientSender) -> GameState {
+        GameState {
+            clients: vec![client],
+            playerup: Player::BLACK,
+            modified_at: Instant::now(),
+        }
+    }
 }
 
 /// Keeps track of clients interested in various games
@@ -68,6 +83,7 @@ struct GameState {
 struct Router {
     pub available_games: Vec<GameId>,
     pub game_states: HashMap<GameId, GameState>,
+    pub last_cleanup: Instant,
 }
 
 impl Router {
@@ -75,6 +91,7 @@ impl Router {
         Router {
             available_games: vec![],
             game_states: HashMap::new(),
+            last_cleanup: Instant::now(),
         }
     }
 
@@ -82,6 +99,7 @@ impl Router {
         if let Some(GameState {
             clients,
             playerup: _,
+            modified_at: _,
         }) = self.game_states.get(&ev.game_id())
         {
             for c in clients {
@@ -106,12 +124,12 @@ impl Router {
             .clone()
     }
 
-    // TODO This is never cleaned up
     pub fn set_playerup(&mut self, game_id: GameId, player: Player) {
         let c = player.clone();
         let default = GameState {
             clients: vec![],
             playerup: c,
+            modified_at: Instant::now(),
         };
         let gs = self.game_states.get_mut(&game_id);
         match gs {
@@ -134,10 +152,7 @@ impl Router {
         match self.game_states.get_mut(&game_id) {
             Some(gs) => gs.clients.push(newbie),
             None => {
-                let with_newbie = GameState {
-                    clients: vec![newbie],
-                    playerup: Player::BLACK,
-                };
+                let with_newbie = GameState::new(newbie);
                 self.game_states.insert(game_id, with_newbie);
             }
         }
@@ -159,13 +174,45 @@ impl Router {
         match self.game_states.get_mut(&game_id) {
             Some(gs) => gs.clients.push(cs),
             None => {
-                self.game_states.insert(
-                    game_id,
-                    GameState {
-                        clients: vec![cs],
-                        playerup: Player::BLACK,
-                    },
-                );
+                self.game_states.insert(game_id, GameState::new(cs));
+            }
+        }
+    }
+
+    fn find_dead_game_states(&mut self) -> Vec<GameId> {
+        let mut to_delete = vec![];
+
+        for (game_id, game_state) in self.game_states.iter() {
+            if game_state.clients.len() == 0 {
+                if let Some(_) = game_state
+                    .modified_at
+                    .add(Duration::from_millis(GAME_STATE_CLEANUP_PERIOD_MS))
+                    .checked_duration_since(Instant::now())
+                {
+                    // destroy the game state if there are no clients
+                    // connected to it, and make sure it's not in
+                    // the list of available games
+
+                    to_delete.push(*game_id);
+                    //self.game_states.remove_entry(&game_id);
+                }
+            }
+        }
+
+        to_delete
+    }
+    fn cleanup_game_states(&mut self) {
+        let to_delete = self.find_dead_game_states();
+        for game_id in to_delete {
+            self.game_states.remove_entry(&game_id);
+
+            // ...and make sure no one else can wander
+            // into this game, since it's no longer playable
+            match self.available_games.get_mut(0) {
+                Some(gid) if gid == &game_id => {
+                    self.available_games.pop();
+                }
+                _ => (),
             }
         }
     }
@@ -174,6 +221,8 @@ impl Router {
         if let Some(game_state) = self.game_states.get_mut(&game_id) {
             game_state.clients.retain(|c| c.client_id != client_id);
         }
+
+        self.cleanup_game_states();
     }
 
     /// This is a big fat hack...
