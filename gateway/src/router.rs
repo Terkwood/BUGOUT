@@ -217,6 +217,7 @@ impl Router {
             match self.available_games.get_mut(0) {
                 Some(gid) if gid == &game_id => {
                     self.available_games.pop();
+                    println!("POP");
                 }
                 _ => (),
             }
