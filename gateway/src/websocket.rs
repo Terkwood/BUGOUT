@@ -103,7 +103,7 @@ impl Handler for WsSession {
                     "MOVE",
                     player,
                     if let Some(Coord { x, y }) = coord {
-                        format!("{{ {}, {} }}", x, y)
+                        format!("{{ {:<2}, {:<2} }}", x, y)
                     } else {
                         "PASS".to_string()
                     }
