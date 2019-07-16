@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::logging::{short_uuid, EMPTY_SHORT_UUID, MEGA_DEATH_STRING};
 use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, Player, ReconnectedEvent, ReqId};
 
-const GAME_STATE_CLEANUP_PERIOD_MS: u64 = 3_000;
+const GAME_STATE_CLEANUP_PERIOD_MS: u64 = 10_000;
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
@@ -226,30 +226,14 @@ impl Router {
         to_delete
     }
     fn cleanup_game_states(&mut self) {
-        println!("NOW {:?}", Instant::now());
         let since = Instant::now().checked_duration_since(self.last_cleanup);
-        println!("LAST CLEANUP {:?} BIG SINCE {:?}", self.last_cleanup, since);
         if let Some(dur) = since {
             if dur.as_millis() > GAME_STATE_CLEANUP_PERIOD_MS.into() {
                 let to_delete = self.find_dead_game_states();
                 let mut count = 0;
                 for game_id in to_delete {
-                    println!("REMOVE {}", short_uuid(game_id));
                     self.game_states.remove_entry(&game_id);
 
-                    // ...and make sure no one else can wander
-                    // into this game, since it's no longer playable
-                    let num_game_ids_avail = self.available_games.len();
-                    match self
-                        .available_games
-                        .get_mut(usize::max(0, num_game_ids_avail - 1))
-                    {
-                        Some(gid) if gid == &game_id => {
-                            self.available_games.pop();
-                            println!("POP");
-                        }
-                        _ => (),
-                    }
                     count += 1;
                 }
 
