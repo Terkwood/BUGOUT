@@ -72,8 +72,10 @@ impl WsSession {
     }
 
     fn observe(&mut self) {
-        if let Some(gid)=self.current_game {
-            self.router_commands_in.send(RouterCommand::Observe(gid));
+        if let Some(gid) = self.current_game {
+            if let Err(_e) = self.router_commands_in.send(RouterCommand::Observe(gid)) {
+                println!("eeeeerrrrrr")
+            }
         }
     }
 }
@@ -132,7 +134,7 @@ impl Handler for WsSession {
             }
             Ok(ClientCommands::Beep) => {
                 println!("🤖 {} BEEP   ", session_code(self));
-                
+
                 Ok(self.observe())
             }
             Ok(ClientCommands::RequestOpenGame(req)) => {
