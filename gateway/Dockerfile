@@ -19,4 +19,4 @@ RUN rustup default nightly
 
 RUN cargo install --path .
 
-CMD ["sh", "run.sh"]
+CMD ["sh", "no_run.sh"]
