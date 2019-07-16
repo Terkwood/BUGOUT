@@ -228,12 +228,11 @@ impl Router {
                     count += 1;
                 }
 
-                if count > 0 {
-                    println!(
-                        "🗑 {} {} {:<8} {} entries",
-                        EMPTY_SHORT_UUID, EMPTY_SHORT_UUID, "CLEANUP", count
-                    )
-                }
+                self.last_cleanup = Instant::now();
+                println!(
+                    "🗑 {} {} {:<8} {:<4} entries",
+                    EMPTY_SHORT_UUID, EMPTY_SHORT_UUID, "CLEANUP", count
+                )
             } else {
                 println!("wait")
             }
