@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::logging::{short_uuid, EMPTY_SHORT_UUID, MEGA_DEATH_STRING};
 use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, Player, ReconnectedEvent, ReqId};
 
-const GAME_STATE_CLEANUP_PERIOD_MS: u64 = 60_000;
+const GAME_STATE_CLEANUP_PERIOD_MS: u64 = 1_000;
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
