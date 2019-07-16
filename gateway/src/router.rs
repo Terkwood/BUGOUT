@@ -63,15 +63,6 @@ struct GameState {
     pub playerup: Player,
 }
 
-impl Default for GameState {
-    fn default() -> GameState {
-        GameState {
-            clients: vec![],
-            playerup: Player::BLACK,
-        }
-    }
-}
-
 /// Keeps track of clients interested in various games
 /// Each client has an associated crossbeam Sender for BUGOUT events
 struct Router {
