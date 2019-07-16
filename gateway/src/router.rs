@@ -190,11 +190,16 @@ impl Router {
 
         for (game_id, game_state) in self.game_states.iter() {
             if game_state.clients.len() == 0 {
-                let since = game_state
-                    .modified_at
-                    .add(Duration::from_millis(GAME_STATE_CLEANUP_PERIOD_MS))
-                    .checked_duration_since(Instant::now());
-                println!("...NOW  {:?}\tGS MOD_AT {:?}", Instant::now(), game_state.modified_at);
+                let since = Instant::now().checked_duration_since(
+                    game_state
+                        .modified_at
+                        .add(Duration::from_millis(GAME_STATE_CLEANUP_PERIOD_MS)),
+                );
+                println!(
+                    "...NOW  {:?}\tGS MOD_AT {:?}",
+                    Instant::now(),
+                    game_state.modified_at
+                );
                 println!("SINCE {:?}", since);
                 if let Some(dur) = since {
                     if dur.as_millis() > GAME_STATE_CLEANUP_PERIOD_MS.into() {
