@@ -194,7 +194,7 @@ impl Router {
                     .modified_at
                     .add(Duration::from_millis(GAME_STATE_CLEANUP_PERIOD_MS))
                     .checked_duration_since(Instant::now());
-                println!("NOW   {:?}", Instant::now());
+                println!("...NOW  {:?}\tGS MOD_AT {:?}", Instant::now(), game_state.modified_at);
                 println!("SINCE {:?}", since);
                 if let Some(dur) = since {
                     if dur.as_millis() > GAME_STATE_CLEANUP_PERIOD_MS.into() {
