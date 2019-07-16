@@ -76,6 +76,11 @@ impl GameState {
             modified_at: Instant::now(),
         }
     }
+
+    pub fn add_client(&mut self, client: ClientSender) {
+        self.clients.push(client);
+        self.modified_at = Instant::now()
+    }
 }
 
 /// Keeps track of clients interested in various games
@@ -138,6 +143,7 @@ impl Router {
             }
             Some(gs) => {
                 gs.playerup = player;
+                gs.modified_at = Instant::now();
             }
         }
     }
@@ -150,7 +156,7 @@ impl Router {
 
         let game_id = self.pop_open_game_id();
         match self.game_states.get_mut(&game_id) {
-            Some(gs) => gs.clients.push(newbie),
+            Some(gs) => gs.add_client(newbie),
             None => {
                 let with_newbie = GameState::new(newbie);
                 self.game_states.insert(game_id, with_newbie);
@@ -172,7 +178,7 @@ impl Router {
         };
 
         match self.game_states.get_mut(&game_id) {
-            Some(gs) => gs.clients.push(cs),
+            Some(gs) => gs.add_client(cs),
             None => {
                 self.game_states.insert(game_id, GameState::new(cs));
             }
@@ -189,12 +195,9 @@ impl Router {
                     .add(Duration::from_millis(GAME_STATE_CLEANUP_PERIOD_MS))
                     .checked_duration_since(Instant::now())
                 {
-                    // destroy the game state if there are no clients
-                    // connected to it, and make sure it's not in
-                    // the list of available games
-
+                    // we will destroy the game state if there are
+                    // no clients connected to it
                     to_delete.push(*game_id);
-                    //self.game_states.remove_entry(&game_id);
                 }
             }
         }
@@ -203,6 +206,7 @@ impl Router {
     }
     fn cleanup_game_states(&mut self) {
         let to_delete = self.find_dead_game_states();
+        let mut count = 0;
         for game_id in to_delete {
             self.game_states.remove_entry(&game_id);
 
@@ -214,6 +218,14 @@ impl Router {
                 }
                 _ => (),
             }
+            count += 1;
+        }
+
+        if count > 0 {
+            println!(
+                "🗑 {} {} {:<8} {} entries",
+                EMPTY_SHORT_UUID, EMPTY_SHORT_UUID, "CLEANUP", count
+            )
         }
     }
 
