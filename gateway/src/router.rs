@@ -210,7 +210,7 @@ impl Router {
     }
     fn cleanup_game_states(&mut self) {
         println!("NOW {:?}", Instant::now());
-        let since = self.last_cleanup.checked_duration_since(Instant::now());
+        let since = Instant::now().checked_duration_since(self.last_cleanup);
         println!("LAST CLEANUP {:?} BIG SINCE {:?}", self.last_cleanup, since);
         if let Some(dur) = since {
             if dur.as_millis() > GAME_STATE_CLEANUP_PERIOD_MS.into() {
