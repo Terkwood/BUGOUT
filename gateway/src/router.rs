@@ -196,10 +196,12 @@ impl Router {
                     .checked_duration_since(Instant::now());
                 println!("NOW   {:?}", Instant::now());
                 println!("SINCE {:?}", since);
-                if let Some(_) = since {
-                    // we will destroy the game state if there are
-                    // no clients connected to it
-                    to_delete.push(*game_id);
+                if let Some(dur) = since {
+                    if dur.as_millis() > GAME_STATE_CLEANUP_PERIOD_MS.into() {
+                        // we will destroy the game state if there are
+                        // no clients connected to it
+                        to_delete.push(*game_id);
+                    }
                 }
             }
         }
