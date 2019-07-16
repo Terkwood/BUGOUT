@@ -84,6 +84,7 @@ impl GameState {
         self.modified_at = Instant::now()
     }
 
+    /// Observe that this game still has an open connection somewhere
     pub fn observed(&mut self) {
         self.modified_at = Instant::now()
     }
