@@ -222,6 +222,7 @@ impl Router {
                 let to_delete = self.find_dead_game_states();
                 let mut count = 0;
                 for game_id in to_delete {
+                    println!("REMOVE {}", short_uuid(game_id));
                     self.game_states.remove_entry(&game_id);
 
                     // ...and make sure no one else can wander
