@@ -40,8 +40,8 @@ services:
     volumes:
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy
-  gamestates-aggregator:
-    build: gamestates-aggregator/.
+  changelog:
+    build: changelog/.
     links:
       - "kafka"
     #volumes:

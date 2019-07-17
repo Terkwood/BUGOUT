@@ -1,0 +1,3 @@
+# changelog
+
+Aggregates game states
