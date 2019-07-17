@@ -8,6 +8,6 @@ RUN chmod 755 wait-for-it.sh
 
 # You must build this outside of docker
 # So that development productivity doesn't plummet
-COPY "bugout.gamestates.aggregator.jar" .
+COPY "bugout.changelog.jar" .
 
 CMD ["sh", "run.sh"]

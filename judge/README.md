@@ -1,8 +1,8 @@
 # game judge
 
-Uses [Kafka Streams](https://kafka.apache.org/22/documentation/streams/quickstart) to calculate game states.  Rejects invalid moves.  Declares the game completed when both parties pass
+Uses [Kafka Streams](https://kafka.apache.org/22/documentation/streams/quickstart) to calculate game states. [Responsible for rejecting invalid moves](https://github.com/Terkwood/BUGOUT/issues/20).
 
-## topology
+## kafka streams topology
 
 ![game judge topology](topology.jpg)
 
