@@ -1,12 +1,15 @@
 # BUGOUT
 
-Multiplayer web implementation of Go/Baduk/Weiqi using Kafka as the backend 🐛
+🐛Play Go against your friends,   _over the web!_ 🕸
 
 ![BUGOUT Online Go](BUGOUT.jpeg)
 
-- Use a [fork of Sabaki](https://github.com/Terkwood/Sabaki) for the web UI
-- A [public-facing websocket gateway](gateway/README.md)
-- [Kotlin & Kafka streams](judge/README.md) to adjudicate games
+## Design
+
+- Powered by [Sabaki](https://sabaki.yichuanshen.de/) and [kafka](https://kafka.apache.org/)
+- Uses a [fork of Sabaki](https://github.com/Terkwood/Sabaki) for the web UI
+- A [public-facing websocket gateway](gateway/README.md) communicates with the browser
+- [Kotlin & Kafka streams adjudicate games](judge/README.md), announce moves, and [will eventually provide lobby functionality](https://github.com/Terkwood/BUGOUT/issues/42)
 
 ## Resources
 
