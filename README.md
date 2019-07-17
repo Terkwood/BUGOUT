@@ -2,7 +2,7 @@
 
 Multiplayer web implementation of Go/Baduk/Weiqi using Kafka as the backend 🐛
 
-![BUGOUT Online Go](bugout.jpeg)
+![BUGOUT Online Go](BUGOUT.jpeg)
 
 - Use a [fork of Sabaki](https://github.com/Terkwood/Sabaki) for the web UI
 - A [public-facing websocket gateway](gateway/README.md)
