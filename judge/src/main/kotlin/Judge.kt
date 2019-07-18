@@ -85,8 +85,7 @@ class Judge(private val brokers: String) {
 
         val validMoveGameState = branches[0]
 
-        // TODO rename
-        val validMoveMadeEventStream: KStream<GameId, MoveAcceptedEv> =
+        val validMoveAcceptedStream: KStream<GameId, MoveAcceptedEv> =
             validMoveGameState.map { _, moveCmdGameState ->
                 val eventId = UUID.randomUUID()
                 val move = moveCmdGameState.moveCmd
@@ -107,7 +106,7 @@ class Judge(private val brokers: String) {
                 )
             }
 
-        validMoveMadeEventStream.mapValues { v ->
+        validMoveAcceptedStream.mapValues { v ->
             println(
                 "move made ${v.gameId.short()}: ${v.player} @ ${v
                     .coord} capturing ${v.captured.joinToString(",")}"
