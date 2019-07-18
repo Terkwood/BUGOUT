@@ -6,8 +6,13 @@ RUN curl -O https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-
 
 RUN chmod 755 wait-for-it.sh
 
-# You must build this outside of docker
-# So that development productivity doesn't plummet
-COPY "bugout.changelog.jar" .
+### BEGIN PROD
+COPY . .
+RUN sh build.sh
+### END   PROD
+
+### BEGIN DEV
+#COPY "bugout.changelog.jar" .
+### END   DEV
 
 CMD ["sh", "run.sh"]
