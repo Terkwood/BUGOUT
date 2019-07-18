@@ -57,7 +57,7 @@ class Aggregator(private val brokers: String) {
         gameStates
             .toStream()
             .map { k, v ->
-                println("changelog   ${k?.toString()?.take(8)}: Turn ${v.turn} PlayerUp: ${v.playerUp} Pieces: ${v.board.pieces.size} ")
+                println("\uD83D\uDCBE          ${k?.toString()?.take(8)} AGGRGATE Turn ${v.turn} PlayerUp: ${v.playerUp} Pieces: ${v.board.pieces.size} ")
                 KeyValue(k,jsonMapper.writeValueAsString(v))
             }.to(
                 GAME_STATES_CHANGELOG_TOPIC,

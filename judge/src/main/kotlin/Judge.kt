@@ -31,7 +31,7 @@ class Judge(private val brokers: String) {
                 jsonMapper.readValue(v, MakeMoveCmd::class.java)
             }.mapValues { v ->
                 println(
-                    "MAKE MOVE CMD ${v.gameId.short()} ${v
+                    "\uD83D\uDCE2          ${v.gameId.short()} MOVE     ${v
                         .player} ${v
                         .coord}"
                 )
@@ -104,7 +104,7 @@ class Judge(private val brokers: String) {
 
         validMoveAcceptedStream.mapValues { v ->
             println(
-                "\uD83D\uDC69\u200D          ️${v.gameId.short()} ACCEPT   ${v
+                "⚖️          ️${v.gameId.short()} ACCEPT   ${v
                     .player} @ ${v
                     .coord} capturing ${v.captured.joinToString(",")}"
             )
