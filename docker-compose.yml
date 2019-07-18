@@ -28,8 +28,6 @@ services:
     build: judge/.
     links:
       - "kafka"
-    #volumes:
-    #  - ~/.gradle:/home/gradle/.gradle
     depends_on:
       - "kafka"
   reverse-proxy:
@@ -44,8 +42,6 @@ services:
     build: changelog/.
     links:
       - "kafka"
-    #volumes:
-    #  - ~/.gradle:/home/gradle/.gradle
     depends_on:
       - "kafka"
   kafkacat:
