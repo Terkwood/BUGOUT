@@ -31,7 +31,7 @@ class Judge(private val brokers: String) {
                 jsonMapper.readValue(v, MakeMoveCmd::class.java)
             }.mapValues { v ->
                 println(
-                    "MAKE MOVE CMD ${v.gameId.short()} ${v
+                    "\uD83D\uDCE2          ${v.gameId.short()} MOVE     ${v
                         .player} ${v
                         .coord}"
                 )
@@ -76,16 +76,12 @@ class Judge(private val brokers: String) {
                 valueJoiner
             )
 
-        makeMoveCommandGameStates.mapValues { v ->
-            println("oh hey ${v.moveCmd.gameId} turn ${v.gameState.turn}")
-        }
-
         val branches = makeMoveCommandGameStates
             .kbranch({ _, moveGameState -> moveGameState.isValid() })
 
         val validMoveGameState = branches[0]
 
-        val validMoveMadeEventStream: KStream<GameId, MoveMadeEv> =
+        val validMoveAcceptedStream: KStream<GameId, MoveAcceptedEv> =
             validMoveGameState.map { _, moveCmdGameState ->
                 val eventId = UUID.randomUUID()
                 val move = moveCmdGameState.moveCmd
@@ -95,7 +91,7 @@ class Judge(private val brokers: String) {
                 } else listOf()
                 KeyValue(
                     move.gameId,
-                    MoveMadeEv(
+                    MoveAcceptedEv(
                         gameId = move.gameId,
                         replyTo = move.reqId,
                         eventId = eventId,
@@ -106,14 +102,15 @@ class Judge(private val brokers: String) {
                 )
             }
 
-        validMoveMadeEventStream.mapValues { v ->
+        validMoveAcceptedStream.mapValues { v ->
             println(
-                "move made ${v.gameId.short()}: ${v.player} @ ${v
+                "⚖️          ️${v.gameId.short()} ACCEPT   ${v
+                    .player} @ ${v
                     .coord} capturing ${v.captured.joinToString(",")}"
             )
             jsonMapper.writeValueAsString(v)
         }.to(
-            MOVE_MADE_EV_TOPIC,
+            MOVE_ACCEPTED_EV_TOPIC,
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 

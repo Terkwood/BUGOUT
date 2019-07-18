@@ -19,7 +19,8 @@ typealias GameId = UUID
 typealias RequestId = UUID
 typealias EventId = UUID
 
-data class MoveMadeEv(
+/// Either a MoveAccepted or a MoveMade
+data class MoveEv(
     val gameId: GameId,
     val replyTo: RequestId,
     val eventId: EventId = UUID.randomUUID(),

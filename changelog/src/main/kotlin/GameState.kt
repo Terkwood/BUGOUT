@@ -12,7 +12,11 @@ class GameState(boardSize: Int = FULL_BOARD_SIZE) {
 
     var playerUp: Player = Player.BLACK
 
-    fun add(ev: MoveMadeEv): GameState {
+    val moves: MutableList<MoveEv> = mutableListOf()
+
+    fun add(ev: MoveEv): GameState {
+        moves.add(ev)
+
         if (ev.coord != null) {
             board.pieces[ev.coord] = ev.player
             ev.captured.forEach { coord ->

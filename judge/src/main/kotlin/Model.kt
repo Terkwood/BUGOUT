@@ -25,7 +25,7 @@ data class MakeMoveCmd(
     val coord: Coord?
 )
 
-data class MoveMadeEv(
+data class MoveAcceptedEv(
     val gameId: GameId,
     val replyTo: RequestId,
     val eventId: EventId = UUID.randomUUID(),

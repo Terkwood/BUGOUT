@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROJ_NAME="bugout.gamestates.aggregator"
+PROJ_NAME="bugout.changelog"
 
 rm -f ./build/libs/$PROJ_NAME*.jar
 gradle build

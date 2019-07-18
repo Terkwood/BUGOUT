@@ -5,7 +5,6 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
-import org.apache.kafka.streams.state.QueryableStoreTypes
 import serdes.GameStateDeserializer
 import serdes.GameStateSerializer
 import serdes.jsonMapper
@@ -20,7 +19,7 @@ class Aggregator(private val brokers: String) {
 
         val streamsBuilder = StreamsBuilder()
         val moveMadeEventJsonStream = streamsBuilder.stream<UUID, String>(
-            MOVE_MADE_EV_TOPIC,
+            MOVE_ACCEPTED_EV_TOPIC,
             Consumed.with(Serdes.UUID(), Serdes.String())
         )
 
@@ -37,7 +36,7 @@ class Aggregator(private val brokers: String) {
                     list.add(
                         jsonMapper.readValue(
                             v,
-                            MoveMadeEv::class.java
+                            MoveEv::class.java
                         )
                     )
                     list
@@ -58,13 +57,22 @@ class Aggregator(private val brokers: String) {
         gameStates
             .toStream()
             .map { k, v ->
-                println("changelog   ${k?.toString()?.take(8)}: Turn ${v.turn} PlayerUp: ${v.playerUp} Pieces: ${v.board.pieces.size} ")
+                println("\uD83D\uDCBE          ${k?.toString()?.take(8)} AGGRGATE Turn ${v.turn} PlayerUp ${v.playerUp}")
                 KeyValue(k,jsonMapper.writeValueAsString(v))
             }.to(
                 GAME_STATES_CHANGELOG_TOPIC,
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
 
+        gameStates
+            .toStream()
+            .filter { _, v ->
+                v.moves.isNotEmpty()
+            }
+            .mapValues { v -> v.moves.last() }
+            .mapValues { v -> jsonMapper.writeValueAsString(v) }
+            .to(MOVE_MADE_EV_TOPIC,
+                Produced.with(Serdes.UUID(), Serdes.String()))
 
         val topology = streamsBuilder.build()
 
