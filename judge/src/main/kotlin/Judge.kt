@@ -113,7 +113,7 @@ class Judge(private val brokers: String) {
             )
             jsonMapper.writeValueAsString(v)
         }.to(
-            MOVE_MADE_EV_TOPIC,
+            MOVE_ACCEPTED_EV_TOPIC,
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
