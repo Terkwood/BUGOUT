@@ -13,6 +13,6 @@ RUN sh build.sh
 
 ### BEGIN DEV
 #COPY "bugout.judge.jar" .
-### END DEV
+### END   DEV
 
 CMD ["sh", "run.sh"]
