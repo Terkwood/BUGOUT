@@ -36,7 +36,7 @@ class Aggregator(private val brokers: String) {
                     list.add(
                         jsonMapper.readValue(
                             v,
-                            MoveMadeEv::class.java
+                            MoveEv::class.java
                         )
                     )
                     list
@@ -64,6 +64,13 @@ class Aggregator(private val brokers: String) {
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
 
+        gameStates
+            .toStream()
+            .filter { _, v ->
+                v.moves.isNotEmpty()
+            }
+            .mapValues { v -> v.moves.last() }
+            .to(MOVE_MADE_EV_TOPIC)
 
         val topology = streamsBuilder.build()
 
