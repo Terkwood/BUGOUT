@@ -70,7 +70,9 @@ class Aggregator(private val brokers: String) {
                 v.moves.isNotEmpty()
             }
             .mapValues { v -> v.moves.last() }
-            .to(MOVE_MADE_EV_TOPIC)
+            .mapValues { v -> jsonMapper.writeValueAsString(v) }
+            .to(MOVE_MADE_EV_TOPIC,
+                Produced.with(Serdes.UUID(), Serdes.String()))
 
         val topology = streamsBuilder.build()
 
