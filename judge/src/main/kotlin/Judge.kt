@@ -76,10 +76,6 @@ class Judge(private val brokers: String) {
                 valueJoiner
             )
 
-        makeMoveCommandGameStates.mapValues { v ->
-            println("oh hey ${v.moveCmd.gameId} turn ${v.gameState.turn}")
-        }
-
         val branches = makeMoveCommandGameStates
             .kbranch({ _, moveGameState -> moveGameState.isValid() })
 
@@ -108,7 +104,8 @@ class Judge(private val brokers: String) {
 
         validMoveAcceptedStream.mapValues { v ->
             println(
-                "move made ${v.gameId.short()}: ${v.player} @ ${v
+                "\uD83D\uDC69\u200D          ️${v.gameId.short()} ACCEPT   ${v
+                    .player} @ ${v
                     .coord} capturing ${v.captured.joinToString(",")}"
             )
             jsonMapper.writeValueAsString(v)
