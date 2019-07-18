@@ -5,7 +5,6 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
-import org.apache.kafka.streams.state.QueryableStoreTypes
 import serdes.GameStateDeserializer
 import serdes.GameStateSerializer
 import serdes.jsonMapper
@@ -20,7 +19,7 @@ class Aggregator(private val brokers: String) {
 
         val streamsBuilder = StreamsBuilder()
         val moveMadeEventJsonStream = streamsBuilder.stream<UUID, String>(
-            MOVE_MADE_EV_TOPIC,
+            MOVE_ACCEPTED_EV_TOPIC,
             Consumed.with(Serdes.UUID(), Serdes.String())
         )
 
