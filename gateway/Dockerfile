@@ -18,6 +18,8 @@ RUN git rev-parse HEAD
 RUN rustup default nightly   
 
 RUN cargo install --path .
+#TODO
+RUN echo "mkay"
 RUN git fetch && git checkout fix/startup
 
 CMD ["sh", "run.sh"]
