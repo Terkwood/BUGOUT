@@ -193,6 +193,7 @@ impl Handler for WsSession {
 
                 Ok(self.observe())
             }
+            Ok(ClientCommands::ProvideGameHistory(_)) => unimplemented!(),
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",
