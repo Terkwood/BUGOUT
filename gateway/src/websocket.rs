@@ -193,7 +193,25 @@ impl Handler for WsSession {
 
                 Ok(self.observe())
             }
-            Ok(ClientCommands::ProvideGameHistory(_)) => unimplemented!(),
+            Ok(ClientCommands::ProvideGameHistory(ProvideGameHistoryCommand {
+                game_id,
+                req_id,
+            })) => {
+                println!("📋 {} HISTORY", session_code(self));
+
+                if let Some(c) = self.current_game {
+                    if c == game_id {
+                        return self
+                            .bugout_commands_in
+                            .send(ClientCommands::ProvideGameHistory(
+                                ProvideGameHistoryCommand { game_id, req_id },
+                            ))
+                            .map_err(|e| ws::Error::from(Box::new(e)));
+                    }
+                }
+
+                Ok(self.observe())
+            }
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",

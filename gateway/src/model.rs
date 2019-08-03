@@ -47,6 +47,8 @@ pub struct RequestGameIdCommand {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProvideGameHistoryCommand {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
     #[serde(rename = "reqId")]
     pub req_id: ReqId,
 }
