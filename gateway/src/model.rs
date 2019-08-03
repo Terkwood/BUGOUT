@@ -46,7 +46,7 @@ pub struct RequestGameIdCommand {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ProvideGameHistoryCommand {
+pub struct ProvideHistoryCommand {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
     #[serde(rename = "reqId")]
@@ -68,7 +68,7 @@ pub enum ClientCommands {
     Beep,
     RequestOpenGame(RequestGameIdCommand),
     Reconnect(ReconnectCommand),
-    ProvideGameHistory(ProvideGameHistoryCommand),
+    ProvideHistory(ProvideHistoryCommand),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -118,6 +118,17 @@ pub struct ReconnectedEvent {
     pub player_up: Player,
 }
 
+// TODO add fields
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct HistoryProvidedEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    #[serde(rename = "replyTo")]
+    pub reply_to: ReqId,
+    #[serde(rename = "eventId")]
+    pub event_id: EventId,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum Events {
@@ -125,6 +136,7 @@ pub enum Events {
     MoveRejected(MoveRejectedEvent),
     OpenGameReply(OpenGameReplyEvent),
     Reconnected(ReconnectedEvent),
+    HistoryProvided(HistoryProvidedEvent),
 }
 
 impl Events {
@@ -134,6 +146,7 @@ impl Events {
             Events::MoveRejected(e) => e.game_id,
             Events::OpenGameReply(e) => e.game_id,
             Events::Reconnected(e) => e.game_id,
+            Events::HistoryProvided(e) => e.game_id,
         }
     }
 }

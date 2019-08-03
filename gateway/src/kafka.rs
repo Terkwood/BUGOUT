@@ -52,7 +52,7 @@ fn start_producer(
                         // Fire and forget
                         ()
                     },
-                    Ok(ClientCommands::ProvideGameHistory(c)) => {
+                    Ok(ClientCommands::ProvideHistory(c)) => {
                         producer.send(FutureRecord::to(unimplemented!())
                             .payload(&serde_json::to_string(&c).unwrap())
                             .key(&c.game_id.to_string()), 0);
