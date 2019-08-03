@@ -147,8 +147,13 @@ fn start_consumer(
                 };
 
                 consumer.commit_message(&msg, CommitMode::Async).unwrap();
-                if let Ok(move_made) = serde_json::from_str(payload) {
-                    events_in.send(Events::MoveMade(move_made)).unwrap()
+                match serde_json::from_str(payload) {
+                    Ok(Events::MoveMade(m)) => events_in.send(Events::MoveMade(m)).unwrap(),
+                    Ok(Events::HistoryProvided(h)) => {
+                        events_in.send(Events::HistoryProvided(h)).unwrap()
+                    }
+                    Ok(_) => (),
+                    Err(_) => println!("ERROR matching JSON :("),
                 }
             }
         }
