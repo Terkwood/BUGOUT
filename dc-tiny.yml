@@ -1,13 +1,9 @@
 version: '2'
 services:
-  gateway:
+  gateway: #TODO pass env vars via --env-file
     build: gateway/.
     ports:
       - "3012:3012"
-    links:
-      - "kafka"
-    depends_on:
-      - "kafka"
   reverse-proxy:
     image: abiosoft/caddy
     ports:
