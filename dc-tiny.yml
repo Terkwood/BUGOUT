@@ -4,6 +4,7 @@ services:
     build: gateway/.
     ports:
       - "3012:3012"
+    env_file: .env
   reverse-proxy:
     image: abiosoft/caddy
     ports:
