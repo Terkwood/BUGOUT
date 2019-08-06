@@ -16,28 +16,12 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-  gateway:
-    build: gateway/.
-    ports:
-      - "3012:3012"
-    links:
-      - "kafka"
-    depends_on:
-      - "kafka"
   judge:
     build: judge/.
     links:
       - "kafka"
     depends_on:
       - "kafka"
-  reverse-proxy:
-    image: abiosoft/caddy
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile
-      - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy
   changelog:
     build: changelog/.
     links:

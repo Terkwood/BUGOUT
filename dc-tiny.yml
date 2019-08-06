@@ -1,0 +1,18 @@
+version: '2'
+services:
+  gateway:
+    build: gateway/.
+    ports:
+      - "3012:3012"
+    links:
+      - "kafka"
+    depends_on:
+      - "kafka"
+  reverse-proxy:
+    image: abiosoft/caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile
+      - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy
