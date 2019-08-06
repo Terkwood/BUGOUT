@@ -1,0 +1,50 @@
+version: '2'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka 
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_CREATE_TOPICS: "bugout-move-accepted-ev:1:1,bugout-move-made-ev:1:1,bugout-move-rejected-ev:1:1,bugout-make-move-cmd:1:1,bugout-game-states:1:1"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  gateway:
+    build: gateway/.
+    ports:
+      - "3012:3012"
+    links:
+      - "kafka"
+    depends_on:
+      - "kafka"
+  judge:
+    build: judge/.
+    links:
+      - "kafka"
+    depends_on:
+      - "kafka"
+  reverse-proxy:
+    image: abiosoft/caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile
+      - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy
+  changelog:
+    build: changelog/.
+    links:
+      - "kafka"
+    depends_on:
+      - "kafka"
+  kafkacat:
+    build: kafkacat/.
+    links:
+      - "kafka"
