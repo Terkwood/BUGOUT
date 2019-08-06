@@ -22,6 +22,8 @@ RUN rustup default nightly
 # not just what's on the git branch
 COPY . /var/BUGOUT/gateway/.
 
+RUN echo $GATEWAY_BROKERS
+
 #TODO
 #CMD ["tail","-f","/dev/null"]
 
