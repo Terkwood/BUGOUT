@@ -22,6 +22,10 @@ RUN rustup default nightly
 # not just what's on the git branch
 COPY . .
 
-RUN cargo install --path .
+CMD ["tail","-f","/dev/null"]
 
-CMD ["sh", "run.sh"]
+#TODO
+#RUN cargo install --path .
+
+#TODO
+#CMD ["sh", "run.sh"]
