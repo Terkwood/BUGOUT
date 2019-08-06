@@ -1,6 +1,7 @@
 FROM rust
 
 WORKDIR /var/
+# git clone to support the submodule
 RUN git clone https://github.com/Terkwood/BUGOUT
 WORKDIR /var/BUGOUT/gateway
 RUN git submodule update --init
@@ -17,6 +18,7 @@ RUN git rev-parse HEAD
 # checked_duration_since feature requires nightly
 RUN rustup default nightly   
 
+# make sure we have the most recent of everything
 COPY . .
 
 RUN cargo install --path .
