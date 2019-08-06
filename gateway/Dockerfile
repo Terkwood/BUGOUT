@@ -17,6 +17,8 @@ RUN git rev-parse HEAD
 # checked_duration_since feature requires nightly
 RUN rustup default nightly   
 
+COPY . .
+
 RUN cargo install --path .
 
 CMD ["sh", "run.sh"]
