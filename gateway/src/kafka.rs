@@ -14,7 +14,7 @@ use crate::json::GameStateJson;
 use crate::model::*;
 use crate::router::RouterCommand;
 
-const BROKERS: &str = env!("GATEWAY_BROKERS");
+const BROKERS: &str = "kafka:9092";
 const APP_NAME: &str = "gateway";
 const GAME_STATES_TOPIC: &str = "bugout-game-states";
 const MAKE_MOVE_CMD_TOPIC: &str = "bugout-make-move-cmd";
