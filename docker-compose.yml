@@ -24,8 +24,6 @@ services:
       - "kafka"
     depends_on:
       - "kafka"
-    environment:
-      GATEWAY_BROKERS: kafka:9092
   judge:
     build: judge/.
     links:
