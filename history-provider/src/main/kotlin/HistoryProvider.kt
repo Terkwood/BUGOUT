@@ -78,7 +78,10 @@ class HistoryProvider(private val brokers: String) {
                     history = throw NotImplementedError()))
             }
 
-        throw NotImplementedError()
+        historyProvidedEvent.mapValues { v ->
+            println("📚          ️${v.gameId.short()} HISTPROV ")
+            jsonMapper.writeValueAsString(v)}.to(HISTORY_PROVIDED_TOPIC,
+            Produced.with(Serdes.UUID(), Serdes.String()))
 
         val topology = streamsBuilder.build()
 
