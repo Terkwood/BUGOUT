@@ -2,4 +2,4 @@ data class ProvideHistoryCommand(val gameId: GameId, val reqId: ReqId, val times
 
 // TODO
 data class HistoryProvidedEvent(val gameId: GameId, val replyTo: ReqId, val
-eventId: EventId)
+eventId: EventId, val history: List<Nothing>)

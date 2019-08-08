@@ -1,6 +1,7 @@
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
+import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
@@ -64,6 +65,18 @@ class HistoryProvider(private val brokers: String) {
         val provideHistoryGameStates: KStream<GameId,
                 ProvideHistoryGameState> =
             provideHistoryCommands.leftJoin(gameStates, keyJoiner, valueJoiner)
+
+        val historyProvidedEvent: KStream<GameId, HistoryProvidedEvent> =
+            provideHistoryGameStates.map { _, provideHistoryGameState ->
+                val eventId = UUID.randomUUID()
+                val command = provideHistoryGameState.provideHistory
+                val gameState = provideHistoryGameState.gameState
+
+                // TODO
+                KeyValue(command.gameId, HistoryProvidedEvent(gameId =
+                command.gameId, replyTo = command.reqId, eventId = eventId,
+                    history = throw NotImplementedError()))
+            }
 
         throw NotImplementedError()
 
