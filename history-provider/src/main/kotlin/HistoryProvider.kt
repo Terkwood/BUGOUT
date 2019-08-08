@@ -2,11 +2,11 @@ import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StreamsBuilder
-import org.apache.kafka.streams.kstream.GlobalKTable
-import org.apache.kafka.streams.kstream.Materialized
+import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
 import serdes.GameStateDeserializer
 import serdes.GameStateSerializer
+import serdes.jsonMapper
 import java.util.*
 
 
@@ -18,6 +18,7 @@ class HistoryProvider(private val brokers: String) {
     fun process() {
         val streamsBuilder = StreamsBuilder()
 
+        // Need global table for joins
         val gameStates: GlobalKTable<GameId, GameState> =
             streamsBuilder
                 .globalTable(
@@ -33,6 +34,18 @@ class HistoryProvider(private val brokers: String) {
                             )
                         )
                 )
+
+        val provideHistoryCommands: KStream<GameId, ProvideHistoryCommand> =
+            streamsBuilder.stream<UUID, String>(
+                PROVIDE_HISTORY_TOPIC,
+                Consumed.with(Serdes.UUID(), Serdes.String())
+            )
+                .mapValues { v ->
+                    jsonMapper.readValue(
+                        v,
+                        ProvideHistoryCommand::class.java
+                    )
+                }
 
         throw NotImplementedError()
 

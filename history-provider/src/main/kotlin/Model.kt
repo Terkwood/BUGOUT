@@ -2,6 +2,8 @@ import serdes.jsonMapper
 import java.util.*
 
 typealias GameId = UUID
+typealias ReqId = UUID
+typealias EventId = UUID
 
 // TODO
 data class GameState(val gameId: GameId) {
