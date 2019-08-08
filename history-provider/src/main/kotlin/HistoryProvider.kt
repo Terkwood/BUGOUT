@@ -17,7 +17,7 @@ fun main() {
 class HistoryProvider(private val brokers: String) {
     fun process() {
         val streamsBuilder = StreamsBuilder()
-        
+
         val gameStates: GlobalKTable<GameId, GameState> =
             streamsBuilder
                 .globalTable(
