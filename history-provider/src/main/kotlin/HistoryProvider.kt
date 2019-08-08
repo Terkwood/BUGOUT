@@ -47,6 +47,24 @@ class HistoryProvider(private val brokers: String) {
                     )
                 }
 
+        val keyJoiner: KeyValueMapper<GameId, ProvideHistoryCommand, GameId> =
+            KeyValueMapper { _: GameId, // left key
+                             leftValue: ProvideHistoryCommand ->
+                leftValue.gameId
+            }
+
+        val valueJoiner: ValueJoiner<ProvideHistoryCommand, GameState, ProvideHistoryGameState> =
+            ValueJoiner { leftValue:
+                          ProvideHistoryCommand,
+                          rightValue:
+                          GameState ->
+                ProvideHistoryGameState(leftValue, rightValue)
+            }
+
+        val provideHistoryGameStates: KStream<GameId,
+                ProvideHistoryGameState> =
+            provideHistoryCommands.leftJoin(gameStates, keyJoiner, valueJoiner)
+
         throw NotImplementedError()
 
         val topology = streamsBuilder.build()

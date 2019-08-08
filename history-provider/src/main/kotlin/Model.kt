@@ -13,3 +13,6 @@ data class GameState(val gameId: GameId) {
 }
 
 data class Coord(val x: Int, val y: Int)
+
+data class ProvideHistoryGameState(val provideHistory: ProvideHistoryCommand,
+                                   val gameState: GameState)
