@@ -19,7 +19,7 @@ const APP_NAME: &str = "gateway";
 const GAME_STATES_TOPIC: &str = "bugout-game-states";
 const MAKE_MOVE_CMD_TOPIC: &str = "bugout-make-move-cmd";
 const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
-const PROVIDE_GAME_HISTORY_CMD_TOPIC: &str = "bugout-provide-history-cmd";
+const PROVIDE_HISTORY_TOPIC: &str = "bugout-provide-history-cmd";
 const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_EV_TOPIC];
 const NUM_PREMADE_GAMES: usize = 64;
 
@@ -53,7 +53,7 @@ fn start_producer(
                         ()
                     },
                     Ok(ClientCommands::ProvideHistory(c)) => {
-                        producer.send(FutureRecord::to(PROVIDE_GAME_HISTORY_CMD_TOPIC)
+                        producer.send(FutureRecord::to(PROVIDE_HISTORY_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
                             .key(&c.game_id.to_string()), 0);
                         // Fire and forget
