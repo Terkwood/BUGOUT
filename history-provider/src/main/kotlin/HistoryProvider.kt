@@ -12,6 +12,7 @@ import java.util.*
 
 
 fun main() {
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
     HistoryProvider("kafka:9092").process()
 }
 
