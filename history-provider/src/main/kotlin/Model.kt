@@ -28,7 +28,7 @@ data class History(
 
 @JsonIgnoreProperties(value = ["board", "captures", "boardSize", "turn"])
 data class GameState(
-    val moves: List<MoveEv>, val
+    val moves: List<MoveEv>?, val
     playerUp: Player
 ) {
     fun asByteArray(): ByteArray {
@@ -36,9 +36,9 @@ data class GameState(
     }
 
     fun toHistory(gameId: GameId): History {
-        val moves = this.moves.withIndex()
-            .map { (index, moveEv) -> Pair(index + 1, moveEv) }
-            .map { (turn, moveEv) ->
+        val moves = this.moves?.withIndex()
+            ?.map { (index, moveEv) -> Pair(index + 1, moveEv) }
+            ?.map { (turn, moveEv) ->
                 Move(
                     player = moveEv.player,
                     coord = moveEv.coord,
@@ -46,7 +46,7 @@ data class GameState(
                 )
             }
         return History(
-            gameId, moves
+            gameId, moves ?: listOf()
         )
     }
 
