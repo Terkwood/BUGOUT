@@ -35,11 +35,20 @@ data class GameState(
         return jsonMapper.writeValueAsBytes(this)
     }
 
-    // TODO
-    fun toHistory(gameId: GameId): History =
-        History(
-            gameId, moves = listOf()
+    fun toHistory(gameId: GameId): History {
+        val moves = this.moves.withIndex()
+            .map { (index, moveEv) -> Pair(index + 1, moveEv) }
+            .map { (turn, moveEv) ->
+                Move(
+                    player = moveEv.player,
+                    coord = moveEv.coord,
+                    turn = turn
+                )
+            }
+        return History(
+            gameId, moves
         )
+    }
 
 }
 
