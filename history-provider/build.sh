@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROJ_NAME="bugout.history-provider"
+PROJ_NAME="bugout.historyprovider"
 
 rm -f ./build/libs/$PROJ_NAME*.jar
 gradle build

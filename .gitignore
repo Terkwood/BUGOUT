@@ -1,3 +1,4 @@
+bugout*.jar
 .DS_Store
 .idea/shelf
 /android.tests.dependencies

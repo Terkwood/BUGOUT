@@ -10,8 +10,8 @@ RUN chmod 755 wait-for-it.sh
 ### END PROD
 
 ### BEGIN DEV
-# COPY "run.sh" .
-# COPY "bugout.history-provider.jar" .
+COPY "run.sh" .
+COPY "bugout.historyprovider.jar" .
 ### END DEV
 
 #TODO
