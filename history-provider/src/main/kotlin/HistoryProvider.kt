@@ -43,22 +43,15 @@ class HistoryProvider(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
-                    val w = jsonMapper.readValue(
+                    jsonMapper.readValue(
                         v,
                         ProvideHistoryCommand::class.java
                     )
-
-                    println("command $v")
-
-                    w
                 }
 
         val keyJoiner: KeyValueMapper<GameId, ProvideHistoryCommand, GameId> =
             KeyValueMapper { _: GameId, // left key
                              leftValue: ProvideHistoryCommand ->
-
-                println("key joiner")
-
                 leftValue.gameId
             }
 
@@ -67,8 +60,6 @@ class HistoryProvider(private val brokers: String) {
                           ProvideHistoryCommand,
                           rightValue:
                           GameState ->
-                println("value joiner")
-
                 ProvideHistoryGameState(leftValue, rightValue)
             }
 
@@ -78,31 +69,25 @@ class HistoryProvider(private val brokers: String) {
 
         val historyProvidedEvent: KStream<GameId, HistoryProvidedEvent> =
             provideHistoryGameStates.map { _, provideHistoryGameState ->
-                println("wakey")
-
                 val eventId = UUID.randomUUID()
                 val command = provideHistoryGameState.provideHistory
                 val gameState = provideHistoryGameState.gameState
 
-                println("... General greetings ...")
-
-                val kv = KeyValue(
-                    command.gameId, HistoryProvidedEvent(
-                        gameId =
-                        command.gameId,
-                        replyTo = command.reqId,
-                        eventId = eventId,
-                        history = gameState.toHistory(command.gameId)
-                    )
+                val event = HistoryProvidedEvent(
+                    gameId =
+                    command.gameId,
+                    replyTo = command.reqId,
+                    eventId = eventId,
+                    history = gameState.toHistory(command.gameId)
                 )
 
-                println("👻 $kv")
-
-                kv
+                KeyValue(
+                    command.gameId, event
+                )
             }
 
         historyProvidedEvent.mapValues { v ->
-            println("📚          ️${v.gameId.short()} HISTPROV ")
+            println("📚          ️${v.gameId.short()} HISTPROV $v")
             jsonMapper.writeValueAsString(v)
         }
             .to(
