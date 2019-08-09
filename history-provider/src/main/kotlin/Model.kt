@@ -10,7 +10,17 @@ data class Coord(val x: Int, val y: Int)
 data class MoveEv(val player: Player, val coord: Coord?)
 data class Move(val player: Player, val coord: Coord?, val turn: Int)
 
-data class History(val gameId: GameId, val moves: List<Move>)
+/**
+ * An ordered list of moves (FIFO).
+ *
+ * @property gameId the game associated with this history
+ * @property moves an ordered list of moves which have occurred;
+ *                 first move is head of the list
+ */
+data class History(
+    val gameId: GameId,
+    val moves: List<Move>
+)
 
 // TODO
 data class GameState(val gameId: GameId, val moves: List<MoveEv>) {
