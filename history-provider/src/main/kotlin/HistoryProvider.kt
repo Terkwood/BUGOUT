@@ -98,7 +98,7 @@ class HistoryProvider(private val brokers: String) {
         val topology = streamsBuilder.build()
 
         println(topology.describe())
-        
+
         val props = Properties()
         props["bootstrap.servers"] = brokers
         props["application.id"] = "bugout-history-provider"
