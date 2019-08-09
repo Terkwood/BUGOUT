@@ -72,16 +72,25 @@ class HistoryProvider(private val brokers: String) {
                 val command = provideHistoryGameState.provideHistory
                 val gameState = provideHistoryGameState.gameState
 
-                // TODO
-                KeyValue(command.gameId, HistoryProvidedEvent(gameId =
-                command.gameId, replyTo = command.reqId, eventId = eventId,
-                    history = throw NotImplementedError()))
+                KeyValue(
+                    command.gameId, HistoryProvidedEvent(
+                        gameId =
+                        command.gameId,
+                        replyTo = command.reqId,
+                        eventId = eventId,
+                        history = gameState.toHistory()
+                    )
+                )
             }
 
         historyProvidedEvent.mapValues { v ->
             println("📚          ️${v.gameId.short()} HISTPROV ")
-            jsonMapper.writeValueAsString(v)}.to(HISTORY_PROVIDED_TOPIC,
-            Produced.with(Serdes.UUID(), Serdes.String()))
+            jsonMapper.writeValueAsString(v)
+        }
+            .to(
+                HISTORY_PROVIDED_TOPIC,
+                Produced.with(Serdes.UUID(), Serdes.String())
+            )
 
         val topology = streamsBuilder.build()
 
