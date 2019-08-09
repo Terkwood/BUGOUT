@@ -44,6 +44,12 @@ services:
       - "kafka"
     depends_on:
       - "kafka"
+  history-provider:
+    build: history-provider/.
+    links:
+      - "kafka"
+    depends_on:
+      - "kafka"
   kafkacat:
     build: kafkacat/.
     links:
