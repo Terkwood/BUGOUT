@@ -42,15 +42,22 @@ class HistoryProvider(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
-                    jsonMapper.readValue(
+                    val w = jsonMapper.readValue(
                         v,
                         ProvideHistoryCommand::class.java
                     )
+
+                    println("command $v")
+
+                    w
                 }
 
         val keyJoiner: KeyValueMapper<GameId, ProvideHistoryCommand, GameId> =
             KeyValueMapper { _: GameId, // left key
                              leftValue: ProvideHistoryCommand ->
+
+                println("key joiner")
+
                 leftValue.gameId
             }
 
@@ -59,6 +66,8 @@ class HistoryProvider(private val brokers: String) {
                           ProvideHistoryCommand,
                           rightValue:
                           GameState ->
+                println("value joiner")
+
                 ProvideHistoryGameState(leftValue, rightValue)
             }
 
@@ -68,6 +77,8 @@ class HistoryProvider(private val brokers: String) {
 
         val historyProvidedEvent: KStream<GameId, HistoryProvidedEvent> =
             provideHistoryGameStates.map { _, provideHistoryGameState ->
+                println("wakey")
+
                 val eventId = UUID.randomUUID()
                 val command = provideHistoryGameState.provideHistory
                 val gameState = provideHistoryGameState.gameState
