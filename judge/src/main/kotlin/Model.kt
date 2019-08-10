@@ -34,7 +34,9 @@ data class MakeMoveCmd(
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
     include = JsonTypeInfo.As.PROPERTY,
-    property = "type"
+    property = "type",
+    defaultImpl = MoveMadeEvent::class,
+    visible = true
 )
 data class MoveMadeEvent(
     val gameId: GameId,
