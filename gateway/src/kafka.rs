@@ -143,7 +143,9 @@ fn start_consumer(
                 };
 
                 consumer.commit_message(&msg, CommitMode::Async).unwrap();
-                match serde_json::from_str(payload) {
+
+                let deserialized: Result<Events, _> = serde_json::from_str(payload);
+                match deserialized {
                     Ok(Events::MoveMade(m)) => events_in.send(Events::MoveMade(m)).unwrap(),
                     Ok(Events::HistoryProvided(h)) => {
                         events_in.send(Events::HistoryProvided(h)).unwrap()

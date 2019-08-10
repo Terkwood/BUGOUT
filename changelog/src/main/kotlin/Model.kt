@@ -1,4 +1,5 @@
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -23,7 +24,15 @@ typealias EventId = UUID
 /**
  * An event signaling that a move has been made.
  * We ignore the type property used by gateway for deserialization.
+ * We emit the type property on serialization.
  */
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type",
+    defaultImpl = MoveMadeEvent::class,
+    visible = true
+)
 @JsonIgnoreProperties(value = ["type"])
 data class MoveMadeEvent(
     val gameId: GameId,

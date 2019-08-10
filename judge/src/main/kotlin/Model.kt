@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.util.*
 import kotlin.collections.HashMap
@@ -38,6 +39,7 @@ data class MakeMoveCmd(
     defaultImpl = MoveMadeEvent::class,
     visible = true
 )
+@JsonIgnoreProperties(value = ["type"]) // madness, we have to ignore it on deser
 data class MoveMadeEvent(
     val gameId: GameId,
     val replyTo: RequestId,
