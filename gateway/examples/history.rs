@@ -2,12 +2,10 @@ extern crate rand;
 extern crate uuid;
 extern crate ws;
 
-use rand::Rng;
 use uuid::Uuid;
 use ws::{connect, CloseCode};
 
 fn main() {
-    let mut rng = rand::thread_rng();
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
         panic!("You must specify a game ID as a command line argument")
