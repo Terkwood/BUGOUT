@@ -29,14 +29,20 @@ fn main() {
         let game_id: Uuid = game_id_parsed.unwrap();
         let request_id = Uuid::new_v4();
 
-        let msg = format!("{{\"type\":\"ProvideHistory\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\"}}", game_id, request_id).to_string();
+        let msg = format!(
+            "{{\"type\":\"ProvideHistory\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\"}}",
+            game_id, request_id
+        )
+        .to_string();
         let debug_msg = String::from(&msg);
-        
 
         if out.send(msg).is_err() {
             println!("Websocket couldn't queue an initial message.")
         } else {
-            println!("Client sent message ({}) with req_id: {:?}", debug_msg, request_id)
+            println!(
+                "Client sent message ({}) with req_id: {:?}",
+                debug_msg, request_id
+            )
         }
 
         // The handler needs to take ownership of out, so we use move
