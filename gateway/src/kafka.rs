@@ -149,7 +149,7 @@ fn start_consumer(
                         events_in.send(Events::HistoryProvided(h)).unwrap()
                     }
                     Ok(_) => (),
-                    Err(_) => println!("ERROR matching JSON :("),
+                    Err(_) => println!("ERROR matching JSON {}", payload),
                 }
             }
         }
