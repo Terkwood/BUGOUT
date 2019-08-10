@@ -20,6 +20,12 @@ fn main() {
         )
     }
 
+    // stop the example at some point in the future
+    std::thread::spawn(move || {
+        std::thread::sleep_ms(1000);
+        std::process::exit(0);
+    });
+
     // Connect to the url and call the closure
     if let Err(error) = connect("ws://127.0.0.1:3012", |out| {
         // Queue a message to be sent when the WebSocket is open
@@ -49,11 +55,14 @@ fn main() {
             println!("Client sent message {}", debug_msg)
         }
 
+        
+
         // The handler needs to take ownership of out, so we use move
-        move |msg| {
+        move |recv_msg| {
             // Handle messages received on this connection
-            println!("Client got message {} ", msg);
-            out.close(CloseCode::Normal)
+            println!("Client got message {} ", recv_msg);
+            
+            Ok(())
         }
     }) {
         // Inform the user of failure
