@@ -5,7 +5,7 @@ data class GameState(
     val captures: Captures = Captures(),
     val turn: Int = 1,
     val playerUp: Player = Player.BLACK,
-    val moves: List<MoveAcceptedEv> = listOf()
+    val moves: List<MoveMade> = listOf()
 ) {
 
     fun asByteArray(): ByteArray {

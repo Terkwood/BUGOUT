@@ -10,6 +10,7 @@
 - Uses a [fork of Sabaki](https://github.com/Terkwood/Sabaki) for the web UI
 - A [public-facing websocket gateway](gateway/README.md) communicates with the browser
 - [Kotlin & Kafka streams adjudicates games](judge/README.md), [announces moves](changelog/README.md), and [will eventually provide lobby functionality](https://github.com/Terkwood/BUGOUT/issues/42)
+- [A microservice to provide game history on request](history-provider/README.md)
 
 ## Data Flow
 

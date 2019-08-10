@@ -2,12 +2,10 @@ extern crate rand;
 extern crate uuid;
 extern crate ws;
 
-use rand::Rng;
 use uuid::Uuid;
-use ws::{connect, CloseCode};
+use ws::connect;
 
 fn main() {
-    let mut rng = rand::thread_rng();
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
         panic!("You must specify a game ID as a command line argument")
@@ -22,6 +20,12 @@ fn main() {
         )
     }
 
+    // stop the example at some point in the future
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        std::process::exit(0);
+    });
+
     // Connect to the url and call the closure
     if let Err(error) = connect("ws://127.0.0.1:3012", |out| {
         // Queue a message to be sent when the WebSocket is open
@@ -29,20 +33,33 @@ fn main() {
         let game_id: Uuid = game_id_parsed.unwrap();
         let request_id = Uuid::new_v4();
 
-        let (x, y) = (rng.gen_range(0, 19), rng.gen_range(0, 19));
-        let msg = format!("{{\"type\":\"MakeMove\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\",\"player\":\"WHITE\",\"coord\":{{\"x\":{},\"y\":{}}}}}", game_id, request_id, x, y).to_string();
+        // We need to "reconnect" to a game in progress, or we won't receive
+        // any reply once the history is provided
+        let reconn_msg = format!(
+            "{{\"type\":\"Reconnect\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\"}}",
+            game_id, request_id
+        )
+        .to_string();
+        out.send(reconn_msg).expect("sent");
+
+        let msg = format!(
+            "{{\"type\":\"ProvideHistory\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\"}}",
+            game_id, request_id
+        )
+        .to_string();
+        let debug_msg = String::from(&msg);
 
         if out.send(msg).is_err() {
             println!("Websocket couldn't queue an initial message.")
         } else {
-            println!("Client sent message with req_id: {:?}", request_id)
+            println!("Client sent message {}", debug_msg)
         }
 
-        // The handler needs to take ownership of out, so we use move
-        move |msg| {
+        |recv_msg| {
             // Handle messages received on this connection
-            println!("Client got message '{}'. ", msg);
-            out.close(CloseCode::Normal)
+            println!("Client got message {} ", recv_msg);
+            
+            Ok(())
         }
     }) {
         // Inform the user of failure

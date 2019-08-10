@@ -1,10 +1,12 @@
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.util.*
 import kotlin.collections.HashMap
 
 enum class Player { BLACK, WHITE }
 data class Coord(val x: Int, val y: Int)
 
-val FULL_BOARD_SIZE = 19
+const val FULL_BOARD_SIZE = 19
 data class Board(
     val pieces: MutableMap<Coord, Player> = HashMap(),
     val size: Int = FULL_BOARD_SIZE
@@ -19,8 +21,20 @@ typealias GameId = UUID
 typealias RequestId = UUID
 typealias EventId = UUID
 
-/// Either a MoveAccepted or a MoveMade
-data class MoveEv(
+/**
+ * An event signaling that a move has been made.
+ * We ignore the type property used by gateway for deserialization.
+ * We emit the type property on serialization.
+ */
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type",
+    defaultImpl = MoveMade::class,
+    visible = true
+)
+@JsonIgnoreProperties(value = ["type"])
+data class MoveMade(  // DO NOT RENAME ME -- gateway  depends on this name
     val gameId: GameId,
     val replyTo: RequestId,
     val eventId: EventId = UUID.randomUUID(),

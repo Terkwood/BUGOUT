@@ -17,9 +17,11 @@ use crate::router::RouterCommand;
 const BROKERS: &str = "kafka:9092";
 const APP_NAME: &str = "gateway";
 const GAME_STATES_TOPIC: &str = "bugout-game-states";
-const MAKE_MOVE_CMD_TOPIC: &str = "bugout-make-move-cmd";
-const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
-const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_EV_TOPIC];
+const MAKE_MOVE_TOPIC: &str = "bugout-make-move-cmd";
+const MOVE_MADE_TOPIC: &str = "bugout-move-made-ev";
+const PROVIDE_HISTORY_TOPIC: &str = "bugout-provide-history-cmd";
+const HISTORY_PROVIDED_TOPIC: &str = "bugout-history-provided-ev";
+const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_TOPIC, HISTORY_PROVIDED_TOPIC];
 const NUM_PREMADE_GAMES: usize = 64;
 
 pub fn start(
@@ -45,12 +47,15 @@ fn start_producer(
             recv(kafka_out) -> command =>
                 match command {
                     Ok(ClientCommands::MakeMove(c)) => {
-                        producer.send(FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
+                        producer.send(FutureRecord::to(MAKE_MOVE_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
-                            .key(&c.game_id.to_string()), 0);
-                        // Fire and forget
-                        ()
+                            .key(&c.game_id.to_string()), 0); // fire & forget
                     },
+                    Ok(ClientCommands::ProvideHistory(c)) => {
+                        producer.send(FutureRecord::to(PROVIDE_HISTORY_TOPIC)
+                            .payload(&serde_json::to_string(&c).unwrap())
+                            .key(&c.game_id.to_string()), 0); // fire & forget
+                    }
                     Ok(_) => (),
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
@@ -139,8 +144,15 @@ fn start_consumer(
                 };
 
                 consumer.commit_message(&msg, CommitMode::Async).unwrap();
-                if let Ok(move_made) = serde_json::from_str(payload) {
-                    events_in.send(Events::MoveMade(move_made)).unwrap()
+
+                let deserialized: Result<Events, _> = serde_json::from_str(payload);
+                match deserialized {
+                    Ok(Events::MoveMade(m)) => events_in.send(Events::MoveMade(m)).unwrap(),
+                    Ok(Events::HistoryProvided(h)) => {
+                        events_in.send(Events::HistoryProvided(h)).unwrap()
+                    }
+                    Ok(_) => (),
+                    Err(e) => println!("ERROR matching JSON {}\n {:?}", payload, e),
                 }
             }
         }

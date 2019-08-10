@@ -10,5 +10,6 @@ docker/compose:1.13.0'
 # do not have access to cargo, gradle etc
 docker-compose build judge
 docker-compose build changelog
+docker-compose build history-provider
 docker-compose build gateway
 docker-compose build kafkacat

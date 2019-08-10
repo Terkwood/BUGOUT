@@ -46,6 +46,14 @@ pub struct RequestGameIdCommand {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ProvideHistoryCommand {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    #[serde(rename = "reqId")]
+    pub req_id: ReqId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReconnectCommand {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
@@ -60,6 +68,7 @@ pub enum ClientCommands {
     Beep,
     RequestOpenGame(RequestGameIdCommand),
     Reconnect(ReconnectCommand),
+    ProvideHistory(ProvideHistoryCommand),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -110,12 +119,24 @@ pub struct ReconnectedEvent {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct HistoryProvidedEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    #[serde(rename = "replyTo")]
+    pub reply_to: ReqId,
+    #[serde(rename = "eventId")]
+    pub event_id: EventId,
+    pub moves: Vec<Move>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum Events {
     MoveMade(MoveMadeEvent),
     MoveRejected(MoveRejectedEvent),
     OpenGameReply(OpenGameReplyEvent),
     Reconnected(ReconnectedEvent),
+    HistoryProvided(HistoryProvidedEvent),
 }
 
 impl Events {
@@ -125,6 +146,7 @@ impl Events {
             Events::MoveRejected(e) => e.game_id,
             Events::OpenGameReply(e) => e.game_id,
             Events::Reconnected(e) => e.game_id,
+            Events::HistoryProvided(e) => e.game_id,
         }
     }
 }
@@ -139,6 +161,13 @@ impl Default for Captures {
     fn default() -> Captures {
         Captures { black: 0, white: 0 }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Move {
+    player: Player,
+    coord: Option<Coord>,
+    turn: i32,
 }
 
 #[cfg(test)]

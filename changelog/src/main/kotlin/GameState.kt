@@ -12,9 +12,9 @@ class GameState(boardSize: Int = FULL_BOARD_SIZE) {
 
     var playerUp: Player = Player.BLACK
 
-    val moves: MutableList<MoveEv> = mutableListOf()
+    val moves: MutableList<MoveMade> = mutableListOf()
 
-    fun add(ev: MoveEv): GameState {
+    fun add(ev: MoveMade): GameState {
         moves.add(ev)
 
         if (ev.coord != null) {

@@ -193,6 +193,22 @@ impl Handler for WsSession {
 
                 Ok(self.observe())
             }
+            Ok(ClientCommands::ProvideHistory(ProvideHistoryCommand { game_id, req_id })) => {
+                println!("📋 {} PROVHIST", session_code(self));
+
+                if let Err(e) = self
+                    .bugout_commands_in
+                    .send(ClientCommands::ProvideHistory(ProvideHistoryCommand {
+                        game_id,
+                        req_id,
+                    }))
+                    .map_err(|e| ws::Error::from(Box::new(e)))
+                {
+                    println!("ERROR on send provhist {:?}", e)
+                }
+
+                Ok(self.observe())
+            }
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",

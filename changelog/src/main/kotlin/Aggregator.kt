@@ -18,12 +18,12 @@ class Aggregator(private val brokers: String) {
     fun process() {
 
         val streamsBuilder = StreamsBuilder()
-        val moveMadeEventJsonStream = streamsBuilder.stream<UUID, String>(
+        val moveAcceptedJson = streamsBuilder.stream<UUID, String>(
             MOVE_ACCEPTED_EV_TOPIC,
             Consumed.with(Serdes.UUID(), Serdes.String())
         )
 
-        val gameStates = moveMadeEventJsonStream.groupByKey(
+        val gameStates = moveAcceptedJson.groupByKey(
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
             Serialized.with(
                 Serdes.UUID(),
@@ -36,7 +36,7 @@ class Aggregator(private val brokers: String) {
                     list.add(
                         jsonMapper.readValue(
                             v,
-                            MoveEv::class.java
+                            MoveMade::class.java
                         )
                     )
                     list
