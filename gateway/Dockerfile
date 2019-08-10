@@ -22,6 +22,8 @@ RUN rustup default nightly
 # not just what's on the git branch
 COPY . /var/BUGOUT/gateway/.
 
-RUN cargo install --path .
+#TODO
+#RUN cargo install --path .
 
-CMD ["sh", "run.sh"]
+#TODO
+#CMD ["sh", "run.sh"]
