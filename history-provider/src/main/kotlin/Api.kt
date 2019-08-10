@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.time.Instant
 
@@ -20,6 +21,7 @@ data class ProvideHistoryCommand(val gameId: GameId, val reqId: ReqId)
     include = JsonTypeInfo.As.PROPERTY,
     property = "type"
 )
+@JsonIgnoreProperties(value = ["type"]) // madness, we have to ignore it on deser
 data class HistoryProvided( // THIS NAME MUST NOT CHANGE -- gateway depends
 // on JSON
     val gameId: GameId,

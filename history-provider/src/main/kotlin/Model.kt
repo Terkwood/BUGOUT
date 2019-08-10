@@ -9,7 +9,8 @@ typealias EventId = UUID
 
 enum class Player { BLACK, WHITE }
 data class Coord(val x: Int, val y: Int)
-@JsonIgnoreProperties(value = ["gameId", "replyTo", "eventId", "captured"])
+@JsonIgnoreProperties(value = ["gameId", "replyTo", "eventId", "captured",
+    "type"])
 data class MoveEv(val player: Player, val coord: Coord?)
 
 data class Move(val player: Player, val coord: Coord?, val turn: Int)

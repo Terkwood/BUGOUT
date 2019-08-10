@@ -194,7 +194,7 @@ impl Handler for WsSession {
                 Ok(self.observe())
             }
             Ok(ClientCommands::ProvideHistory(ProvideHistoryCommand { game_id, req_id })) => {
-                println!("📋 {} HISTORY", session_code(self));
+                println!("📋 {} PROVHIST", session_code(self));
 
                 if let Some(c) = self.current_game {
                     if c == game_id {
