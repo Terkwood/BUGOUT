@@ -17,10 +17,11 @@ use crate::router::RouterCommand;
 const BROKERS: &str = "kafka:9092";
 const APP_NAME: &str = "gateway";
 const GAME_STATES_TOPIC: &str = "bugout-game-states";
-const MAKE_MOVE_CMD_TOPIC: &str = "bugout-make-move-cmd";
-const MOVE_MADE_EV_TOPIC: &str = "bugout-move-made-ev";
+const MAKE_MOVE_TOPIC: &str = "bugout-make-move-cmd";
+const MOVE_MADE_TOPIC: &str = "bugout-move-made-ev";
 const PROVIDE_HISTORY_TOPIC: &str = "bugout-provide-history-cmd";
-const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_EV_TOPIC];
+const HISTORY_PROVIDED_TOPIC: &str = "bugout-history-provided-ev";
+const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_TOPIC, HISTORY_PROVIDED_TOPIC];
 const NUM_PREMADE_GAMES: usize = 64;
 
 pub fn start(
@@ -46,7 +47,7 @@ fn start_producer(
             recv(kafka_out) -> command =>
                 match command {
                     Ok(ClientCommands::MakeMove(c)) => {
-                        producer.send(FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
+                        producer.send(FutureRecord::to(MAKE_MOVE_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
                             .key(&c.game_id.to_string()), 0); // fire & forget
                     },
