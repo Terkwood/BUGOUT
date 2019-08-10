@@ -36,11 +36,11 @@ data class MakeMoveCmd(
     use = JsonTypeInfo.Id.NAME,
     include = JsonTypeInfo.As.PROPERTY,
     property = "type",
-    defaultImpl = MoveMadeEvent::class,
+    defaultImpl = MoveMade::class,
     visible = true
 )
 @JsonIgnoreProperties(value = ["type"]) // madness, we have to ignore it on deser
-data class MoveMadeEvent(
+data class MoveMade( // DO NOT RENAME ME -- gateway  depends on this name
     val gameId: GameId,
     val replyTo: RequestId,
     val eventId: EventId = UUID.randomUUID(),

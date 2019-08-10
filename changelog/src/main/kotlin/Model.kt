@@ -30,11 +30,11 @@ typealias EventId = UUID
     use = JsonTypeInfo.Id.NAME,
     include = JsonTypeInfo.As.PROPERTY,
     property = "type",
-    defaultImpl = MoveMadeEvent::class,
+    defaultImpl = MoveMade::class,
     visible = true
 )
 @JsonIgnoreProperties(value = ["type"])
-data class MoveMadeEvent(
+data class MoveMade(  // DO NOT RENAME ME -- gateway  depends on this name
     val gameId: GameId,
     val replyTo: RequestId,
     val eventId: EventId = UUID.randomUUID(),

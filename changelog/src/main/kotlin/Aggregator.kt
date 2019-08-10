@@ -36,7 +36,7 @@ class Aggregator(private val brokers: String) {
                     list.add(
                         jsonMapper.readValue(
                             v,
-                            MoveMadeEvent::class.java
+                            MoveMade::class.java
                         )
                     )
                     list
