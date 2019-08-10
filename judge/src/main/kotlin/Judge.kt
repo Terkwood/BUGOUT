@@ -81,7 +81,7 @@ class Judge(private val brokers: String) {
 
         val validMoveGameState = branches[0]
 
-        val validMoveAcceptedStream: KStream<GameId, MoveAcceptedEv> =
+        val validMoveMadeStream: KStream<GameId, MoveMadeEvent> =
             validMoveGameState.map { _, moveCmdGameState ->
                 val eventId = UUID.randomUUID()
                 val move = moveCmdGameState.moveCmd
@@ -91,7 +91,7 @@ class Judge(private val brokers: String) {
                 } else listOf()
                 KeyValue(
                     move.gameId,
-                    MoveAcceptedEv(
+                    MoveMadeEvent(
                         gameId = move.gameId,
                         replyTo = move.reqId,
                         eventId = eventId,
@@ -102,7 +102,7 @@ class Judge(private val brokers: String) {
                 )
             }
 
-        validMoveAcceptedStream.mapValues { v ->
+        validMoveMadeStream.mapValues { v ->
             println(
                 "⚖️          ️${v.gameId.short()} ACCEPT   ${v
                     .player} @ ${v

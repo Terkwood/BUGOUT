@@ -126,7 +126,6 @@ pub struct HistoryProvidedEvent {
     pub reply_to: ReqId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
-    #[serde(rename = "moves")]
     pub moves: Vec<Move>,
 }
 

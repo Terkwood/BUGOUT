@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -25,7 +26,17 @@ data class MakeMoveCmd(
     val coord: Coord?
 )
 
-data class MoveAcceptedEv(
+/**
+ * An event signalling the acceptance of a move.
+ * JSON type field must be populated so that
+ * gateway knows how to deserialize this
+ */
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type"
+)
+data class MoveMadeEvent(
     val gameId: GameId,
     val replyTo: RequestId,
     val eventId: EventId = UUID.randomUUID(),
