@@ -3,7 +3,7 @@ extern crate uuid;
 extern crate ws;
 
 use uuid::Uuid;
-use ws::{connect, CloseCode};
+use ws::connect;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -22,7 +22,7 @@ fn main() {
 
     // stop the example at some point in the future
     std::thread::spawn(move || {
-        std::thread::sleep_ms(1000);
+        std::thread::sleep(1000);
         std::process::exit(0);
     });
 
@@ -55,10 +55,7 @@ fn main() {
             println!("Client sent message {}", debug_msg)
         }
 
-        
-
-        // The handler needs to take ownership of out, so we use move
-        move |recv_msg| {
+        |recv_msg| {
             // Handle messages received on this connection
             println!("Client got message {} ", recv_msg);
             
