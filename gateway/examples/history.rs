@@ -22,7 +22,7 @@ fn main() {
 
     // stop the example at some point in the future
     std::thread::spawn(move || {
-        std::thread::sleep(1000);
+        std::thread::sleep(std::time::Duration::from_secs(1));
         std::process::exit(0);
     });
 
