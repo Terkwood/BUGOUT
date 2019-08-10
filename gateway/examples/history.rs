@@ -27,6 +27,15 @@ fn main() {
         let game_id: Uuid = game_id_parsed.unwrap();
         let request_id = Uuid::new_v4();
 
+        // We need to "reconnect" to a game in progress, or we won't receive
+        // any reply once the history is provided
+        let reconn_msg = format!(
+            "{{\"type\":\"Reconnect\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\"}}",
+            game_id, request_id
+        )
+        .to_string();
+        out.send(reconn_msg).expect("sent");
+
         let msg = format!(
             "{{\"type\":\"ProvideHistory\",\"gameId\":\"{:?}\",\"reqId\":\"{:?}\"}}",
             game_id, request_id
@@ -37,16 +46,13 @@ fn main() {
         if out.send(msg).is_err() {
             println!("Websocket couldn't queue an initial message.")
         } else {
-            println!(
-                "Client sent message ({}) with req_id: {:?}",
-                debug_msg, request_id
-            )
+            println!("Client sent message {}", debug_msg)
         }
 
         // The handler needs to take ownership of out, so we use move
         move |msg| {
             // Handle messages received on this connection
-            println!("Client got message '{}'. ", msg);
+            println!("Client got message {} ", msg);
             out.close(CloseCode::Normal)
         }
     }) {
