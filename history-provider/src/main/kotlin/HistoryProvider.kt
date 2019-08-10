@@ -67,13 +67,13 @@ class HistoryProvider(private val brokers: String) {
                 ProvideHistoryGameState> =
             provideHistoryCommands.leftJoin(gameStates, keyJoiner, valueJoiner)
 
-        val historyProvidedEvent: KStream<GameId, HistoryProvidedEvent> =
+        val historyProvidedEvent: KStream<GameId, HistoryProvided> =
             provideHistoryGameStates.map { _, provideHistoryGameState ->
                 val eventId = UUID.randomUUID()
                 val command = provideHistoryGameState.provideHistory
                 val gameState = provideHistoryGameState.gameState
 
-                val event = HistoryProvidedEvent(
+                val event = HistoryProvided(
                     gameId = command.gameId,
                     replyTo = command.reqId,
                     eventId = eventId,
