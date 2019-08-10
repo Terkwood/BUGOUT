@@ -27,3 +27,6 @@ COPY . /var/BUGOUT/gateway/.
 
 #TODO
 #CMD ["sh", "run.sh"]
+
+#TODO
+CMD [ "tail","-f","/dev/null" ]
