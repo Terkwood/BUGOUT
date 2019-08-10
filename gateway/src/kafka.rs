@@ -48,16 +48,12 @@ fn start_producer(
                     Ok(ClientCommands::MakeMove(c)) => {
                         producer.send(FutureRecord::to(MAKE_MOVE_CMD_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
-                            .key(&c.game_id.to_string()), 0);
-                        // Fire and forget
-                        ()
+                            .key(&c.game_id.to_string()), 0); // fire & forget
                     },
                     Ok(ClientCommands::ProvideHistory(c)) => {
                         producer.send(FutureRecord::to(PROVIDE_HISTORY_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
-                            .key(&c.game_id.to_string()), 0);
-                        // Fire and forget
-                        ()
+                            .key(&c.game_id.to_string()), 0); // fire & forget
                     }
                     Ok(_) => (),
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),

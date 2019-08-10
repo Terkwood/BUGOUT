@@ -118,7 +118,6 @@ pub struct ReconnectedEvent {
     pub player_up: Player,
 }
 
-// TODO add fields
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HistoryProvidedEvent {
     #[serde(rename = "gameId")]
@@ -127,6 +126,8 @@ pub struct HistoryProvidedEvent {
     pub reply_to: ReqId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
+    #[serde(rename = "moves")]
+    pub moves: Vec<Move>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -161,6 +162,13 @@ impl Default for Captures {
     fn default() -> Captures {
         Captures { black: 0, white: 0 }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Move {
+    player: Player,
+    coord: Option<Coord>,
+    turn: i32,
 }
 
 #[cfg(test)]
