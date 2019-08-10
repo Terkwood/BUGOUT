@@ -14,18 +14,6 @@ data class MoveEv(val player: Player, val coord: Coord?)
 
 data class Move(val player: Player, val coord: Coord?, val turn: Int)
 
-/**
- * An ordered list of moves (FIFO).
- *
- * @property gameId the game associated with this history
- * @property moves an ordered list of moves which have occurred;
- *                 first move is head of the list
- */
-data class History(
-    val gameId: GameId,
-    val moves: List<Move>
-)
-
 @JsonIgnoreProperties(value = ["board", "captures", "boardSize", "turn"])
 data class GameState(
     val moves: List<MoveEv>?, val
@@ -35,20 +23,15 @@ data class GameState(
         return jsonMapper.writeValueAsBytes(this)
     }
 
-    fun toHistory(gameId: GameId): History {
-        val moves = this.moves?.withIndex()
-            ?.map { (index, moveEv) -> Pair(index + 1, moveEv) }
-            ?.map { (turn, moveEv) ->
-                Move(
-                    player = moveEv.player,
-                    coord = moveEv.coord,
-                    turn = turn
-                )
-            }
-        return History(
-            gameId, moves ?: listOf()
-        )
-    }
+    fun toHistory(): List<Move> = this.moves?.withIndex()
+        ?.map { (index, moveEv) -> Pair(index + 1, moveEv) }
+        ?.map { (turn, moveEv) ->
+            Move(
+                player = moveEv.player,
+                coord = moveEv.coord,
+                turn = turn
+            )
+        } ?: listOf()
 
 }
 

@@ -74,11 +74,10 @@ class HistoryProvider(private val brokers: String) {
                 val gameState = provideHistoryGameState.gameState
 
                 val event = HistoryProvidedEvent(
-                    gameId =
-                    command.gameId,
+                    gameId = command.gameId,
                     replyTo = command.reqId,
                     eventId = eventId,
-                    history = gameState.toHistory(command.gameId)
+                    moves = gameState.toHistory()
                 )
 
                 KeyValue(
