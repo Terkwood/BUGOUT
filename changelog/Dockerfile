@@ -5,12 +5,17 @@ RUN curl -O https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-
 RUN chmod 755 wait-for-it.sh
 
 ### BEGIN PROD
-COPY . .
-RUN sh build.sh
+#TODO
+#COPY . .
+#RUN sh build.sh
 ### END   PROD
 
 ### BEGIN DEV
-#COPY "bugout.changelog.jar" .
+#TODO
+COPY "bugout.changelog.jar" .
 ### END   DEV
 
-CMD ["sh", "run.sh"]
+#TODO
+#CMD ["sh", "run.sh"]
+
+CMD ["tail","-f","/dev/null"]
