@@ -6,7 +6,6 @@ data class OpenGame(val gameId: GameId, val visibility: Visibility)
 class AllOpenGames {
     var games: Set<OpenGame> = setOf()
 
-    val TOPIC_KEY: Short = 0
 
     fun add(openGame: OpenGame): AllOpenGames {
         games += openGame
@@ -17,4 +16,12 @@ class AllOpenGames {
     fun asByteArray(): ByteArray {
         return jsonMapper.writeValueAsBytes(this)
     }
+
+
+    companion object  {
+        val TOPIC_KEY: Short = 0
+
+    }
 }
+
+data class FindPublicGameAllOpenGames(val command: FindPublicGame, val store: AllOpenGames)
