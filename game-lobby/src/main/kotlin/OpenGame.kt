@@ -28,7 +28,7 @@ class AllOpenGames {
         /**
          * Trivial key for kafka join
          */
-        const val TOPIC_KEY: Short = 0
+        const val TOPIC_KEY: Int = 0
     }
 }
 

@@ -23,12 +23,12 @@ class GameLobby(private val brokers: String) {
         // aggregate data as it comes in
         // this is done with a local ktable
         val aggregateAll =
-            streamsBuilder.stream<Short, String>(
+            streamsBuilder.stream<Int, String>(
                 Topics.OPEN_GAME_COMMANDS,
-                Consumed.with(Serdes.Short(), Serdes.String())
+                Consumed.with(Serdes.Integer(), Serdes.String())
             )
                 .groupByKey(
-                    Serialized.with(Serdes.Short(), Serdes.String())
+                    Serialized.with(Serdes.Integer(), Serdes.String())
                 ).aggregate(
                     { AllOpenGames() },
                     { _, v, allGames ->
@@ -37,10 +37,10 @@ class GameLobby(private val brokers: String) {
                         )
                         allGames
                     },
-                    Materialized.`as`<Short, AllOpenGames, KeyValueStore<Bytes, ByteArray>>(
+                    Materialized.`as`<Int, AllOpenGames, KeyValueStore<Bytes, ByteArray>>(
                         Topics.OPEN_GAMES_STORE_NAME_LOCAL
                     ).withKeySerde(
-                        Serdes.Short()
+                        Serdes.Integer()
                     ).withValueSerde(
                         Serdes.serdeFrom(
                             AllOpenGamesSerializer(),
@@ -50,16 +50,16 @@ class GameLobby(private val brokers: String) {
                 )
 
         aggregateAll.toStream().map { k, v -> KeyValue(k, jsonMapper.writeValueAsString(v)) }
-            .to(Topics.OPEN_GAMES, Produced.with(Serdes.Short(), Serdes.String()))
+            .to(Topics.OPEN_GAMES, Produced.with(Serdes.Integer(), Serdes.String()))
 
         // expose the aggregated as a global ktable
         // so that we can join against it
-        val allOpenGames: GlobalKTable<Short, AllOpenGames> =
+        val allOpenGames: GlobalKTable<Int, AllOpenGames> =
             streamsBuilder.globalTable(
                 Topics.OPEN_GAMES,
-                Materialized.`as`<Short, AllOpenGames, KeyValueStore<Bytes, ByteArray>>
+                Materialized.`as`<Int, AllOpenGames, KeyValueStore<Bytes, ByteArray>>
                     (Topics.OPEN_GAMES_STORE_NAME_GLOBAL)
-                    .withKeySerde(Serdes.Short())
+                    .withKeySerde(Serdes.Integer())
                     .withValueSerde(
                         Serdes.serdeFrom(
                             AllOpenGamesSerializer(),
@@ -75,7 +75,7 @@ class GameLobby(private val brokers: String) {
             )
                 .mapValues { v -> jsonMapper.readValue(v, FindPublicGame::class.java) }
 
-        val fpgKeyJoiner: KeyValueMapper<ReqId, FindPublicGame, Short> =
+        val fpgKeyJoiner: KeyValueMapper<ReqId, FindPublicGame, Int> =
             KeyValueMapper { _: ReqId, // left key
                              _: FindPublicGame ->
                 // left value
@@ -104,7 +104,7 @@ class GameLobby(private val brokers: String) {
 
         val publicGameExists = fpgBranches[0]
 
-        val popPublicGame: KStream<Short, GameCommand> =
+        val popPublicGame: KStream<Int, GameCommand> =
             publicGameExists.map { _, fpgJoinAllGames ->
                 val fpg = fpgJoinAllGames.command
 
@@ -122,7 +122,7 @@ class GameLobby(private val brokers: String) {
 
         popPublicGame.mapValues { v -> jsonMapper.writeValueAsString(v) }.to(
             Topics.OPEN_GAME_COMMANDS,
-            Produced.with(Serdes.Short(), Serdes.String())
+            Produced.with(Serdes.Integer(), Serdes.String())
         )
 
         popPublicGame
@@ -147,7 +147,7 @@ class GameLobby(private val brokers: String) {
         }.mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(Topics.GAME_READY, Produced.with(Serdes.UUID(), Serdes.String()))
 
-        
+
         // TODO
         val joinPrivateGameStream: KStream<ReqId, JoinPrivateGame> =
             streamsBuilder.stream<ReqId, String>(
@@ -171,7 +171,7 @@ class GameLobby(private val brokers: String) {
             val newGame = Game(gameId = UUID.randomUUID(), visibility = v.visibility)
             KeyValue(AllOpenGames.TOPIC_KEY, GameCommand(game = newGame, command = Command.Open))
         }.mapValues { v -> jsonMapper.writeValueAsString(v)}
-            .to(Topics.OPEN_GAME_COMMANDS, Produced.with(Serdes.Short(), Serdes.String()))
+            .to(Topics.OPEN_GAME_COMMANDS, Produced.with(Serdes.Integer(), Serdes.String()))
 
 
         val topology = streamsBuilder.build()
