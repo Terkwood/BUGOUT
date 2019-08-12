@@ -8,9 +8,6 @@ enum class OpenGameAction { Add, Remove }
 class AllOpenGames {
     var games: Set<Game> = setOf()
 
-
-
-
     fun update(command: OpenGameCommand): AllOpenGames {
         games = when (command.action) {
             OpenGameAction.Add ->
@@ -28,8 +25,10 @@ class AllOpenGames {
 
 
     companion object  {
-        val TOPIC_KEY: Short = 0
-
+        /**
+         * Trivial key for kafka join
+         */
+        const val TOPIC_KEY: Short = 0
     }
 }
 
