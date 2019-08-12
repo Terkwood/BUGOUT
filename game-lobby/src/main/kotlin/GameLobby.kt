@@ -1,6 +1,7 @@
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
+import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
@@ -20,23 +21,30 @@ class GameLobby(private val brokers: String) {
 
         // aggregate data as it comes in
         // this is done with a local ktable
-        streamsBuilder.stream<Short, String>(Topics.OPEN_GAMES, Consumed.with(Serdes.Short(), Serdes.String()))
-            .groupByKey(
-                Serialized.with(Serdes.Short(), Serdes.String())
-            ).aggregate(
-                { AllOpenGames() },
-                { _, v, list ->
-                    list.add(
-                        jsonMapper.readValue(v, OpenGame::class.java)
-                    )
-                    list
-                },
-                Materialized.`as`<Short, AllOpenGames, KeyValueStore<Bytes, ByteArray>>(
-                    Topics.OPEN_GAMES_STORE_NAME_LOCAL
-                ).withKeySerde(
-                    Serdes.Short()
-                ).withValueSerde(Serdes.serdeFrom(AllOpenGamesSerializer(), AllOpenGamesDeserializer()))
+        val aggregateAll =
+            streamsBuilder.stream<Short, String>(
+                Topics.OPEN_GAME_COMMANDS,
+                Consumed.with(Serdes.Short(), Serdes.String())
             )
+                .groupByKey(
+                    Serialized.with(Serdes.Short(), Serdes.String())
+                ).aggregate(
+                    { AllOpenGames() },
+                    { _, v, allGames ->
+                        allGames.update(
+                            jsonMapper.readValue(v, OpenGameCommand::class.java)
+                        )
+                        allGames
+                    },
+                    Materialized.`as`<Short, AllOpenGames, KeyValueStore<Bytes, ByteArray>>(
+                        Topics.OPEN_GAMES_STORE_NAME_LOCAL
+                    ).withKeySerde(
+                        Serdes.Short()
+                    ).withValueSerde(Serdes.serdeFrom(AllOpenGamesSerializer(), AllOpenGamesDeserializer()))
+                )
+
+        aggregateAll.toStream().map { k, v -> KeyValue(k, jsonMapper.writeValueAsString(v)) }
+            .to(Topics.OPEN_GAMES, Produced.with(Serdes.Short(), Serdes.String()))
 
         // expose the aggregated as a global ktable
         // so that we can join against it
@@ -74,9 +82,19 @@ class GameLobby(private val brokers: String) {
             findPublicGameStream.leftJoin(allOpenGames, fpgKeyJoiner, fpgValueJoiner)
 
         val fpgBranches =
-            fpgJoinAllOpenGames.kbranch({ _, fpgOpenGames -> fpgOpenGames.store.games.isNotEmpty() })
+            fpgJoinAllOpenGames
+                .kbranch({ _, fpgOpenGames ->
+                    fpgOpenGames.store.games
+                        .any { g -> g.visibility == Visibility.Public }
+                })
 
-        throw NotImplementedError()
+        val publicGameAvailable =
+            fpgBranches[0]
+
+        val noPublicGameAvailable =
+            fpgBranches[1]
+
+        // TODO throw NotImplementedError()
 
 
         val joinPrivateGameStream: KStream<ReqId, JoinPrivateGame> =
@@ -86,14 +104,14 @@ class GameLobby(private val brokers: String) {
             )
                 .mapValues { v -> jsonMapper.readValue(v, JoinPrivateGame::class.java) }
 
-        throw NotImplementedError()
+        // TODO throw NotImplementedError()
 
 
         val createGameStream: KStream<ReqId, CreateGame> =
             streamsBuilder.stream<ReqId, String>(Topics.CREATE_GAME, Consumed.with(Serdes.UUID(), Serdes.String()))
                 .mapValues { v -> jsonMapper.readValue(v, CreateGame::class.java) }
 
-        throw NotImplementedError()
+        // TODO throw NotImplementedError()
 
 
         val topology = streamsBuilder.build()
