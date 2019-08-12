@@ -1,5 +1,9 @@
+import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StreamsBuilder
+import org.apache.kafka.streams.kstream.Consumed
+import org.apache.kafka.streams.kstream.KStream
+import serdes.jsonMapper
 import java.util.*
 
 fun main() {
@@ -7,9 +11,13 @@ fun main() {
     GameLobby("kafka:9092").process()
 }
 
-class GameLobby(val brokers: String) {
+class GameLobby(private val brokers: String) {
     fun process() {
         val streamsBuilder = StreamsBuilder()
+
+        val findPublicGameStream: KStream<ReqId, FindPublicGame> =
+            streamsBuilder.stream<ReqId, String>(Topics.FIND_PUBLIC_GAME, Consumed.with(Serdes.UUID(), Serdes.String()))
+                .mapValues { v -> jsonMapper.readValue(v, FindPublicGame::class.java) }
 
         throw NotImplementedError()
 
