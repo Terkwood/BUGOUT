@@ -111,6 +111,8 @@ class GameLobby(private val brokers: String) {
                 val someGame =
                     fpgJoinAllGames.store.games.first { g -> g.visibility == Visibility.Public }
 
+                print("Popping a public game with ID ${someGame.gameId}")
+
                 KeyValue(
                     AllOpenGames.TOPIC_KEY,
                     GameCommand(game = someGame, command = Command.Ready)
@@ -145,6 +147,8 @@ class GameLobby(private val brokers: String) {
         }.mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(Topics.GAME_READY, Produced.with(Serdes.UUID(), Serdes.String()))
 
+        
+        // TODO
         val joinPrivateGameStream: KStream<ReqId, JoinPrivateGame> =
             streamsBuilder.stream<ReqId, String>(
                 Topics.JOIN_PRIVATE_GAME,
@@ -162,7 +166,12 @@ class GameLobby(private val brokers: String) {
             )
                 .mapValues { v -> jsonMapper.readValue(v, CreateGame::class.java) }
 
-        // TODO throw NotImplementedError()
+        // open a new game
+        createGameStream.map { _, v ->
+            val newGame = Game(gameId = UUID.randomUUID(), visibility = v.visibility)
+            KeyValue(AllOpenGames.TOPIC_KEY, GameCommand(game = newGame, command = Command.Open))
+        }.mapValues { v -> jsonMapper.writeValueAsString(v)}
+            .to(Topics.OPEN_GAME_COMMANDS, Produced.with(Serdes.Short(), Serdes.String()))
 
 
         val topology = streamsBuilder.build()
