@@ -1,3 +1,5 @@
+import org.apache.kafka.streams.KafkaStreams
+import org.apache.kafka.streams.StreamsBuilder
 import java.util.*
 
 fun main() {
@@ -7,6 +9,20 @@ fun main() {
 
 class GameLobby(val brokers: String) {
     fun process() {
-        print("👺")
+        val streamsBuilder = StreamsBuilder()
+
+        throw NotImplementedError()
+
+        val topology = streamsBuilder.build()
+
+        println(topology.describe())
+
+        val props = Properties()
+        props["bootstrap.servers"] = brokers
+        props["application.id"] = "bugout-game-lobby"
+        props["processing.guarantee"] = "exactly_once"
+
+        val streams = KafkaStreams(topology, props)
+        streams.start()
     }
 }
