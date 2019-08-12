@@ -21,6 +21,24 @@ class GameLobby(private val brokers: String) {
 
         throw NotImplementedError()
 
+
+
+        val joinPrivateGameStream: KStream<ReqId, JoinPrivateGame> =
+            streamsBuilder.stream<ReqId, String>(Topics.JOIN_PRIVATE_GAME, Consumed.with(Serdes.UUID(), Serdes.String()))
+                .mapValues { v -> jsonMapper.readValue(v, JoinPrivateGame::class.java) }
+
+        throw NotImplementedError()
+
+
+
+        val createGameStream: KStream<ReqId, CreateGame> =
+            streamsBuilder.stream<ReqId, String>(Topics.CREATE_GAME, Consumed.with(Serdes.UUID(), Serdes.String()))
+                .mapValues { v -> jsonMapper.readValue(v, CreateGame::class.java) }
+
+        throw NotImplementedError()
+
+
+
         val topology = streamsBuilder.build()
 
         println(topology.describe())
