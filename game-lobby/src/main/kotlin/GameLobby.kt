@@ -41,11 +41,13 @@ class GameLobby(private val brokers: String) {
         // expose the aggregated as a global ktable
         // so that we can join against it
         val allOpenGames: GlobalKTable<Short, AllOpenGames> =
-            streamsBuilder.globalTable(Topics.OPEN_GAMES,
+            streamsBuilder.globalTable(
+                Topics.OPEN_GAMES,
                 Materialized.`as`<Short, AllOpenGames, KeyValueStore<Bytes, ByteArray>>
                     (Topics.OPEN_GAMES_STORE_NAME_GLOBAL)
-                .withKeySerde(Serdes.Short())
-                    .withValueSerde(Serdes.serdeFrom(AllOpenGamesSerializer(), AllOpenGamesDeserializer())))
+                    .withKeySerde(Serdes.Short())
+                    .withValueSerde(Serdes.serdeFrom(AllOpenGamesSerializer(), AllOpenGamesDeserializer()))
+            )
 
         val findPublicGameStream: KStream<ReqId, FindPublicGame> =
             streamsBuilder.stream<ReqId, String>(Topics.FIND_PUBLIC_GAME, Consumed.with(Serdes.UUID(), Serdes.String()))
@@ -68,8 +70,11 @@ class GameLobby(private val brokers: String) {
                 FindPublicGameAllOpenGames(leftValue, rightValue)
             }
 
-        val fpgJoinAllOpenGames = findPublicGameStream.leftJoin(allOpenGames, fpgKeyJoiner, fpgValueJoiner)
-        
+        val fpgJoinAllOpenGames =
+            findPublicGameStream.leftJoin(allOpenGames, fpgKeyJoiner, fpgValueJoiner)
+
+        val fpgBranches =
+            fpgJoinAllOpenGames.kbranch({ _, fpgOpenGames -> fpgOpenGames.store.games.isNotEmpty() })
 
         throw NotImplementedError()
 
