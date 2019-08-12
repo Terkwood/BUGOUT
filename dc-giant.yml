@@ -34,6 +34,12 @@ services:
       - "kafka"
     depends_on:
       - "kafka"
+  game-lobby:
+    build: game-lobby/.
+    links:
+      - "kafka"
+    depends_on:
+      - "kafka
   kafkacat:
     build: kafkacat/.
     links:
