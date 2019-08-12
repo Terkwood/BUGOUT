@@ -118,12 +118,15 @@ class GameLobby(private val brokers: String) {
 
             }
 
-        popPublicGame.to(Topics.OPEN_GAME_COMMANDS)
+        popPublicGame.mapValues { v -> jsonMapper.writeValueAsString(v) }.to(
+            Topics.OPEN_GAME_COMMANDS,
+            Produced.with(Serdes.Short(), Serdes.String())
+        )
 
         popPublicGame
             .map { _, v -> KeyValue(v.game.gameId, GameState()) }
             .to(Topics.GAME_STATES_CHANGELOG_TOPIC)
-        
+
         val changelogNewGame: KStream<GameId, GameStateTurnOnly> =
             streamsBuilder.stream<UUID, String>(
                 Topics.GAME_STATES_CHANGELOG_TOPIC,
@@ -139,7 +142,8 @@ class GameLobby(private val brokers: String) {
                     epochMillis = Instant.now().toEpochMilli()
                 )
             )
-        }.to(Topics.GAME_READY)
+        }.mapValues { v -> jsonMapper.writeValueAsString(v) }
+            .to(Topics.GAME_READY, Produced.with(Serdes.UUID(), Serdes.String()))
 
         val joinPrivateGameStream: KStream<ReqId, JoinPrivateGame> =
             streamsBuilder.stream<ReqId, String>(
