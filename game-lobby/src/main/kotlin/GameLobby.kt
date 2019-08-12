@@ -88,11 +88,12 @@ class GameLobby(private val brokers: String) {
                         .any { g -> g.visibility == Visibility.Public }
                 })
 
-        val publicGameAvailable =
-            fpgBranches[0]
-
-        val noPublicGameAvailable =
-            fpgBranches[1]
+        when(fpgBranches.size) {
+            0 -> print("nothing")
+            1 -> print("one")
+            2 -> print("two")
+        }
+        
 
         // TODO throw NotImplementedError()
 
