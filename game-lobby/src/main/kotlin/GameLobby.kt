@@ -4,8 +4,8 @@ import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
-import serdes.OpenGameDeserializer
-import serdes.OpenGameSerializer
+import serdes.AllOpenGamesDeserializer
+import serdes.AllOpenGamesSerializer
 import serdes.jsonMapper
 import java.util.*
 
@@ -18,21 +18,23 @@ class GameLobby(private val brokers: String) {
     fun process() {
         val streamsBuilder = StreamsBuilder()
 
-
-        val openGames: KTable<GameId, OpenGame> =
-            streamsBuilder
-                .table(
-                    Topics.OPEN_GAMES,
-                    Materialized
-                        .`as`<GameId, OpenGame, KeyValueStore<Bytes,
-                                ByteArray>>(Topics.OPEN_GAMES_STORE_NAME)
-                        .withKeySerde(Serdes.UUID())
-                        .withValueSerde(
-                            Serdes.serdeFrom(
-                                OpenGameSerializer(),
-                                OpenGameDeserializer()
-                            )
+        val allOpenGames =
+            streamsBuilder.stream<Short, String>(Topics.OPEN_GAMES, Consumed.with(Serdes.Short(), Serdes.String()))
+                .groupByKey(
+                    Serialized.with(Serdes.Short(), Serdes.String())
+                ).aggregate(
+                    { AllOpenGames() },
+                    { _, v, list ->
+                        list.add(
+                            jsonMapper.readValue(v, OpenGame::class.java)
                         )
+                        list
+                    },
+                    Materialized.`as`<Short, AllOpenGames, KeyValueStore<Bytes, ByteArray>>(
+                        Topics.OPEN_GAMES_STORE_NAME
+                    ).withKeySerde(
+                        Serdes.Short()
+                    ).withValueSerde(Serdes.serdeFrom(AllOpenGamesSerializer(), AllOpenGamesDeserializer()))
                 )
 
 
@@ -43,13 +45,14 @@ class GameLobby(private val brokers: String) {
         throw NotImplementedError()
 
 
-
         val joinPrivateGameStream: KStream<ReqId, JoinPrivateGame> =
-            streamsBuilder.stream<ReqId, String>(Topics.JOIN_PRIVATE_GAME, Consumed.with(Serdes.UUID(), Serdes.String()))
+            streamsBuilder.stream<ReqId, String>(
+                Topics.JOIN_PRIVATE_GAME,
+                Consumed.with(Serdes.UUID(), Serdes.String())
+            )
                 .mapValues { v -> jsonMapper.readValue(v, JoinPrivateGame::class.java) }
 
         throw NotImplementedError()
-
 
 
         val createGameStream: KStream<ReqId, CreateGame> =
@@ -57,7 +60,6 @@ class GameLobby(private val brokers: String) {
                 .mapValues { v -> jsonMapper.readValue(v, CreateGame::class.java) }
 
         throw NotImplementedError()
-
 
 
         val topology = streamsBuilder.build()

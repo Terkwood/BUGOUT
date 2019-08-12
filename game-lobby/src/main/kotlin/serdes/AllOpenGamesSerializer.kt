@@ -1,16 +1,16 @@
 package serdes
 
-import OpenGame
+import AllOpenGames
 import org.apache.kafka.common.errors.SerializationException
 import org.apache.kafka.common.serialization.Serializer
 
-class OpenGameSerializer : Serializer<OpenGame> {
+class AllOpenGamesSerializer : Serializer<AllOpenGames> {
 
     override fun configure(configs: Map<String, *>, isKey: Boolean) {}
 
     override fun close() {}
 
-    override fun serialize(topic: String, logAgg: OpenGame?): ByteArray? {
+    override fun serialize(topic: String, logAgg: AllOpenGames?): ByteArray? {
         if (logAgg == null) {
             return null
         }
