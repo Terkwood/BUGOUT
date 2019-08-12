@@ -1,8 +1,11 @@
 import org.apache.kafka.common.serialization.Serdes
+import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StreamsBuilder
-import org.apache.kafka.streams.kstream.Consumed
-import org.apache.kafka.streams.kstream.KStream
+import org.apache.kafka.streams.kstream.*
+import org.apache.kafka.streams.state.KeyValueStore
+import serdes.OpenGameDeserializer
+import serdes.OpenGameSerializer
 import serdes.jsonMapper
 import java.util.*
 
@@ -14,6 +17,24 @@ fun main() {
 class GameLobby(private val brokers: String) {
     fun process() {
         val streamsBuilder = StreamsBuilder()
+
+
+        val openGames: KTable<GameId, OpenGame> =
+            streamsBuilder
+                .table(
+                    Topics.OPEN_GAMES,
+                    Materialized
+                        .`as`<GameId, OpenGame, KeyValueStore<Bytes,
+                                ByteArray>>(Topics.OPEN_GAMES_STORE_NAME)
+                        .withKeySerde(Serdes.UUID())
+                        .withValueSerde(
+                            Serdes.serdeFrom(
+                                OpenGameSerializer(),
+                                OpenGameDeserializer()
+                            )
+                        )
+                )
+
 
         val findPublicGameStream: KStream<ReqId, FindPublicGame> =
             streamsBuilder.stream<ReqId, String>(Topics.FIND_PUBLIC_GAME, Consumed.with(Serdes.UUID(), Serdes.String()))
