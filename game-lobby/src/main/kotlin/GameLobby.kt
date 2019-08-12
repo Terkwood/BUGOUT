@@ -8,6 +8,7 @@ import org.apache.kafka.streams.state.KeyValueStore
 import serdes.AllOpenGamesDeserializer
 import serdes.AllOpenGamesSerializer
 import serdes.jsonMapper
+import java.time.Instant
 import java.util.*
 
 fun main() {
@@ -31,8 +32,8 @@ class GameLobby(private val brokers: String) {
                 ).aggregate(
                     { AllOpenGames() },
                     { _, v, allGames ->
-                        allGames.update(
-                            jsonMapper.readValue(v, OpenGameCommand::class.java)
+                        allGames.execute(
+                            jsonMapper.readValue(v, GameCommand::class.java)
                         )
                         allGames
                     },
@@ -40,7 +41,12 @@ class GameLobby(private val brokers: String) {
                         Topics.OPEN_GAMES_STORE_NAME_LOCAL
                     ).withKeySerde(
                         Serdes.Short()
-                    ).withValueSerde(Serdes.serdeFrom(AllOpenGamesSerializer(), AllOpenGamesDeserializer()))
+                    ).withValueSerde(
+                        Serdes.serdeFrom(
+                            AllOpenGamesSerializer(),
+                            AllOpenGamesDeserializer()
+                        )
+                    )
                 )
 
         aggregateAll.toStream().map { k, v -> KeyValue(k, jsonMapper.writeValueAsString(v)) }
@@ -54,11 +60,19 @@ class GameLobby(private val brokers: String) {
                 Materialized.`as`<Short, AllOpenGames, KeyValueStore<Bytes, ByteArray>>
                     (Topics.OPEN_GAMES_STORE_NAME_GLOBAL)
                     .withKeySerde(Serdes.Short())
-                    .withValueSerde(Serdes.serdeFrom(AllOpenGamesSerializer(), AllOpenGamesDeserializer()))
+                    .withValueSerde(
+                        Serdes.serdeFrom(
+                            AllOpenGamesSerializer(),
+                            AllOpenGamesDeserializer()
+                        )
+                    )
             )
 
         val findPublicGameStream: KStream<ReqId, FindPublicGame> =
-            streamsBuilder.stream<ReqId, String>(Topics.FIND_PUBLIC_GAME, Consumed.with(Serdes.UUID(), Serdes.String()))
+            streamsBuilder.stream<ReqId, String>(
+                Topics.FIND_PUBLIC_GAME,
+                Consumed.with(Serdes.UUID(), Serdes.String())
+            )
                 .mapValues { v -> jsonMapper.readValue(v, FindPublicGame::class.java) }
 
         val fpgKeyJoiner: KeyValueMapper<ReqId, FindPublicGame, Short> =
@@ -88,15 +102,44 @@ class GameLobby(private val brokers: String) {
                         .any { g -> g.visibility == Visibility.Public }
                 })
 
-        when(fpgBranches.size) {
-            0 -> print("nothing")
-            1 -> print("one")
-            2 -> print("two")
-        }
+        val publicGameExists = fpgBranches[0]
+
+        val popPublicGame: KStream<Short, GameCommand> =
+            publicGameExists.map { _, fpgJoinAllGames ->
+                val fpg = fpgJoinAllGames.command
+
+                val someGame =
+                    fpgJoinAllGames.store.games.first { g -> g.visibility == Visibility.Public }
+
+                KeyValue(
+                    AllOpenGames.TOPIC_KEY,
+                    GameCommand(game = someGame, command = Command.Ready)
+                )
+
+            }
+
+        popPublicGame.to(Topics.OPEN_GAME_COMMANDS)
+
+        popPublicGame
+            .map { _, v -> KeyValue(v.game.gameId, GameState()) }
+            .to(Topics.GAME_STATES_CHANGELOG_TOPIC)
         
+        val changelogNewGame: KStream<GameId, GameStateTurnOnly> =
+            streamsBuilder.stream<UUID, String>(
+                Topics.GAME_STATES_CHANGELOG_TOPIC,
+                Consumed.with(Serdes.UUID(), Serdes.String())
+            ).mapValues { v -> jsonMapper.readValue(v, GameStateTurnOnly::class.java) }
 
-        // TODO throw NotImplementedError()
-
+        changelogNewGame.map { k, _ ->
+            KeyValue(
+                k,
+                GameReady(
+                    gameId = k,
+                    eventId = UUID.randomUUID(),
+                    epochMillis = Instant.now().toEpochMilli()
+                )
+            )
+        }.to(Topics.GAME_READY)
 
         val joinPrivateGameStream: KStream<ReqId, JoinPrivateGame> =
             streamsBuilder.stream<ReqId, String>(
@@ -109,7 +152,10 @@ class GameLobby(private val brokers: String) {
 
 
         val createGameStream: KStream<ReqId, CreateGame> =
-            streamsBuilder.stream<ReqId, String>(Topics.CREATE_GAME, Consumed.with(Serdes.UUID(), Serdes.String()))
+            streamsBuilder.stream<ReqId, String>(
+                Topics.CREATE_GAME,
+                Consumed.with(Serdes.UUID(), Serdes.String())
+            )
                 .mapValues { v -> jsonMapper.readValue(v, CreateGame::class.java) }
 
         // TODO throw NotImplementedError()

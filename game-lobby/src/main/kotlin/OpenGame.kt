@@ -1,18 +1,18 @@
 import serdes.jsonMapper
 
 data class Game (val gameId: GameId, val visibility: Visibility)
-data class OpenGameCommand(val game: Game, val action: OpenGameAction)
-enum class OpenGameAction { Add, Remove }
+data class GameCommand(val game: Game, val command: Command)
+enum class Command { Open, Ready }
 
 
 class AllOpenGames {
     var games: Set<Game> = setOf()
 
-    fun update(command: OpenGameCommand): AllOpenGames {
-        games = when (command.action) {
-            OpenGameAction.Add ->
+    fun execute(command: GameCommand): AllOpenGames {
+        games = when (command.command) {
+            Command.Open ->
                 games + command.game
-            OpenGameAction.Remove ->
+            Command.Ready ->
                 games - command.game
         }
 

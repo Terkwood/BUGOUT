@@ -10,4 +10,6 @@ object Topics {
     const val OPEN_GAMES = "bugout-open-games"
     const val OPEN_GAMES_STORE_NAME_LOCAL = "bugout-open-games-game-lobby-local"
     const val OPEN_GAMES_STORE_NAME_GLOBAL = "bugout-open-games-game-lobby-global"
+
+    const val GAME_STATES_CHANGELOG_TOPIC = "bugout-game-states"
 }
