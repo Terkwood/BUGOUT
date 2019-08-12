@@ -53,8 +53,11 @@ class GameLobby(private val brokers: String) {
                     )
                 )
 
-        aggregateAll.toStream().map { k, v -> KeyValue(k, jsonMapper.writeValueAsString(v)) }
-            .to(Topics.OPEN_GAMES, Produced.with(Serdes.String(), Serdes.String()))
+        aggregateAll.toStream()
+            .map { k, v ->
+                print("Aggregated $v")
+                KeyValue(k, jsonMapper.writeValueAsString(v))
+            }.to(Topics.OPEN_GAMES, Produced.with(Serdes.String(), Serdes.String()))
 
         // expose the aggregated as a global ktable
         // so that we can join against it
@@ -115,7 +118,7 @@ class GameLobby(private val brokers: String) {
                 val someGame =
                     fpgJoinAllGames.store.games.first { g -> g.visibility == Visibility.Public }
 
-                print("Popping a public game with ID ${someGame.gameId}")
+                print("Popping public game  ${someGame.gameId.short()}")
 
                 KeyValue(
                     AllOpenGames.TOPIC_KEY,
@@ -140,6 +143,7 @@ class GameLobby(private val brokers: String) {
             ).mapValues { v -> jsonMapper.readValue(v, GameStateTurnOnly::class.java) }
 
         changelogNewGame.map { k, _ ->
+            print("Emit to changelog: game ${k.short()} ready")
             KeyValue(
                 k,
                 GameReady(
