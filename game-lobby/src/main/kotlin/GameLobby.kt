@@ -56,8 +56,9 @@ class GameLobby(private val brokers: String) {
 
         aggregateAll.toStream()
             .map { k, v ->
-                println("Aggregated $v")
-                KeyValue(k, jsonMapper.writeValueAsString(v))
+                val json = jsonMapper.writeValueAsString(v)
+                println("Aggregated $json")
+                KeyValue(k, json)
             }.to(Topics.OPEN_GAMES, Produced.with(Serdes.String(), Serdes.String()))
 
         // expose the aggregated as a global ktable
@@ -144,7 +145,7 @@ class GameLobby(private val brokers: String) {
             ).mapValues { v -> jsonMapper.readValue(v, GameStateTurnOnly::class.java) }
 
         changelogNewGame.map { k, _ ->
-            println("Emit to changelog: game ${k.short()} ready")
+            println("▶          ️${k.short()} READY")
             KeyValue(
                 k,
                 GameReady(
