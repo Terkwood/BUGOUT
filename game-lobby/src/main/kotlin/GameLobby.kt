@@ -24,6 +24,7 @@ class GameLobby(private val brokers: String) {
          * aggregate data to a local ktable
          * ```sh
          * echo 'ALL:{"games":[]}' | kafkacat -b kafka:9092 -t bugout-open-games -K: -P
+         * echo 'ALL:{"game": {"gameId":"4c0d9b9a-4040-4f10-8cd0-25a28e332fd7", "visibility":"Public"}, "command": "Open"}' | kafkacat -b kafka:9092 -t bugout-open-game-commands -K: -P
          * ```
          */
         val aggregateAll =
