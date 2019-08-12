@@ -1,0 +1,5 @@
+const val FIND_PUBLIC_GAME = "bugout-find-public-game-cmd"
+const val CREATE_GAME = "bugout-create-game-cmd"
+const val WAIT_FOR_OPPONENT = "bugout-wait-for-opponent-ev"
+const val GAME_READY = "bugout-game-ready-ev"
+const val PRIVATE_GAME_REJECTED = "bugout-private-game-rejected-ev"
