@@ -146,6 +146,7 @@ class GameLobby(private val brokers: String) {
 
         return streamsBuilder.build()
     }
+
     /**
      * aggregate data to a local ktable
      * ```sh
