@@ -12,19 +12,9 @@ import serdes.jsonMapper
 import java.util.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class GameLobbyTest {
+class GameReadyAndGameCreationTests {
 
     private val testDriver: TopologyTestDriver = setup()
-
-    private fun setup(): TopologyTestDriver {
-        // setup test driver
-        val props = Properties()
-        props[StreamsConfig.BOOTSTRAP_SERVERS_CONFIG] = "no-matter"
-        props[StreamsConfig.APPLICATION_ID_CONFIG] = "test-bugout-game-lobby"
-        props[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = "exactly_once"
-
-        return TopologyTestDriver(GameLobby("dummy-brokers").build(), props)
-    }
 
     @BeforeAll
     fun initializeAggregation() {
@@ -45,13 +35,6 @@ class GameLobbyTest {
         testDriver.pipeInput(cr)
     }
 
-    @Test
-    fun lobbyOpenGame() {
-    }
-
-    @Test
-    fun lobbyReadyGame() {
-    }
 
     @Test
     fun emptyGameStatesTriggerGameReady() {
@@ -111,6 +94,43 @@ class GameLobbyTest {
             )
         )
     }
+
+
+    @Test
+    fun createGameStreamsToGameLobbyCommands() {
+        val factory =
+            ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
+
+        val reqId = UUID.randomUUID()
+        val visibility = Visibility.Public
+        val cgReq = CreateGame(reqId = reqId, visibility = visibility)
+
+        testDriver.pipeInput(
+            factory.create(
+                Topics.CREATE_GAME, reqId, jsonMapper.writeValueAsString(cgReq)
+            )
+        )
+
+        val outputRecord =
+            testDriver.readOutput(
+                Topics.GAME_LOBBY_COMMANDS,
+                StringDeserializer(),
+                StringDeserializer()
+            )
+
+        val newGameId = jsonMapper
+            .readValue(outputRecord.value(), GameCommand::class.java)
+            .game
+            .gameId
+
+        OutputVerifier.compareKeyValue(
+            outputRecord,
+            AllOpenGames.TRIVIAL_KEY,
+            jsonMapper.writeValueAsString(GameCommand(Game(newGameId, visibility),
+                Command.Open))
+        )
+    }
+
 
     @AfterAll
     fun tearDown() {

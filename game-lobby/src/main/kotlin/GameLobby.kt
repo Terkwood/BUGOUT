@@ -6,7 +6,6 @@ import org.apache.kafka.streams.state.KeyValueStore
 import serdes.AllOpenGamesDeserializer
 import serdes.AllOpenGamesSerializer
 import serdes.jsonMapper
-import java.time.Instant
 import java.util.*
 
 fun main() {
@@ -66,12 +65,20 @@ class GameLobby(private val brokers: String) {
 
         val fpgBranches =
             fpgJoinAllOpenGames
-                .kbranch({ _, fpgOpenGames ->
-                    fpgOpenGames.store.games
-                        .any { g -> g.visibility == Visibility.Public }
-                })
+                .kbranch(
+                    { _, fo ->
+                        fo.store.games.any { g -> g.visibility == Visibility.Public }
+                    },
+                    { _, fo ->
+                        !fo.store.games.any { g -> g.visibility == Visibility.Public }
+                    }
+                )
 
-        val publicGameExists = fpgBranches[0]
+        val publicGameExists: KStream<ReqId, FindPublicGameAllOpenGames> =
+            fpgBranches[0]
+
+        val noPublicGameExists: KStream<ReqId, FindPublicGameAllOpenGames> =
+            fpgBranches[1]
 
         val popPublicGame: KStream<String, GameCommand> =
             publicGameExists.map { _, fpgJoinAllGames ->
