@@ -50,8 +50,6 @@ class GameLobbyTest {
             )
 
         OutputVerifier.compareKeyValue(outputRecord, gameId, "bad idea")
-
-
     }
 
     @AfterAll

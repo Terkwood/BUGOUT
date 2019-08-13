@@ -62,7 +62,7 @@ class GameLobby(private val brokers: String) {
 
 
         val fpgJoinAllOpenGames =
-            findPublicGameStream.leftJoin(allOpenGames, fpgKeyJoiner, fpgValueJoiner)
+            findPublicGameStream.join(allOpenGames, fpgKeyJoiner, fpgValueJoiner)
 
         val fpgBranches =
             fpgJoinAllOpenGames
