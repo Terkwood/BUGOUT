@@ -33,83 +33,20 @@ class GameLobby(private val brokers: String) {
         val streamsBuilder = StreamsBuilder()
 
         val allOpenGames: GlobalKTable<String, AllOpenGames> =
-            openGamesTable(streamsBuilder)
+            buildGameLobbyTable(streamsBuilder)
 
-        val findPublicGameStream: KStream<ReqId, FindPublicGame> =
-            streamsBuilder.stream<ReqId, String>(
-                Topics.FIND_PUBLIC_GAME,
-                Consumed.with(Serdes.UUID(), Serdes.String())
-            )
-                .mapValues { v -> jsonMapper.readValue(v, FindPublicGame::class.java) }
-
-        val fpgKeyJoiner: KeyValueMapper<ReqId, FindPublicGame, String> =
-            KeyValueMapper { _: ReqId, // left key
-                             _: FindPublicGame ->
-                // left value
-
-                // use a trivial join, so that all queries are routed to the same store
-                AllOpenGames.TRIVIAL_KEY
-            }
-
-        val fpgValueJoiner: ValueJoiner<FindPublicGame, AllOpenGames, FindPublicGameAllOpenGames> =
-            ValueJoiner { leftValue:
-                          FindPublicGame,
-                          rightValue:
-                          AllOpenGames ->
-                FindPublicGameAllOpenGames(leftValue, rightValue)
-            }
-
-
-        val fpgJoinAllOpenGames =
-            findPublicGameStream.join(allOpenGames, fpgKeyJoiner, fpgValueJoiner)
-
-        val fpgBranches =
-            fpgJoinAllOpenGames
-                .kbranch(
-                    { _, fo ->
-                        fo.store.games.any { g -> g.visibility == Visibility.Public }
-                    },
-                    { _, fo ->
-                        !fo.store.games.any { g -> g.visibility == Visibility.Public }
-                    }
-                )
-
-        val publicGameExists: KStream<ReqId, FindPublicGameAllOpenGames> =
-            fpgBranches[0]
-
-        val noPublicGameExists: KStream<ReqId, FindPublicGameAllOpenGames> =
-            fpgBranches[1]
-
-        val popPublicGame: KStream<String, GameCommand> =
-            publicGameExists.map { _, fpgJoinAllGames ->
-                val fpg = fpgJoinAllGames.command
-
-                val someGame =
-                    fpgJoinAllGames.store.games.first { g -> g.visibility == Visibility.Public }
-
-                println("Popping public game  ${someGame.gameId.short()}")
-
-                KeyValue(
-                    AllOpenGames.TRIVIAL_KEY,
-                    GameCommand(game = someGame, command = Command.Ready)
-                )
-
-            }
-
-        popPublicGame.mapValues { v -> jsonMapper.writeValueAsString(v) }.to(
-            Topics.GAME_LOBBY_COMMANDS,
-            Produced.with(Serdes.String(), Serdes.String())
-        )
-
-        popPublicGame
-            .map { _, v -> KeyValue(v.game.gameId, GameState()) }
-            .to(Topics.GAME_STATES_CHANGELOG)
+        buildPublicGameStreams(streamsBuilder, allOpenGames)
 
         val changelogNewGame: KStream<GameId, GameStateTurnOnly> =
             streamsBuilder.stream<UUID, String>(
                 Topics.GAME_STATES_CHANGELOG,
                 Consumed.with(Serdes.UUID(), Serdes.String())
-            ).mapValues { v -> jsonMapper.readValue(v, GameStateTurnOnly::class.java) }
+            ).mapValues { v ->
+                jsonMapper.readValue(
+                    v,
+                    GameStateTurnOnly::class.java
+                )
+            }
 
         changelogNewGame
             .filter { _, gameState -> gameState.turn == 1 }
@@ -123,7 +60,10 @@ class GameLobby(private val brokers: String) {
                     )
                 )
             }.mapValues { v -> jsonMapper.writeValueAsString(v) }
-            .to(Topics.GAME_READY, Produced.with(Serdes.UUID(), Serdes.String()))
+            .to(
+                Topics.GAME_READY,
+                Produced.with(Serdes.UUID(), Serdes.String())
+            )
 
 
         // TODO
@@ -132,7 +72,12 @@ class GameLobby(private val brokers: String) {
                 Topics.JOIN_PRIVATE_GAME,
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
-                .mapValues { v -> jsonMapper.readValue(v, JoinPrivateGame::class.java) }
+                .mapValues { v ->
+                    jsonMapper.readValue(
+                        v,
+                        JoinPrivateGame::class.java
+                    )
+                }
 
         // TODO throw NotImplementedError()
 
@@ -142,17 +87,27 @@ class GameLobby(private val brokers: String) {
                 Topics.CREATE_GAME,
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
-                .mapValues { v -> jsonMapper.readValue(v, CreateGame::class.java) }
+                .mapValues { v ->
+                    jsonMapper.readValue(
+                        v,
+                        CreateGame::class.java
+                    )
+                }
 
         // open a new game
         createGameStream.map { _, v ->
-            val newGame = Game(gameId = UUID.randomUUID(), visibility = v.visibility)
+            val newGame =
+                Game(gameId = UUID.randomUUID(), visibility = v.visibility)
             KeyValue(
                 AllOpenGames.TRIVIAL_KEY,
                 GameCommand(game = newGame, command = Command.Open)
             )
         }.mapValues { v -> jsonMapper.writeValueAsString(v) }
-            .to(Topics.GAME_LOBBY_COMMANDS, Produced.with(Serdes.String(), Serdes.String()))
+            .to(
+                Topics.GAME_LOBBY_COMMANDS,
+                Produced.with(Serdes.String(), Serdes.String())
+            )
+
 
 
         return streamsBuilder.build()
@@ -165,7 +120,7 @@ class GameLobby(private val brokers: String) {
      * echo 'ALL:{"game": {"gameId":"4c0d9b9a-4040-4f10-8cd0-25a28e332fd7", "visibility":"Public"}, "command": "Open"}' | kafkacat -b kafka:9092 -t bugout-game-lobby-commands -K: -P
      * ```
      */
-    private fun openGamesTable(streamsBuilder: StreamsBuilder): GlobalKTable<String, AllOpenGames> {
+    private fun buildGameLobbyTable(streamsBuilder: StreamsBuilder): GlobalKTable<String, AllOpenGames> {
 
         val aggregateAll =
             streamsBuilder.stream<String, String>(
@@ -199,7 +154,10 @@ class GameLobby(private val brokers: String) {
                 val json = jsonMapper.writeValueAsString(v)
                 println("Aggregated $json")
                 KeyValue(k, json)
-            }.to(Topics.GAME_LOBBY_CHANGELOG, Produced.with(Serdes.String(), Serdes.String()))
+            }.to(
+                Topics.GAME_LOBBY_CHANGELOG,
+                Produced.with(Serdes.String(), Serdes.String())
+            )
 
         // expose the aggregated as a global ktable
         // so that we can join against it
@@ -215,6 +173,106 @@ class GameLobby(private val brokers: String) {
                     )
                 )
         )
+    }
+
+    private fun buildPublicGameStreams(
+        streamsBuilder: StreamsBuilder,
+        allOpenGames: GlobalKTable<String, AllOpenGames>
+    ) {
+        val findPublicGameStream: KStream<ReqId, FindPublicGame> =
+            streamsBuilder.stream<ReqId, String>(
+                Topics.FIND_PUBLIC_GAME,
+                Consumed.with(Serdes.UUID(), Serdes.String())
+            )
+                .mapValues { v ->
+                    jsonMapper.readValue(
+                        v,
+                        FindPublicGame::class.java
+                    )
+                }
+
+        val fpgKeyJoiner: KeyValueMapper<ReqId, FindPublicGame, String> =
+            KeyValueMapper { _: ReqId, // left key
+                             _: FindPublicGame ->
+                // left value
+
+                // use a trivial join, so that all queries are routed to the same store
+                AllOpenGames.TRIVIAL_KEY
+            }
+
+        val fpgValueJoiner: ValueJoiner<FindPublicGame, AllOpenGames, FindPublicGameAllOpenGames> =
+            ValueJoiner { leftValue:
+                          FindPublicGame,
+                          rightValue:
+                          AllOpenGames ->
+                FindPublicGameAllOpenGames(leftValue, rightValue)
+            }
+
+
+        val fpgJoinAllOpenGames =
+            findPublicGameStream.join(
+                allOpenGames,
+                fpgKeyJoiner,
+                fpgValueJoiner
+            )
+
+        val fpgBranches =
+            fpgJoinAllOpenGames
+                .kbranch(
+                    { _, fo ->
+                        fo.store.games.any { g -> g.visibility == Visibility.Public }
+                    },
+                    { _, fo ->
+                        !fo.store.games.any { g -> g.visibility == Visibility.Public }
+                    }
+                )
+
+        val publicGameExists: KStream<ReqId, FindPublicGameAllOpenGames> =
+            fpgBranches[0]
+
+        val noPublicGameExists: KStream<ReqId, FindPublicGameAllOpenGames> =
+            fpgBranches[1]
+
+
+        // if someone was looking for a public game and
+        // didn't find one
+        noPublicGameExists
+            .map { _, fo ->
+                KeyValue(
+                    fo.command.reqId,
+                    CreateGame(fo.command.reqId, Visibility.Public)
+                )
+            }.mapValues { v -> jsonMapper.writeValueAsString(v) }
+            .to(
+                Topics.CREATE_GAME,
+                Produced.with(Serdes.UUID(), Serdes.String())
+            )
+
+        val popPublicGame: KStream<String, GameCommand> =
+            publicGameExists.map { _, fpgJoinAllGames ->
+                val fpg = fpgJoinAllGames.command
+
+                val someGame =
+                    fpgJoinAllGames.store.games.first { g -> g.visibility == Visibility.Public }
+
+                println("Popping public game  ${someGame.gameId.short()}")
+
+                KeyValue(
+                    AllOpenGames.TRIVIAL_KEY,
+                    GameCommand(game = someGame, command = Command.Ready)
+                )
+
+            }
+
+        popPublicGame.mapValues { v -> jsonMapper.writeValueAsString(v) }.to(
+            Topics.GAME_LOBBY_COMMANDS,
+            Produced.with(Serdes.String(), Serdes.String())
+        )
+
+        popPublicGame
+            .map { _, v -> KeyValue(v.game.gameId, GameState()) }
+            .to(Topics.GAME_STATES_CHANGELOG)
+
     }
 }
 

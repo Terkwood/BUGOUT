@@ -3,7 +3,6 @@ import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
 import org.apache.kafka.common.serialization.UUIDSerializer
-import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
 import org.apache.kafka.streams.test.OutputVerifier
@@ -15,6 +14,11 @@ import java.util.*
 class GameReadyAndGameCreationTests {
 
     private val testDriver: TopologyTestDriver = setup()
+    private val emptyBoard =
+        "{\"board\":{\"pieces\":{},\"size\":19}," +
+                "\"captures\":{\"black\":0,\"white\":0}," +
+                "\"turn\":1," +
+                "\"playerUp\":\"BLACK\"}"
 
     @BeforeAll
     fun initializeAggregation() {
@@ -46,11 +50,7 @@ class GameReadyAndGameCreationTests {
             )
 
         val gameId = UUID.randomUUID()
-        val emptyBoard =
-            "{\"board\":{\"pieces\":{},\"size\":19}," +
-                    "\"captures\":{\"black\":0,\"white\":0}," +
-                    "\"turn\":1," +
-                    "\"playerUp\":\"BLACK\"}"
+
         testDriver.pipeInput(factory.create(gameId, emptyBoard))
 
         val outputRecord =
@@ -97,7 +97,7 @@ class GameReadyAndGameCreationTests {
 
 
     @Test
-    fun createGameStreamsToGameLobbyCommands() {
+    fun createGameStreamsHappily() {
         val factory =
             ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
@@ -111,7 +111,7 @@ class GameReadyAndGameCreationTests {
             )
         )
 
-        val outputRecord =
+        val gameLobbyCommandOutput =
             testDriver.readOutput(
                 Topics.GAME_LOBBY_COMMANDS,
                 StringDeserializer(),
@@ -119,17 +119,28 @@ class GameReadyAndGameCreationTests {
             )
 
         val newGameId = jsonMapper
-            .readValue(outputRecord.value(), GameCommand::class.java)
+            .readValue(gameLobbyCommandOutput.value(), GameCommand::class.java)
             .game
             .gameId
 
         OutputVerifier.compareKeyValue(
-            outputRecord,
+            gameLobbyCommandOutput,
             AllOpenGames.TRIVIAL_KEY,
             jsonMapper.writeValueAsString(GameCommand(Game(newGameId, visibility),
                 Command.Open))
         )
+
+        val gameStatesChangelogOutput =
+            testDriver.readOutput(Topics.GAME_LOBBY_CHANGELOG,
+                StringDeserializer(), StringDeserializer())
+
+        val expectedLobby = AllOpenGames()
+        expectedLobby.games = setOf(Game(newGameId , Visibility.Public))
+        OutputVerifier.compareKeyValue(gameStatesChangelogOutput,
+            AllOpenGames.TRIVIAL_KEY,
+            jsonMapper.writeValueAsString(expectedLobby))
     }
+
 
 
     @AfterAll
