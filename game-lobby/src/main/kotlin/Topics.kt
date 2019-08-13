@@ -6,10 +6,10 @@ object Topics {
     const val PRIVATE_GAME_REJECTED = "bugout-private-game-rejected-ev"
     const val JOIN_PRIVATE_GAME = "bugout-join-private-game-cmd"
 
-    const val OPEN_GAME_COMMANDS = "bugout-open-game-commands"
-    const val OPEN_GAMES = "bugout-open-games"
-    const val OPEN_GAMES_STORE_NAME_LOCAL = "bugout-open-games-game-lobby-local"
-    const val OPEN_GAMES_STORE_NAME_GLOBAL = "bugout-open-games-game-lobby-global"
+    const val OPEN_GAME_COMMANDS = "bugout-game-lobby-commands"
+    const val GAME_LOBBY_CHANGELOG = "bugout-game-lobby"
+    const val GAME_LOBBY_STORE_LOCAL = "bugout-game-lobby-store-local"
+    const val GAME_LOBBY_STORE_GLOBAL = "bugout-game-lobby-store-global"
 
-    const val GAME_STATES_CHANGELOG_TOPIC = "bugout-game-states"
+    const val GAME_STATES_CHANGELOG = "bugout-game-states"
 }

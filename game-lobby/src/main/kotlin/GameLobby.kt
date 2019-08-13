@@ -20,62 +20,8 @@ class GameLobby(private val brokers: String) {
     fun process() {
         val streamsBuilder = StreamsBuilder()
 
-        /**
-         * aggregate data to a local ktable
-         * ```sh
-         * echo 'ALL:{"games":[]}' | kafkacat -b kafka:9092 -t bugout-open-games -K: -P
-         * echo 'ALL:{"game": {"gameId":"4c0d9b9a-4040-4f10-8cd0-25a28e332fd7", "visibility":"Public"}, "command": "Open"}' | kafkacat -b kafka:9092 -t bugout-open-game-commands -K: -P
-         * ```
-         */
-        val aggregateAll =
-            streamsBuilder.stream<String, String>(
-                Topics.OPEN_GAME_COMMANDS,
-                Consumed.with(Serdes.String(), Serdes.String())
-            )
-                .groupByKey(
-                    Serialized.with(Serdes.String(), Serdes.String())
-                ).aggregate(
-                    { AllOpenGames() },
-                    { _, v, allGames ->
-                        allGames.execute(
-                            jsonMapper.readValue(v, GameCommand::class.java)
-                        )
-                        allGames
-                    },
-                    Materialized.`as`<String, AllOpenGames, KeyValueStore<Bytes, ByteArray>>(
-                        Topics.OPEN_GAMES_STORE_NAME_LOCAL
-                    ).withKeySerde(
-                        Serdes.String()
-                    ).withValueSerde(
-                        Serdes.serdeFrom(
-                            AllOpenGamesSerializer(),
-                            AllOpenGamesDeserializer()
-                        )
-                    )
-                )
-
-        aggregateAll.toStream()
-            .map { k, v ->
-                val json = jsonMapper.writeValueAsString(v)
-                println("Aggregated $json")
-                KeyValue(k, json)
-            }.to(Topics.OPEN_GAMES, Produced.with(Serdes.String(), Serdes.String()))
-
-        // expose the aggregated as a global ktable
-        // so that we can join against it
         val allOpenGames: GlobalKTable<String, AllOpenGames> =
-            streamsBuilder.globalTable(
-                Topics.OPEN_GAMES,
-                Materialized.`as`<String, AllOpenGames, KeyValueStore<Bytes, ByteArray>>
-                    (Topics.OPEN_GAMES_STORE_NAME_GLOBAL)
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(
-                        Serdes.serdeFrom(
-                            AllOpenGamesSerializer(),
-                            AllOpenGamesDeserializer()
-                        )
-                    )
-            )
+            openGamesTable(streamsBuilder)
 
         val findPublicGameStream: KStream<ReqId, FindPublicGame> =
             streamsBuilder.stream<ReqId, String>(
@@ -100,6 +46,7 @@ class GameLobby(private val brokers: String) {
                           AllOpenGames ->
                 FindPublicGameAllOpenGames(leftValue, rightValue)
             }
+
 
         val fpgJoinAllOpenGames =
             findPublicGameStream.leftJoin(allOpenGames, fpgKeyJoiner, fpgValueJoiner)
@@ -136,11 +83,11 @@ class GameLobby(private val brokers: String) {
 
         popPublicGame
             .map { _, v -> KeyValue(v.game.gameId, GameState()) }
-            .to(Topics.GAME_STATES_CHANGELOG_TOPIC)
+            .to(Topics.GAME_STATES_CHANGELOG)
 
         val changelogNewGame: KStream<GameId, GameStateTurnOnly> =
             streamsBuilder.stream<UUID, String>(
-                Topics.GAME_STATES_CHANGELOG_TOPIC,
+                Topics.GAME_STATES_CHANGELOG,
                 Consumed.with(Serdes.UUID(), Serdes.String())
             ).mapValues { v -> jsonMapper.readValue(v, GameStateTurnOnly::class.java) }
 
@@ -196,4 +143,63 @@ class GameLobby(private val brokers: String) {
         val streams = KafkaStreams(topology, props)
         streams.start()
     }
+}
+
+fun openGamesTable(streamsBuilder: StreamsBuilder): GlobalKTable<String, AllOpenGames> {
+
+    /**
+     * aggregate data to a local ktable
+     * ```sh
+     * echo 'ALL:{"games":[]}' | kafkacat -b kafka:9092 -t bugout-game-lobby -K: -P
+     * echo 'ALL:{"game": {"gameId":"4c0d9b9a-4040-4f10-8cd0-25a28e332fd7", "visibility":"Public"}, "command": "Open"}' | kafkacat -b kafka:9092 -t bugout-game-lobby-commands -K: -P
+     * ```
+     */
+    val aggregateAll =
+        streamsBuilder.stream<String, String>(
+            Topics.OPEN_GAME_COMMANDS,
+            Consumed.with(Serdes.String(), Serdes.String())
+        )
+            .groupByKey(
+                Serialized.with(Serdes.String(), Serdes.String())
+            ).aggregate(
+                { AllOpenGames() },
+                { _, v, allGames ->
+                    allGames.execute(
+                        jsonMapper.readValue(v, GameCommand::class.java)
+                    )
+                    allGames
+                },
+                Materialized.`as`<String, AllOpenGames, KeyValueStore<Bytes, ByteArray>>(
+                    Topics.GAME_LOBBY_STORE_LOCAL
+                ).withKeySerde(
+                    Serdes.String()
+                ).withValueSerde(
+                    Serdes.serdeFrom(
+                        AllOpenGamesSerializer(),
+                        AllOpenGamesDeserializer()
+                    )
+                )
+            )
+
+    aggregateAll.toStream()
+        .map { k, v ->
+            val json = jsonMapper.writeValueAsString(v)
+            println("Aggregated $json")
+            KeyValue(k, json)
+        }.to(Topics.GAME_LOBBY_CHANGELOG, Produced.with(Serdes.String(), Serdes.String()))
+
+    // expose the aggregated as a global ktable
+    // so that we can join against it
+    streamsBuilder.globalTable(
+        Topics.GAME_LOBBY_CHANGELOG,
+        Materialized.`as`<String, AllOpenGames, KeyValueStore<Bytes, ByteArray>>
+            (Topics.GAME_LOBBY_STORE_GLOBAL)
+            .withKeySerde(Serdes.String())
+            .withValueSerde(
+                Serdes.serdeFrom(
+                    AllOpenGamesSerializer(),
+                    AllOpenGamesDeserializer()
+                )
+            )
+    )
 }
