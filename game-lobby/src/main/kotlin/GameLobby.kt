@@ -49,7 +49,7 @@ class GameLobby(private val brokers: String) {
                 // left value
 
                 // use a trivial join, so that all queries are routed to the same store
-                AllOpenGames.TOPIC_KEY
+                AllOpenGames.TRIVIAL_KEY
             }
 
         val fpgValueJoiner: ValueJoiner<FindPublicGame, AllOpenGames, FindPublicGameAllOpenGames> =
@@ -83,14 +83,14 @@ class GameLobby(private val brokers: String) {
                 println("Popping public game  ${someGame.gameId.short()}")
 
                 KeyValue(
-                    AllOpenGames.TOPIC_KEY,
+                    AllOpenGames.TRIVIAL_KEY,
                     GameCommand(game = someGame, command = Command.Ready)
                 )
 
             }
 
         popPublicGame.mapValues { v -> jsonMapper.writeValueAsString(v) }.to(
-            Topics.OPEN_GAME_COMMANDS,
+            Topics.GAME_LOBBY_COMMANDS,
             Produced.with(Serdes.String(), Serdes.String())
         )
 
@@ -139,9 +139,9 @@ class GameLobby(private val brokers: String) {
         // open a new game
         createGameStream.map { _, v ->
             val newGame = Game(gameId = UUID.randomUUID(), visibility = v.visibility)
-            KeyValue(AllOpenGames.TOPIC_KEY, GameCommand(game = newGame, command = Command.Open))
+            KeyValue(AllOpenGames.TRIVIAL_KEY, GameCommand(game = newGame, command = Command.Open))
         }.mapValues { v -> jsonMapper.writeValueAsString(v) }
-            .to(Topics.OPEN_GAME_COMMANDS, Produced.with(Serdes.String(), Serdes.String()))
+            .to(Topics.GAME_LOBBY_COMMANDS, Produced.with(Serdes.String(), Serdes.String()))
 
 
         return streamsBuilder.build()
@@ -158,7 +158,7 @@ class GameLobby(private val brokers: String) {
 
         val aggregateAll =
             streamsBuilder.stream<String, String>(
-                Topics.OPEN_GAME_COMMANDS,
+                Topics.GAME_LOBBY_COMMANDS,
                 Consumed.with(Serdes.String(), Serdes.String())
             )
                 .groupByKey(

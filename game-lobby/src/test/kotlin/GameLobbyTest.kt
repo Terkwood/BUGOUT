@@ -1,3 +1,4 @@
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
@@ -26,6 +27,25 @@ class GameLobbyTest {
         props[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = "exactly_once"
 
         return TopologyTestDriver(GameLobby("dummy-brokers").build(), props)
+    }
+
+    @Test
+    fun initializeAggregation() {
+        val factory =
+            ConsumerRecordFactory(
+                StringSerializer(),
+                StringSerializer()
+            )
+
+        val emptyAgg = "{\"games\":[]}"
+
+        val cr: ConsumerRecord<ByteArray, ByteArray> =
+            factory.create(
+                Topics.GAME_LOBBY_CHANGELOG,
+                AllOpenGames.TRIVIAL_KEY, emptyAgg
+            )
+
+        testDriver.pipeInput(cr)
     }
 
     @Test
