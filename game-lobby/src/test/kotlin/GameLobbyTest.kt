@@ -7,10 +7,7 @@ import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
 import org.apache.kafka.streams.test.OutputVerifier
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.*
 import java.util.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -29,7 +26,7 @@ class GameLobbyTest {
         return TopologyTestDriver(GameLobby("dummy-brokers").build(), props)
     }
 
-    @Test
+    @BeforeAll
     fun initializeAggregation() {
         val factory =
             ConsumerRecordFactory(
@@ -47,6 +44,12 @@ class GameLobbyTest {
 
         testDriver.pipeInput(cr)
     }
+
+    @Test
+    fun lobbyOpenGame() {}
+
+    @Test
+    fun lobbyReadyGame() {}
 
     @Test
     fun emptyGameStatesTriggerGameReady() {
