@@ -60,9 +60,15 @@ class GameReadyAndGameCreationTests {
                 StringDeserializer()
             )
 
-        val actual: GameReady = jsonMapper.readValue(outputRecord.value(), GameReady::class.java)
+        val actual: GameReady =
+            jsonMapper.readValue(outputRecord.value(), GameReady::class.java)
         val expected =
-            jsonMapper.writeValueAsString(GameReady(gameId = gameId, eventId = actual.eventId))
+            jsonMapper.writeValueAsString(
+                GameReady(
+                    gameId = gameId,
+                    eventId = actual.eventId
+                )
+            )
 
         OutputVerifier.compareKeyValue(outputRecord, gameId, expected)
     }
@@ -98,49 +104,67 @@ class GameReadyAndGameCreationTests {
 
     @Test
     fun createGameStreamsHappily() {
-        val factory =
-            ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
+        val expectedGames = mutableSetOf<Game>()
+        listOf(Visibility.Public, Visibility.Private).forEach { v ->
+            val factory =
+                ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
-        val reqId = UUID.randomUUID()
-        val visibility = Visibility.Public
-        val cgReq = CreateGame(reqId = reqId, visibility = visibility)
+            val reqId = UUID.randomUUID()
+            val cgReq = CreateGame(reqId = reqId, visibility = v)
 
-        testDriver.pipeInput(
-            factory.create(
-                Topics.CREATE_GAME, reqId, jsonMapper.writeValueAsString(cgReq)
-            )
-        )
-
-        val gameLobbyCommandOutput =
-            testDriver.readOutput(
-                Topics.GAME_LOBBY_COMMANDS,
-                StringDeserializer(),
-                StringDeserializer()
+            testDriver.pipeInput(
+                factory.create(
+                    Topics.CREATE_GAME,
+                    reqId,
+                    jsonMapper.writeValueAsString(cgReq)
+                )
             )
 
-        val newGameId = jsonMapper
-            .readValue(gameLobbyCommandOutput.value(), GameCommand::class.java)
-            .game
-            .gameId
+            val gameLobbyCommandOutput =
+                testDriver.readOutput(
+                    Topics.GAME_LOBBY_COMMANDS,
+                    StringDeserializer(),
+                    StringDeserializer()
+                )
 
-        OutputVerifier.compareKeyValue(
-            gameLobbyCommandOutput,
-            AllOpenGames.TRIVIAL_KEY,
-            jsonMapper.writeValueAsString(GameCommand(Game(newGameId, visibility),
-                Command.Open))
-        )
+            val newGameId = jsonMapper
+                .readValue(
+                    gameLobbyCommandOutput.value(),
+                    GameCommand::class.java
+                )
+                .game
+                .gameId
 
-        val gameStatesChangelogOutput =
-            testDriver.readOutput(Topics.GAME_LOBBY_CHANGELOG,
-                StringDeserializer(), StringDeserializer())
+            OutputVerifier.compareKeyValue(
+                gameLobbyCommandOutput,
+                AllOpenGames.TRIVIAL_KEY,
+                jsonMapper.writeValueAsString(
+                    GameCommand(
+                        Game(newGameId, v),
+                        Command.Open
+                    )
+                )
+            )
 
-        val expectedLobby = AllOpenGames()
-        expectedLobby.games = setOf(Game(newGameId , Visibility.Public))
-        OutputVerifier.compareKeyValue(gameStatesChangelogOutput,
-            AllOpenGames.TRIVIAL_KEY,
-            jsonMapper.writeValueAsString(expectedLobby))
+            val gameStatesChangelogOutput =
+                testDriver.readOutput(
+                    Topics.GAME_LOBBY_CHANGELOG,
+                    StringDeserializer(), StringDeserializer()
+                )
+
+            val expectedLobby = AllOpenGames()
+            expectedGames += Game(newGameId, v)
+            expectedLobby.games = expectedGames
+
+            OutputVerifier.compareKeyValue(
+                gameStatesChangelogOutput,
+                AllOpenGames.TRIVIAL_KEY,
+                jsonMapper.writeValueAsString(expectedLobby)
+            )
+        }
+
+
     }
-
 
 
     @AfterAll
