@@ -190,7 +190,7 @@ fun openGamesTable(streamsBuilder: StreamsBuilder): GlobalKTable<String, AllOpen
 
     // expose the aggregated as a global ktable
     // so that we can join against it
-    streamsBuilder.globalTable(
+    return streamsBuilder.globalTable(
         Topics.GAME_LOBBY_CHANGELOG,
         Materialized.`as`<String, AllOpenGames, KeyValueStore<Bytes, ByteArray>>
             (Topics.GAME_LOBBY_STORE_GLOBAL)
