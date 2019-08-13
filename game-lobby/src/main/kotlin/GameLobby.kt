@@ -104,16 +104,18 @@ class GameLobby(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             ).mapValues { v -> jsonMapper.readValue(v, GameStateTurnOnly::class.java) }
 
-        changelogNewGame.map { k, _ ->
-            println("▶          ️${k.short()} READY")
-            KeyValue(
-                k,
-                GameReady(
-                    gameId = k,
-                    eventId = UUID.randomUUID()
+        changelogNewGame
+            .filter { _, gameState -> gameState.turn == 1 }
+            .map { k, _ ->
+                println("▶          ️${k.short()} READY")
+                KeyValue(
+                    k,
+                    GameReady(
+                        gameId = k,
+                        eventId = UUID.randomUUID()
+                    )
                 )
-            )
-        }.mapValues { v -> jsonMapper.writeValueAsString(v) }
+            }.mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(Topics.GAME_READY, Produced.with(Serdes.UUID(), Serdes.String()))
 
 
@@ -138,7 +140,10 @@ class GameLobby(private val brokers: String) {
         // open a new game
         createGameStream.map { _, v ->
             val newGame = Game(gameId = UUID.randomUUID(), visibility = v.visibility)
-            KeyValue(AllOpenGames.TRIVIAL_KEY, GameCommand(game = newGame, command = Command.Open))
+            KeyValue(
+                AllOpenGames.TRIVIAL_KEY,
+                GameCommand(game = newGame, command = Command.Open)
+            )
         }.mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(Topics.GAME_LOBBY_COMMANDS, Produced.with(Serdes.String(), Serdes.String()))
 
