@@ -1,6 +1,8 @@
+import org.apache.kafka.common.serialization.StringSerializer
+import org.apache.kafka.common.serialization.UUIDSerializer
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.TopologyTestDriver
-import org.junit.jupiter.api.Assertions
+import org.apache.kafka.streams.test.ConsumerRecordFactory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -18,6 +20,22 @@ class GameLobbyTest {
 
     @Test
     fun emptyGameStatesTriggerGameReady() {
-        assertEquals(true,false)
+        val testDriver = setup()
+
+        val factory =
+            ConsumerRecordFactory(
+                Topics.GAME_STATES_CHANGELOG,
+                UUIDSerializer(),
+                StringSerializer()
+            )
+
+        val gameId = UUID.randomUUID()
+        val emptyBoard =
+            "{\"board\":{\"pieces\":{},\"size\":19}," +
+                    "\"captures\":{\"black\":0,\"white\":0},\"turn\":1," +
+                    "\"playerUp\":\"BLACK\"}"
+        testDriver.pipeInput(factory.create(gameId, emptyBoard))
+
+        assertEquals(true, false)
     }
 }
