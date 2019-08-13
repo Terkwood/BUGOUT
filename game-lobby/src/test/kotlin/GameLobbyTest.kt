@@ -8,10 +8,10 @@ import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
 import org.apache.kafka.streams.test.OutputVerifier
 import org.junit.jupiter.api.*
+import serdes.jsonMapper
 import java.util.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Disabled
 class GameLobbyTest {
 
     private val testDriver: TopologyTestDriver = setup()
@@ -74,7 +74,10 @@ class GameLobbyTest {
                 StringDeserializer()
             )
 
-        OutputVerifier.compareKeyValue(outputRecord, gameId, "bad idea")
+        val actual: GameReady = jsonMapper.readValue(outputRecord.value(), GameReady::class.java)
+        val expected = jsonMapper.writeValueAsString(GameReady(gameId = gameId, eventId = actual.eventId))
+
+        OutputVerifier.compareKeyValue(outputRecord, gameId, expected)
     }
 
     @AfterAll

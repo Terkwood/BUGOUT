@@ -110,8 +110,7 @@ class GameLobby(private val brokers: String) {
                 k,
                 GameReady(
                     gameId = k,
-                    eventId = UUID.randomUUID(),
-                    epochMillis = Instant.now().toEpochMilli()
+                    eventId = UUID.randomUUID()
                 )
             )
         }.mapValues { v -> jsonMapper.writeValueAsString(v) }
