@@ -9,7 +9,6 @@ import org.apache.kafka.streams.test.ConsumerRecordFactory
 import org.apache.kafka.streams.test.OutputVerifier
 import org.junit.jupiter.api.*
 import serdes.jsonMapper
-import java.lang.NullPointerException
 import java.util.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -66,7 +65,8 @@ class GameLobbyTest {
         val gameId = UUID.randomUUID()
         val emptyBoard =
             "{\"board\":{\"pieces\":{},\"size\":19}," +
-                    "\"captures\":{\"black\":0,\"white\":0},\"turn\":1," +
+                    "\"captures\":{\"black\":0,\"white\":0}," +
+                    "\"turn\":1," +
                     "\"playerUp\":\"BLACK\"}"
         testDriver.pipeInput(factory.create(gameId, emptyBoard))
 
@@ -95,11 +95,13 @@ class GameLobbyTest {
             )
 
         val gameId = UUID.randomUUID()
-        val emptyBoard =
+
+        val turnTwo =
             "{\"board\":{\"pieces\":{},\"size\":19}," +
-                    "\"captures\":{\"black\":0,\"white\":0},\"turn\":2," +
+                    "\"captures\":{\"black\":0,\"white\":0}," +
+                    "\"turn\":2," +
                     "\"playerUp\":\"BLACK\"}"
-        testDriver.pipeInput(factory.create(gameId, emptyBoard))
+        testDriver.pipeInput(factory.create(gameId, turnTwo))
 
         Assertions.assertNull(
             testDriver.readOutput(
