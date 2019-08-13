@@ -38,7 +38,7 @@ dependencies {
             "org.junit.jupiter:junit-jupiter-api:$junitVersion"
     )
     testRuntime("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-    testCompile 'org.apache.kafka:kafka-streams-test-utils:2.0.0'
+    testCompile 'org.apache.kafka:kafka-streams-test-utils:2.3.0'
 }
 
 compileKotlin {

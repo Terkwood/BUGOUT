@@ -1,17 +1,25 @@
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
+import org.apache.kafka.common.serialization.UUIDDeserializer
 import org.apache.kafka.common.serialization.UUIDSerializer
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.apache.kafka.streams.test.OutputVerifier
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import java.util.*
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GameLobbyTest {
 
-    fun setup(): TopologyTestDriver {
+    private val testDriver: TopologyTestDriver = setup()
+
+    private fun setup(): TopologyTestDriver {
         // setup test driver
         val props = Properties()
+        props[StreamsConfig.BOOTSTRAP_SERVERS_CONFIG] = "no-matter"
         props[StreamsConfig.APPLICATION_ID_CONFIG] = "test-bugout-game-lobby"
         props[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = "exactly_once"
 
@@ -20,8 +28,6 @@ class GameLobbyTest {
 
     @Test
     fun emptyGameStatesTriggerGameReady() {
-        val testDriver = setup()
-
         val factory =
             ConsumerRecordFactory(
                 Topics.GAME_STATES_CHANGELOG,
@@ -36,6 +42,21 @@ class GameLobbyTest {
                     "\"playerUp\":\"BLACK\"}"
         testDriver.pipeInput(factory.create(gameId, emptyBoard))
 
-        assertEquals(true, false)
+        val outputRecord =
+            testDriver.readOutput(
+                Topics.GAME_READY,
+                UUIDDeserializer(),
+                StringDeserializer()
+            )
+
+        OutputVerifier.compareKeyValue(outputRecord, gameId, "bad idea")
+
+
     }
+
+    @AfterAll
+    fun tearDown() {
+        testDriver.close()
+    }
+
 }
