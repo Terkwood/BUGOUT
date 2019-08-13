@@ -7,11 +7,13 @@ import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
 import org.apache.kafka.streams.test.OutputVerifier
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import java.util.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Disabled
 class GameLobbyTest {
 
     private val testDriver: TopologyTestDriver = setup()
