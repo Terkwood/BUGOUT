@@ -1,9 +1,6 @@
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
-import org.apache.kafka.streams.KafkaStreams
-import org.apache.kafka.streams.KeyValue
-import org.apache.kafka.streams.StreamsBuilder
-import org.apache.kafka.streams.Topology
+import org.apache.kafka.streams.*
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
 import serdes.AllOpenGamesDeserializer
@@ -19,20 +16,21 @@ fun main() {
 
 class GameLobby(private val brokers: String) {
     fun process() {
-        val topology = buildTopology()
+        val topology = build()
 
         println(topology.describe())
 
         val props = Properties()
-        props["bootstrap.servers"] = brokers
-        props["application.id"] = "bugout-game-lobby"
-        props["processing.guarantee"] = "exactly_once"
+        props[StreamsConfig.BOOTSTRAP_SERVERS_CONFIG] = brokers
+        props[StreamsConfig.APPLICATION_ID_CONFIG] = "bugout-game-lobby"
+        props[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = "exactly_once"
 
         val streams = KafkaStreams(topology, props)
         streams.start()
     }
 
-    private fun buildTopology(): Topology {
+
+    fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
 
         val allOpenGames: GlobalKTable<String, AllOpenGames> =
@@ -148,7 +146,6 @@ class GameLobby(private val brokers: String) {
 
         return streamsBuilder.build()
     }
-
     /**
      * aggregate data to a local ktable
      * ```sh
@@ -208,3 +205,5 @@ class GameLobby(private val brokers: String) {
         )
     }
 }
+
+

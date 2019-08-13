@@ -32,17 +32,13 @@ dependencies {
 
     compile 'org.apache.kafka:kafka-streams:2.3.0'
 
-
-    // TODO Fix JNI unsatisfied link error (?!)
-    // TODO compile group: 'org.rocksdb', name: 'rocksdbjni', version: '6.0.1'
-
     testCompile "org.junit.jupiter:junit-jupiter-api:$junitVersion"
     testImplementation(
             'org.assertj:assertj-core:3.12.2',
             "org.junit.jupiter:junit-jupiter-api:$junitVersion"
     )
     testRuntime("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-
+    testCompile 'org.apache.kafka:kafka-streams-test-utils:2.0.0'
 }
 
 compileKotlin {
