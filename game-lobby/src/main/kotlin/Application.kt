@@ -144,7 +144,7 @@ class Application(private val brokers: String) {
                 )
             KeyValue(
                 GameLobby.TRIVIAL_KEY,
-                GameCommand(game = newGame, command = Command.Open)
+                GameLobbyCommand(game = newGame, lobbyCommand = LobbyCommand.Open)
             )
         }.mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(
@@ -177,7 +177,7 @@ class Application(private val brokers: String) {
                     { GameLobby() },
                     { _, v, allGames ->
                         allGames.execute(
-                            jsonMapper.readValue(v, GameCommand::class.java)
+                            jsonMapper.readValue(v, GameLobbyCommand::class.java)
                         )
                         allGames
                     },
@@ -301,7 +301,7 @@ class Application(private val brokers: String) {
          * The ClientId key is the person finding a game
          * The creator of the game is buried in the game lobby (someGame)
          */
-        val popPublicGame: KStream<ClientId, GameCommand> =
+        val popPublicGame: KStream<ClientId, GameLobbyCommand> =
             publicGameExists.map { _, fpgJoinAllGames ->
                 val fpg = fpgJoinAllGames.command
 
@@ -312,7 +312,7 @@ class Application(private val brokers: String) {
 
                 KeyValue(
                     fpgJoinAllGames.command.clientId,
-                    GameCommand(game = someGame, command = Command.Ready)
+                    GameLobbyCommand(game = someGame, lobbyCommand = LobbyCommand.Ready)
                 )
 
             }

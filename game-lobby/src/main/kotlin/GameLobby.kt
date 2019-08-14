@@ -6,18 +6,18 @@ data class Game(
     val creator: ClientId
 )
 
-data class GameCommand(val game: Game, val command: Command)
-enum class Command { Open, Ready }
+data class GameLobbyCommand(val game: Game, val lobbyCommand: LobbyCommand)
+enum class LobbyCommand { Open, Ready }
 
 
 class GameLobby {
     var games: List<Game> = listOf()
 
-    fun execute(command: GameCommand): GameLobby {
-        games = when (command.command) {
-            Command.Open ->
+    fun execute(command: GameLobbyCommand): GameLobby {
+        games = when (command.lobbyCommand) {
+            LobbyCommand.Open ->
                 games + command.game
-            Command.Ready ->
+            LobbyCommand.Ready ->
                 games - command.game
         }
 

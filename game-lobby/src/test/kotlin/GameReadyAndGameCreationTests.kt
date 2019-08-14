@@ -138,7 +138,7 @@ class GameReadyAndGameCreationTests {
             val newGameId = jsonMapper
                 .readValue(
                     gameLobbyCommandOutput.value(),
-                    GameCommand::class.java
+                    GameLobbyCommand::class.java
                 )
                 .game
                 .gameId
@@ -147,9 +147,9 @@ class GameReadyAndGameCreationTests {
                 gameLobbyCommandOutput,
                 GameLobby.TRIVIAL_KEY,
                 jsonMapper.writeValueAsString(
-                    GameCommand(
+                    GameLobbyCommand(
                         Game(newGameId, v, creator = creatorClientId),
-                        Command.Open
+                        LobbyCommand.Open
                     )
                 )
             )
