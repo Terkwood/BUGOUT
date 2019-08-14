@@ -54,6 +54,15 @@ class CreateAndJoinPrivateGameTest {
             )
 
 
+        testDriver.pipeInput(
+            factory.create(
+                Topics.JOIN_PRIVATE_GAME,
+                joinerClientId,
+                jsonMapper.writeValueAsString(joinRequest)
+            )
+        )
+
+
         val outputRecord =
             testDriver.readOutput(
                 Topics.GAME_READY,
@@ -111,6 +120,15 @@ class CreateAndJoinPrivateGameTest {
             )
 
 
+        testDriver.pipeInput(
+            factory.create(
+                Topics.JOIN_PRIVATE_GAME,
+                joinerClientId,
+                jsonMapper.writeValueAsString(joinRequest)
+            )
+        )
+
+
         val outputRecord =
             testDriver.readOutput(
                 Topics.PRIVATE_GAME_REJECTED,
@@ -133,7 +151,7 @@ class CreateAndJoinPrivateGameTest {
                 )
             )
 
-        OutputVerifier.compareKeyValue(outputRecord, actual.gameId, expected)
+        OutputVerifier.compareKeyValue(outputRecord, joinerClientId, expected)
 
     }
 

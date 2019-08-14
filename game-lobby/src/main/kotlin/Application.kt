@@ -97,13 +97,13 @@ class Application(private val brokers: String) {
         }
 
 
-        // TODO
         val joinPrivateGameStream: KStream<ClientId, JoinPrivateGame> =
             streamsBuilder.stream<ClientId, String>(
                 Topics.JOIN_PRIVATE_GAME,
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
+                    println("READ A JOIN PRIV REQUEST   ... ")
                     jsonMapper.readValue(
                         v,
                         JoinPrivateGame::class.java
@@ -141,14 +141,14 @@ class Application(private val brokers: String) {
                 .kbranch(
                     { _, jl ->
                         jl.lobby.games.any { g ->
-                            g.visibility == Visibility
-                                .Private && g.gameId == jl.command.gameId
+                            g.visibility == Visibility.Private
+                                    && g.gameId == jl.command.gameId
                         }
                     },
                     { _, jl ->
                         !jl.lobby.games.any { g ->
-                            g.visibility == Visibility
-                                .Private && g.gameId == jl.command.gameId
+                            g.visibility == Visibility.Private
+                                    && g.gameId == jl.command.gameId
                         }
                     }
                 )
@@ -160,7 +160,27 @@ class Application(private val brokers: String) {
         val joinPrivateFailure: KStream<ClientId, JoinPrivateGameLobby> =
             joinPrivateLobbyBranches[1]
 
-        // TODO
+
+        // reject invalid game IDs
+        joinPrivateFailure
+            .map { _, jl ->
+                println("HEY THERE GUY ➿")
+                KeyValue(
+                    jl.command.clientId,
+                    // game ID randomly generated here
+                    PrivateGameRejected(
+                        clientId = jl.command.clientId,
+                        gameId = jl.command.gameId
+                    )
+                )
+            }
+            .mapValues { v -> jsonMapper.writeValueAsString(v) }
+            .to(
+                Topics.PRIVATE_GAME_REJECTED,
+                Produced.with(Serdes.UUID(), Serdes.String())
+            )
+
+        // TODO priv join success
 
 
         val createGameStream: KStream<ClientId, CreateGame> =
