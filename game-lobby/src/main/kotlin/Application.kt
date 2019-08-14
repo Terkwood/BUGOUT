@@ -170,6 +170,67 @@ class Application(private val brokers: String) {
         val joinPrivateFailure: KStream<ClientId, JoinPrivateGameLobby> =
             joinPrivateLobbyBranches[1]
 
+        /**
+         * The ClientId key is the person finding a game
+         * The creator of the game is buried in the game lobby (someGame)
+         */
+        val popPrivateGame: KStream<ClientId, GameLobbyCommand> =
+            joinPrivateSuccess.map { _, jpgLobby ->
+                val jpg = jpgLobby.command
+                val lobby = jpgLobby.lobby
+
+                val someGame =
+                    lobby.games.first { g ->
+                        g.visibility == Visibility.Private &&
+                                g.gameId == jpg.gameId
+                    }
+
+                println("Popping public game  ${someGame.gameId.short()}")
+
+                KeyValue(
+                    jpg.clientId,
+                    GameLobbyCommand(
+                        game = someGame,
+                        lobbyCommand = LobbyCommand.Ready
+                    )
+                )
+
+            }
+
+
+        popPrivateGame.map { finderClientId, gameCommand ->
+            KeyValue(
+                gameCommand.game.gameId,
+                GameReady(
+                    gameCommand.game.gameId,
+                    Pair(gameCommand.game.creator, finderClientId)
+                )
+            )
+        }.mapValues { it -> jsonMapper.writeValueAsString(it) }
+            .to(
+                Topics
+                    .GAME_READY,
+                Produced.with(Serdes.UUID(), Serdes.String())
+            )
+
+        popPrivateGame.map { _, v ->
+            KeyValue(
+                GameLobby.TRIVIAL_KEY,
+                jsonMapper.writeValueAsString(v)
+            )
+        }.to(
+            Topics.GAME_LOBBY_COMMANDS,
+            Produced.with(Serdes.String(), Serdes.String())
+        )
+
+        popPrivateGame
+            .map { _, v -> KeyValue(v.game.gameId, GameState()) }
+            .mapValues { v -> jsonMapper.writeValueAsString(v) }
+            .to(
+                Topics.GAME_STATES_CHANGELOG,
+                Produced.with(Serdes.UUID(), Serdes.String())
+            )
+
 
         // reject invalid game IDs
         joinPrivateFailure
@@ -189,8 +250,6 @@ class Application(private val brokers: String) {
                 Topics.PRIVATE_GAME_REJECTED,
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
-
-        // TODO priv join success
 
 
         val createGameStream: KStream<ClientId, CreateGame> =
@@ -392,16 +451,19 @@ class Application(private val brokers: String) {
          * The creator of the game is buried in the game lobby (someGame)
          */
         val popPublicGame: KStream<ClientId, GameLobbyCommand> =
-            publicGameExists.map { _, fpgJoinAllGames ->
-                val fpg = fpgJoinAllGames.command
+            publicGameExists.map { _, fl ->
+                val fpg = fl.command
 
                 val someGame =
-                    fpgJoinAllGames.lobby.games.first { g -> g.visibility == Visibility.Public }
+                    fl.lobby.games.first { g ->
+                        g.visibility == Visibility
+                            .Public
+                    }
 
                 println("Popping public game  ${someGame.gameId.short()}")
 
                 KeyValue(
-                    fpgJoinAllGames.command.clientId,
+                    fpg.clientId,
                     GameLobbyCommand(
                         game = someGame,
                         lobbyCommand = LobbyCommand.Ready
