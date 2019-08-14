@@ -18,7 +18,7 @@ class CreateGameTest {
 
 
     @Test
-    fun createGameStreamsToGameState() {
+    fun createGameStreamsToGameLobby() {
 
         val expectedGames = mutableListOf<Game>()
         listOf(Visibility.Public, Visibility.Private).forEach { v ->

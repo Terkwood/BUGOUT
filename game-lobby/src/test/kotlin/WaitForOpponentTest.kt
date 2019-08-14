@@ -43,7 +43,8 @@ class WaitForOpponentTest {
             val output =
                 testDriver.readOutput(
                     Topics.WAIT_FOR_OPPONENT,
-                    UUIDDeserializer(), StringDeserializer()
+                    UUIDDeserializer(),
+                    StringDeserializer()
                 )
 
             val actual = jsonMapper.readValue(

@@ -37,7 +37,7 @@ class Application(private val brokers: String) {
 
         buildPublicGameStreams(streamsBuilder, gameLobby)
 
-        val changelogNewGame: KStream<GameId, GameStateTurnOnly> =
+        val gameStatesChangeLog: KStream<GameId, GameStateTurnOnly> =
             streamsBuilder.stream<UUID, String>(
                 Topics.GAME_STATES_CHANGELOG,
                 Consumed.with(Serdes.UUID(), Serdes.String())
@@ -48,8 +48,8 @@ class Application(private val brokers: String) {
                 )
             }
 
-        val changelogTurnOne =
-            changelogNewGame
+        val gameStatesTurnOne =
+            gameStatesChangeLog
                 .filter { _, gameState -> gameState.turn == 1 }
 
         // we need to join game states changelog against the lobby
@@ -75,26 +75,36 @@ class Application(private val brokers: String) {
                 GameStateLobby(leftValue, rightValue)
             }
 
-        val gameStateLobby =
-            changelogTurnOne.join(
+        val turnOneGameStateLobby =
+            gameStatesTurnOne.join(
                 gameLobby,
                 gslKVMapper, gslValueJoiner
             )
 
-        val waitForOpponent = gameStateLobby.filter { k, v ->
-            v.lobby.games.any { it.gameId == k }
-        }.map { k, v ->
-            println("▶          ️${k.short()} READY")
-            val creator = v.lobby.games.find { it.gameId == k }?.creator!!
-            KeyValue(
-                k,
-                WaitForOpponent(
-                    gameId = k,
-                    eventId = UUID.randomUUID(),
-                    clientId = creator
+        val waitForOpponent =
+            turnOneGameStateLobby.filter { k, v ->
+                v.lobby.games.any { it.gameId == k }
+            }.map { k, v ->
+                println("!          ️${k.short()} WAIT")
+                // based on changelogTurnOne, we know that we can bypass this
+                // null check
+                val creator = v.lobby.games.find { it.gameId == k }?.creator!!
+                KeyValue(
+                    creator,
+                    WaitForOpponent(
+                        gameId = k,
+                        eventId = UUID.randomUUID(),
+                        clientId = creator
+                    )
                 )
+            }
+        waitForOpponent.mapValues { v -> jsonMapper.writeValueAsString(v) }.to(
+            Topics
+                .WAIT_FOR_OPPONENT, Produced.with(
+                Serdes.UUID(), Serdes
+                    .String()
             )
-        }
+        )
 
 
         val joinPrivateGameStream: KStream<ClientId, JoinPrivateGame> =
@@ -214,6 +224,17 @@ class Application(private val brokers: String) {
             .to(
                 Topics.GAME_LOBBY_COMMANDS,
                 Produced.with(Serdes.String(), Serdes.String())
+            )
+
+        // write an empty game state to the game states changelog
+        createGameStream.map { _, cg ->
+            KeyValue(cg.gameId, GameState())
+        }.mapValues { v -> jsonMapper.writeValueAsString(v) }
+            .to(
+                Topics.GAME_STATES_CHANGELOG, Produced.with(
+                    Serdes.UUID(),
+                    Serdes.String()
+                )
             )
 
 
