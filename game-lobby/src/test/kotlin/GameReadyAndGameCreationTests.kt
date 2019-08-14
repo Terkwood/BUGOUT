@@ -40,6 +40,12 @@ class GameReadyAndGameCreationTests {
     }
 
 
+    // TODO this seems too simplistic...
+    // TODO   in total, we need a CreateGame event
+    // TODO    _and either_ a JoinPrivateGame   _or_
+    // TODO     a FindPublicGame  request   in order
+    // TODO  see a GameReady
+    /*
     @Test
     fun emptyGameStatesTriggerGameReady() {
         val factory =
@@ -73,6 +79,7 @@ class GameReadyAndGameCreationTests {
 
         OutputVerifier.compareKeyValue(outputRecord, gameId, expected)
     }
+    */
 
 
     @Test
@@ -110,13 +117,13 @@ class GameReadyAndGameCreationTests {
             val factory =
                 ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
-            val clientId = UUID.randomUUID()
-            val cgReq = CreateGame(clientId = clientId, visibility = v)
+            val creatorClientId = UUID.randomUUID()
+            val cgReq = CreateGame(clientId = creatorClientId, visibility = v)
 
             testDriver.pipeInput(
                 factory.create(
                     Topics.CREATE_GAME,
-                    clientId,
+                    creatorClientId,
                     jsonMapper.writeValueAsString(cgReq)
                 )
             )
@@ -136,7 +143,6 @@ class GameReadyAndGameCreationTests {
                 .game
                 .gameId
 
-            val creatorClientId = UUID.randomUUID()
             OutputVerifier.compareKeyValue(
                 gameLobbyCommandOutput,
                 AllOpenGames.TRIVIAL_KEY,
