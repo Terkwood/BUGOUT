@@ -66,7 +66,8 @@ class GameReadyAndGameCreationTests {
             jsonMapper.writeValueAsString(
                 GameReady(
                     gameId = gameId,
-                    eventId = actual.eventId
+                    eventId = actual.eventId,
+                    clients = throw NotImplementedError()
                 )
             )
 
@@ -109,13 +110,13 @@ class GameReadyAndGameCreationTests {
             val factory =
                 ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
-            val reqId = UUID.randomUUID()
-            val cgReq = CreateGame(reqId = reqId, visibility = v)
+            val clientId = UUID.randomUUID()
+            val cgReq = CreateGame(clientId = clientId, visibility = v)
 
             testDriver.pipeInput(
                 factory.create(
                     Topics.CREATE_GAME,
-                    reqId,
+                    clientId,
                     jsonMapper.writeValueAsString(cgReq)
                 )
             )
