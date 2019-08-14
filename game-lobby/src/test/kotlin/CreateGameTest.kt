@@ -72,8 +72,6 @@ class CreateGameTest {
             expectedGames += Game(newGameId, v, creatorClientId)
             expectedLobby.games = expectedGames
 
-            println("expected lobby $expectedLobby")
-
             OutputVerifier.compareKeyValue(
                 gameStatesChangelogOutput,
                 GameLobby.TRIVIAL_KEY,

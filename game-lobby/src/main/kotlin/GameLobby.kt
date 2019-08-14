@@ -37,7 +37,18 @@ class GameLobby {
     }
 }
 
-data class FindPublicGameAllOpenGames(
+/**
+ * Joiner class
+ */
+data class FindPublicGameLobby(
     val command: FindPublicGame,
-    val store: GameLobby
+    val lobby: GameLobby
+)
+
+/**
+ * Joiner class
+ */
+data class JoinPrivateGameLobby(
+    val command: JoinPrivateGame,
+    val lobby: GameLobby
 )

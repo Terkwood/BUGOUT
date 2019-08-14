@@ -96,15 +96,6 @@ class Application(private val brokers: String) {
             )
         }
 
-        /* final
-        .mapValues { v -> jsonMapper.writeValueAsString(v) }
-        .to(
-            Topics.GAME_READY,
-            Produced.with(Serdes.UUID(), Serdes.String())
-        )
-
-         */
-
 
         // TODO
         val joinPrivateGameStream: KStream<ClientId, JoinPrivateGame> =
@@ -119,7 +110,57 @@ class Application(private val brokers: String) {
                     )
                 }
 
-        // TODO throw NotImplementedError()
+        val joinPrivateKVM: KeyValueMapper<ClientId, JoinPrivateGame,
+                String> =
+            KeyValueMapper { _: ClientId, // left key
+                             _: JoinPrivateGame ->
+                // left value
+
+                // use a trivial join, so that all queries are routed to the same store
+                GameLobby.TRIVIAL_KEY
+            }
+
+        val joinPrivateVJ: ValueJoiner<JoinPrivateGame, GameLobby,
+                JoinPrivateGameLobby> =
+            ValueJoiner { leftValue:
+                          JoinPrivateGame,
+                          rightValue:
+                          GameLobby ->
+                JoinPrivateGameLobby(leftValue, rightValue)
+            }
+
+        val joinPrivateLobby =
+            joinPrivateGameStream.join(
+                gameLobby,
+                joinPrivateKVM,
+                joinPrivateVJ
+            )
+
+        val joinPrivateLobbyBranches =
+            joinPrivateLobby
+                .kbranch(
+                    { _, jl ->
+                        jl.lobby.games.any { g ->
+                            g.visibility == Visibility
+                                .Private && g.gameId == jl.command.gameId
+                        }
+                    },
+                    { _, jl ->
+                        !jl.lobby.games.any { g ->
+                            g.visibility == Visibility
+                                .Private && g.gameId == jl.command.gameId
+                        }
+                    }
+                )
+
+
+        val joinPrivateSuccess: KStream<ClientId, JoinPrivateGameLobby> =
+            joinPrivateLobbyBranches[0]
+
+        val joinPrivateFailure: KStream<ClientId, JoinPrivateGameLobby> =
+            joinPrivateLobbyBranches[1]
+
+        // TODO
 
 
         val createGameStream: KStream<ClientId, CreateGame> =
@@ -144,7 +185,10 @@ class Application(private val brokers: String) {
                 )
             KeyValue(
                 GameLobby.TRIVIAL_KEY,
-                GameLobbyCommand(game = newGame, lobbyCommand = LobbyCommand.Open)
+                GameLobbyCommand(
+                    game = newGame,
+                    lobbyCommand = LobbyCommand.Open
+                )
             )
         }.mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(
@@ -177,7 +221,10 @@ class Application(private val brokers: String) {
                     { GameLobby() },
                     { _, v, allGames ->
                         allGames.execute(
-                            jsonMapper.readValue(v, GameLobbyCommand::class.java)
+                            jsonMapper.readValue(
+                                v,
+                                GameLobbyCommand::class.java
+                            )
                         )
                         allGames
                     },
@@ -244,38 +291,38 @@ class Application(private val brokers: String) {
                 GameLobby.TRIVIAL_KEY
             }
 
-        val fpgValueJoiner: ValueJoiner<FindPublicGame, GameLobby, FindPublicGameAllOpenGames> =
+        val fpgValueJoiner: ValueJoiner<FindPublicGame, GameLobby, FindPublicGameLobby> =
             ValueJoiner { leftValue:
                           FindPublicGame,
                           rightValue:
                           GameLobby ->
-                FindPublicGameAllOpenGames(leftValue, rightValue)
+                FindPublicGameLobby(leftValue, rightValue)
             }
 
 
-        val fpgJoinAllOpenGames =
+        val fpgLobby =
             findPublicGameStream.join(
                 gameLobby,
                 fpgKeyJoiner,
                 fpgValueJoiner
             )
 
-        val fpgBranches =
-            fpgJoinAllOpenGames
+        val fpgLobbyBranches =
+            fpgLobby
                 .kbranch(
-                    { _, fo ->
-                        fo.store.games.any { g -> g.visibility == Visibility.Public }
+                    { _, fl ->
+                        fl.lobby.games.any { g -> g.visibility == Visibility.Public }
                     },
-                    { _, fo ->
-                        !fo.store.games.any { g -> g.visibility == Visibility.Public }
+                    { _, fl ->
+                        !fl.lobby.games.any { g -> g.visibility == Visibility.Public }
                     }
                 )
 
-        val publicGameExists: KStream<ClientId, FindPublicGameAllOpenGames> =
-            fpgBranches[0]
+        val publicGameExists: KStream<ClientId, FindPublicGameLobby> =
+            fpgLobbyBranches[0]
 
-        val noPublicGameExists: KStream<ClientId, FindPublicGameAllOpenGames> =
-            fpgBranches[1]
+        val noPublicGameExists: KStream<ClientId, FindPublicGameLobby> =
+            fpgLobbyBranches[1]
 
 
         // if someone was looking for a public game and
@@ -308,13 +355,16 @@ class Application(private val brokers: String) {
                 val fpg = fpgJoinAllGames.command
 
                 val someGame =
-                    fpgJoinAllGames.store.games.first { g -> g.visibility == Visibility.Public }
+                    fpgJoinAllGames.lobby.games.first { g -> g.visibility == Visibility.Public }
 
                 println("Popping public game  ${someGame.gameId.short()}")
 
                 KeyValue(
                     fpgJoinAllGames.command.clientId,
-                    GameLobbyCommand(game = someGame, lobbyCommand = LobbyCommand.Ready)
+                    GameLobbyCommand(
+                        game = someGame,
+                        lobbyCommand = LobbyCommand.Ready
+                    )
                 )
 
             }
@@ -346,9 +396,11 @@ class Application(private val brokers: String) {
 
         popPublicGame
             .map { _, v -> KeyValue(v.game.gameId, GameState()) }
-            .mapValues { v -> jsonMapper.writeValueAsString(v)}
-            .to(Topics.GAME_STATES_CHANGELOG,
-                Produced.with(Serdes.UUID(), Serdes.String()))
+            .mapValues { v -> jsonMapper.writeValueAsString(v) }
+            .to(
+                Topics.GAME_STATES_CHANGELOG,
+                Produced.with(Serdes.UUID(), Serdes.String())
+            )
 
     }
 }
