@@ -112,7 +112,7 @@ class GameReadyAndGameCreationTests {
 
     @Test
     fun createGameStreamsHappily() {
-        val expectedGames = mutableSetOf<Game>()
+        val expectedGames = mutableListOf<Game>()
         listOf(Visibility.Public, Visibility.Private).forEach { v ->
             val factory =
                 ConsumerRecordFactory(UUIDSerializer(), StringSerializer())

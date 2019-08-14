@@ -11,7 +11,7 @@ enum class Command { Open, Ready }
 
 
 class GameLobby {
-    var games: Set<Game> = setOf()
+    var games: List<Game> = listOf()
 
     fun execute(command: GameCommand): GameLobby {
         games = when (command.command) {
