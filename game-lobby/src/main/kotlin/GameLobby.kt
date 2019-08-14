@@ -1,4 +1,6 @@
 import org.apache.kafka.common.serialization.Serdes
+import org.apache.kafka.common.serialization.StringSerializer
+import org.apache.kafka.common.serialization.UUIDSerializer
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.*
 import org.apache.kafka.streams.kstream.*
@@ -56,7 +58,7 @@ class GameLobby(private val brokers: String) {
         // so that we can figure out the creator of the game,
         // and correctly announce game ready
         // game states changelog is a stream, here
-        val changelogLobbyKeyJoiner: KeyValueMapper<GameId, GameStateTurnOnly,
+        val gslKVMapper: KeyValueMapper<GameId, GameStateTurnOnly,
                 String> =
             KeyValueMapper { _: GameId, // left key
                              _: GameStateTurnOnly ->
@@ -66,22 +68,44 @@ class GameLobby(private val brokers: String) {
                 AllOpenGames.TRIVIAL_KEY
             }
 
-        changelogTurnOne
-            .map { k, _ ->
-                println("▶          ️${k.short()} READY")
-                KeyValue(
-                    k,
-                    GameReady(
-                        gameId = k,
-                        eventId = UUID.randomUUID(),
-                        clients = throw NotImplementedError()
-                    )
-                )
-            }.mapValues { v -> jsonMapper.writeValueAsString(v) }
-            .to(
-                Topics.GAME_READY,
-                Produced.with(Serdes.UUID(), Serdes.String())
+        val gslValueJoiner: ValueJoiner<GameStateTurnOnly,
+                AllOpenGames, GameStateLobby> =
+            ValueJoiner { leftValue:
+                          GameStateTurnOnly,
+                          rightValue:
+                          AllOpenGames ->
+                GameStateLobby(leftValue, rightValue)
+            }
+
+        val gameStateLobby =
+            changelogTurnOne.join(
+                allOpenGames,
+                gslKVMapper, gslValueJoiner
             )
+
+        val waitForOpponent = gameStateLobby.filter { k, v ->
+            v.lobby.games.any { it.gameId == k }
+        }.map { k, v ->
+            println("▶          ️${k.short()} READY")
+            val creator = v.lobby.games.find { it.gameId == k }?.creator!!
+            KeyValue(
+                k,
+                WaitForOpponent(
+                    gameId = k,
+                    eventId = UUID.randomUUID(),
+                    clientId = creator
+                )
+            )
+        }
+
+        /* final
+        .mapValues { v -> jsonMapper.writeValueAsString(v) }
+        .to(
+            Topics.GAME_READY,
+            Produced.with(Serdes.UUID(), Serdes.String())
+        )
+
+         */
 
 
         // TODO
@@ -115,7 +139,11 @@ class GameLobby(private val brokers: String) {
         // open a new game
         createGameStream.map { _, v ->
             val newGame =
-                Game(gameId = UUID.randomUUID(), visibility = v.visibility)
+                Game(
+                    gameId = v.gameId,
+                    visibility = v.visibility,
+                    creator = v.clientId
+                )
             KeyValue(
                 AllOpenGames.TRIVIAL_KEY,
                 GameCommand(game = newGame, command = Command.Open)
@@ -258,8 +286,11 @@ class GameLobby(private val brokers: String) {
             .map { _, fo ->
                 KeyValue(
                     fo.command.clientId,
-                    CreateGame(fo.command.clientId,
-                                Visibility.Public)
+                    // game ID randomly generated here
+                    CreateGame(
+                        fo.command.clientId,
+                        Visibility.Public
+                    )
                 )
             }.mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(
@@ -268,7 +299,11 @@ class GameLobby(private val brokers: String) {
             )
 
 
-        val popPublicGame: KStream<String, GameCommand> =
+        /**
+         * The ClientId key is the person finding a game
+         * The creator of the game is buried in the game lobby (someGame)
+         */
+        val popPublicGame: KStream<ClientId, GameCommand> =
             publicGameExists.map { _, fpgJoinAllGames ->
                 val fpg = fpgJoinAllGames.command
 
@@ -278,13 +313,33 @@ class GameLobby(private val brokers: String) {
                 println("Popping public game  ${someGame.gameId.short()}")
 
                 KeyValue(
-                    AllOpenGames.TRIVIAL_KEY,
+                    fpgJoinAllGames.command.clientId,
                     GameCommand(game = someGame, command = Command.Ready)
                 )
 
             }
 
-        popPublicGame.mapValues { v -> jsonMapper.writeValueAsString(v) }.to(
+        popPublicGame.map { finderClientId, gameCommand ->
+            KeyValue(
+                gameCommand.game.gameId,
+                GameReady(
+                    gameCommand.game.gameId,
+                    Pair(gameCommand.game.creator, finderClientId)
+                )
+            )
+        }.mapValues { it -> jsonMapper.writeValueAsString(it) }
+            .to(
+                Topics
+                    .GAME_READY,
+                Produced.with(Serdes.UUID(), Serdes.String())
+            )
+
+        popPublicGame.map { _, v ->
+            KeyValue(
+                AllOpenGames.TRIVIAL_KEY,
+                jsonMapper.writeValueAsString(v)
+            )
+        }.to(
             Topics.GAME_LOBBY_COMMANDS,
             Produced.with(Serdes.String(), Serdes.String())
         )

@@ -8,3 +8,5 @@ data class GameState(
 
 @JsonIgnoreProperties(value = ["board", "captures", "playerUp", "moves"])
 data class GameStateTurnOnly(val turn: Int)
+
+data class GameStateLobby(val gameState: GameStateTurnOnly, val lobby: AllOpenGames)

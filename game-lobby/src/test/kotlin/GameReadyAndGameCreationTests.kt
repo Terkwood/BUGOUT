@@ -136,12 +136,13 @@ class GameReadyAndGameCreationTests {
                 .game
                 .gameId
 
+            val creatorClientId = UUID.randomUUID()
             OutputVerifier.compareKeyValue(
                 gameLobbyCommandOutput,
                 AllOpenGames.TRIVIAL_KEY,
                 jsonMapper.writeValueAsString(
                     GameCommand(
-                        Game(newGameId, v),
+                        Game(newGameId, v, creator = creatorClientId),
                         Command.Open
                     )
                 )
@@ -154,7 +155,7 @@ class GameReadyAndGameCreationTests {
                 )
 
             val expectedLobby = AllOpenGames()
-            expectedGames += Game(newGameId, v)
+            expectedGames += Game(newGameId, v, creatorClientId)
             expectedLobby.games = expectedGames
 
             OutputVerifier.compareKeyValue(

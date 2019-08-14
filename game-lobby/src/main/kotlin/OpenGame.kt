@@ -1,6 +1,11 @@
 import serdes.jsonMapper
 
-data class Game (val gameId: GameId, val visibility: Visibility)
+data class Game(
+    val gameId: GameId,
+    val visibility: Visibility,
+    val creator: ClientId
+)
+
 data class GameCommand(val game: Game, val command: Command)
 enum class Command { Open, Ready }
 
@@ -24,7 +29,7 @@ class AllOpenGames {
     }
 
 
-    companion object  {
+    companion object {
         /**
          * Trivial key for kafka join
          */
@@ -32,4 +37,7 @@ class AllOpenGames {
     }
 }
 
-data class FindPublicGameAllOpenGames(val command: FindPublicGame, val store: AllOpenGames)
+data class FindPublicGameAllOpenGames(
+    val command: FindPublicGame,
+    val store: AllOpenGames
+)

@@ -1,9 +1,12 @@
+import java.util.*
+
 // requests & commands
 data class FindPublicGame(val clientId: ClientId)
 
 data class CreateGame(
     val clientId: ClientId,
-    val visibility: Visibility
+    val visibility: Visibility,
+    val gameId: GameId = UUID.randomUUID()
 )
 
 /**
@@ -33,13 +36,13 @@ data class JoinPrivateGame(
 data class WaitForOpponent(
     val gameId: GameId,
     val clientId: ClientId,
-    val eventId: EventId
+    val eventId: EventId = UUID.randomUUID()
 )
 
 data class GameReady(
     val gameId: GameId,
     val clients: Pair<ClientId, ClientId>,
-    val eventId: EventId
+    val eventId: EventId = UUID.randomUUID()
 )
 
 data class PrivateGameRejected(
