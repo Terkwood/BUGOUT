@@ -6,7 +6,7 @@ data class FindPublicGame(val clientId: ClientId)
 data class CreateGame(
     val clientId: ClientId,
     val visibility: Visibility,
-    val gameId: GameId = UUID.randomUUID()
+    val gameId: GameId
 )
 
 /**

@@ -286,11 +286,13 @@ class Application(private val brokers: String) {
                     fo.command.clientId,
                     // game ID randomly generated here
                     CreateGame(
-                        fo.command.clientId,
-                        Visibility.Public
+                        clientId = fo.command.clientId,
+                        visibility = Visibility.Public,
+                        gameId = UUID.randomUUID()
                     )
                 )
-            }.mapValues { v -> jsonMapper.writeValueAsString(v) }
+            }
+            .mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(
                 Topics.CREATE_GAME,
                 Produced.with(Serdes.UUID(), Serdes.String())
