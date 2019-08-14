@@ -344,7 +344,9 @@ class Application(private val brokers: String) {
 
         popPublicGame
             .map { _, v -> KeyValue(v.game.gameId, GameState()) }
-            .to(Topics.GAME_STATES_CHANGELOG)
+            .mapValues { v -> jsonMapper.writeValueAsString(v)}
+            .to(Topics.GAME_STATES_CHANGELOG,
+                Produced.with(Serdes.UUID(), Serdes.String()))
 
     }
 }

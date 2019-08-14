@@ -1,8 +1,5 @@
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.common.serialization.StringDeserializer
-import org.apache.kafka.common.serialization.StringSerializer
-import org.apache.kafka.common.serialization.UUIDDeserializer
-import org.apache.kafka.common.serialization.UUIDSerializer
+import org.apache.kafka.common.serialization.*
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
 import org.apache.kafka.streams.test.OutputVerifier
@@ -40,24 +37,38 @@ class GameReadyAndGameCreationTests {
     }
 
 
-    // TODO this seems too simplistic...
-    // TODO   in total, we need a CreateGame event
-    // TODO    _and either_ a JoinPrivateGame   _or_
-    // TODO     a FindPublicGame  request   in order
-    // TODO  see a GameReady
-    /*
+
     @Test
-    fun emptyGameStatesTriggerGameReady() {
-        val factory =
+    fun twoPeopleCanJoinAPublicGame() {
+
+
+        // Starting from a fresh kafka cluster, we need two FindPublicGame
+        // events to trigger a game ready event
+
+        val fpgFactory =
             ConsumerRecordFactory(
-                Topics.GAME_STATES_CHANGELOG,
                 UUIDSerializer(),
                 StringSerializer()
             )
+        val clients = Pair(UUID.randomUUID(), UUID.randomUUID())
+        val fpg = { client: ClientId -> FindPublicGame(client)}
 
-        val gameId = UUID.randomUUID()
+        val f1: ConsumerRecord<ByteArray, ByteArray> =
+            fpgFactory.create(
+                Topics.FIND_PUBLIC_GAME,
+                clients.first, jsonMapper.writeValueAsString(fpg(clients
+                    .first))
+            )
+        val f2: ConsumerRecord<ByteArray, ByteArray> =
+            fpgFactory.create(
+                Topics.FIND_PUBLIC_GAME,
+                clients.second, jsonMapper.writeValueAsString(fpg(clients
+                    .second))
+            )
 
-        testDriver.pipeInput(factory.create(gameId, emptyBoard))
+        testDriver.pipeInput(f1)
+
+        testDriver.pipeInput(f2)
 
         val outputRecord =
             testDriver.readOutput(
@@ -71,43 +82,16 @@ class GameReadyAndGameCreationTests {
         val expected =
             jsonMapper.writeValueAsString(
                 GameReady(
-                    gameId = gameId,
+                    gameId = actual.gameId,
                     eventId = actual.eventId,
-                    clients = throw NotImplementedError()
+                    clients = clients
                 )
             )
 
-        OutputVerifier.compareKeyValue(outputRecord, gameId, expected)
+        OutputVerifier.compareKeyValue(outputRecord, actual.gameId, expected)
     }
-    */
 
 
-    @Test
-    fun midGameStatesDoNotTriggerGameReady() {
-        val factory =
-            ConsumerRecordFactory(
-                Topics.GAME_STATES_CHANGELOG,
-                UUIDSerializer(),
-                StringSerializer()
-            )
-
-        val gameId = UUID.randomUUID()
-
-        val turnTwo =
-            "{\"board\":{\"pieces\":{},\"size\":19}," +
-                    "\"captures\":{\"black\":0,\"white\":0}," +
-                    "\"turn\":2," +
-                    "\"playerUp\":\"BLACK\"}"
-        testDriver.pipeInput(factory.create(gameId, turnTwo))
-
-        Assertions.assertNull(
-            testDriver.readOutput(
-                Topics.GAME_READY,
-                UUIDDeserializer(),
-                StringDeserializer()
-            )
-        )
-    }
 
 
     @Test

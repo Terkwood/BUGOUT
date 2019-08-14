@@ -9,5 +9,7 @@ fun setup(): TopologyTestDriver {
     props[StreamsConfig.APPLICATION_ID_CONFIG] = "test-bugout-game-lobby"
     props[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = "exactly_once"
 
-    return TopologyTestDriver(Application("dummy-brokers").build(), props)
+    val topo = Application("dummy-brokers").build()
+    println(topo.describe())
+    return TopologyTestDriver(topo, props)
 }
