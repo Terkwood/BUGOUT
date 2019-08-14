@@ -1,6 +1,4 @@
 import org.apache.kafka.common.serialization.Serdes
-import org.apache.kafka.common.serialization.StringSerializer
-import org.apache.kafka.common.serialization.UUIDSerializer
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.*
 import org.apache.kafka.streams.kstream.*
@@ -12,10 +10,10 @@ import java.util.*
 
 fun main() {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
-    GameLobby("kafka:9092").process()
+    Application("kafka:9092").process()
 }
 
-class GameLobby(private val brokers: String) {
+class Application(private val brokers: String) {
     fun process() {
         val topology = build()
 
@@ -34,10 +32,10 @@ class GameLobby(private val brokers: String) {
     fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
 
-        val allOpenGames: GlobalKTable<String, AllOpenGames> =
+        val gameLobby: GlobalKTable<String, GameLobby> =
             buildGameLobbyTable(streamsBuilder)
 
-        buildPublicGameStreams(streamsBuilder, allOpenGames)
+        buildPublicGameStreams(streamsBuilder, gameLobby)
 
         val changelogNewGame: KStream<GameId, GameStateTurnOnly> =
             streamsBuilder.stream<UUID, String>(
@@ -65,21 +63,21 @@ class GameLobby(private val brokers: String) {
                 // left value
 
                 // use a trivial join, so that all queries are routed to the same store
-                AllOpenGames.TRIVIAL_KEY
+                GameLobby.TRIVIAL_KEY
             }
 
         val gslValueJoiner: ValueJoiner<GameStateTurnOnly,
-                AllOpenGames, GameStateLobby> =
+                GameLobby, GameStateLobby> =
             ValueJoiner { leftValue:
                           GameStateTurnOnly,
                           rightValue:
-                          AllOpenGames ->
+                          GameLobby ->
                 GameStateLobby(leftValue, rightValue)
             }
 
         val gameStateLobby =
             changelogTurnOne.join(
-                allOpenGames,
+                gameLobby,
                 gslKVMapper, gslValueJoiner
             )
 
@@ -145,7 +143,7 @@ class GameLobby(private val brokers: String) {
                     creator = v.clientId
                 )
             KeyValue(
-                AllOpenGames.TRIVIAL_KEY,
+                GameLobby.TRIVIAL_KEY,
                 GameCommand(game = newGame, command = Command.Open)
             )
         }.mapValues { v -> jsonMapper.writeValueAsString(v) }
@@ -166,7 +164,7 @@ class GameLobby(private val brokers: String) {
      * echo 'ALL:{"game": {"gameId":"4c0d9b9a-4040-4f10-8cd0-25a28e332fd7", "visibility":"Public"}, "command": "Open"}' | kafkacat -b kafka:9092 -t bugout-game-lobby-commands -K: -P
      * ```
      */
-    private fun buildGameLobbyTable(streamsBuilder: StreamsBuilder): GlobalKTable<String, AllOpenGames> {
+    private fun buildGameLobbyTable(streamsBuilder: StreamsBuilder): GlobalKTable<String, GameLobby> {
 
         val aggregateAll =
             streamsBuilder.stream<String, String>(
@@ -176,14 +174,14 @@ class GameLobby(private val brokers: String) {
                 .groupByKey(
                     Serialized.with(Serdes.String(), Serdes.String())
                 ).aggregate(
-                    { AllOpenGames() },
+                    { GameLobby() },
                     { _, v, allGames ->
                         allGames.execute(
                             jsonMapper.readValue(v, GameCommand::class.java)
                         )
                         allGames
                     },
-                    Materialized.`as`<String, AllOpenGames, KeyValueStore<Bytes, ByteArray>>(
+                    Materialized.`as`<String, GameLobby, KeyValueStore<Bytes, ByteArray>>(
                         Topics.GAME_LOBBY_STORE_LOCAL
                     ).withKeySerde(
                         Serdes.String()
@@ -209,7 +207,7 @@ class GameLobby(private val brokers: String) {
         // so that we can join against it
         return streamsBuilder.globalTable(
             Topics.GAME_LOBBY_CHANGELOG,
-            Materialized.`as`<String, AllOpenGames, KeyValueStore<Bytes, ByteArray>>
+            Materialized.`as`<String, GameLobby, KeyValueStore<Bytes, ByteArray>>
                 (Topics.GAME_LOBBY_STORE_GLOBAL)
                 .withKeySerde(Serdes.String())
                 .withValueSerde(
@@ -223,7 +221,7 @@ class GameLobby(private val brokers: String) {
 
     private fun buildPublicGameStreams(
         streamsBuilder: StreamsBuilder,
-        allOpenGames: GlobalKTable<String, AllOpenGames>
+        gameLobby: GlobalKTable<String, GameLobby>
     ) {
         val findPublicGameStream: KStream<ClientId, FindPublicGame> =
             streamsBuilder.stream<ClientId, String>(
@@ -243,21 +241,21 @@ class GameLobby(private val brokers: String) {
                 // left value
 
                 // use a trivial join, so that all queries are routed to the same store
-                AllOpenGames.TRIVIAL_KEY
+                GameLobby.TRIVIAL_KEY
             }
 
-        val fpgValueJoiner: ValueJoiner<FindPublicGame, AllOpenGames, FindPublicGameAllOpenGames> =
+        val fpgValueJoiner: ValueJoiner<FindPublicGame, GameLobby, FindPublicGameAllOpenGames> =
             ValueJoiner { leftValue:
                           FindPublicGame,
                           rightValue:
-                          AllOpenGames ->
+                          GameLobby ->
                 FindPublicGameAllOpenGames(leftValue, rightValue)
             }
 
 
         val fpgJoinAllOpenGames =
             findPublicGameStream.join(
-                allOpenGames,
+                gameLobby,
                 fpgKeyJoiner,
                 fpgValueJoiner
             )
@@ -336,7 +334,7 @@ class GameLobby(private val brokers: String) {
 
         popPublicGame.map { _, v ->
             KeyValue(
-                AllOpenGames.TRIVIAL_KEY,
+                GameLobby.TRIVIAL_KEY,
                 jsonMapper.writeValueAsString(v)
             )
         }.to(

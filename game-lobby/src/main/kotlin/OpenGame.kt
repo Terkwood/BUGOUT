@@ -10,10 +10,10 @@ data class GameCommand(val game: Game, val command: Command)
 enum class Command { Open, Ready }
 
 
-class AllOpenGames {
+class GameLobby {
     var games: Set<Game> = setOf()
 
-    fun execute(command: GameCommand): AllOpenGames {
+    fun execute(command: GameCommand): GameLobby {
         games = when (command.command) {
             Command.Open ->
                 games + command.game
@@ -39,5 +39,5 @@ class AllOpenGames {
 
 data class FindPublicGameAllOpenGames(
     val command: FindPublicGame,
-    val store: AllOpenGames
+    val store: GameLobby
 )

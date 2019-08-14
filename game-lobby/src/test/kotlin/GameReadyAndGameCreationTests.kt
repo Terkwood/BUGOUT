@@ -33,7 +33,7 @@ class GameReadyAndGameCreationTests {
         val cr: ConsumerRecord<ByteArray, ByteArray> =
             factory.create(
                 Topics.GAME_LOBBY_CHANGELOG,
-                AllOpenGames.TRIVIAL_KEY, emptyAgg
+                GameLobby.TRIVIAL_KEY, emptyAgg
             )
 
         testDriver.pipeInput(cr)
@@ -145,7 +145,7 @@ class GameReadyAndGameCreationTests {
 
             OutputVerifier.compareKeyValue(
                 gameLobbyCommandOutput,
-                AllOpenGames.TRIVIAL_KEY,
+                GameLobby.TRIVIAL_KEY,
                 jsonMapper.writeValueAsString(
                     GameCommand(
                         Game(newGameId, v, creator = creatorClientId),
@@ -160,13 +160,13 @@ class GameReadyAndGameCreationTests {
                     StringDeserializer(), StringDeserializer()
                 )
 
-            val expectedLobby = AllOpenGames()
+            val expectedLobby = GameLobby()
             expectedGames += Game(newGameId, v, creatorClientId)
             expectedLobby.games = expectedGames
 
             OutputVerifier.compareKeyValue(
                 gameStatesChangelogOutput,
-                AllOpenGames.TRIVIAL_KEY,
+                GameLobby.TRIVIAL_KEY,
                 jsonMapper.writeValueAsString(expectedLobby)
             )
         }
