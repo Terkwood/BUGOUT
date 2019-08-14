@@ -47,5 +47,6 @@ data class GameReady(
 
 data class PrivateGameRejected(
     val gameId: GameId,
-    val clientId: ClientId
+    val clientId: ClientId,
+    val eventId: EventId = UUID.randomUUID()
 )
