@@ -8,5 +8,4 @@ COPY . .
 
 RUN sh build.sh
 
-RUN ./wait-for-it.sh kafka:9092 -s -- sleep 16
-CMD ["java", "-jar", "bugout.game-lobby.jar"]
+CMD ["sh", "run.sh"]
