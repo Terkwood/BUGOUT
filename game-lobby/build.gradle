@@ -9,7 +9,7 @@ version '0.0.1-EXISTENCE'
 apply plugin: 'kotlin'
 apply plugin: 'application'
 
-mainClassName = 'GameLobbyKt'
+mainClassName = 'ApplicationKt'
 
 defaultTasks 'run'
 
@@ -51,7 +51,7 @@ compileTestKotlin {
 
 // fat jar
 jar {
-    manifest { attributes 'Main-Class': 'GameLobbyKt' }
+    manifest { attributes 'Main-Class': 'ApplicationKt' }
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
