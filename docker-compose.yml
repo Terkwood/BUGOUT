@@ -56,6 +56,12 @@ services:
       - "kafka"
     depends_on:
       - "kafka"
+  startup:
+    build: startup/.
+    links:
+      - "kafka"
+    depends_on:
+      - "kafka"
   kafkacat:
     build: kafkacat/.
     links:
