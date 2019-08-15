@@ -58,7 +58,7 @@ fn main() {
         |recv_msg| {
             // Handle messages received on this connection
             println!("Client got message {} ", recv_msg);
-            
+
             Ok(())
         }
     }) {

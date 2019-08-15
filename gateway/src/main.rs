@@ -2,6 +2,7 @@
 #![feature(checked_duration_since)]
 extern crate crossbeam;
 extern crate crossbeam_channel;
+extern crate harsh;
 extern crate mio_extras;
 extern crate rand;
 extern crate serde;
@@ -10,6 +11,7 @@ extern crate serde_json;
 extern crate time;
 extern crate ws;
 
+mod compact_ids;
 mod json;
 mod kafka;
 mod logging;
