@@ -71,7 +71,7 @@ pub enum ClientCommands {
     ProvideHistory(ProvideHistoryCommand),
 }
 
-// TODO - get rid of type tag ?
+// https://github.com/Terkwood/BUGOUT/issues/81
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 pub enum KafkaCommands {
