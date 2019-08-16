@@ -71,6 +71,14 @@ pub enum ClientCommands {
     ProvideHistory(ProvideHistoryCommand),
 }
 
+// https://github.com/Terkwood/BUGOUT/issues/81
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type")]
+pub enum KafkaCommands {
+    MakeMove(MakeMoveCommand),
+    ProvideHistory(ProvideHistoryCommand),
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MoveMadeEvent {
     #[serde(rename = "gameId")]

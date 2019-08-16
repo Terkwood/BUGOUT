@@ -27,7 +27,7 @@ const NUM_PREMADE_GAMES: usize = 64;
 pub fn start(
     events_in: crossbeam::Sender<Events>,
     router_commands_in: crossbeam::Sender<RouterCommand>,
-    commands_out: crossbeam::Receiver<ClientCommands>,
+    commands_out: crossbeam::Receiver<KafkaCommands>,
 ) {
     thread::spawn(move || start_producer(router_commands_in, commands_out));
 
@@ -36,7 +36,7 @@ pub fn start(
 
 fn start_producer(
     router_commands_in: crossbeam::Sender<RouterCommand>,
-    kafka_out: crossbeam::Receiver<ClientCommands>,
+    kafka_out: crossbeam::Receiver<KafkaCommands>,
 ) {
     let producer = configure_producer(BROKERS);
 
@@ -46,17 +46,16 @@ fn start_producer(
         select! {
             recv(kafka_out) -> command =>
                 match command {
-                    Ok(ClientCommands::MakeMove(c)) => {
+                    Ok(KafkaCommands::MakeMove(c)) => {
                         producer.send(FutureRecord::to(MAKE_MOVE_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
                             .key(&c.game_id.to_string()), 0); // fire & forget
                     },
-                    Ok(ClientCommands::ProvideHistory(c)) => {
+                    Ok(KafkaCommands::ProvideHistory(c)) => {
                         producer.send(FutureRecord::to(PROVIDE_HISTORY_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
                             .key(&c.game_id.to_string()), 0); // fire & forget
-                    }
-                    Ok(_) => (),
+                    },
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
         }
