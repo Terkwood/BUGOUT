@@ -21,6 +21,7 @@ const MAKE_MOVE_TOPIC: &str = "bugout-make-move-cmd";
 const MOVE_MADE_TOPIC: &str = "bugout-move-made-ev";
 const PROVIDE_HISTORY_TOPIC: &str = "bugout-provide-history-cmd";
 const HISTORY_PROVIDED_TOPIC: &str = "bugout-history-provided-ev";
+const JOIN_PRIVATE_GAME_TOPIC: &str = "bugout-join-private-game-cmd";
 const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_TOPIC, HISTORY_PROVIDED_TOPIC];
 const NUM_PREMADE_GAMES: usize = 64;
 
@@ -55,6 +56,11 @@ fn start_producer(
                         producer.send(FutureRecord::to(PROVIDE_HISTORY_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
                             .key(&c.game_id.to_string()), 0); // fire & forget
+                    },
+                    Ok(KafkaCommands::JoinPrivateGame(j)) => {
+                        producer.send(FutureRecord::to(JOIN_PRIVATE_GAME_TOPIC)
+                            .payload(&serde_json::to_string(&j).unwrap())
+                            .key(&j.game_id.to_string()), 0); // fire & forget
                     },
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }

@@ -1,8 +1,9 @@
 use harsh::HarshBuilder;
+use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone, Debug)]
-pub struct CompactId(String);
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct CompactId(pub String);
 
 impl CompactId {
     pub fn encode(uuid: Uuid) -> CompactId {
@@ -49,7 +50,7 @@ mod tests {
     use uuid::Uuid;
 
     #[test]
-    fn encode_works() {
+    fn encode() {
         let u = Uuid::new_v4();
         let compact = CompactId::encode(u);
 

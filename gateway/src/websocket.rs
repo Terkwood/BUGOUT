@@ -204,7 +204,25 @@ impl Handler for WsSession {
                     }))
                     .map_err(|e| ws::Error::from(Box::new(e)))
                 {
-                    println!("ERROR on send provhist {:?}", e)
+                    println!("ERROR on kafka send provhist {:?}", e)
+                }
+
+                Ok(self.observe())
+            }
+            Ok(ClientCommands::JoinPrivateGame(JoinPrivateGameClientCommand { game_id })) => {
+                println!("🤝 {} JOINPRIV", session_code(self));
+
+                if let Err(e) = self
+                    .kafka_commands_in
+                    .send(KafkaCommands::JoinPrivateGame(
+                        JoinPrivateGameKafkaCommand {
+                            game_id: game_id.decode(),
+                            client_id: self.client_id,
+                        },
+                    ))
+                    .map_err(|e| ws::Error::from(Box::new(e)))
+                {
+                    println!("ERROR on kafka send join private game {:?}", e)
                 }
 
                 Ok(self.observe())
