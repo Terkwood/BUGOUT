@@ -23,18 +23,8 @@ typealias EventId = UUID
 
 /**
  * An event signaling that a move has been made.
- * We ignore the type property used by gateway for deserialization.
- * We emit the type property on serialization.
  */
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type",
-    defaultImpl = MoveMade::class,
-    visible = true
-)
-@JsonIgnoreProperties(value = ["type"])
-data class MoveMade(  // DO NOT RENAME ME -- gateway  depends on this name
+data class MoveMade(
     val gameId: GameId,
     val replyTo: RequestId,
     val eventId: EventId = UUID.randomUUID(),
