@@ -144,14 +144,29 @@ fn start_consumer(
 
                 consumer.commit_message(&msg, CommitMode::Async).unwrap();
 
-                let deserialized: Result<Events, _> = serde_json::from_str(payload);
-                match deserialized {
-                    Ok(Events::MoveMade(m)) => events_in.send(Events::MoveMade(m)).unwrap(),
-                    Ok(Events::HistoryProvided(h)) => {
-                        events_in.send(Events::HistoryProvided(h)).unwrap()
+                let topic = msg.topic();
+
+                // we match on the topic, explicitly, so that we can know
+                // exactly what type of object to decode.  this lets us
+                // avoid some horrid JSON annotations for our kafka-streams/jvm
+                // level models
+                match topic {
+                    MOVE_MADE_TOPIC => {
+                        let deserialized: Result<MoveMadeEvent, _> = serde_json::from_str(payload);
+                        match deserialized {
+                            Err(e) => println!("failed to deserialized move made {}", e),
+                            Ok(m) => events_in.send(Events::MoveMade(m)).unwrap(),
+                        }
                     }
-                    Ok(_) => (),
-                    Err(e) => println!("ERROR matching JSON {}\n {:?}", payload, e),
+                    HISTORY_PROVIDED_TOPIC => {
+                        let deserialized: Result<HistoryProvidedEvent, _> =
+                            serde_json::from_str(payload);
+                        match deserialized {
+                            Err(e) => println!("failed to deserialized history prov {}", e),
+                            Ok(h) => events_in.send(Events::HistoryProvided(h)).unwrap(),
+                        }
+                    }
+                    other => println!("ERROR Couldn't match kafka events topic: {}", other),
                 }
             }
         }
