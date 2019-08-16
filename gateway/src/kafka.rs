@@ -22,6 +22,8 @@ const MOVE_MADE_TOPIC: &str = "bugout-move-made-ev";
 const PROVIDE_HISTORY_TOPIC: &str = "bugout-provide-history-cmd";
 const HISTORY_PROVIDED_TOPIC: &str = "bugout-history-provided-ev";
 const JOIN_PRIVATE_GAME_TOPIC: &str = "bugout-join-private-game-cmd";
+const PRIVATE_GAME_REJECTED_TOPIC: &str = "bugout-private-game-rejected-ev";
+const GAME_READY_TOPIC: &str = "bugout-game-ready-ev";
 const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_TOPIC, HISTORY_PROVIDED_TOPIC];
 const NUM_PREMADE_GAMES: usize = 64;
 
