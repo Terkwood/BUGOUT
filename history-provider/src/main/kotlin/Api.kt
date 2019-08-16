@@ -1,5 +1,3 @@
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.time.Instant
 
 data class ProvideHistoryCommand(val gameId: GameId, val reqId: ReqId)
@@ -16,14 +14,7 @@ data class ProvideHistoryCommand(val gameId: GameId, val reqId: ReqId)
  *                          first move is head of the list
  * @property epochMillis    a timestamp for this event
  */
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type"
-)
-@JsonIgnoreProperties(value = ["type"]) // madness, we have to ignore it on deser
-data class HistoryProvided( // THIS NAME MUST NOT CHANGE -- gateway depends
-// on JSON
+data class HistoryProvided(
     val gameId: GameId,
     val replyTo: ReqId,
     val eventId: EventId,
