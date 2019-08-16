@@ -29,18 +29,8 @@ data class MakeMoveCmd(
 
 /**
  * An event signalling the acceptance of a move.
- * JSON type field must be populated so that
- * gateway knows how to deserialize this
  */
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type",
-    defaultImpl = MoveMade::class,
-    visible = true
-)
-@JsonIgnoreProperties(value = ["type"]) // madness, we have to ignore it on deser
-data class MoveMade( // DO NOT RENAME ME -- gateway  depends on this name
+data class MoveMade(
     val gameId: GameId,
     val replyTo: RequestId,
     val eventId: EventId = UUID.randomUUID(),
@@ -50,18 +40,12 @@ data class MoveMade( // DO NOT RENAME ME -- gateway  depends on this name
 )
 
 
-// Signals an invalid move in reply to a client's request
+/** Signals an invalid move in reply to a client's request */
 data class MoveRejectedEv(
     val gameId: GameId,
     val replyTo: RequestId,
     val player: Player,
     val coord: Coord
-)
-
-data class Move(
-    val player: Player,
-    val coord: Coord?,
-    val captures: List<Coord> = ArrayList()
 )
 
 data class MoveCommandGameState(
