@@ -146,6 +146,10 @@ fn start_consumer(
 
                 let topic = msg.topic();
 
+                // we match on the topic, explicitly, so that we can know
+                // exactly what type of object to decode.  this lets us
+                // avoid some horrid JSON annotations for our kafka-streams/jvm
+                // level models
                 match topic {
                     MOVE_MADE_TOPIC => {
                         let deserialized: Result<MoveMadeEvent, _> = serde_json::from_str(payload);
