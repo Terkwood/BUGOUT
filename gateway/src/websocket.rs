@@ -28,7 +28,7 @@ pub struct WsSession {
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
     pub channel_recv_timeout: Option<Timeout>,
-    pub bugout_commands_in: crossbeam_channel::Sender<ClientCommands>,
+    pub kafka_commands_in: crossbeam_channel::Sender<KafkaCommands>,
     pub events_out: Option<crossbeam_channel::Receiver<Events>>,
     pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     pub current_game: Option<GameId>,
@@ -39,7 +39,7 @@ impl WsSession {
     pub fn new(
         client_id: ClientId,
         ws_out: ws::Sender,
-        bugout_commands_in: crossbeam_channel::Sender<ClientCommands>,
+        kafka_commands_in: crossbeam_channel::Sender<KafkaCommands>,
         router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     ) -> WsSession {
         WsSession {
@@ -48,7 +48,7 @@ impl WsSession {
             ping_timeout: None,
             expire_timeout: None,
             channel_recv_timeout: None,
-            bugout_commands_in,
+            kafka_commands_in,
             events_out: None,
             router_commands_in,
             current_game: None,
@@ -120,8 +120,8 @@ impl Handler for WsSession {
                 if let Some(c) = self.current_game {
                     if c == game_id {
                         return self
-                            .bugout_commands_in
-                            .send(ClientCommands::MakeMove(MakeMoveCommand {
+                            .kafka_commands_in
+                            .send(KafkaCommands::MakeMove(MakeMoveCommand {
                                 game_id,
                                 req_id,
                                 player,
@@ -197,8 +197,8 @@ impl Handler for WsSession {
                 println!("📋 {} PROVHIST", session_code(self));
 
                 if let Err(e) = self
-                    .bugout_commands_in
-                    .send(ClientCommands::ProvideHistory(ProvideHistoryCommand {
+                    .kafka_commands_in
+                    .send(KafkaCommands::ProvideHistory(ProvideHistoryCommand {
                         game_id,
                         req_id,
                     }))
