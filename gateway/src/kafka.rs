@@ -162,7 +162,7 @@ fn start_consumer(
                     MOVE_MADE_TOPIC => {
                         let deserialized: Result<MoveMadeEvent, _> = serde_json::from_str(payload);
                         match deserialized {
-                            Err(e) => println!("failed to deserialized move made {}", e),
+                            Err(e) => println!("failed to deserialize move made {}", e),
                             Ok(m) => events_in.send(Events::MoveMade(m)).unwrap(),
                         }
                     }
@@ -170,7 +170,7 @@ fn start_consumer(
                         let deserialized: Result<HistoryProvidedEvent, _> =
                             serde_json::from_str(payload);
                         match deserialized {
-                            Err(e) => println!("failed to deserialized history prov {}", e),
+                            Err(e) => println!("failed to deserialize history prov {}", e),
                             Ok(h) => events_in.send(Events::HistoryProvided(h)).unwrap(),
                         }
                     }
