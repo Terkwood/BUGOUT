@@ -15,8 +15,9 @@ mod compact_ids;
 mod json;
 mod kafka;
 mod logging;
-pub mod model;
+mod model;
 mod router;
+mod topics;
 mod websocket;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
