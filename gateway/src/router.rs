@@ -13,6 +13,12 @@ use crate::model::{ClientId, Events, GameId, OpenGameReplyEvent, Player, Reconne
 
 const GAME_STATE_CLEANUP_PERIOD_MS: u64 = 10_000;
 
+struct RequestedGameChannel {
+    pub client_id: ClientId,
+    pub game_id: GameId,
+    pub events_in: Sender<Events>,
+}
+
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
 pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Receiver<Events>) {
@@ -24,8 +30,9 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                     match command {
                         Ok(RouterCommand::Observe(game_id)) => router.observed(game_id),
                         Ok(RouterCommand::JoinPrivateGame { client_id, game_id, events_in }) => {
-                            // TODO halp
-                            unimplemented!()
+
+                          // request the channel, if it's valid we'll follow up below
+                        router.request(RequestedGameChannel{client_id, game_id,  events_in: events_in.clone()});
                         },
                         Ok(RouterCommand::RequestOpenGame{client_id, events_in, req_id}) => {
                             let game_id = router.add_client(client_id, events_in.clone());
@@ -56,6 +63,11 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                             let u = m.clone();
                             router.set_playerup(u.game_id, u.player.other());
                             router.forward_event(Events::MoveMade(m))
+                        }
+                        Ok(Events::GameReady(g)) => {
+                            let u = g.clone();
+                            router.route_new_game(u.game_id);
+                            router.forward_event(Events::GameReady(g));
                         }
                         Ok(e) => {
                             router.observed(e.game_id());
@@ -100,6 +112,7 @@ struct Router {
     pub available_games: Vec<GameId>,
     pub game_states: HashMap<GameId, GameState>,
     pub last_cleanup: Instant,
+    pub requested_game_channels: HashMap<GameId, Vec<RequestedGameChannel>>,
 }
 
 impl Router {
@@ -108,6 +121,7 @@ impl Router {
             available_games: vec![],
             game_states: HashMap::new(),
             last_cleanup: Instant::now(),
+            requested_game_channels: HashMap::new(),
         }
     }
 
@@ -165,12 +179,30 @@ impl Router {
         }
     }
 
-    pub fn join_private_game(
-        &mut self,
-        client_id: ClientId,
-        events_in: Sender<Events>,
-    ) -> Option<GameId> {
-        unimplemented!() // TODO halp
+    pub fn request(&mut self, r: RequestedGameChannel) {
+        let gs = self.requested_game_channels.get_mut(&r.game_id);
+        match gs {
+            Some(v) => v.push(r), // TODO verify me
+            None => {
+                self.requested_game_channels.insert(r.game_id, vec![r]);
+            }
+        }
+    }
+
+    pub fn route_new_game(&mut self, game_id: GameId) {
+        let x = self.requested_game_channels.get(&game_id);
+        if let Some(v) = x {
+            for req_chan in v {
+                let newbie = ClientSender {
+                    client_id: req_chan.client_id,
+                    events_in: req_chan.events_in.clone(),
+                };
+                let with_newbie = GameState::new(newbie);
+                self.game_states.insert(game_id, with_newbie);
+            }
+
+            self.requested_game_channels.remove(&game_id);
+        }
     }
 
     pub fn add_client(&mut self, client_id: ClientId, events_in: Sender<Events>) -> GameId {

@@ -138,8 +138,8 @@ impl Handler for WsSession {
                 Ok(self.observe())
             }
             Ok(ClientCommands::RequestOpenGame(req)) => {
-                // Tentatively ignore this request if we already have a game
-                // in progress.  Not sure this is perfect, though.
+                // Ignore this request if we already have a game
+                // in progress.
                 if self.current_game.is_none() {
                     let (events_in, events_out) = client_event_channels();
 
@@ -210,20 +210,46 @@ impl Handler for WsSession {
                 Ok(self.observe())
             }
             Ok(ClientCommands::JoinPrivateGame(JoinPrivateGameClientCommand { game_id })) => {
-                println!("🤝 {} JOINPRIV", session_code(self));
+                // Ignore this request if we already have a game
+                // in progress.
+                if self.current_game.is_none() {
+                    println!("🤝 {} JOINPRIV", session_code(self));
 
-                if let Some(game_id) = game_id.decode() {
-                    if let Err(e) = self
-                        .kafka_commands_in
-                        .send(KafkaCommands::JoinPrivateGame(
-                            JoinPrivateGameKafkaCommand {
-                                game_id,
-                                client_id: self.client_id,
-                            },
-                        ))
-                        .map_err(|e| ws::Error::from(Box::new(e)))
-                    {
-                        println!("ERROR on kafka send join private game {:?}", e)
+                    if let Some(game_id) = game_id.decode() {
+                        if let Err(e) = self
+                            .kafka_commands_in
+                            .send(KafkaCommands::JoinPrivateGame(
+                                JoinPrivateGameKafkaCommand {
+                                    game_id,
+                                    client_id: self.client_id,
+                                },
+                            ))
+                            .map_err(|e| ws::Error::from(Box::new(e)))
+                        {
+                            println!("ERROR on kafka send join private game {:?}", e)
+                        }
+
+                        let (events_in, events_out) = client_event_channels();
+
+                        // ..and let the router know we're interested in it,
+                        // so that we can receive updates
+                        if let Err(e) =
+                            self.router_commands_in
+                                .send(RouterCommand::JoinPrivateGame {
+                                    client_id: self.client_id,
+                                    game_id,
+                                    events_in,
+                                }) {
+                            println!(
+                                "😠 {} {:<8} sending router command to add client {}",
+                                session_code(self),
+                                "ERROR",
+                                e
+                            )
+                        }
+
+                        //.. and track the out-channel so we can select! on it
+                        self.events_out = Some(events_out);
                     }
                 } else {
                     println!("🏴‍☠️ FAILED TO DECODE PRIVATE GAME ID 🏴‍☠️")
