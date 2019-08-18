@@ -1,24 +1,31 @@
-use harsh::HarshBuilder;
+use harsh::{Harsh, HarshBuilder};
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::env::HASH_SALT;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct CompactId(pub String);
 
+lazy_static! {
+    static ref HARSH: Harsh = HarshBuilder::new()
+        .salt(HASH_SALT.to_string())
+        .init()
+        .unwrap();
+}
+
 impl CompactId {
     pub fn encode(uuid: Uuid) -> CompactId {
-        let harsh = HarshBuilder::new().salt("BUGOUT").init().unwrap();
         let bytes: &[u8; 16] = uuid.as_bytes();
         let chunk_one = &bytes[0..8];
         let chunk_two = &bytes[8..16];
         let x = u64::from_be_bytes(array(chunk_one));
         let y = u64::from_be_bytes(array(chunk_two));
-        CompactId(harsh.encode(&[x, y]).unwrap())
+        CompactId(HARSH.encode(&[x, y]).unwrap())
     }
 
     pub fn decode(self) -> Option<Uuid> {
-        let harsh = HarshBuilder::new().salt("BUGOUT").init().unwrap();
-        harsh.decode(self.0).map(|xy| {
+        HARSH.decode(self.0).map(|xy| {
             let x = xy[0];
             let y = xy[1];
             let chunk_one = u64::to_be_bytes(x);

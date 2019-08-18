@@ -225,6 +225,8 @@ impl Handler for WsSession {
                     {
                         println!("ERROR on kafka send join private game {:?}", e)
                     }
+                } else {
+                    println!("🏴‍☠️ FAILED TO DECODE PRIVATE GAME ID 🏴‍☠️")
                 }
 
                 Ok(self.observe())
