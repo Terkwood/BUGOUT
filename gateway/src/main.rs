@@ -2,7 +2,7 @@ extern crate gateway;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
-use gateway::model::{Events, KafkaCommands, KafkaEvents};
+use gateway::model::{KafkaCommands, KafkaEvents};
 use gateway::router::RouterCommand;
 use gateway::websocket::WsSession;
 use gateway::{kafka, router};
@@ -18,8 +18,7 @@ fn main() {
         Receiver<KafkaCommands>,
     ) = unbounded();
 
-    let (kafka_events_in, _): (Sender<KafkaEvents>, Receiver<KafkaEvents>) = unbounded();
-    let (_, client_events_out): (Sender<Events>, Receiver<Events>) = unbounded();
+    let (kafka_events_in, kafka_events_out): (Sender<KafkaEvents>, Receiver<KafkaEvents>) = unbounded();
 
     let (router_commands_in, router_commands_out): (
         Sender<RouterCommand>,
@@ -32,7 +31,7 @@ fn main() {
         kafka_commands_out,
     );
 
-    router::start(router_commands_out, client_events_out);
+    router::start(router_commands_out, kafka_events_out);
 
     ws::listen("0.0.0.0:3012", |ws_out| {
         WsSession::new(

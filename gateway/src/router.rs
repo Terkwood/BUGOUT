@@ -21,7 +21,7 @@ struct RequestedGameChannel {
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
 /// it must respond to requests to let it add and drop listeners
-pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Receiver<Events>) {
+pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Receiver<KafkaEvents>) {
     thread::spawn(move || {
         let mut router = Router::new();
         loop {
@@ -59,19 +59,19 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                     },
                 recv(kafka_events_out) -> event =>
                     match event {
-                        Ok(Events::MoveMade(m)) => {
+                        Ok(KafkaEvents::MoveMade(m)) => {
                             let u = m.clone();
                             router.set_playerup(u.game_id, u.player.other());
-                            router.forward_event(Events::MoveMade(m))
+                            router.forward_event(KafkaEvents::MoveMade(m).to_client_event())
                         }
-                        Ok(Events::GameReady(g)) => {
+                        Ok(KafkaEvents::GameReady(g)) => {
                             let u = g.clone();
                             router.route_new_game(u.game_id);
-                            router.forward_event(Events::GameReady(g));
+                            router.forward_event(KafkaEvents::GameReady(g).to_client_event());
                         }
                         Ok(e) => {
                             router.observed(e.game_id());
-                            router.forward_event(e)},
+                            router.forward_event(e.to_client_event())},
                         Err(e) =>
                             panic!("Unable to receive kafka event via router channel: {:?}", e),
                     }

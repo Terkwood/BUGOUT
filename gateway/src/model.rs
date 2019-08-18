@@ -171,7 +171,7 @@ pub struct GameReadyKafkaEvent {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameReadyClientEvent {
     #[serde(rename = "gameId")]
-    pub game_id: GameId,
+    pub game_id: GameId,  // TODO compact_id
     #[serde(rename = "eventId")]
     pub event_id: EventId,
 }
@@ -196,6 +196,21 @@ pub enum Events {
     PrivateGameRejected(PrivateGameRejectedClientEvent),
 }
 
+
+impl Events {
+    pub fn game_id(&self) -> GameId {
+        match self {
+            Events::MoveMade(e) => e.game_id,
+            Events::MoveRejected(e) => e.game_id,
+            Events::OpenGameReply(e) => e.game_id,
+            Events::Reconnected(e) => e.game_id,
+            Events::HistoryProvided(e) => e.game_id,
+            Events::GameReady(e) => e.game_id,
+            Events::PrivateGameRejected(e) => unimplemented!(),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PrivateGameRejectedKafkaEvent {
     #[serde(rename = "gameId")]
@@ -209,24 +224,29 @@ pub struct PrivateGameRejectedKafkaEvent {
 pub enum KafkaEvents {
     MoveMade(MoveMadeEvent),
     MoveRejected(MoveRejectedEvent),
-    OpenGameReply(OpenGameReplyEvent),
-    Reconnected(ReconnectedEvent),
     HistoryProvided(HistoryProvidedEvent),
     GameReady(GameReadyKafkaEvent),
     PrivateGameRejected(PrivateGameRejectedKafkaEvent),
 }
 
-impl Events {
+impl KafkaEvents {
+    pub fn to_client_event(self) -> Events {
+        match self {
+            KafkaEvents::MoveMade(m) => Events::MoveMade(m),
+            KafkaEvents::MoveRejected(m) => Events::MoveRejected(m),
+            KafkaEvents::HistoryProvided(h) => Events::HistoryProvided(h),
+            KafkaEvents::GameReady(g) => Events::GameReady(GameReadyClientEvent{game_id: g.game_id, event_id: g.event_id}),
+            KafkaEvents::PrivateGameRejected(p) => Events::PrivateGameRejected(PrivateGameRejectedClientEvent{game_id: CompactId::encode(p.game_id), event_id: p.event_id})
+        }
+    }
+
     pub fn game_id(&self) -> GameId {
         match self {
-            Events::MoveMade(e) => e.game_id,
-            Events::MoveRejected(e) => e.game_id,
-            Events::OpenGameReply(e) => e.game_id,
-            Events::Reconnected(e) => e.game_id,
-            Events::HistoryProvided(e) => e.game_id,
-            Events::GameReady(e) => e.game_id,
-            // TODO -- how do we route game ready and private game rejects to clients?
-            Events::PrivateGameRejected(e) => unimplemented!(),
+            KafkaEvents::MoveMade(e) => e.game_id,
+            KafkaEvents::MoveRejected(e) => e.game_id,
+            KafkaEvents::HistoryProvided(e) => e.game_id,
+            KafkaEvents::GameReady(e) => e.game_id,
+            KafkaEvents::PrivateGameRejected(e) => e.game_id,
         }
     }
 }
