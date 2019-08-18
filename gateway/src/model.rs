@@ -171,7 +171,7 @@ pub struct GameReadyKafkaEvent {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameReadyClientEvent {
     #[serde(rename = "gameId")]
-    pub game_id: GameId, // TODO compact_id
+    pub game_id: GameId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
 }
@@ -197,15 +197,15 @@ pub enum Events {
 }
 
 impl Events {
-    pub fn game_id(&self) -> GameId {
+    pub fn game_id(&self) -> Option<GameId> {
         match self {
-            Events::MoveMade(e) => e.game_id,
-            Events::MoveRejected(e) => e.game_id,
-            Events::OpenGameReply(e) => e.game_id,
-            Events::Reconnected(e) => e.game_id,
-            Events::HistoryProvided(e) => e.game_id,
-            Events::GameReady(e) => e.game_id,
-            Events::PrivateGameRejected(e) => unimplemented!(),
+            Events::MoveMade(e) => Some(e.game_id),
+            Events::MoveRejected(e) => Some(e.game_id),
+            Events::OpenGameReply(e) => Some(e.game_id),
+            Events::Reconnected(e) => Some(e.game_id),
+            Events::HistoryProvided(e) => Some(e.game_id),
+            Events::GameReady(e) => Some(e.game_id),
+            _ => None, // TODO priv game rejected
         }
     }
 }

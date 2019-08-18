@@ -68,6 +68,7 @@ pub fn start(
                         Ok(e) => {
                             router.observed(e.game_id());
                             router.forward_event(e.to_client_event())},
+                        // TODO priv game rejection?
                         Err(e) =>
                             panic!("Unable to receive kafka event via router channel: {:?}", e),
                     }
@@ -122,21 +123,23 @@ impl Router {
     }
 
     pub fn forward_event(&self, ev: Events) {
-        if let Some(GameState {
-            clients,
-            playerup: _,
-            modified_at: _,
-        }) = self.game_states.get(&ev.game_id())
-        {
-            for c in clients {
-                if let Err(err) = c.events_in.send(ev.clone()) {
-                    println!(
-                        "😑 {} {} {:<8} forwarding event {}",
-                        short_uuid(c.client_id),
-                        short_uuid(ev.game_id()),
-                        "ERROR",
-                        err
-                    )
+        if let Some(gid) = &ev.game_id() {
+            if let Some(GameState {
+                clients,
+                playerup: _,
+                modified_at: _,
+            }) = self.game_states.get(gid)
+            {
+                for c in clients {
+                    if let Err(err) = c.events_in.send(ev.clone()) {
+                        println!(
+                            "😑 {} {} {:<8} forwarding event {}",
+                            short_uuid(c.client_id),
+                            short_uuid(*gid),
+                            "ERROR",
+                            err
+                        )
+                    }
                 }
             }
         }
