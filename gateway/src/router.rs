@@ -23,6 +23,10 @@ pub fn start(router_commands_out: Receiver<RouterCommand>, kafka_events_out: Rec
                 recv(router_commands_out) -> command =>
                     match command {
                         Ok(RouterCommand::Observe(game_id)) => router.observed(game_id),
+                        Ok(RouterCommand::JoinPrivateGame { client_id, game_id, events_in }) => {
+                            // TODO halp
+                            unimplemented!()
+                        },
                         Ok(RouterCommand::RequestOpenGame{client_id, events_in, req_id}) => {
                             let game_id = router.add_client(client_id, events_in.clone());
                             if let Err(err) = events_in.send(Events::OpenGameReply(OpenGameReplyEvent{game_id, reply_to:req_id, event_id: Uuid::new_v4()})) {
@@ -159,6 +163,14 @@ impl Router {
                 gs.observed();
             }
         }
+    }
+
+    pub fn join_private_game(
+        &mut self,
+        client_id: ClientId,
+        events_in: Sender<Events>,
+    ) -> Option<GameId> {
+        unimplemented!() // TODO halp
     }
 
     pub fn add_client(&mut self, client_id: ClientId, events_in: Sender<Events>) -> GameId {
@@ -298,5 +310,10 @@ pub enum RouterCommand {
         game_id: GameId,
         events_in: Sender<Events>,
         req_id: ReqId,
+    },
+    JoinPrivateGame {
+        client_id: ClientId,
+        game_id: GameId,
+        events_in: Sender<Events>,
     },
 }

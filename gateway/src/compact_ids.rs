@@ -2,6 +2,9 @@ use harsh::{Harsh, HarshBuilder};
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
+// you can pass a hash_salt option to a .env file,
+// if desired.  it'll be picked up by this static
+// variable
 use crate::env::HASH_SALT;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

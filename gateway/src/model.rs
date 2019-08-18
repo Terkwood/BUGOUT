@@ -154,6 +154,23 @@ pub struct HistoryProvidedEvent {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct GameReadyEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    pub clients: (ClientId, ClientId),
+    #[serde(rename = "eventId")]
+    pub event_id: EventId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PrivateGameRejectedClientEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: CompactId,
+    #[serde(rename = "eventId")]
+    pub event_id: EventId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum Events {
     MoveMade(MoveMadeEvent),
@@ -161,6 +178,29 @@ pub enum Events {
     OpenGameReply(OpenGameReplyEvent),
     Reconnected(ReconnectedEvent),
     HistoryProvided(HistoryProvidedEvent),
+    GameReady(GameReadyEvent),
+    PrivateGameRejected(PrivateGameRejectedClientEvent),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PrivateGameRejectedKafkaEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    #[serde(rename = "clientId")]
+    pub client_id: ClientId,
+    #[serde(rename = "eventId")]
+    pub event_id: EventId,
+}
+
+// TODO use these
+pub enum KafkaEvents {
+    MoveMade(MoveMadeEvent),
+    MoveRejected(MoveRejectedEvent),
+    OpenGameReply(OpenGameReplyEvent),
+    Reconnected(ReconnectedEvent),
+    HistoryProvided(HistoryProvidedEvent),
+    GameReady(GameReadyEvent),
+    PrivateGameRejected(PrivateGameRejectedKafkaEvent),
 }
 
 impl Events {
@@ -171,6 +211,9 @@ impl Events {
             Events::OpenGameReply(e) => e.game_id,
             Events::Reconnected(e) => e.game_id,
             Events::HistoryProvided(e) => e.game_id,
+            Events::GameReady(e) => e.game_id,
+            // TODO -- how do we route game ready and private game rejects to clients?
+            Events::PrivateGameRejected(e) => unimplemented!(),
         }
     }
 }

@@ -164,6 +164,14 @@ fn start_consumer(
                             Ok(h) => events_in.send(Events::HistoryProvided(h)).unwrap(),
                         }
                     }
+                    PRIVATE_GAME_REJECTED_TOPIC => unimplemented!(),
+                    GAME_READY_TOPIC => {
+                        let deserialized: Result<GameReadyEvent, _> = serde_json::from_str(payload);
+                        match deserialized {
+                            Err(e) => println!("failed to deserialize game ready {}", e),
+                            Ok(g) => events_in.send(Events::GameReady(g)).unwrap(),
+                        }
+                    }
                     other => println!("ERROR Couldn't match kafka events topic: {}", other),
                 }
             }
