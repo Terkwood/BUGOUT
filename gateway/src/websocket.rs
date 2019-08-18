@@ -95,6 +95,7 @@ impl Handler for WsSession {
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let msg_text = &&msg.into_text()?;
+        println!("-- {}", msg_text.clone()); // TODO
         let deserialized: Result<ClientCommands> = serde_json::from_str(msg_text)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
         match deserialized {

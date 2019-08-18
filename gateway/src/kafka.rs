@@ -18,7 +18,7 @@ use crate::topics::*;
 const NUM_PREMADE_GAMES: usize = 64;
 
 pub fn start(
-    events_in: crossbeam::Sender<Events>,
+    events_in: crossbeam::Sender<KafkaEvents>,
     router_commands_in: crossbeam::Sender<RouterCommand>,
     commands_out: crossbeam::Receiver<KafkaCommands>,
 ) {
@@ -112,7 +112,7 @@ fn start_consumer(
     brokers: &str,
     group_id: &str,
     topics: &[&str],
-    events_in: crossbeam::Sender<Events>,
+    events_in: crossbeam::Sender<KafkaEvents>,
 ) {
     let consumer: StreamConsumer = ClientConfig::new()
         .set("group.id", group_id)
@@ -153,7 +153,7 @@ fn start_consumer(
                         let deserialized: Result<MoveMadeEvent, _> = serde_json::from_str(payload);
                         match deserialized {
                             Err(e) => println!("failed to deserialize move made {}", e),
-                            Ok(m) => events_in.send(Events::MoveMade(m)).unwrap(),
+                            Ok(m) => events_in.send(KafkaEvents::MoveMade(m)).unwrap(),
                         }
                     }
                     HISTORY_PROVIDED_TOPIC => {
@@ -161,15 +161,16 @@ fn start_consumer(
                             serde_json::from_str(payload);
                         match deserialized {
                             Err(e) => println!("failed to deserialize history prov {}", e),
-                            Ok(h) => events_in.send(Events::HistoryProvided(h)).unwrap(),
+                            Ok(h) => events_in.send(KafkaEvents::HistoryProvided(h)).unwrap(),
                         }
                     }
                     PRIVATE_GAME_REJECTED_TOPIC => unimplemented!(),
                     GAME_READY_TOPIC => {
-                        let deserialized: Result<GameReadyEvent, _> = serde_json::from_str(payload);
+                        let deserialized: Result<GameReadyKafkaEvent, _> =
+                            serde_json::from_str(payload);
                         match deserialized {
                             Err(e) => println!("failed to deserialize game ready {}", e),
-                            Ok(g) => events_in.send(Events::GameReady(g)).unwrap(),
+                            Ok(g) => events_in.send(KafkaEvents::GameReady(g)).unwrap(),
                         }
                     }
                     other => println!("ERROR Couldn't match kafka events topic: {}", other),

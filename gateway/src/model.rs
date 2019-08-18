@@ -154,10 +154,24 @@ pub struct HistoryProvidedEvent {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GameReadyEvent {
+pub struct GameClients {
+    pub first: ClientId,
+    pub second: ClientId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct GameReadyKafkaEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
-    pub clients: (ClientId, ClientId),
+    pub clients: GameClients,
+    #[serde(rename = "eventId")]
+    pub event_id: EventId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct GameReadyClientEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
 }
@@ -178,7 +192,7 @@ pub enum Events {
     OpenGameReply(OpenGameReplyEvent),
     Reconnected(ReconnectedEvent),
     HistoryProvided(HistoryProvidedEvent),
-    GameReady(GameReadyEvent),
+    GameReady(GameReadyClientEvent),
     PrivateGameRejected(PrivateGameRejectedClientEvent),
 }
 
@@ -192,14 +206,13 @@ pub struct PrivateGameRejectedKafkaEvent {
     pub event_id: EventId,
 }
 
-// TODO use these
 pub enum KafkaEvents {
     MoveMade(MoveMadeEvent),
     MoveRejected(MoveRejectedEvent),
     OpenGameReply(OpenGameReplyEvent),
     Reconnected(ReconnectedEvent),
     HistoryProvided(HistoryProvidedEvent),
-    GameReady(GameReadyEvent),
+    GameReady(GameReadyKafkaEvent),
     PrivateGameRejected(PrivateGameRejectedKafkaEvent),
 }
 
