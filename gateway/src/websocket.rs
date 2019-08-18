@@ -29,7 +29,7 @@ pub struct WsSession {
     pub expire_timeout: Option<Timeout>,
     pub channel_recv_timeout: Option<Timeout>,
     pub kafka_commands_in: crossbeam_channel::Sender<KafkaCommands>,
-    pub events_out: Option<crossbeam_channel::Receiver<Events>>,
+    pub events_out: Option<crossbeam_channel::Receiver<ClientEvents>>,
     pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     pub current_game: Option<GameId>,
     pub expire_after: std::time::Instant,
@@ -327,12 +327,12 @@ impl Handler for WsSession {
                 if let Some(eo) = &self.events_out {
                     while let Ok(event) = eo.try_recv() {
                         match event {
-                            Events::OpenGameReply(OpenGameReplyEvent {
+                            ClientEvents::OpenGameReply(OpenGameReplyEvent {
                                 game_id,
                                 reply_to: _,
                                 event_id: _,
                             }) => self.current_game = Some(game_id),
-                            Events::GameReady(GameReadyClientEvent {
+                            ClientEvents::GameReady(GameReadyClientEvent {
                                 game_id,
                                 event_id: _,
                             }) => self.current_game = Some(game_id),
@@ -412,8 +412,8 @@ fn next_expiry() -> Instant {
 }
 
 fn client_event_channels() -> (
-    crossbeam_channel::Sender<Events>,
-    crossbeam_channel::Receiver<Events>,
+    crossbeam_channel::Sender<ClientEvents>,
+    crossbeam_channel::Receiver<ClientEvents>,
 ) {
     unbounded()
 }

@@ -32,7 +32,7 @@ pub fn start(
                         },
                         Ok(RouterCommand::RequestOpenGame{client_id, events_in, req_id}) => {
                             let game_id = router.add_client(client_id, events_in.clone());
-                            if let Err(err) = events_in.send(Events::OpenGameReply(OpenGameReplyEvent{game_id, reply_to:req_id, event_id: Uuid::new_v4()})) {
+                            if let Err(err) = events_in.send(ClientEvents::OpenGameReply(OpenGameReplyEvent{game_id, reply_to:req_id, event_id: Uuid::new_v4()})) {
                                 println!("😯 {} {} {:<8} could not send open game reply {}",
                                     short_uuid(client_id), EMPTY_SHORT_UUID, "ERROR", err)
                             }
@@ -43,7 +43,7 @@ pub fn start(
                             router.register_open_game(game_id),
                         Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
                             router.reconnect_client(client_id, game_id, events_in.clone());
-                            if let Err(err) = events_in.send(Events::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
+                            if let Err(err) = events_in.send(ClientEvents::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
                                 println!(
                                     "😦 {} {} {:<8} could not send reconnect reply {}",
                                     short_uuid(client_id),
@@ -109,7 +109,7 @@ struct Router {
     pub available_games: Vec<GameId>,
     pub game_states: HashMap<GameId, GameState>,
     pub last_cleanup: Instant,
-    pub requested_channels: HashMap<ClientId, Sender<Events>>,
+    pub requested_channels: HashMap<ClientId, Sender<ClientEvents>>,
 }
 
 impl Router {
@@ -122,7 +122,7 @@ impl Router {
         }
     }
 
-    pub fn forward_event(&self, ev: Events) {
+    pub fn forward_event(&self, ev: ClientEvents) {
         if let Some(gid) = &ev.game_id() {
             if let Some(GameState {
                 clients,
@@ -178,7 +178,7 @@ impl Router {
         }
     }
 
-    pub fn request_channel(&mut self, client_id: ClientId, events_in: Sender<Events>) {
+    pub fn request_channel(&mut self, client_id: ClientId, events_in: Sender<ClientEvents>) {
         self.requested_channels.insert(client_id, events_in);
         println!("channel requested")
     }
@@ -204,7 +204,7 @@ impl Router {
         }
     }
 
-    pub fn add_client(&mut self, client_id: ClientId, events_in: Sender<Events>) -> GameId {
+    pub fn add_client(&mut self, client_id: ClientId, events_in: Sender<ClientEvents>) -> GameId {
         let newbie = ClientSender {
             client_id,
             events_in,
@@ -226,7 +226,7 @@ impl Router {
         &mut self,
         client_id: ClientId,
         game_id: GameId,
-        events_in: Sender<Events>,
+        events_in: Sender<ClientEvents>,
     ) {
         let cs = ClientSender {
             client_id,
@@ -318,7 +318,7 @@ impl Router {
 #[derive(Debug, Clone)]
 struct ClientSender {
     pub client_id: ClientId,
-    pub events_in: Sender<Events>,
+    pub events_in: Sender<ClientEvents>,
 }
 
 #[derive(Debug, Clone)]
@@ -326,7 +326,7 @@ pub enum RouterCommand {
     Observe(GameId),
     RequestOpenGame {
         client_id: ClientId,
-        events_in: Sender<Events>,
+        events_in: Sender<ClientEvents>,
         req_id: ReqId,
     },
     DeleteClient {
@@ -339,12 +339,12 @@ pub enum RouterCommand {
     Reconnect {
         client_id: ClientId,
         game_id: GameId,
-        events_in: Sender<Events>,
+        events_in: Sender<ClientEvents>,
         req_id: ReqId,
     },
     JoinPrivateGame {
         client_id: ClientId,
         game_id: GameId,
-        events_in: Sender<Events>,
+        events_in: Sender<ClientEvents>,
     },
 }

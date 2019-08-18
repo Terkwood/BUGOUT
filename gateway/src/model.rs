@@ -186,7 +186,7 @@ pub struct PrivateGameRejectedClientEvent {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
-pub enum Events {
+pub enum ClientEvents {
     MoveMade(MoveMadeEvent),
     MoveRejected(MoveRejectedEvent),
     OpenGameReply(OpenGameReplyEvent),
@@ -196,15 +196,15 @@ pub enum Events {
     PrivateGameRejected(PrivateGameRejectedClientEvent),
 }
 
-impl Events {
+impl ClientEvents {
     pub fn game_id(&self) -> Option<GameId> {
         match self {
-            Events::MoveMade(e) => Some(e.game_id),
-            Events::MoveRejected(e) => Some(e.game_id),
-            Events::OpenGameReply(e) => Some(e.game_id),
-            Events::Reconnected(e) => Some(e.game_id),
-            Events::HistoryProvided(e) => Some(e.game_id),
-            Events::GameReady(e) => Some(e.game_id),
+            ClientEvents::MoveMade(e) => Some(e.game_id),
+            ClientEvents::MoveRejected(e) => Some(e.game_id),
+            ClientEvents::OpenGameReply(e) => Some(e.game_id),
+            ClientEvents::Reconnected(e) => Some(e.game_id),
+            ClientEvents::HistoryProvided(e) => Some(e.game_id),
+            ClientEvents::GameReady(e) => Some(e.game_id),
             _ => None, // TODO priv game rejected
         }
     }
@@ -229,17 +229,17 @@ pub enum KafkaEvents {
 }
 
 impl KafkaEvents {
-    pub fn to_client_event(self) -> Events {
+    pub fn to_client_event(self) -> ClientEvents {
         match self {
-            KafkaEvents::MoveMade(m) => Events::MoveMade(m),
-            KafkaEvents::MoveRejected(m) => Events::MoveRejected(m),
-            KafkaEvents::HistoryProvided(h) => Events::HistoryProvided(h),
-            KafkaEvents::GameReady(g) => Events::GameReady(GameReadyClientEvent {
+            KafkaEvents::MoveMade(m) => ClientEvents::MoveMade(m),
+            KafkaEvents::MoveRejected(m) => ClientEvents::MoveRejected(m),
+            KafkaEvents::HistoryProvided(h) => ClientEvents::HistoryProvided(h),
+            KafkaEvents::GameReady(g) => ClientEvents::GameReady(GameReadyClientEvent {
                 game_id: g.game_id,
                 event_id: g.event_id,
             }),
             KafkaEvents::PrivateGameRejected(p) => {
-                Events::PrivateGameRejected(PrivateGameRejectedClientEvent {
+                ClientEvents::PrivateGameRejected(PrivateGameRejectedClientEvent {
                     game_id: CompactId::encode(p.game_id),
                     event_id: p.event_id,
                 })
