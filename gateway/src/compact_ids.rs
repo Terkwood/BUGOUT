@@ -16,25 +16,26 @@ impl CompactId {
         CompactId(harsh.encode(&[x, y]).unwrap())
     }
 
-    pub fn decode(self) -> Uuid {
+    pub fn decode(self) -> Option<Uuid> {
         let harsh = HarshBuilder::new().salt("BUGOUT").init().unwrap();
-        let xy = harsh.decode(self.0).unwrap();
-        let x = xy[0];
-        let y = xy[1];
-        let chunk_one = u64::to_be_bytes(x);
-        let chunk_two = u64::to_be_bytes(y);
-        let mut bytes: [u8; 16] = [0; 16];
-        let mut i = 0;
-        for b in chunk_one.iter() {
-            bytes[i] = *b;
-            i += 1;
-        }
-        for b in chunk_two.iter() {
-            bytes[i] = *b;
-            i += 1;
-        }
+        harsh.decode(self.0).map(|xy| {
+            let x = xy[0];
+            let y = xy[1];
+            let chunk_one = u64::to_be_bytes(x);
+            let chunk_two = u64::to_be_bytes(y);
+            let mut bytes: [u8; 16] = [0; 16];
+            let mut i = 0;
+            for b in chunk_one.iter() {
+                bytes[i] = *b;
+                i += 1;
+            }
+            for b in chunk_two.iter() {
+                bytes[i] = *b;
+                i += 1;
+            }
 
-        Uuid::from_bytes(bytes)
+            Uuid::from_bytes(bytes)
+        })
     }
 }
 
@@ -67,9 +68,9 @@ mod tests {
 
         let d = compact.decode();
 
-        println!("{} {}\t{}", u, cc.0, d);
+        println!("{} {}\t{:?}", u, cc.0, d);
 
-        assert_eq!(u, d);
+        assert_eq!(Some(u), d);
     }
 
     const LOTS: u32 = 10000;
@@ -107,7 +108,7 @@ mod tests {
 
             let d = compact.decode();
 
-            assert_eq!(u, d);
+            assert_eq!(Some(u), d);
         }
     }
 }
