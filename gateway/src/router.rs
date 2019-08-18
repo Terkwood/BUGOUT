@@ -61,9 +61,8 @@ pub fn start(
                             router.forward_event(KafkaEvents::MoveMade(m).to_client_event())
                         }
                         Ok(KafkaEvents::GameReady(g)) => {
-                            let u = g.clone();
-                            router.route_new_game(g.clients.first, u.game_id);
-                            router.route_new_game(g.clients.second, u.game_id);
+                            router.route_new_game(g.clients.first, g.game_id);
+                            router.route_new_game(g.clients.second, g.game_id);
                             router.forward_event(KafkaEvents::GameReady(g).to_client_event());
                         }
                         Ok(e) => {
@@ -109,7 +108,7 @@ struct Router {
     pub available_games: Vec<GameId>,
     pub game_states: HashMap<GameId, GameState>,
     pub last_cleanup: Instant,
-    pub requested_game_channels: HashMap<ClientId, Sender<Events>>,
+    pub requested_channels: HashMap<ClientId, Sender<Events>>,
 }
 
 impl Router {
@@ -118,7 +117,7 @@ impl Router {
             available_games: vec![],
             game_states: HashMap::new(),
             last_cleanup: Instant::now(),
-            requested_game_channels: HashMap::new(),
+            requested_channels: HashMap::new(),
         }
     }
 
@@ -177,20 +176,28 @@ impl Router {
     }
 
     pub fn request_channel(&mut self, client_id: ClientId, events_in: Sender<Events>) {
-        self.requested_game_channels.insert(client_id, events_in);
+        self.requested_channels.insert(client_id, events_in);
+        println!("channel requested")
     }
 
-    pub fn route_new_game(&mut self, game_id: GameId, client_id: ClientId) {
-        let x = self.requested_game_channels.get(&game_id);
+    pub fn route_new_game(&mut self, client_id: ClientId, game_id: GameId) {
+        let x = self.requested_channels.get(&client_id);
         if let Some(events_in) = x {
             let newbie = ClientSender {
                 client_id,
                 events_in: events_in.clone(),
             };
-            let with_newbie = GameState::new(newbie);
-            self.game_states.insert(game_id, with_newbie);
 
-            self.requested_game_channels.remove(&game_id);
+            match self.game_states.get_mut(&game_id) {
+                Some(gs) => gs.add_client(newbie),
+                None => {
+                    let with_newbie = GameState::new(newbie);
+                    self.game_states.insert(game_id, with_newbie);
+                }
+            }
+
+            self.requested_channels.remove(&client_id);
+            println!("routing new game {}  to client {}", game_id, client_id)
         }
     }
 

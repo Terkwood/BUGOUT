@@ -333,6 +333,10 @@ impl Handler for WsSession {
                                 reply_to: _,
                                 event_id: _,
                             }) => self.current_game = Some(game_id),
+                            Events::GameReady(GameReadyClientEvent {
+                                game_id,
+                                event_id: _,
+                            }) => self.current_game = Some(game_id),
                             _ => (),
                         }
                         self.ws_out.send(serde_json::to_string(&event).unwrap())?;
