@@ -171,7 +171,7 @@ pub struct GameReadyKafkaEvent {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameReadyClientEvent {
     #[serde(rename = "gameId")]
-    pub game_id: GameId,  // TODO compact_id
+    pub game_id: GameId, // TODO compact_id
     #[serde(rename = "eventId")]
     pub event_id: EventId,
 }
@@ -195,7 +195,6 @@ pub enum Events {
     GameReady(GameReadyClientEvent),
     PrivateGameRejected(PrivateGameRejectedClientEvent),
 }
-
 
 impl Events {
     pub fn game_id(&self) -> GameId {
@@ -235,8 +234,16 @@ impl KafkaEvents {
             KafkaEvents::MoveMade(m) => Events::MoveMade(m),
             KafkaEvents::MoveRejected(m) => Events::MoveRejected(m),
             KafkaEvents::HistoryProvided(h) => Events::HistoryProvided(h),
-            KafkaEvents::GameReady(g) => Events::GameReady(GameReadyClientEvent{game_id: g.game_id, event_id: g.event_id}),
-            KafkaEvents::PrivateGameRejected(p) => Events::PrivateGameRejected(PrivateGameRejectedClientEvent{game_id: CompactId::encode(p.game_id), event_id: p.event_id})
+            KafkaEvents::GameReady(g) => Events::GameReady(GameReadyClientEvent {
+                game_id: g.game_id,
+                event_id: g.event_id,
+            }),
+            KafkaEvents::PrivateGameRejected(p) => {
+                Events::PrivateGameRejected(PrivateGameRejectedClientEvent {
+                    game_id: CompactId::encode(p.game_id),
+                    event_id: p.event_id,
+                })
+            }
         }
     }
 

@@ -18,7 +18,8 @@ fn main() {
         Receiver<KafkaCommands>,
     ) = unbounded();
 
-    let (kafka_events_in, kafka_events_out): (Sender<KafkaEvents>, Receiver<KafkaEvents>) = unbounded();
+    let (kafka_events_in, kafka_events_out): (Sender<KafkaEvents>, Receiver<KafkaEvents>) =
+        unbounded();
 
     let (router_commands_in, router_commands_out): (
         Sender<RouterCommand>,
