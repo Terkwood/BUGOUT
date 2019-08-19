@@ -35,6 +35,7 @@ class Application(private val brokers: String) {
                         Consumed.with(Serdes.UUID(), Serdes.String())
                 )
                         .mapValues { v ->
+                            println("pref chosen $v")
                             jsonMapper.readValue(
                                     v,
                                     ChooseColorPref::class.java
@@ -80,12 +81,13 @@ class Application(private val brokers: String) {
                         Consumed.with(Serdes.UUID(), Serdes.String())
                 )
                         .mapValues { v ->
+                            println("client game ready $v")
                             jsonMapper.readValue(
                                     v,
                                     ClientGameReady::class.java
                             )
                         }
-/*
+
         val prefJoiner: ValueJoiner<ClientGameReady,
                 ChooseColorPref, ClientGameColorPref> =
                 ValueJoiner { leftValue: ClientGameReady,
@@ -95,11 +97,13 @@ class Application(private val brokers: String) {
                 }
 
 
+        // TODO serialization fails here
         // TODO join window sanity
         val clientGameColorPref: KStream<ClientIdKey, ClientGameColorPref> =
                 clientGameReady.join(chooseColorPref, prefJoiner,
                         JoinWindows.of(TimeUnit.DAYS.toMillis(1000)))
 
+        /*
         clientGameColorPref
                 .map { _, gcp ->
                     KeyValue(gcp.gameId.underlying,
