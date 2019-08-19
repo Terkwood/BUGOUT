@@ -1,8 +1,6 @@
 import org.apache.kafka.common.serialization.Serdes
-import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.*
 import org.apache.kafka.streams.kstream.*
-import org.apache.kafka.streams.state.KeyValueStore
 import serdes.jsonMapper
 import java.util.*
 
@@ -30,6 +28,82 @@ class Application(private val brokers: String) {
     fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
 
-        throw NotImplementedError()
+        val chooseColorPref: KStream<ClientIdKey, ChooseColorPref> =
+                streamsBuilder.stream<UUID, String>(
+                        Topics.CHOOSE_COLOR_PREF,
+                        Consumed.with(Serdes.UUID(), Serdes.String())
+                )
+                        .mapValues { v ->
+                            jsonMapper.readValue(
+                                    v,
+                                    ChooseColorPref::class.java
+                            )
+                        }
+
+        val gameReady: KStream<GameIdKey, GameReady> =
+                streamsBuilder.stream<UUID, String>(
+                        Topics.GAME_READY,
+                        Consumed.with(Serdes.UUID(), Serdes.String())
+                )
+                        .mapValues { v ->
+                            jsonMapper.readValue(
+                                    v,
+                                    GameReady::class.java
+                            )
+                        }
+
+        // generate  a ClientGameReady event for the first client
+        gameReady
+                .map { _, gr ->
+                    KeyValue(gr.clients.first.underlying,
+                            ClientGameReady(gr.clients.first, gr.gameId))
+                }
+                .mapValues { cgr -> jsonMapper.writeValueAsString(cgr) }
+                .to(Topics.CLIENT_GAME_READY,
+                        Produced.with(Serdes.UUID(), Serdes.String()))
+
+        // generate a ClientGameReady event for the second client
+        gameReady
+                .map { _, gr ->
+                    KeyValue(gr.clients.second.underlying,
+                            ClientGameReady(gr.clients.second, gr.gameId))
+                }
+                .mapValues { cgr -> jsonMapper.writeValueAsString(cgr) }
+                .to(Topics.CLIENT_GAME_READY,
+                        Produced.with(Serdes.UUID(), Serdes.String()))
+
+        val clientGameReady: KStream<ClientIdKey, ClientGameReady> =
+                streamsBuilder.stream<UUID, String>(
+                        Topics.CLIENT_GAME_READY,
+                        Consumed.with(Serdes.UUID(), Serdes.String())
+                )
+                        .mapValues { v ->
+                            jsonMapper.readValue(
+                                    v,
+                                    ClientGameReady::class.java
+                            )
+                        }
+
+        val clientGameColorPrefKVM: KeyValueMapper<ClientIdKey,
+                ClientGameReady, ClientIdKey> =
+                // left key, left value
+                KeyValueMapper { clientId: ClientIdKey,
+                                 _: ClientGameReady ->
+                    clientId
+                }
+
+        val clientGameColorPrefVJ: ValueJoiner<ClientGameReady,
+                ChooseColorPref, ClientGameColorPref> =
+                ValueJoiner { leftValue: ClientGameReady,
+                              rightValue: ChooseColorPref ->
+                    ClientGameColorPref(leftValue.clientId, leftValue.gameId,
+                            rightValue.colorPref)
+                }
+
+        val clientGameColorPref: KStream<ClientIdKey, ClientGameColorPref> =
+                clientGameReady.join(chooseColorPref,clientGameColorPrefVJ,
+                        null)
+
+        return streamsBuilder.build()
     }
 }

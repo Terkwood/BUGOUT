@@ -1,4 +1,5 @@
+/** A client's chosen color preference.  Keyed by client ID */
 data class ChooseColorPref(
-        val choice: ColorPref,
-        val clientId: ClientId
+        val clientId: ClientId,
+        val colorPref: ColorPref
 )

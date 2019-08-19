@@ -1,5 +1,5 @@
 /** Emitted downstream of GameReady.  Client ID is
- * topic key
+ * topic key.
  */
 data class ClientGameReady (
         val clientId: ClientId,
