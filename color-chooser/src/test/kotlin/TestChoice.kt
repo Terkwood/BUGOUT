@@ -1,3 +1,4 @@
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.*
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
@@ -14,17 +15,9 @@ class TestChoice {
     fun init() {
     }
 
-    @Test
-    fun test() {
+    private fun push(c1: ChooseColorPref, c2: ChooseColorPref, gameId:GameId): ProducerRecord<UUID, String>? {
 
-        val clientOne = UUID.randomUUID()
-        val clientTwo = UUID.randomUUID()
-        val gameId = UUID.randomUUID()
-
-        val clientOnePref = ChooseColorPref(clientOne, ColorPref.White)
-        val clientTwoPref = ChooseColorPref(clientTwo, ColorPref.Black)
-
-        val gameReadyEvent = GameReady(gameId, Pair(clientOne, clientTwo), eventId = UUID.randomUUID())
+        val gameReadyEvent = GameReady(gameId, Pair(c1.clientId, c2.clientId), eventId = UUID.randomUUID())
 
         val factory =
             ConsumerRecordFactory(
@@ -35,16 +28,16 @@ class TestChoice {
         testDriver.pipeInput(
             factory.create(
                 Topics.CHOOSE_COLOR_PREF,
-                clientOne,
-                jsonMapper.writeValueAsString(clientOnePref)
+                c1.clientId,
+                jsonMapper.writeValueAsString(c1)
             )
         )
 
         testDriver.pipeInput(
             factory.create(
                 Topics.CHOOSE_COLOR_PREF,
-                clientTwo,
-                jsonMapper.writeValueAsString(clientTwoPref)
+                c2.clientId,
+                jsonMapper.writeValueAsString(c2)
             )
         )
 
@@ -57,20 +50,50 @@ class TestChoice {
             )
         )
 
-        val chosenColors =
-            testDriver.readOutput(
+        return testDriver.readOutput(
                 Topics.COLORS_CHOSEN,
                 UUIDDeserializer(),
                 StringDeserializer()
             )
 
+
+    }
+
+    @Test
+    fun testNoConflict() {
+
+        val clientOne = UUID.randomUUID()
+        val clientTwo = UUID.randomUUID()
+        val gameId = UUID.randomUUID()
+
+        val chosen = push(
+            ChooseColorPref(clientOne,ColorPref.White),
+            ChooseColorPref(clientTwo,ColorPref.Black), gameId)
+
         OutputVerifier.compareKeyValue(
-            chosenColors, gameId,
+            chosen, gameId,
             jsonMapper.writeValueAsString(
                 ColorsChosen(gameId = gameId, black = clientTwo, white = clientOne)
             )
         )
+    }
 
+    @Test
+    fun testAnotherNoConflict() {
+        val clientOne = UUID.randomUUID()
+        val clientTwo = UUID.randomUUID()
+        val gameId = UUID.randomUUID()
+
+        val chosen = push(
+            ChooseColorPref(clientOne,ColorPref.Black),
+            ChooseColorPref(clientTwo,ColorPref.White), gameId)
+
+        OutputVerifier.compareKeyValue(
+            chosen, gameId,
+            jsonMapper.writeValueAsString(
+                ColorsChosen(gameId = gameId, black = clientOne, white = clientTwo)
+            )
+        )
     }
 
 
