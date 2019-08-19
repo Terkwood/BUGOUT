@@ -87,7 +87,6 @@ class TestAggregateColorPref {
                 GameColorPref(clientTwo,gameId,clientTwoPref.colorPref)
             ).toTypedArray(),
             gameColorPrefs.toTypedArray())
-
     }
 
     @AfterAll
