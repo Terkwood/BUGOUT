@@ -9,7 +9,7 @@ version '0.0.1'
 apply plugin: 'kotlin'
 apply plugin: 'application'
 
-mainClassName = 'ColorChooserKt'
+mainClassName = 'ApplicationKt'
 
 defaultTasks 'run'
 
@@ -54,7 +54,7 @@ compileTestKotlin {
 
 // fat jar
 jar {
-    manifest { attributes 'Main-Class': 'ColorChooserKt' }
+    manifest { attributes 'Main-Class': 'ApplicationKt' }
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
