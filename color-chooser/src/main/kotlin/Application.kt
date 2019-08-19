@@ -3,6 +3,7 @@ import org.apache.kafka.streams.*
 import org.apache.kafka.streams.kstream.*
 import serdes.jsonMapper
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 fun main() {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
@@ -92,9 +93,11 @@ class Application(private val brokers: String) {
                             rightValue.colorPref)
                 }
 
+
+        // TODO join window sanity
         val clientGameColorPref: KStream<ClientIdKey, ClientGameColorPref> =
                 clientGameReady.join(chooseColorPref, prefJoiner,
-                        null)
+                        JoinWindows.of(TimeUnit.DAYS.toMillis(1000)))
 
         clientGameColorPref
                 .map { _, gcp ->

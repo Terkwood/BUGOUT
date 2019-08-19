@@ -1,3 +1,4 @@
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.*
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
@@ -16,7 +17,8 @@ class TestAggregateColorPref {
 
     @Test
     fun test() {
-        val factory = ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
+        val factory =
+            ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
         val clientOne = ClientId(UUID.randomUUID())
         val clientTwo = ClientId(UUID.randomUUID())
@@ -27,13 +29,13 @@ class TestAggregateColorPref {
 
         val gameReadyEvent = GameReady(gameId, Pair(clientOne, clientTwo), EventId(UUID.randomUUID()))
 
-        testDriver.pipeInput(
-            factory.create(
-                Topics.CHOOSE_COLOR_PREF,
-                clientOne.underlying,
-                jsonMapper.writeValueAsString(clientOnePref)
-            )
+        val cr1: ConsumerRecord<ByteArray, ByteArray> = factory.create(
+            Topics.CHOOSE_COLOR_PREF,
+            clientOne.underlying,
+            jsonMapper.writeValueAsString(clientOnePref)
         )
+
+        testDriver.pipeInput(cr1)
 
         testDriver.pipeInput(
             factory.create(
