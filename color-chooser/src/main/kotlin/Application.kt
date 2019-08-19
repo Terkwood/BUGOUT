@@ -73,7 +73,7 @@ class Application(private val brokers: String) {
                 .to(Topics.CLIENT_GAME_READY,
                         Produced.with(Serdes.UUID(), Serdes.String()))
 
-        /*
+
         val clientGameReady: KStream<ClientIdKey, ClientGameReady> =
                 streamsBuilder.stream<UUID, String>(
                         Topics.CLIENT_GAME_READY,
@@ -85,7 +85,7 @@ class Application(private val brokers: String) {
                                     ClientGameReady::class.java
                             )
                         }
-
+/*
         val prefJoiner: ValueJoiner<ClientGameReady,
                 ChooseColorPref, ClientGameColorPref> =
                 ValueJoiner { leftValue: ClientGameReady,
