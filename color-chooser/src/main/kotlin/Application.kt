@@ -84,15 +84,7 @@ class Application(private val brokers: String) {
                             )
                         }
 
-        val clientGameColorPrefKVM: KeyValueMapper<ClientIdKey,
-                ClientGameReady, ClientIdKey> =
-                // left key, left value
-                KeyValueMapper { clientId: ClientIdKey,
-                                 _: ClientGameReady ->
-                    clientId
-                }
-
-        val clientGameColorPrefVJ: ValueJoiner<ClientGameReady,
+        val prefJoiner: ValueJoiner<ClientGameReady,
                 ChooseColorPref, ClientGameColorPref> =
                 ValueJoiner { leftValue: ClientGameReady,
                               rightValue: ChooseColorPref ->
@@ -101,7 +93,7 @@ class Application(private val brokers: String) {
                 }
 
         val clientGameColorPref: KStream<ClientIdKey, ClientGameColorPref> =
-                clientGameReady.join(chooseColorPref, clientGameColorPrefVJ,
+                clientGameReady.join(chooseColorPref, prefJoiner,
                         null)
 
         clientGameColorPref
