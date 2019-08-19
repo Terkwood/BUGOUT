@@ -114,7 +114,7 @@ class Application(private val brokers: String) {
                             gcp)
                 }
                 .mapValues { v -> jsonMapper.writeValueAsString(v) }
-                .to(Topics.AGGREGATE_COLOR_PREF,
+                .to(Topics.GAME_COLOR_PREF,
                         Produced.with(Serdes.UUID(), Serdes.String()))
 
         return streamsBuilder.build()

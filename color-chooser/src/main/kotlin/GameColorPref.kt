@@ -1,3 +1,5 @@
+import java.util.*
+
 /** Represents an individual client's color
  * preference for a specific game.  Used in
  * multiple contexts:  initially, this can
