@@ -10,13 +10,13 @@ class ClientGameReadySer : Serializer<ClientGameReady> {
 
     override fun close() {}
 
-    override fun serialize(topic: String, logAgg: ClientGameReady?): ByteArray? {
-        if (logAgg == null) {
+    override fun serialize(topic: String, data: ClientGameReady?): ByteArray? {
+        if (data == null) {
             return null
         }
 
         try {
-            return logAgg.asByteArray()
+            return data.asByteArray()
         } catch (e: RuntimeException) {
             throw SerializationException("Error serializing value", e)
         }
