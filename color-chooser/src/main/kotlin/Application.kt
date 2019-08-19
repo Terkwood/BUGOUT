@@ -52,7 +52,7 @@ class Application(private val brokers: String) {
                                     GameReady::class.java
                             )
                         }
-/*
+
         // generate  a ClientGameReady event for the first client
         gameReady
                 .map { _, gr ->
@@ -73,6 +73,7 @@ class Application(private val brokers: String) {
                 .to(Topics.CLIENT_GAME_READY,
                         Produced.with(Serdes.UUID(), Serdes.String()))
 
+        /*
         val clientGameReady: KStream<ClientIdKey, ClientGameReady> =
                 streamsBuilder.stream<UUID, String>(
                         Topics.CLIENT_GAME_READY,
