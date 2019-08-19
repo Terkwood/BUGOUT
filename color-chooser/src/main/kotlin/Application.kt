@@ -2,6 +2,7 @@ import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.*
 import org.apache.kafka.streams.kstream.*
 import serdes.*
+import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -35,7 +36,6 @@ class Application(private val brokers: String) {
                         Consumed.with(Serdes.UUID(), Serdes.String())
                 )
                         .mapValues { v ->
-                            println("pref chosen $v")
                             jsonMapper.readValue(
                                     v,
                                     ChooseColorPref::class.java
@@ -81,7 +81,6 @@ class Application(private val brokers: String) {
                         Consumed.with(Serdes.UUID(), Serdes.String())
                 )
                         .mapValues { v ->
-                            println("client game ready $v")
                             jsonMapper.readValue(
                                     v,
                                     ClientGameReady::class.java
@@ -97,11 +96,9 @@ class Application(private val brokers: String) {
                 }
 
 
-        // TODO serialization fails here
-        // TODO join window sanity
         val clientGameColorPref: KStream<ClientId, ClientGameColorPref> =
                 clientGameReady.join(chooseColorPref, prefJoiner,
-                        JoinWindows.of(TimeUnit.DAYS.toMillis(1000)),
+                        JoinWindows.of(ChronoUnit.YEARS.duration),
                     Joined.with(Serdes.UUID(),
                         Serdes.serdeFrom(ClientGameReadySer(), ClientGameReadyDes()),
                         Serdes.serdeFrom(ChooseColorPrefSer(), ChooseColorPrefDes())

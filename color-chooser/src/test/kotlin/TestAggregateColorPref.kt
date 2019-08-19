@@ -81,6 +81,12 @@ class TestAggregateColorPref {
         Assertions.assertEquals(expectedSize,
             gameColorPrefs.size)
 
+        Assertions.assertArrayEquals(
+            listOf(
+                GameColorPref(clientOne,gameId,clientOnePref.colorPref),
+                GameColorPref(clientTwo,gameId,clientTwoPref.colorPref)
+            ).toTypedArray(),
+            gameColorPrefs.toTypedArray())
 
     }
 
