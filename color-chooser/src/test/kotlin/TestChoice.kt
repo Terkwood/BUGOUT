@@ -97,6 +97,56 @@ class TestChoice {
     }
 
 
+    @Test
+    fun testSimpleDemands() {
+        val clientOne = UUID.randomUUID()
+        val clientTwo = UUID.randomUUID()
+        val gameId = UUID.randomUUID()
+
+        val chosen = push(
+            ChooseColorPref(clientOne,ColorPref.Any),
+            ChooseColorPref(clientTwo,ColorPref.White), gameId)
+
+        OutputVerifier.compareKeyValue(
+            chosen, gameId,
+            jsonMapper.writeValueAsString(
+                ColorsChosen(gameId = gameId, black = clientOne, white = clientTwo)
+            )
+        )
+    }
+
+    @Test
+    fun testMoreDemands() {
+        val clientOne = UUID.randomUUID()
+        val clientTwo = UUID.randomUUID()
+        val gameId = UUID.randomUUID()
+
+        val chosen = push(
+            ChooseColorPref(clientOne,ColorPref.White),
+            ChooseColorPref(clientTwo,ColorPref.Any), gameId)
+
+        OutputVerifier.compareKeyValue(
+            chosen, gameId,
+            jsonMapper.writeValueAsString(
+                ColorsChosen(gameId = gameId, black = clientTwo, white = clientOne)
+            )
+        )
+    }
+
+    @Test
+    fun testLooseConcerns() {
+        val clientOne = UUID.randomUUID()
+        val clientTwo = UUID.randomUUID()
+        val gameId = UUID.randomUUID()
+
+        val chosen = push(
+            ChooseColorPref(clientOne,ColorPref.Any),
+            ChooseColorPref(clientTwo,ColorPref.Any), gameId)
+
+        TODO("output verifier check")
+    }
+
+
     @AfterAll
     fun tearDown() {
         testDriver.close()
