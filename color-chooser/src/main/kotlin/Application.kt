@@ -1,7 +1,7 @@
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.*
 import org.apache.kafka.streams.kstream.*
-import serdes.jsonMapper
+import serdes.*
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -29,7 +29,7 @@ class Application(private val brokers: String) {
     fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
 
-        val chooseColorPref: KStream<ClientIdKey, ChooseColorPref> =
+        val chooseColorPref: KStream<ClientId, ChooseColorPref> =
                 streamsBuilder.stream<UUID, String>(
                         Topics.CHOOSE_COLOR_PREF,
                         Consumed.with(Serdes.UUID(), Serdes.String())
@@ -42,7 +42,7 @@ class Application(private val brokers: String) {
                             )
                         }
 
-        val gameReady: KStream<GameIdKey, GameReady> =
+        val gameReady: KStream<GameId, GameReady> =
                 streamsBuilder.stream<UUID, String>(
                         Topics.GAME_READY,
                         Consumed.with(Serdes.UUID(), Serdes.String())
@@ -57,7 +57,7 @@ class Application(private val brokers: String) {
         // generate  a ClientGameReady event for the first client
         gameReady
                 .map { _, gr ->
-                    KeyValue(gr.clients.first.underlying,
+                    KeyValue(gr.clients.first,
                             ClientGameReady(gr.clients.first, gr.gameId))
                 }
                 .mapValues { cgr -> jsonMapper.writeValueAsString(cgr) }
@@ -67,7 +67,7 @@ class Application(private val brokers: String) {
         // generate a ClientGameReady event for the second client
         gameReady
                 .map { _, gr ->
-                    KeyValue(gr.clients.second.underlying,
+                    KeyValue(gr.clients.second,
                             ClientGameReady(gr.clients.second, gr.gameId))
                 }
                 .mapValues { cgr -> jsonMapper.writeValueAsString(cgr) }
@@ -75,7 +75,7 @@ class Application(private val brokers: String) {
                         Produced.with(Serdes.UUID(), Serdes.String()))
 
 
-        val clientGameReady: KStream<ClientIdKey, ClientGameReady> =
+        val clientGameReady: KStream<ClientId, ClientGameReady> =
                 streamsBuilder.stream<UUID, String>(
                         Topics.CLIENT_GAME_READY,
                         Consumed.with(Serdes.UUID(), Serdes.String())
@@ -99,20 +99,24 @@ class Application(private val brokers: String) {
 
         // TODO serialization fails here
         // TODO join window sanity
-        val clientGameColorPref: KStream<ClientIdKey, ClientGameColorPref> =
+        val clientGameColorPref: KStream<ClientId, ClientGameColorPref> =
                 clientGameReady.join(chooseColorPref, prefJoiner,
-                        JoinWindows.of(TimeUnit.DAYS.toMillis(1000)))
+                        JoinWindows.of(TimeUnit.DAYS.toMillis(1000)),
+                    Joined.with(Serdes.UUID(),
+                        Serdes.serdeFrom(ClientGameReadySer(), ClientGameReadyDes()),
+                        Serdes.serdeFrom(ChooseColorPrefSer(), ChooseColorPrefDes())
+                    ))
 
-        /*
+
         clientGameColorPref
                 .map { _, gcp ->
-                    KeyValue(gcp.gameId.underlying,
+                    KeyValue(gcp.gameId,
                             gcp)
                 }
                 .mapValues { v -> jsonMapper.writeValueAsString(v) }
                 .to(Topics.AGGREGATE_COLOR_PREF,
                         Produced.with(Serdes.UUID(), Serdes.String()))
-*/
+
         return streamsBuilder.build()
     }
 }

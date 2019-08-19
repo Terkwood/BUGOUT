@@ -17,15 +17,14 @@ class TestAggregateColorPref {
     @Test
     fun test() {
 
-        val c1 = UUID.randomUUID()
-        val clientOne = ClientId(c1)
-        val clientTwo = ClientId(UUID.randomUUID())
-        val gameId = GameId(UUID.randomUUID())
+        val clientOne = UUID.randomUUID()
+        val clientTwo = UUID.randomUUID()
+        val gameId =UUID.randomUUID()
 
         val clientOnePref = ChooseColorPref(clientOne, ColorPref.Any)
         val clientTwoPref = ChooseColorPref(clientTwo, ColorPref.Black)
 
-        val gameReadyEvent = GameReady(gameId, Pair(clientOne, clientTwo), EventId(UUID.randomUUID()))
+        val gameReadyEvent = GameReady(gameId, Pair(clientOne, clientTwo), eventId=UUID.randomUUID())
 
         val factory =
             ConsumerRecordFactory(
@@ -33,7 +32,7 @@ class TestAggregateColorPref {
             )
         val cr1: ConsumerRecord<ByteArray, ByteArray> = factory.create(
             Topics.CHOOSE_COLOR_PREF,
-            c1,
+            clientOne,
             jsonMapper.writeValueAsString(clientOnePref)
         )
 
@@ -43,7 +42,7 @@ class TestAggregateColorPref {
         testDriver.pipeInput(
             factory.create(
                 Topics.CHOOSE_COLOR_PREF,
-                clientTwo.underlying,
+                clientTwo,
                 jsonMapper.writeValueAsString(clientTwoPref)
             )
         )
@@ -52,7 +51,7 @@ class TestAggregateColorPref {
         testDriver.pipeInput(
             factory.create(
                 Topics.GAME_READY,
-                gameId.underlying,
+                gameId,
                 jsonMapper.writeValueAsString(gameReadyEvent)
             )
         )
