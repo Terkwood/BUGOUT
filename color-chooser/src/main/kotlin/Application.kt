@@ -53,25 +53,6 @@ class Application(private val brokers: String) {
         return streamsBuilder.build()
     }
 
-    private fun aggregateColorPrefs(
-        streamsBuilder: StreamsBuilder
-    ): KTable<GameId,AggregatedPrefs> =
-        streamsBuilder
-            .stream<UUID, String>(
-                Topics.GAME_COLOR_PREF, Consumed.with(Serdes.UUID(), Serdes.String())
-            ).groupByKey(Serialized.with(Serdes.UUID(), Serdes.String()))
-            .aggregate({AggregatedPrefs()}, {_, p, allPrefs ->
-                allPrefs.add(jsonMapper.readValue(p, ClientGameColorPref::class.java))
-                allPrefs
-            }, Materialized.`as`<UUID, AggregatedPrefs, KeyValueStore<Bytes, ByteArray>>(
-                    Topics.REDUCE_COLOR_PREFS_STORE
-                )
-                    .withKeySerde(Serdes.UUID())
-                    .withValueSerde(Serdes.serdeFrom(AggPrefSer(), AggPrefDes())))
-
-
-
-
 
     private fun buildGameColorPref(streamsBuilder: StreamsBuilder): KStream<GameId, ClientGameColorPref> {
         val chooseColorPref: KStream<ClientId, ChooseColorPref> =
@@ -179,4 +160,22 @@ class Application(private val brokers: String) {
         return gameColorPref
 
     }
+
+
+    private fun aggregateColorPrefs(
+        streamsBuilder: StreamsBuilder
+    ): KTable<GameId, AggregatedPrefs> =
+        streamsBuilder
+            .stream<UUID, String>(
+                Topics.GAME_COLOR_PREF, Consumed.with(Serdes.UUID(), Serdes.String())
+            ).groupByKey(Serialized.with(Serdes.UUID(), Serdes.String()))
+            .aggregate({ AggregatedPrefs() }, { _, p, allPrefs ->
+                allPrefs.add(jsonMapper.readValue(p, ClientGameColorPref::class.java))
+                allPrefs
+            }, Materialized.`as`<UUID, AggregatedPrefs, KeyValueStore<Bytes, ByteArray>>(
+                Topics.REDUCE_COLOR_PREFS_STORE
+            )
+                .withKeySerde(Serdes.UUID())
+                .withValueSerde(Serdes.serdeFrom(AggPrefSer(), AggPrefDes()))
+            )
 }
