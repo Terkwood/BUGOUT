@@ -35,9 +35,9 @@ class Application(private val brokers: String) {
         val streamsBuilder = StreamsBuilder()
 
         val colorPrefs = buildGameColorPref(streamsBuilder)
-/*
-        val reduced = reduceColorPrefs(colorPrefs)
 
+        //val reduced = reduceColorPrefs(colorPrefs)
+/*
         val branches = reduced?.toStream()?.kbranch(
             { _, prefs -> prefs.size < REQUIRED_PREFS },
             { _, prefs -> prefs.size == REQUIRED_PREFS },
@@ -54,18 +54,21 @@ class Application(private val brokers: String) {
         return streamsBuilder.build()
     }
 
-    val ls: Serde<List<ClientGameColorPref>> = Serdes.serdeFrom(ListPrefSer(), ListPrefDes())
+    private val listPrefSerde: Serde<List<ClientGameColorPref>> =
+        Serdes.serdeFrom(ListPrefSer(), ListPrefDes())
     private fun reduceColorPrefs(
         colorPrefs: KStream<GameId, ClientGameColorPref>
     ): KTable<GameId, List<ClientGameColorPref>> =
         colorPrefs
             .mapValues { cp -> listOf(cp) }
             .groupByKey()
-            .reduce( { left, right -> left + right },
+            .reduce(
+                { left, right -> left + right },
                 Materialized.`as`<UUID, List<ClientGameColorPref>, KeyValueStore<Bytes, ByteArray>>(
-                    Topics.REDUCE_COLOR_PREFS_STORE).withKeySerde
-                    (Serdes.UUID()).withValueSerde(
-                    ls)
+                    Topics.REDUCE_COLOR_PREFS_STORE
+                )
+                    .withKeySerde(Serdes.UUID())
+                    .withValueSerde(listPrefSerde)
             )
 
 
