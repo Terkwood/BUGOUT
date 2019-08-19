@@ -101,8 +101,17 @@ class Application(private val brokers: String) {
                 }
 
         val clientGameColorPref: KStream<ClientIdKey, ClientGameColorPref> =
-                clientGameReady.join(chooseColorPref,clientGameColorPrefVJ,
+                clientGameReady.join(chooseColorPref, clientGameColorPrefVJ,
                         null)
+
+        clientGameColorPref
+                .map { _, gcp ->
+                    KeyValue(gcp.gameId.underlying,
+                            gcp)
+                }
+                .mapValues { v -> jsonMapper.writeValueAsString(v) }
+                .to(Topics.AGGREGATE_COLOR_PREF,
+                        Produced.with(Serdes.UUID(), Serdes.String()))
 
         return streamsBuilder.build()
     }
