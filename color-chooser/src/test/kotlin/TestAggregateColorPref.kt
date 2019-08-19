@@ -1,4 +1,3 @@
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.*
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
@@ -30,14 +29,13 @@ class TestAggregateColorPref {
             ConsumerRecordFactory(
                 UUIDSerializer(), StringSerializer()
             )
-        val cr1: ConsumerRecord<ByteArray, ByteArray> = factory.create(
+
+
+        testDriver.pipeInput(factory.create(
             Topics.CHOOSE_COLOR_PREF,
             clientOne,
             jsonMapper.writeValueAsString(clientOnePref)
-        )
-
-
-        testDriver.pipeInput(cr1)
+        ))
 
         testDriver.pipeInput(
             factory.create(
@@ -56,6 +54,26 @@ class TestAggregateColorPref {
             )
         )
 
+
+        val aggregatedRecordOne =
+            testDriver.readOutput(
+                Topics.AGGREGATE_COLOR_PREF,
+                UUIDDeserializer(),
+                StringDeserializer()
+            )
+
+        println("output record one!  $aggregatedRecordOne")
+
+
+
+        val aggregatedRecordTwo =
+            testDriver.readOutput(
+                Topics.AGGREGATE_COLOR_PREF,
+                UUIDDeserializer(),
+                StringDeserializer()
+            )
+
+        println("output record two!  $aggregatedRecordTwo")
 
 
     }
