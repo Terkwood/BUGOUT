@@ -1,6 +1,7 @@
 import org.apache.kafka.common.serialization.*
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
+import org.apache.kafka.streams.test.OutputVerifier
 import org.junit.jupiter.api.*
 import serdes.jsonMapper
 import java.util.*
@@ -63,6 +64,12 @@ class TestChoice {
                 StringDeserializer()
             )
 
+        OutputVerifier.compareKeyValue(
+            chosenColors, gameId,
+            jsonMapper.writeValueAsString(
+                ColorsChosen(gameId = gameId, black = clientTwo, white = clientOne)
+            )
+        )
 
     }
 
