@@ -4,7 +4,6 @@ import org.apache.kafka.streams.kstream.*
 import serdes.*
 import java.time.temporal.ChronoUnit
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 fun main() {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
