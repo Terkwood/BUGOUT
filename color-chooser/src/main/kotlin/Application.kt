@@ -52,7 +52,7 @@ class Application(private val brokers: String) {
                                     GameReady::class.java
                             )
                         }
-
+/*
         // generate  a ClientGameReady event for the first client
         gameReady
                 .map { _, gr ->
@@ -107,7 +107,7 @@ class Application(private val brokers: String) {
                 .mapValues { v -> jsonMapper.writeValueAsString(v) }
                 .to(Topics.AGGREGATE_COLOR_PREF,
                         Produced.with(Serdes.UUID(), Serdes.String()))
-
+*/
         return streamsBuilder.build()
     }
 }
