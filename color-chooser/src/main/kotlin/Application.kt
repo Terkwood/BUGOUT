@@ -35,7 +35,7 @@ class Application(private val brokers: String) {
         val streamsBuilder = StreamsBuilder()
 
         val colorPrefs = buildGameColorPref(streamsBuilder)
-
+/*
         val reduced = reduceColorPrefs(colorPrefs)
 
         val branches = reduced?.toStream()?.kbranch(
@@ -50,7 +50,7 @@ class Application(private val brokers: String) {
 
         val tooManyPrefs = branches?.get(2)
 
-
+*/
         return streamsBuilder.build()
     }
 
