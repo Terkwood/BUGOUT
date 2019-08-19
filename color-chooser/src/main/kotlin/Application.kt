@@ -36,40 +36,41 @@ class Application(private val brokers: String) {
 
         val colorPrefs = buildGameColorPref(streamsBuilder)
 
-        //val reduced = reduceColorPrefs(colorPrefs)
-/*
-        val branches = reduced?.toStream()?.kbranch(
-            { _, prefs -> prefs.size < REQUIRED_PREFS },
-            { _, prefs -> prefs.size == REQUIRED_PREFS },
-            { _, prefs -> prefs.size > REQUIRED_PREFS }
+        val aggregated = aggregateColorPrefs(streamsBuilder)
+
+        val branches = aggregated.toStream().kbranch(
+            { _, agg -> agg.prefs.size < REQUIRED_PREFS },
+            { _, agg -> agg.prefs.size == REQUIRED_PREFS },
+            { _, agg -> agg.prefs.size > REQUIRED_PREFS }
         )
 
-        val notEnoughPrefs = branches?.get(0)
+        val notEnoughPrefs = branches[0]
 
-        val readyToChoose = branches?.get(1)
+        val readyToChoose = branches[1]
 
-        val tooManyPrefs = branches?.get(2)
+        val tooManyPrefs = branches[2]
 
-*/
         return streamsBuilder.build()
     }
 
-    private val listPrefSerde: Serde<List<ClientGameColorPref>> =
-        Serdes.serdeFrom(ListPrefSer(), ListPrefDes())
-    private fun reduceColorPrefs(
-        colorPrefs: KStream<GameId, ClientGameColorPref>
-    ): KTable<GameId, List<ClientGameColorPref>> =
-        colorPrefs
-            .mapValues { cp -> listOf(cp) }
-            .groupByKey()
-            .reduce(
-                { left, right -> left + right },
-                Materialized.`as`<UUID, List<ClientGameColorPref>, KeyValueStore<Bytes, ByteArray>>(
+    private fun aggregateColorPrefs(
+        streamsBuilder: StreamsBuilder
+    ): KTable<GameId,AggregatedPrefs> =
+        streamsBuilder
+            .stream<UUID, String>(
+                Topics.GAME_COLOR_PREF, Consumed.with(Serdes.UUID(), Serdes.String())
+            ).groupByKey(Serialized.with(Serdes.UUID(), Serdes.String()))
+            .aggregate({AggregatedPrefs()}, {_, p, allPrefs ->
+                allPrefs.add(jsonMapper.readValue(p, ClientGameColorPref::class.java))
+                allPrefs
+            }, Materialized.`as`<UUID, AggregatedPrefs, KeyValueStore<Bytes, ByteArray>>(
                     Topics.REDUCE_COLOR_PREFS_STORE
                 )
                     .withKeySerde(Serdes.UUID())
-                    .withValueSerde(listPrefSerde)
-            )
+                    .withValueSerde(Serdes.serdeFrom(AggPrefSer(), AggPrefDes())))
+
+
+
 
 
     private fun buildGameColorPref(streamsBuilder: StreamsBuilder): KStream<GameId, ClientGameColorPref> {
