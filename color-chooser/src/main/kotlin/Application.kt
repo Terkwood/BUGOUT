@@ -1,4 +1,3 @@
-import org.apache.kafka.common.serialization.Serde
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.*
@@ -44,11 +43,11 @@ class Application(private val brokers: String) {
 
         // TODO NOT THE rigHT CHOICE
         readyToChoose.mapValues { agg ->
-            agg.prefs[0].colorPref
+            ColorsChosen.resolve(agg.prefs[0], agg.prefs[1])
         }.mapValues { v ->
             println("hello from $v")
             jsonMapper.writeValueAsString(v)
-        }.to(Topics.COLOR_CHOSEN, Produced.with(Serdes.UUID(), Serdes.String()))
+        }.to(Topics.COLORS_CHOSEN, Produced.with(Serdes.UUID(), Serdes.String()))
 
         return streamsBuilder.build()
     }

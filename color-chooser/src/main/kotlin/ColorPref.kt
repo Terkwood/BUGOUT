@@ -3,3 +3,5 @@ enum class ColorPref {
     White,
     Any
 }
+
+fun isAny(c : ColorPref): Boolean = c == ColorPref.Any
