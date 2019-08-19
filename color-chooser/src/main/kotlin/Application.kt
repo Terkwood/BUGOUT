@@ -34,27 +34,27 @@ class Application(private val brokers: String) {
     fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
 
-        val colorPrefs = buildGameColorPref(streamsBuilder)
+        buildGameColorPref(streamsBuilder)
 
         val aggregated = aggregateColorPrefs(streamsBuilder)
 
-        val branches = aggregated.toStream().kbranch(
-            { _, agg -> agg.prefs.size < REQUIRED_PREFS },
-            { _, agg -> agg.prefs.size == REQUIRED_PREFS },
-            { _, agg -> agg.prefs.size > REQUIRED_PREFS }
-        )
+        val readyToChoose: KStream<GameId, AggregatedPrefs> =
+            aggregated.toStream().filter { _, agg -> agg.prefs.size == REQUIRED_PREFS }
 
-        val notEnoughPrefs = branches[0]
 
-        val readyToChoose = branches[1]
-
-        val tooManyPrefs = branches[2]
+        // TODO NOT THE rigHT CHOICE
+        readyToChoose.mapValues { agg ->
+            agg.prefs[0].colorPref
+        }.mapValues { v ->
+            println("hello from $v")
+            jsonMapper.writeValueAsString(v)
+        }.to(Topics.COLOR_CHOSEN, Produced.with(Serdes.UUID(), Serdes.String()))
 
         return streamsBuilder.build()
     }
 
 
-    private fun buildGameColorPref(streamsBuilder: StreamsBuilder): KStream<GameId, ClientGameColorPref> {
+    private fun buildGameColorPref(streamsBuilder: StreamsBuilder) {
         val chooseColorPref: KStream<ClientId, ChooseColorPref> =
             streamsBuilder.stream<UUID, String>(
                 Topics.CHOOSE_COLOR_PREF,
@@ -156,8 +156,6 @@ class Application(private val brokers: String) {
             Topics.GAME_COLOR_PREF,
             Produced.with(Serdes.UUID(), Serdes.String())
         )
-
-        return gameColorPref
 
     }
 

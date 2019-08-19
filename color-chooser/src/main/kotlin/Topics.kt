@@ -4,4 +4,5 @@ object Topics {
     const val CLIENT_GAME_READY = "bugout-client-game-ready"
     const val GAME_COLOR_PREF = "bugout-game-color-pref"
     const val REDUCE_COLOR_PREFS_STORE = "bugout-reduce-color-prefs-origin"
+    const val COLOR_CHOSEN = "bugout-color-chosen-ev"
 }
