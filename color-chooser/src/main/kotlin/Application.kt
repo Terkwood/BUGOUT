@@ -19,7 +19,7 @@ class Application(private val brokers: String) {
 
         val props = Properties()
         props[StreamsConfig.BOOTSTRAP_SERVERS_CONFIG] = brokers
-        props[StreamsConfig.APPLICATION_ID_CONFIG] = "bugout-game-lobby"
+        props[StreamsConfig.APPLICATION_ID_CONFIG] = "bugout-color-chooser"
         props[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = "exactly_once"
 
         val streams = KafkaStreams(topology, props)
