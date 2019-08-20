@@ -40,8 +40,6 @@ class Application(private val brokers: String) {
         val readyToChoose: KStream<GameId, AggregatedPrefs> =
             aggregated.toStream().filter { _, agg -> agg.prefs.size == REQUIRED_PREFS }
 
-
-        // TODO NOT THE rigHT CHOICE
         readyToChoose.mapValues { agg ->
             ColorsChosen.resolve(agg.prefs[0], agg.prefs[1])
         }.mapValues { v ->
