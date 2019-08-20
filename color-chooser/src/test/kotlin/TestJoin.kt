@@ -9,7 +9,6 @@ import java.util.*
 class TestJoin {
     private val testDriver: TopologyTestDriver = setup()
 
-
     @Test
     fun testJoin() {
 

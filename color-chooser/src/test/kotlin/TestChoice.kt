@@ -11,13 +11,17 @@ import java.util.*
 class TestChoice {
     private val testDriver: TopologyTestDriver = setup()
 
-    @BeforeAll
-    fun init() {
-    }
+    private fun push(
+        c1: ChooseColorPref,
+        c2: ChooseColorPref,
+        gameId: GameId
+    ): ProducerRecord<UUID, String>? {
 
-    private fun push(c1: ChooseColorPref, c2: ChooseColorPref, gameId:GameId): ProducerRecord<UUID, String>? {
-
-        val gameReadyEvent = GameReady(gameId, Pair(c1.clientId, c2.clientId), eventId = UUID.randomUUID())
+        val gameReadyEvent = GameReady(
+            gameId,
+            Pair(c1.clientId, c2.clientId),
+            eventId = UUID.randomUUID()
+        )
 
         val factory =
             ConsumerRecordFactory(
@@ -51,10 +55,10 @@ class TestChoice {
         )
 
         return testDriver.readOutput(
-                Topics.COLORS_CHOSEN,
-                UUIDDeserializer(),
-                StringDeserializer()
-            )
+            Topics.COLORS_CHOSEN,
+            UUIDDeserializer(),
+            StringDeserializer()
+        )
 
 
     }
@@ -66,23 +70,23 @@ class TestChoice {
         val clientTwo = UUID.randomUUID()
         val gameId = UUID.randomUUID()
 
-        val c1Pref = ChooseColorPref(clientOne,ColorPref.White)
-        val c2Pref = ChooseColorPref(clientTwo,ColorPref.Black)
-
-        println("c1 pref $c1Pref")
-        println("c2 pref $c2Pref")
+        val c1Pref = ChooseColorPref(clientOne, ColorPref.White)
+        val c2Pref = ChooseColorPref(clientTwo, ColorPref.Black)
 
         val chosen = push(
             c1Pref,
-            c2Pref, gameId)
+            c2Pref, gameId
+        )
 
-
-        println("chosen ${chosen?.value()}")
 
         OutputVerifier.compareKeyValue(
             chosen, gameId,
             jsonMapper.writeValueAsString(
-                ColorsChosen(gameId = gameId, black = clientTwo, white = clientOne)
+                ColorsChosen(
+                    gameId = gameId,
+                    black = clientTwo,
+                    white = clientOne
+                )
             )
         )
     }
@@ -94,13 +98,18 @@ class TestChoice {
         val gameId = UUID.randomUUID()
 
         val chosen = push(
-            ChooseColorPref(clientOne,ColorPref.Black),
-            ChooseColorPref(clientTwo,ColorPref.White), gameId)
+            ChooseColorPref(clientOne, ColorPref.Black),
+            ChooseColorPref(clientTwo, ColorPref.White), gameId
+        )
 
         OutputVerifier.compareKeyValue(
             chosen, gameId,
             jsonMapper.writeValueAsString(
-                ColorsChosen(gameId = gameId, black = clientOne, white = clientTwo)
+                ColorsChosen(
+                    gameId = gameId,
+                    black = clientOne,
+                    white = clientTwo
+                )
             )
         )
     }
@@ -113,13 +122,18 @@ class TestChoice {
         val gameId = UUID.randomUUID()
 
         val chosen = push(
-            ChooseColorPref(clientOne,ColorPref.Any),
-            ChooseColorPref(clientTwo,ColorPref.White), gameId)
+            ChooseColorPref(clientOne, ColorPref.Any),
+            ChooseColorPref(clientTwo, ColorPref.White), gameId
+        )
 
         OutputVerifier.compareKeyValue(
             chosen, gameId,
             jsonMapper.writeValueAsString(
-                ColorsChosen(gameId = gameId, black = clientOne, white = clientTwo)
+                ColorsChosen(
+                    gameId = gameId,
+                    black = clientOne,
+                    white = clientTwo
+                )
             )
         )
     }
@@ -131,15 +145,18 @@ class TestChoice {
         val gameId = UUID.randomUUID()
 
         val chosen = push(
-            ChooseColorPref(clientOne,ColorPref.White),
-            ChooseColorPref(clientTwo,ColorPref.Any), gameId)
-
-        println("chosen $chosen")
+            ChooseColorPref(clientOne, ColorPref.White),
+            ChooseColorPref(clientTwo, ColorPref.Any), gameId
+        )
 
         OutputVerifier.compareKeyValue(
             chosen, gameId,
             jsonMapper.writeValueAsString(
-                ColorsChosen(gameId = gameId, black = clientTwo, white = clientOne)
+                ColorsChosen(
+                    gameId = gameId,
+                    black = clientTwo,
+                    white = clientOne
+                )
             )
         )
     }
@@ -150,11 +167,22 @@ class TestChoice {
         val clientTwo = UUID.randomUUID()
         val gameId = UUID.randomUUID()
 
-        val chosen = push(
-            ChooseColorPref(clientOne,ColorPref.Any),
-            ChooseColorPref(clientTwo,ColorPref.Any), gameId)
+        val chosenJson = push(
+            ChooseColorPref(clientOne, ColorPref.Any),
+            ChooseColorPref(clientTwo, ColorPref.Any), gameId
+        )
 
-        TODO("output verifier check")
+        val chosen: ColorsChosen =
+            jsonMapper.readValue(chosenJson?.value(), ColorsChosen::class.java)
+
+        when (chosen.black) {
+            clientOne -> Assertions.assertTrue(chosen.white == clientTwo)
+            else -> Assertions.assertTrue(
+                chosen.black == clientTwo &&
+                        chosen.white == clientOne
+            )
+        }
+
     }
 
 
