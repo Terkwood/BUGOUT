@@ -1,28 +1,50 @@
+import kotlin.random.Random
+
 data class ColorsChosen(val gameId: GameId, val black: ClientId, val white: ClientId) {
 
     companion object {
-        fun resolve(one: ClientGameColorPref, another: ClientGameColorPref): ColorsChosen {
-            val x = Pair(one, another)
+        fun resolve(first: ClientGameColorPref, second: ClientGameColorPref): ColorsChosen {
+
             return when {
-                isAny(x.first.colorPref) -> TODO("any first")
-                isAny(x.second.colorPref) -> TODO("any second")
+                isAny(first.colorPref) ->
+                    when (force(second.colorPref)) {
+                        Color.Black -> whiteFirst(first, second)
+                        Color.White -> blackFirst(first, second)
+                    }
+                isAny(second.colorPref) ->
+                    when (force(first.colorPref)) {
+                        Color.Black -> blackFirst(first, second)
+                        Color.White -> whiteFirst(first, second)
+                    }
                 // no conflict
-                x.first.colorPref == ColorPref.Black && x.first != x.second ->
-                    ColorsChosen(
-                        gameId = x.first.gameId,
-                        black = x.first.clientId,
-                        white = x.second.clientId
-                    )
+                first.colorPref == ColorPref.Black && first.colorPref != second.colorPref ->
+                    blackFirst(first, second)
                 // no conflict
-                x.first.colorPref == ColorPref.White && x.first != x.second ->
-                    ColorsChosen(
-                        gameId = x.first.gameId,
-                        white = x.first.clientId,
-                        black = x.second.clientId
-                    )
-                else -> TODO("conflict")
+                first.colorPref == ColorPref.White && first != second ->
+                    whiteFirst(first, second)
+                // both sides picked the same color
+                else -> {
+                    return when (random()) {
+                        Color.Black -> blackFirst(first, second)
+                        Color.White -> whiteFirst(first, second)
+                    }
+                }
             }
         }
+
+        private fun blackFirst(first: ClientGameColorPref, second: ClientGameColorPref) =
+            ColorsChosen(
+                gameId = first.gameId,
+                black = first.clientId,
+                white = second.clientId
+            )
+
+        private fun whiteFirst(first: ClientGameColorPref, second: ClientGameColorPref) =
+            ColorsChosen(
+                gameId = first.gameId,
+                black = first.clientId,
+                white = second.clientId
+            )
 
         private fun random(): Color = TODO()
 
