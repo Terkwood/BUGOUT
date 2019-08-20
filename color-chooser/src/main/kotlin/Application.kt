@@ -38,14 +38,18 @@ class Application(private val brokers: String) {
         val aggregated = aggregateColorPrefs(streamsBuilder)
 
         val readyToChoose: KStream<GameId, AggregatedPrefs> =
-            aggregated.toStream().filter { _, agg -> agg.prefs.size == REQUIRED_PREFS }
+            aggregated.toStream()
+                .filter { _, agg -> agg.prefs.size == REQUIRED_PREFS }
 
         readyToChoose.mapValues { agg ->
             ColorsChosen.resolve(agg.prefs[0], agg.prefs[1])
         }.mapValues { v ->
             println("🎨          ${v.gameId.short()} COLRCHSN $v")
             jsonMapper.writeValueAsString(v)
-        }.to(Topics.COLORS_CHOSEN, Produced.with(Serdes.UUID(), Serdes.String()))
+        }.to(
+            Topics.COLORS_CHOSEN,
+            Produced.with(Serdes.UUID(), Serdes.String())
+        )
 
         return streamsBuilder.build()
     }
@@ -134,7 +138,10 @@ class Application(private val brokers: String) {
                 JoinWindows.of(ChronoUnit.YEARS.duration),
                 Joined.with(
                     Serdes.UUID(),
-                    Serdes.serdeFrom(ClientGameReadySer(), ClientGameReadyDes()),
+                    Serdes.serdeFrom(
+                        ClientGameReadySer(),
+                        ClientGameReadyDes()
+                    ),
                     Serdes.serdeFrom(ChooseColorPrefSer(), ChooseColorPrefDes())
                 )
             )
@@ -161,15 +168,28 @@ class Application(private val brokers: String) {
     ): KTable<GameId, AggregatedPrefs> =
         streamsBuilder
             .stream<UUID, String>(
-                Topics.GAME_COLOR_PREF, Consumed.with(Serdes.UUID(), Serdes.String())
+                Topics.GAME_COLOR_PREF,
+                Consumed.with(Serdes.UUID(), Serdes.String())
             ).groupByKey(Serialized.with(Serdes.UUID(), Serdes.String()))
-            .aggregate({ AggregatedPrefs() }, { _, p, allPrefs ->
-                allPrefs.add(jsonMapper.readValue(p, ClientGameColorPref::class.java))
-                allPrefs
-            }, Materialized.`as`<UUID, AggregatedPrefs, KeyValueStore<Bytes, ByteArray>>(
-                Topics.COLOR_PREFS_STORE
-            )
-                .withKeySerde(Serdes.UUID())
-                .withValueSerde(Serdes.serdeFrom(AggPrefSer(), AggPrefDes()))
+            .aggregate({ AggregatedPrefs() },
+                { _, p, allPrefs ->
+                    allPrefs.add(
+                        jsonMapper.readValue(
+                            p,
+                            ClientGameColorPref::class.java
+                        )
+                    )
+                    allPrefs
+                },
+                Materialized.`as`<UUID, AggregatedPrefs, KeyValueStore<Bytes, ByteArray>>(
+                    Topics.COLOR_PREFS_STORE
+                )
+                    .withKeySerde(Serdes.UUID())
+                    .withValueSerde(
+                        Serdes.serdeFrom(
+                            AggPrefSer(),
+                            AggPrefDes()
+                        )
+                    )
             )
 }
