@@ -18,14 +18,10 @@ data class ColorsChosen(val gameId: GameId, val black: ClientId, val white: Clie
                         Color.Black -> bf
                         Color.White -> wf
                     }
-                first.colorPref == ColorPref.Black && noConflict -> {
-                    println("no conflict 1")
+                first.colorPref == ColorPref.Black && noConflict -> 
                     bf
-                }
-                first.colorPref == ColorPref.White && noConflict -> {
-                    println("no conflict 2")
+                first.colorPref == ColorPref.White && noConflict ->
                     wf
-                }
                 // both sides picked the same color
                 else ->
                     when (random()) {
