@@ -43,7 +43,7 @@ class Application(private val brokers: String) {
         readyToChoose.mapValues { agg ->
             ColorsChosen.resolve(agg.prefs[0], agg.prefs[1])
         }.mapValues { v ->
-            println("hello from $v")
+            println("🎨          ${v.gameId.short()} COLRCHSN $v")
             jsonMapper.writeValueAsString(v)
         }.to(Topics.COLORS_CHOSEN, Produced.with(Serdes.UUID(), Serdes.String()))
 
