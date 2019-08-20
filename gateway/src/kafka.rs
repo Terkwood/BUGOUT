@@ -164,7 +164,16 @@ fn start_consumer(
                             Ok(h) => events_in.send(KafkaEvents::HistoryProvided(h)).unwrap(),
                         }
                     }
-                    PRIVATE_GAME_REJECTED_TOPIC => unimplemented!(), // TODO
+                    PRIVATE_GAME_REJECTED_TOPIC => {
+                        let deserialized: Result<
+                            PrivateGameRejectedKafkaEvent,
+                            _,
+                        > = serde_json::from_str(payload);
+                        match deserialized {
+                            Err(e) => println!("failed to deserialize priv game reject {}", e),
+                            Ok(r) => events_in.send(KafkaEvents::PrivateGameRejected(r)).unwrap(),
+                        }
+                    }
                     GAME_READY_TOPIC => {
                         let deserialized: Result<GameReadyKafkaEvent, _> =
                             serde_json::from_str(payload);
