@@ -285,8 +285,9 @@ pub fn start(
                             router.forward_by_game_id(KafkaEvents::GameReady(g).to_client_event());
                         }
                         Ok(KafkaEvents::PrivateGameRejected(p)) => {
-                            // suppress the observed call to avoid some havoc
-                            println!("priv game rejected  seen -- at router layer");
+                            // there's no game ID associated with
+                            // this game, yet, so we need to 
+                            // forward via client ID
                             router.forward_by_client_id(p.client_id, KafkaEvents::PrivateGameRejected(p).to_client_event())
                         }
                         Ok(e) => {
