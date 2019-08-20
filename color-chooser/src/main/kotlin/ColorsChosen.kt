@@ -4,31 +4,36 @@ data class ColorsChosen(val gameId: GameId, val black: ClientId, val white: Clie
 
     companion object {
         fun resolve(first: ClientGameColorPref, second: ClientGameColorPref): ColorsChosen {
-
+            val noConflict: Boolean by lazy { first.colorPref != second.colorPref }
+            val bf: ColorsChosen by lazy { blackFirst(first, second) }
+            val wf: ColorsChosen by lazy { whiteFirst(first, second) }
             return when {
                 isAny(first.colorPref) ->
                     when (force(second.colorPref)) {
-                        Color.Black -> whiteFirst(first, second)
-                        Color.White -> blackFirst(first, second)
+                        Color.Black -> wf
+                        Color.White -> bf
                     }
                 isAny(second.colorPref) ->
                     when (force(first.colorPref)) {
-                        Color.Black -> blackFirst(first, second)
-                        Color.White -> whiteFirst(first, second)
+                        Color.Black -> bf
+                        Color.White -> wf
                     }
                 // no conflict
-                first.colorPref == ColorPref.Black && first.colorPref != second.colorPref ->
-                    blackFirst(first, second)
-                // no conflict
-                first.colorPref == ColorPref.White && first != second ->
-                    whiteFirst(first, second)
-                // both sides picked the same color
-                else -> {
-                    return when (random()) {
-                        Color.Black -> blackFirst(first, second)
-                        Color.White -> whiteFirst(first, second)
-                    }
+                first.colorPref == ColorPref.Black && noConflict -> {
+                    println("no conflict 1")
+                    bf
                 }
+                // no conflict
+                first.colorPref == ColorPref.White && noConflict -> {
+                    println("no conflict 2")
+                    wf
+                }
+                // both sides picked the same color
+                else ->
+                    when (random()) {
+                        Color.Black -> blackFirst(first, second)
+                        Color.White -> whiteFirst(first, second)
+                    }
             }
         }
 
@@ -42,11 +47,14 @@ data class ColorsChosen(val gameId: GameId, val black: ClientId, val white: Clie
         private fun whiteFirst(first: ClientGameColorPref, second: ClientGameColorPref) =
             ColorsChosen(
                 gameId = first.gameId,
-                black = first.clientId,
-                white = second.clientId
+                black = second.clientId,
+                white = first.clientId
             )
 
-        private fun random(): Color = TODO()
+        private fun random(): Color = when (Random.nextBoolean()) {
+            false -> Color.Black
+            true -> Color.White
+        }
 
         private fun force(cp: ColorPref): Color =
             when (cp) {
@@ -55,11 +63,6 @@ data class ColorsChosen(val gameId: GameId, val black: ClientId, val white: Clie
                 ColorPref.White -> Color.White
             }
 
-
-        private fun other(c: Color) = when (c) {
-            Color.Black -> Color.White
-            Color.White -> Color.Black
-        }
 
     }
 }

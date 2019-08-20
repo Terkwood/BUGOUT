@@ -66,9 +66,18 @@ class TestChoice {
         val clientTwo = UUID.randomUUID()
         val gameId = UUID.randomUUID()
 
+        val c1Pref = ChooseColorPref(clientOne,ColorPref.White)
+        val c2Pref = ChooseColorPref(clientTwo,ColorPref.Black)
+
+        println("c1 pref $c1Pref")
+        println("c2 pref $c2Pref")
+
         val chosen = push(
-            ChooseColorPref(clientOne,ColorPref.White),
-            ChooseColorPref(clientTwo,ColorPref.Black), gameId)
+            c1Pref,
+            c2Pref, gameId)
+
+
+        println("chosen ${chosen?.value()}")
 
         OutputVerifier.compareKeyValue(
             chosen, gameId,
@@ -124,6 +133,8 @@ class TestChoice {
         val chosen = push(
             ChooseColorPref(clientOne,ColorPref.White),
             ChooseColorPref(clientTwo,ColorPref.Any), gameId)
+
+        println("chosen $chosen")
 
         OutputVerifier.compareKeyValue(
             chosen, gameId,
