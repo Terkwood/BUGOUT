@@ -338,6 +338,8 @@ impl Handler for WsSession {
                             }) => self.current_game = Some(game_id),
                             _ => (),
                         }
+                        // TODO remove
+                        println!("ws_out.send({})", serde_json::to_string(&event).unwrap());
                         self.ws_out.send(serde_json::to_string(&event).unwrap())?;
                     }
                 }

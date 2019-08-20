@@ -32,7 +32,7 @@ impl Router {
         }
     }
 
-    pub fn forward_event(&self, ev: ClientEvents) {
+    pub fn forward_by_game_id(&self, ev: ClientEvents) {
         if let Some(gid) = &ev.game_id() {
             if let Some(GameClients {
                 clients,
@@ -263,16 +263,22 @@ pub fn start(
                         Ok(KafkaEvents::MoveMade(m)) => {
                             let u = m.clone();
                             router.set_playerup(u.game_id, u.player.other());
-                            router.forward_event(KafkaEvents::MoveMade(m).to_client_event())
+                            router.forward_by_game_id(KafkaEvents::MoveMade(m).to_client_event())
                         }
                         Ok(KafkaEvents::GameReady(g)) => {
                             router.route_new_game(g.clients.first, g.game_id);
                             router.route_new_game(g.clients.second, g.game_id);
-                            router.forward_event(KafkaEvents::GameReady(g).to_client_event());
+                            router.forward_by_game_id(KafkaEvents::GameReady(g).to_client_event());
+                        }
+                        Ok(KafkaEvents::PrivateGameRejected(p)) => {
+                            // suppress the observed call to avoid some havoc
+                            println!("priv game rejected  seen -- at router layer");
+                            router.forward_by_game_id(KafkaEvents::PrivateGameRejected(p).to_client_event())
                         }
                         Ok(e) => {
                             router.observed(e.game_id());
-                            router.forward_event(e.to_client_event())},
+                            router.forward_by_game_id(e.to_client_event())
+                        },
                         Err(e) =>
                             panic!("Unable to receive kafka event via router channel: {:?}", e),
                     }

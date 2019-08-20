@@ -15,6 +15,9 @@ use crate::model::*;
 use crate::router::RouterCommand;
 use crate::topics::*;
 
+pub const BROKERS: &str = "kafka:9092";
+pub const APP_NAME: &str = "gateway";
+
 const NUM_PREMADE_GAMES: usize = 64;
 
 pub fn start(
@@ -169,6 +172,12 @@ fn start_consumer(
                             PrivateGameRejectedKafkaEvent,
                             _,
                         > = serde_json::from_str(payload);
+
+                        println!(
+                            "kafka.rs has a deserialized rejection in hand:\n{:?}",
+                            deserialized
+                        );
+
                         match deserialized {
                             Err(e) => println!("failed to deserialize priv game reject {}", e),
                             Ok(r) => events_in.send(KafkaEvents::PrivateGameRejected(r)).unwrap(),
