@@ -13,19 +13,15 @@ use uuid::Uuid;
 use crate::json::GameStateJson;
 use crate::model::*;
 use crate::router::RouterCommand;
+use crate::topics::*;
 
-const BROKERS: &str = "kafka:9092";
-const APP_NAME: &str = "gateway";
-const GAME_STATES_TOPIC: &str = "bugout-game-states";
-const MAKE_MOVE_TOPIC: &str = "bugout-make-move-cmd";
-const MOVE_MADE_TOPIC: &str = "bugout-move-made-ev";
-const PROVIDE_HISTORY_TOPIC: &str = "bugout-provide-history-cmd";
-const HISTORY_PROVIDED_TOPIC: &str = "bugout-history-provided-ev";
-const CONSUME_TOPICS: &[&str] = &[MOVE_MADE_TOPIC, HISTORY_PROVIDED_TOPIC];
+pub const BROKERS: &str = "kafka:9092";
+pub const APP_NAME: &str = "gateway";
+
 const NUM_PREMADE_GAMES: usize = 64;
 
 pub fn start(
-    events_in: crossbeam::Sender<Events>,
+    events_in: crossbeam::Sender<KafkaEvents>,
     router_commands_in: crossbeam::Sender<RouterCommand>,
     commands_out: crossbeam::Receiver<KafkaCommands>,
 ) {
@@ -55,6 +51,11 @@ fn start_producer(
                         producer.send(FutureRecord::to(PROVIDE_HISTORY_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
                             .key(&c.game_id.to_string()), 0); // fire & forget
+                    },
+                    Ok(KafkaCommands::JoinPrivateGame(j)) => {
+                        producer.send(FutureRecord::to(JOIN_PRIVATE_GAME_TOPIC)
+                            .payload(&serde_json::to_string(&j).unwrap())
+                            .key(&j.game_id.to_string()), 0); // fire & forget
                     },
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
@@ -114,7 +115,7 @@ fn start_consumer(
     brokers: &str,
     group_id: &str,
     topics: &[&str],
-    events_in: crossbeam::Sender<Events>,
+    events_in: crossbeam::Sender<KafkaEvents>,
 ) {
     let consumer: StreamConsumer = ClientConfig::new()
         .set("group.id", group_id)
@@ -154,16 +155,34 @@ fn start_consumer(
                     MOVE_MADE_TOPIC => {
                         let deserialized: Result<MoveMadeEvent, _> = serde_json::from_str(payload);
                         match deserialized {
-                            Err(e) => println!("failed to deserialized move made {}", e),
-                            Ok(m) => events_in.send(Events::MoveMade(m)).unwrap(),
+                            Err(e) => println!("failed to deserialize move made {}", e),
+                            Ok(m) => events_in.send(KafkaEvents::MoveMade(m)).unwrap(),
                         }
                     }
                     HISTORY_PROVIDED_TOPIC => {
                         let deserialized: Result<HistoryProvidedEvent, _> =
                             serde_json::from_str(payload);
                         match deserialized {
-                            Err(e) => println!("failed to deserialized history prov {}", e),
-                            Ok(h) => events_in.send(Events::HistoryProvided(h)).unwrap(),
+                            Err(e) => println!("failed to deserialize history prov {}", e),
+                            Ok(h) => events_in.send(KafkaEvents::HistoryProvided(h)).unwrap(),
+                        }
+                    }
+                    PRIVATE_GAME_REJECTED_TOPIC => {
+                        let deserialized: Result<
+                            PrivateGameRejectedKafkaEvent,
+                            _,
+                        > = serde_json::from_str(payload);
+                        match deserialized {
+                            Err(e) => println!("failed to deserialize priv game reject {}", e),
+                            Ok(r) => events_in.send(KafkaEvents::PrivateGameRejected(r)).unwrap(),
+                        }
+                    }
+                    GAME_READY_TOPIC => {
+                        let deserialized: Result<GameReadyKafkaEvent, _> =
+                            serde_json::from_str(payload);
+                        match deserialized {
+                            Err(e) => println!("failed to deserialize game ready {}", e),
+                            Ok(g) => events_in.send(KafkaEvents::GameReady(g)).unwrap(),
                         }
                     }
                     other => println!("ERROR Couldn't match kafka events topic: {}", other),

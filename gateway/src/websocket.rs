@@ -29,7 +29,7 @@ pub struct WsSession {
     pub expire_timeout: Option<Timeout>,
     pub channel_recv_timeout: Option<Timeout>,
     pub kafka_commands_in: crossbeam_channel::Sender<KafkaCommands>,
-    pub events_out: Option<crossbeam_channel::Receiver<Events>>,
+    pub events_out: Option<crossbeam_channel::Receiver<ClientEvents>>,
     pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     pub current_game: Option<GameId>,
     pub expire_after: std::time::Instant,
@@ -138,8 +138,8 @@ impl Handler for WsSession {
                 Ok(self.observe())
             }
             Ok(ClientCommands::RequestOpenGame(req)) => {
-                // Tentatively ignore this request if we already have a game
-                // in progress.  Not sure this is perfect, though.
+                // Ignore this request if we already have a game
+                // in progress.
                 if self.current_game.is_none() {
                     let (events_in, events_out) = client_event_channels();
 
@@ -204,7 +204,55 @@ impl Handler for WsSession {
                     }))
                     .map_err(|e| ws::Error::from(Box::new(e)))
                 {
-                    println!("ERROR on send provhist {:?}", e)
+                    println!("ERROR on kafka send provhist {:?}", e)
+                }
+
+                Ok(self.observe())
+            }
+            Ok(ClientCommands::JoinPrivateGame(JoinPrivateGameClientCommand { game_id })) => {
+                // Ignore this request if we already have a game
+                // in progress.
+                if self.current_game.is_none() {
+                    println!("🤝 {} JOINPRIV", session_code(self));
+
+                    if let Some(game_id) = game_id.decode() {
+                        if let Err(e) = self
+                            .kafka_commands_in
+                            .send(KafkaCommands::JoinPrivateGame(
+                                JoinPrivateGameKafkaCommand {
+                                    game_id,
+                                    client_id: self.client_id,
+                                },
+                            ))
+                            .map_err(|e| ws::Error::from(Box::new(e)))
+                        {
+                            println!("ERROR on kafka send join private game {:?}", e)
+                        }
+
+                        let (events_in, events_out) = client_event_channels();
+
+                        // ..and let the router know we're interested in it,
+                        // so that we can receive updates
+                        if let Err(e) =
+                            self.router_commands_in
+                                .send(RouterCommand::JoinPrivateGame {
+                                    client_id: self.client_id,
+                                    game_id,
+                                    events_in,
+                                }) {
+                            println!(
+                                "😠 {} {:<8} sending router command to add client {}",
+                                session_code(self),
+                                "ERROR",
+                                e
+                            )
+                        }
+
+                        //.. and track the out-channel so we can select! on it
+                        self.events_out = Some(events_out);
+                    }
+                } else {
+                    println!("🏴‍☠️ FAILED TO DECODE PRIVATE GAME ID 🏴‍☠️")
                 }
 
                 Ok(self.observe())
@@ -279,13 +327,18 @@ impl Handler for WsSession {
                 if let Some(eo) = &self.events_out {
                     while let Ok(event) = eo.try_recv() {
                         match event {
-                            Events::OpenGameReply(OpenGameReplyEvent {
+                            ClientEvents::OpenGameReply(OpenGameReplyEvent {
                                 game_id,
                                 reply_to: _,
                                 event_id: _,
                             }) => self.current_game = Some(game_id),
+                            ClientEvents::GameReady(GameReadyClientEvent {
+                                game_id,
+                                event_id: _,
+                            }) => self.current_game = Some(game_id),
                             _ => (),
                         }
+
                         self.ws_out.send(serde_json::to_string(&event).unwrap())?;
                     }
                 }
@@ -360,8 +413,8 @@ fn next_expiry() -> Instant {
 }
 
 fn client_event_channels() -> (
-    crossbeam_channel::Sender<Events>,
-    crossbeam_channel::Receiver<Events>,
+    crossbeam_channel::Sender<ClientEvents>,
+    crossbeam_channel::Receiver<ClientEvents>,
 ) {
     unbounded()
 }
