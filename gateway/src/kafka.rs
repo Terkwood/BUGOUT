@@ -172,12 +172,6 @@ fn start_consumer(
                             PrivateGameRejectedKafkaEvent,
                             _,
                         > = serde_json::from_str(payload);
-
-                        println!(
-                            "kafka.rs has a deserialized rejection in hand:\n{:?}",
-                            deserialized
-                        );
-
                         match deserialized {
                             Err(e) => println!("failed to deserialize priv game reject {}", e),
                             Ok(r) => events_in.send(KafkaEvents::PrivateGameRejected(r)).unwrap(),
