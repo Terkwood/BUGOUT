@@ -18,12 +18,10 @@ data class ColorsChosen(val gameId: GameId, val black: ClientId, val white: Clie
                         Color.Black -> bf
                         Color.White -> wf
                     }
-                // no conflict
                 first.colorPref == ColorPref.Black && noConflict -> {
                     println("no conflict 1")
                     bf
                 }
-                // no conflict
                 first.colorPref == ColorPref.White && noConflict -> {
                     println("no conflict 2")
                     wf
