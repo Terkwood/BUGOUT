@@ -147,8 +147,7 @@ class Application(private val brokers: String) {
                 )
             }
 
-
-        // mainly a checkpoint for testing
+        // these will be used to aggregate prefs
         gameColorPref.mapValues { v -> jsonMapper.writeValueAsString(v) }.to(
             Topics.GAME_COLOR_PREF,
             Produced.with(Serdes.UUID(), Serdes.String())
