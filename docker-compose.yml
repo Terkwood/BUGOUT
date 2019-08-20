@@ -57,7 +57,7 @@ services:
     depends_on:
       - "kafka"
   color-chooser:
-    build: game-lobby/.
+    build: color-chooser/.
     links:
       - "kafka"
     depends_on:
