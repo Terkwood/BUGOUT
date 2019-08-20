@@ -114,6 +114,15 @@ class TestChoice {
         )
     }
 
+    @Test
+    fun testConflict() {
+        TODO()
+    }
+
+    @Test
+    fun testMoreConflict() {
+        TODO()
+    }
 
     @Test
     fun testSimpleDemands() {
