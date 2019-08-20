@@ -168,7 +168,7 @@ class Application(private val brokers: String) {
                 allPrefs.add(jsonMapper.readValue(p, ClientGameColorPref::class.java))
                 allPrefs
             }, Materialized.`as`<UUID, AggregatedPrefs, KeyValueStore<Bytes, ByteArray>>(
-                Topics.REDUCE_COLOR_PREFS_STORE
+                Topics.COLOR_PREFS_STORE
             )
                 .withKeySerde(Serdes.UUID())
                 .withValueSerde(Serdes.serdeFrom(AggPrefSer(), AggPrefDes()))
