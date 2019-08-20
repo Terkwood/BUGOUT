@@ -32,6 +32,20 @@ impl Router {
         }
     }
 
+    pub fn forward_by_client_id(&self, client_id: ClientId, ev: ClientEvents) {
+        if let Some(events_in) = self.clients.get(&client_id) {
+            if let Err(e) = events_in.send(ev.clone()) {
+                println!(
+                    "😗 {} {:<8} {:<8} forwarding event by client ID {}",
+                    short_uuid(client_id),
+                    "",
+                    "ERROR",
+                    e
+                )
+            }
+        }
+    }
+
     pub fn forward_by_game_id(&self, ev: ClientEvents) {
         if let Some(gid) = &ev.game_id() {
             if let Some(GameClients {
@@ -273,7 +287,7 @@ pub fn start(
                         Ok(KafkaEvents::PrivateGameRejected(p)) => {
                             // suppress the observed call to avoid some havoc
                             println!("priv game rejected  seen -- at router layer");
-                            router.forward_by_game_id(KafkaEvents::PrivateGameRejected(p).to_client_event())
+                            router.forward_by_client_id(p.client_id, KafkaEvents::PrivateGameRejected(p).to_client_event())
                         }
                         Ok(e) => {
                             router.observed(e.game_id());
