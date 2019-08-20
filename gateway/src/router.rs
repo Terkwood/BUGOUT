@@ -119,7 +119,6 @@ impl Router {
             }
 
             self.clients.remove(&client_id);
-            println!("routing new game {}  to client {}", game_id, client_id)
         }
     }
 
