@@ -40,6 +40,12 @@ services:
       - "kafka"
     depends_on:
       - "kafka"
+  color-chooser:
+    build: color-chooser/.
+    links:
+      - "kafka"
+    depends_on:
+      - "kafka"
   startup:
     build: startup/.
     links:
