@@ -338,7 +338,7 @@ impl Handler for WsSession {
                             }) => self.current_game = Some(game_id),
                             _ => (),
                         }
-                        
+
                         self.ws_out.send(serde_json::to_string(&event).unwrap())?;
                     }
                 }

@@ -286,7 +286,7 @@ pub fn start(
                         }
                         Ok(KafkaEvents::PrivateGameRejected(p)) => {
                             // there's no game ID associated with
-                            // this game, yet, so we need to 
+                            // this game, yet, so we need to
                             // forward via client ID
                             router.forward_by_client_id(p.client_id, KafkaEvents::PrivateGameRejected(p).to_client_event())
                         }
