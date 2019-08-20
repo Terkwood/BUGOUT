@@ -116,12 +116,36 @@ class TestChoice {
 
     @Test
     fun testConflict() {
-        TODO()
+        val clientOne = UUID.randomUUID()
+        val clientTwo = UUID.randomUUID()
+        val gameId = UUID.randomUUID()
+
+        val chosen: ColorsChosen = jsonMapper.readValue(push(
+            ChooseColorPref(clientOne, ColorPref.Black),
+            ChooseColorPref(clientTwo, ColorPref.Black), gameId
+        )?.value(), ColorsChosen::class.java)
+
+        Assertions.assertTrue(when (chosen.black) {
+            clientOne -> chosen.white == clientTwo
+            else -> chosen.black == clientTwo && chosen.white == clientOne
+        })
     }
 
     @Test
     fun testMoreConflict() {
-        TODO()
+        val clientOne = UUID.randomUUID()
+        val clientTwo = UUID.randomUUID()
+        val gameId = UUID.randomUUID()
+
+        val chosen: ColorsChosen = jsonMapper.readValue(push(
+            ChooseColorPref(clientOne, ColorPref.White),
+            ChooseColorPref(clientTwo, ColorPref.White), gameId
+        )?.value(), ColorsChosen::class.java)
+
+        Assertions.assertTrue(when (chosen.black) {
+            clientOne -> chosen.white == clientTwo
+            else -> chosen.black == clientTwo && chosen.white == clientOne
+        })
     }
 
     @Test
