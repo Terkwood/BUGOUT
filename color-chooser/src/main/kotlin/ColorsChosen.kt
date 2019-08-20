@@ -56,8 +56,6 @@ data class ColorsChosen(val gameId: GameId, val black: ClientId, val white: Clie
                 ColorPref.Black -> Color.Black
                 ColorPref.White -> Color.White
             }
-
-
     }
 }
 
