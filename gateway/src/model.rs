@@ -29,6 +29,12 @@ impl Player {
     }
 }
 
+/// Gateway doesn't know about creating public games
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum Visibility {
+    Private,
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct MakeMoveCommand {
     #[serde(rename = "gameId")]
@@ -87,11 +93,28 @@ pub struct JoinPrivateGameKafkaCommand {
     pub client_id: ClientId,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct FindPublicGameKafkaCommand {
+    #[serde(rename = "clientId")]
+    pub client_id: ClientId,
+}
+
+/// Gateway may manually create private games,
+/// but it will never create a public game.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CreatePrivateGameKafkaCommand {
+    #[serde(rename = "clientId")]
+    pub client_id: ClientId,
+    pub visibility: Visibility,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub enum KafkaCommands {
     MakeMove(MakeMoveCommand),
     ProvideHistory(ProvideHistoryCommand),
     JoinPrivateGame(JoinPrivateGameKafkaCommand),
+    FindPublicGame(FindPublicGameKafkaCommand),
+    CreatePrivateGame(CreatePrivateGameKafkaCommand),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
