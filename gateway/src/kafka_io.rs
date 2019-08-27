@@ -45,9 +45,13 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
                     Ok(KafkaCommands::JoinPrivateGame(j)) => {
                         producer.send(FutureRecord::to(JOIN_PRIVATE_GAME_TOPIC)
                             .payload(&serde_json::to_string(&j).unwrap())
-                            .key(&j.game_id.to_string()), 0); // fire & forget
+                            .key(&j.client_id.to_string()), 0); // fire & forget
                     },
-                    Ok(KafkaCommands::FindPublicGame(f)) => unimplemented!(),
+                    Ok(KafkaCommands::FindPublicGame(f)) => {
+                        producer.send(FutureRecord::to(FIND_PUBLIC_GAME_TOPIC)
+                            .payload(&serde_json::to_string(&f).unwrap())
+                            .key(&f.client_id.to_string()), 0); // fire & forget
+                    },
                     Ok(KafkaCommands::CreatePrivateGame(c)) => unimplemented!(),
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
