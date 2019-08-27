@@ -9,8 +9,6 @@ pub type ReqId = Uuid;
 pub type EventId = Uuid;
 pub type ClientId = Uuid;
 
-pub const DEFAULT_BOARD_SIZE: usize = 19;
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Coord {
     pub x: u16,

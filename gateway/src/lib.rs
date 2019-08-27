@@ -16,9 +16,10 @@ extern crate ws;
 
 mod client_events;
 pub mod compact_ids;
+mod constants;
 mod env;
 mod json;
-pub mod kafka;
+pub mod kafka_io;
 mod logging;
 pub mod model;
 pub mod router;

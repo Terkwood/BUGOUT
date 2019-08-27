@@ -1,4 +1,4 @@
-use crate::model::{Captures, Player, DEFAULT_BOARD_SIZE};
+use crate::model::{Captures, Player};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -17,7 +17,7 @@ impl Default for BoardJson {
     fn default() -> BoardJson {
         BoardJson {
             pieces: HashMap::new(),
-            size: DEFAULT_BOARD_SIZE,
+            size: crate::constants::DEFAULT_BOARD_SIZE,
         }
     }
 }
