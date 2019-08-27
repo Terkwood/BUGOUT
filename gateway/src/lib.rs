@@ -17,7 +17,6 @@ extern crate ws;
 mod client_commands;
 mod client_events;
 pub mod compact_ids;
-mod constants;
 mod env;
 pub mod kafka_commands;
 pub mod kafka_events;
