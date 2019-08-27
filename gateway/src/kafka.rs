@@ -153,6 +153,7 @@ fn start_consumer(
     }
 }
 
+/** Because no one wants to .unwrap() a crossbeam send result */
 fn flail_on_fail(send_result: std::result::Result<(), crossbeam::SendError<KafkaEvents>>) {
     if let Err(e) = send_result {
         println!("HALP! Failed to send kafka event in crossbeam: {}", e)
