@@ -9,7 +9,7 @@
 - Powered by [Sabaki](https://sabaki.yichuanshen.de/) and [kafka](https://kafka.apache.org/)
 - Uses a [fork of Sabaki](https://github.com/Terkwood/Sabaki) for the web UI
 - A [public-facing websocket gateway](gateway/README.md) communicates with the browser
-- [Kotlin & Kafka streams adjudicates games](judge/README.md), [announces moves](changelog/README.md), and [will eventually provide lobby functionality](https://github.com/Terkwood/BUGOUT/issues/42)
+- [Kotlin & Kafka streams adjudicates games](judge/README.md), [announces moves](changelog/README.md), [provides game lobby functionality](game-lobby/README.md), and [implements fair color choice for the players](color-chooser/README.md).
 - [A microservice to provide game history on request](history-provider/README.md)
 
 ## Data Flow
