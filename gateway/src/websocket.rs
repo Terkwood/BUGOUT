@@ -9,6 +9,7 @@ use crossbeam_channel::unbounded;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
+use crate::client_events::*;
 use crate::logging::*;
 use crate::model::*;
 use crate::router::RouterCommand;
