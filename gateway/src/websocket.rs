@@ -284,13 +284,10 @@ impl Handler for WsSession {
 
                         // ..and let the router know we're interested in it,
                         // so that we can receive updates
-                        if let Err(e) =
-                            self.router_commands_in
-                                .send(RouterCommand::JoinPrivateGame {
-                                    client_id: self.client_id,
-                                    game_id,
-                                    events_in,
-                                }) {
+                        if let Err(e) = self.router_commands_in.send(RouterCommand::AddClient {
+                            client_id: self.client_id,
+                            events_in,
+                        }) {
                             println!(
                                 "😠 {} {:<8} sending router command to add client {}",
                                 session_code(self),

@@ -207,10 +207,6 @@ pub fn start(
                 recv(router_commands_out) -> command =>
                     match command {
                         Ok(RouterCommand::Observe(game_id)) => router.observed(game_id),
-                        Ok(RouterCommand::JoinPrivateGame { client_id, game_id: _, events_in }) => {
-                            // request the channel, if it's valid we'll follow up below
-                            router.clients.insert(client_id, events_in);
-                        },
                         // A create private game request, or a find public
                         // game request, will result in us tracking a
                         // client_id -> event channel mapping
@@ -219,15 +215,6 @@ pub fn start(
                         Ok(RouterCommand::AddClient { client_id, events_in }) => {
                             router.clients.insert(client_id, events_in);
                         },
-                        // TODO RIP
-                        /*
-                        Ok(RouterCommand::RequestOpenGame{client_id, events_in, req_id}) => {
-                            let game_id = router.add_client(client_id, events_in.clone());
-                            if let Err(err) = events_in.send(ClientEvents::OpenGameReply(OpenGameReplyEvent{game_id, reply_to:req_id, event_id: Uuid::new_v4()})) {
-                                println!("😯 {} {} {:<8} could not send open game reply {}",
-                                    short_uuid(client_id), EMPTY_SHORT_UUID, "ERROR", err)
-                            }
-                        },*/
                         Ok(RouterCommand::DeleteClient{client_id, game_id}) =>
                             router.delete_client(client_id, game_id),
                         Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
@@ -323,11 +310,6 @@ pub enum RouterCommand {
     },
     AddClient {
         client_id: ClientId,
-        events_in: Sender<ClientEvents>,
-    },
-    JoinPrivateGame {
-        client_id: ClientId,
-        game_id: GameId,
         events_in: Sender<ClientEvents>,
     },
 }
