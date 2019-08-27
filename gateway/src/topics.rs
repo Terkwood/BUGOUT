@@ -1,4 +1,3 @@
-pub const GAME_STATES_TOPIC: &str = "bugout-game-states";
 pub const MAKE_MOVE_TOPIC: &str = "bugout-make-move-cmd";
 pub const PROVIDE_HISTORY_TOPIC: &str = "bugout-provide-history-cmd";
 pub const JOIN_PRIVATE_GAME_TOPIC: &str = "bugout-join-private-game-cmd";

@@ -26,11 +26,7 @@ fn main() {
         Receiver<RouterCommand>,
     ) = unbounded();
 
-    kafka::start(
-        kafka_events_in,
-        router_commands_in.clone(),
-        kafka_commands_out,
-    );
+    kafka::start(kafka_events_in, kafka_commands_out);
 
     router::start(router_commands_out, kafka_events_out);
 
