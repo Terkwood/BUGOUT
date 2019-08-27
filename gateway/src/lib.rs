@@ -14,6 +14,7 @@ extern crate serde_json;
 extern crate time;
 extern crate ws;
 
+mod client_commands;
 mod client_events;
 pub mod compact_ids;
 mod constants;
