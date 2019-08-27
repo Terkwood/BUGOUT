@@ -42,12 +42,6 @@ pub struct MakeMoveCommand {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct RequestGameIdCommand {
-    #[serde(rename = "reqId")]
-    pub req_id: ReqId,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ProvideHistoryCommand {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
@@ -69,15 +63,22 @@ pub struct JoinPrivateGameClientCommand {
     pub game_id: CompactId,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct FindPublicGameClientCommand {}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct CreatePrivateGameClientCommand {}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(tag = "type")]
 pub enum ClientCommands {
     MakeMove(MakeMoveCommand),
     Beep,
-    RequestOpenGame(RequestGameIdCommand),
     Reconnect(ReconnectCommand),
     ProvideHistory(ProvideHistoryCommand),
     JoinPrivateGame(JoinPrivateGameClientCommand),
+    FindPublicGame(FindPublicGameClientCommand),
+    CreatePrivateGame(CreatePrivateGameClientCommand),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

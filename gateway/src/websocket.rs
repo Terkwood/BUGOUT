@@ -137,12 +137,13 @@ impl Handler for WsSession {
 
                 Ok(self.observe())
             }
-            Ok(ClientCommands::RequestOpenGame(req)) => {
+            // TODO RIP ⚰️ ☠️
+            /*Ok(ClientCommands::RequestOpenGame(req)) => {
                 // Ignore this request if we already have a game
                 // in progress.
                 if self.current_game.is_none() {
                     let (events_in, events_out) = client_event_channels();
-
+            
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
                     if let Err(e) = self
@@ -159,12 +160,12 @@ impl Handler for WsSession {
                             e
                         )
                     }
-
+            
                     //.. and track the out-channel so we can select! on it
                     self.events_out = Some(events_out);
                 }
                 Ok(self.observe())
-            }
+            }*/
             Ok(ClientCommands::Reconnect(ReconnectCommand { game_id, req_id })) => {
                 // accept whatever game_id the client shares with us
                 self.current_game = Some(game_id);
@@ -209,6 +210,8 @@ impl Handler for WsSession {
 
                 Ok(self.observe())
             }
+            Ok(ClientCommands::FindPublicGame(_)) => unimplemented!(),
+            Ok(ClientCommands::CreatePrivateGame(_)) => unimplemented!(),
             Ok(ClientCommands::JoinPrivateGame(JoinPrivateGameClientCommand { game_id })) => {
                 // Ignore this request if we already have a game
                 // in progress.

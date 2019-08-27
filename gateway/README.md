@@ -4,9 +4,12 @@ WebSocket server which negotiates between BUGOUT frontend and an internal kafka 
 
 ## Client commands accepted
 
-- Make move
-- Request open game
+- Make Move
+- Find Public Game
+- Create Private Pame
+- Join Private Game
 - Reconnect
+- Provide History
 - Beep (client-originated keepalive)
 
 ## Overloaded router functionality
