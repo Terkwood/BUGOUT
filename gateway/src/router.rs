@@ -8,7 +8,7 @@ use crossbeam_channel::select;
 
 use uuid::Uuid;
 
-use crate::logging::{short_uuid, EMPTY_SHORT_UUID, MEGA_DEATH_STRING};
+use crate::logging::{short_uuid, EMPTY_SHORT_UUID};
 use crate::model::*;
 
 const GAME_CLIENT_CLEANUP_PERIOD_MS: u64 = 10_000;
@@ -122,24 +122,6 @@ impl Router {
         }
     }
 
-    pub fn add_client(&mut self, client_id: ClientId, events_in: Sender<ClientEvents>) -> GameId {
-        let newbie = ClientSender {
-            client_id,
-            events_in,
-        };
-
-        let game_id = self.pop_open_game_id();
-        match self.game_clients.get_mut(&game_id) {
-            Some(gs) => gs.add_client(newbie),
-            None => {
-                let with_newbie = GameClients::new(newbie);
-                self.game_clients.insert(game_id, with_newbie);
-            }
-        }
-
-        game_id
-    }
-
     fn reconnect(&mut self, client_id: ClientId, game_id: GameId, events_in: Sender<ClientEvents>) {
         let cs = ClientSender {
             client_id,
@@ -207,27 +189,6 @@ impl Router {
         self.clients.remove(&client_id);
 
         self.cleanup_game_clients();
-    }
-
-    /// This is a big fat hack...
-    /// We want the game IDs to be data driven via kafka.
-    /// But this is better than having the game IDs hardcoded.
-    pub fn register_open_game(&mut self, game_id: GameId) {
-        // Register duplicates as we'll plan to consume two at a time
-        self.available_games.push(game_id);
-        self.available_games.push(game_id);
-    }
-
-    fn pop_open_game_id(&mut self) -> GameId {
-        let popped = self.available_games.pop();
-        if let Some(open_game_id) = popped {
-            open_game_id
-        } else {
-            panic!(
-                "☠️ {} {} {:<8} Out of game IDs!",
-                MEGA_DEATH_STRING, MEGA_DEATH_STRING, "UBERFAIL"
-            )
-        }
     }
 }
 

@@ -9,7 +9,6 @@ use rdkafka::message::Message;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
 use crate::model::*;
-use crate::router::RouterCommand;
 use crate::topics::*;
 
 pub const BROKERS: &str = "kafka:9092";
