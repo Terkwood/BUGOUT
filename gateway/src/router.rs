@@ -248,17 +248,23 @@ pub fn start(
                             // request the channel, if it's valid we'll follow up below
                             router.clients.insert(client_id, events_in);
                         },
+                        Ok(RouterCommand::FindPublicGame { client_id, events_in }) => {
+                            router.clients.insert(client_id, events_in);
+                        },
+                        Ok(RouterCommand::CreatePrivateGame { client_id, events_in }) => {
+                            router.clients.insert(client_id, events_in);
+                        },
+                        // TODO RIP
+                        /*
                         Ok(RouterCommand::RequestOpenGame{client_id, events_in, req_id}) => {
                             let game_id = router.add_client(client_id, events_in.clone());
                             if let Err(err) = events_in.send(ClientEvents::OpenGameReply(OpenGameReplyEvent{game_id, reply_to:req_id, event_id: Uuid::new_v4()})) {
                                 println!("😯 {} {} {:<8} could not send open game reply {}",
                                     short_uuid(client_id), EMPTY_SHORT_UUID, "ERROR", err)
                             }
-                        },
+                        },*/
                         Ok(RouterCommand::DeleteClient{client_id, game_id}) =>
                             router.delete_client(client_id, game_id),
-                        Ok(RouterCommand::RegisterOpenGame{game_id}) =>
-                            router.register_open_game(game_id),
                         Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
                             router.reconnect(client_id, game_id, events_in.clone());
                             if let Err(err) = events_in.send(ClientEvents::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
@@ -336,16 +342,8 @@ struct ClientSender {
 #[derive(Debug, Clone)]
 pub enum RouterCommand {
     Observe(GameId),
-    RequestOpenGame {
-        client_id: ClientId,
-        events_in: Sender<ClientEvents>,
-        req_id: ReqId,
-    },
     DeleteClient {
         client_id: ClientId,
-        game_id: GameId,
-    },
-    RegisterOpenGame {
         game_id: GameId,
     },
     Reconnect {
@@ -353,6 +351,14 @@ pub enum RouterCommand {
         game_id: GameId,
         events_in: Sender<ClientEvents>,
         req_id: ReqId,
+    },
+    FindPublicGame {
+        client_id: ClientId,
+        events_in: Sender<ClientEvents>,
+    },
+    CreatePrivateGame {
+        client_id: ClientId,
+        events_in: Sender<ClientEvents>,
     },
     JoinPrivateGame {
         client_id: ClientId,

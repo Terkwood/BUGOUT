@@ -190,7 +190,6 @@ pub struct PrivateGameRejectedClientEvent {
 pub enum ClientEvents {
     MoveMade(MoveMadeEvent),
     MoveRejected(MoveRejectedEvent),
-    OpenGameReply(OpenGameReplyEvent),
     Reconnected(ReconnectedEvent),
     HistoryProvided(HistoryProvidedEvent),
     GameReady(GameReadyClientEvent),
@@ -202,7 +201,6 @@ impl ClientEvents {
         match self {
             ClientEvents::MoveMade(e) => Some(e.game_id),
             ClientEvents::MoveRejected(e) => Some(e.game_id),
-            ClientEvents::OpenGameReply(e) => Some(e.game_id),
             ClientEvents::Reconnected(e) => Some(e.game_id),
             ClientEvents::HistoryProvided(e) => Some(e.game_id),
             ClientEvents::GameReady(e) => Some(e.game_id),

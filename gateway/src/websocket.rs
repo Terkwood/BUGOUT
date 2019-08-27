@@ -330,11 +330,6 @@ impl Handler for WsSession {
                 if let Some(eo) = &self.events_out {
                     while let Ok(event) = eo.try_recv() {
                         match event {
-                            ClientEvents::OpenGameReply(OpenGameReplyEvent {
-                                game_id,
-                                reply_to: _,
-                                event_id: _,
-                            }) => self.current_game = Some(game_id),
                             ClientEvents::GameReady(GameReadyClientEvent {
                                 game_id,
                                 event_id: _,
