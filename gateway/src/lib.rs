@@ -19,7 +19,6 @@ mod client_events;
 pub mod compact_ids;
 mod constants;
 mod env;
-mod json;
 pub mod kafka_commands;
 pub mod kafka_events;
 pub mod kafka_io;
