@@ -25,6 +25,7 @@ pub fn start(
     thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS, events_in));
 }
 
+/// Pay attention to the topic keys in the loop 🔄 👀
 fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
     let producer = configure_producer(BROKERS);
 
@@ -52,7 +53,11 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
                             .payload(&serde_json::to_string(&f).unwrap())
                             .key(&f.client_id.to_string()), 0); // fire & forget
                     },
-                    Ok(KafkaCommands::CreatePrivateGame(c)) => unimplemented!(),
+                    Ok(KafkaCommands::CreatePrivateGame(c)) =>{
+                        producer.send(FutureRecord::to(CREATE_GAME_TOPIC)
+                            .payload(&serde_json::to_string(&c).unwrap())
+                            .key(&c.client_id.to_string()), 0); // fire & forget
+                    },
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
         }
