@@ -105,7 +105,7 @@ fn start_consumer(
                         let deserialized: Result<MoveMadeEvent, _> = serde_json::from_str(payload);
                         match deserialized {
                             Err(e) => println!("failed to deserialize move made {}", e),
-                            Ok(m) => events_in.send(KafkaEvents::MoveMade(m)).unwrap(),
+                            Ok(m) => flail_on_fail(events_in.send(KafkaEvents::MoveMade(m))),
                         }
                     }
                     HISTORY_PROVIDED_TOPIC => {
@@ -113,7 +113,7 @@ fn start_consumer(
                             serde_json::from_str(payload);
                         match deserialized {
                             Err(e) => println!("failed to deserialize history prov {}", e),
-                            Ok(h) => events_in.send(KafkaEvents::HistoryProvided(h)).unwrap(),
+                            Ok(h) => flail_on_fail(events_in.send(KafkaEvents::HistoryProvided(h))),
                         }
                     }
                     PRIVATE_GAME_REJECTED_TOPIC => {
@@ -123,7 +123,9 @@ fn start_consumer(
                         > = serde_json::from_str(payload);
                         match deserialized {
                             Err(e) => println!("failed to deserialize priv game reject {}", e),
-                            Ok(r) => events_in.send(KafkaEvents::PrivateGameRejected(r)).unwrap(),
+                            Ok(r) => {
+                                flail_on_fail(events_in.send(KafkaEvents::PrivateGameRejected(r)))
+                            }
                         }
                     }
                     GAME_READY_TOPIC => {
@@ -131,13 +133,28 @@ fn start_consumer(
                             serde_json::from_str(payload);
                         match deserialized {
                             Err(e) => println!("failed to deserialize game ready {}", e),
-                            Ok(g) => events_in.send(KafkaEvents::GameReady(g)).unwrap(),
+                            Ok(g) => flail_on_fail(events_in.send(KafkaEvents::GameReady(g))),
                         }
                     }
-                    WAIT_FOR_OPPONENT_TOPIC => unimplemented!(),
+                    WAIT_FOR_OPPONENT_TOPIC => {
+                        let deserialized: Result<
+                            WaitForOpponentKafkaEvent,
+                            _,
+                        > = serde_json::from_str(payload);
+                        match deserialized {
+                            Err(e) => println!("failed to deserialize wait for opponent {}", e),
+                            Ok(w) => flail_on_fail(events_in.send(KafkaEvents::WaitForOpponent(w))),
+                        }
+                    }
                     other => println!("ERROR Couldn't match kafka events topic: {}", other),
                 }
             }
         }
+    }
+}
+
+fn flail_on_fail(send_result: std::result::Result<(), crossbeam::SendError<KafkaEvents>>) {
+    if let Err(e) = send_result {
+        println!("HALP! Failed to send kafka event in crossbeam: {}", e)
     }
 }
