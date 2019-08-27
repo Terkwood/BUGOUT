@@ -104,7 +104,7 @@ class Judge(private val brokers: String) {
 
         moveAcceptedStream.mapValues { v ->
             println(
-                "⚖️          ️${v.gameId.short()} ACCEPT   ${v
+                "⚖️           ️${v.gameId.short()} ACCEPT   ${v
                     .player} @ ${v
                     .coord} capturing ${v.captured.joinToString(",")}"
             )
