@@ -134,6 +134,7 @@ fn start_consumer(
                             Ok(g) => events_in.send(KafkaEvents::GameReady(g)).unwrap(),
                         }
                     }
+                    WAIT_FOR_OPPONENT_TOPIC => unimplemented!(),
                     other => println!("ERROR Couldn't match kafka events topic: {}", other),
                 }
             }

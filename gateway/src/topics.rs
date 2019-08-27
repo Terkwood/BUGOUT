@@ -6,10 +6,12 @@ pub const MOVE_MADE_TOPIC: &str = "bugout-move-made-ev";
 pub const HISTORY_PROVIDED_TOPIC: &str = "bugout-history-provided-ev";
 pub const PRIVATE_GAME_REJECTED_TOPIC: &str = "bugout-private-game-rejected-ev";
 pub const GAME_READY_TOPIC: &str = "bugout-game-ready-ev";
+pub const WAIT_FOR_OPPONENT_TOPIC: &str = "bugout-wait-for-opponent-ev";
 
 pub const CONSUME_TOPICS: &[&str] = &[
     MOVE_MADE_TOPIC,
     HISTORY_PROVIDED_TOPIC,
     PRIVATE_GAME_REJECTED_TOPIC,
     GAME_READY_TOPIC,
+    WAIT_FOR_OPPONENT_TOPIC,
 ];
