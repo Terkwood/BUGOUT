@@ -88,4 +88,14 @@ mod tests {
 
         assert_eq!(d, ClientCommands::CreatePrivateGame)
     }
+
+    #[test]
+    fn deserialize_beep_client_command() {
+        let json = "{\"type\":\"Beep\"}";
+
+        let d: ClientCommands = serde_json::from_str(json).unwrap();
+
+        assert_eq!(d, ClientCommands::Beep)
+    }
+
 }
