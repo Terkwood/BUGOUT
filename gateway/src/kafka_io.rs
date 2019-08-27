@@ -8,6 +8,7 @@ use rdkafka::consumer::{CommitMode, Consumer};
 use rdkafka::message::Message;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
+use crate::kafka_commands::*;
 use crate::kafka_events::*;
 use crate::model::*;
 use crate::topics::*;

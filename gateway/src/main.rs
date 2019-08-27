@@ -2,8 +2,8 @@ extern crate gateway;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
+use gateway::kafka_commands::KafkaCommands;
 use gateway::kafka_events::KafkaEvents;
-use gateway::model::KafkaCommands;
 use gateway::router::RouterCommand;
 use gateway::websocket::WsSession;
 use gateway::{kafka_io, router};
