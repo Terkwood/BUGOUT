@@ -70,4 +70,22 @@ mod tests {
             })
         )
     }
+
+    #[test]
+    fn deserialize_find_public_game_client_command() {
+        let json = "{\"type\":\"FindPublicGame\"}";
+
+        let d: ClientCommands = serde_json::from_str(json).unwrap();
+
+        assert_eq!(d, ClientCommands::FindPublicGame)
+    }
+
+    #[test]
+    fn deserialize_create_private_game_client_command() {
+        let json = "{\"type\":\"CreatePrivateGame\"}";
+
+        let d: ClientCommands = serde_json::from_str(json).unwrap();
+
+        assert_eq!(d, ClientCommands::CreatePrivateGame)
+    }
 }
