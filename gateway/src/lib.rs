@@ -22,7 +22,7 @@ pub mod kafka_commands;
 pub mod kafka_events;
 pub mod kafka_io;
 mod logging;
-pub mod model;
+mod model;
 pub mod router;
 mod topics;
 pub mod websocket;
