@@ -53,7 +53,7 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
                             .payload(&serde_json::to_string(&f).unwrap())
                             .key(&f.client_id.to_string()), 0); // fire & forget
                     },
-                    Ok(KafkaCommands::CreatePrivateGame(c)) =>{
+                    Ok(KafkaCommands::CreateGame(c)) =>{
                         producer.send(FutureRecord::to(CREATE_GAME_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
                             .key(&c.client_id.to_string()), 0); // fire & forget

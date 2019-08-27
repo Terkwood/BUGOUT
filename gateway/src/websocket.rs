@@ -245,14 +245,14 @@ impl Handler for WsSession {
 
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
-                    if let Err(e) = self
-                        .router_commands_in
-                        .send(RouterCommand::CreatePrivateGame {
+                    if let Err(e) = self.kafka_commands_in.send(KafkaCommands::CreateGame(
+                        CreateGameKafkaCommand {
                             client_id: self.client_id,
-                            events_in,
-                        }) {
+                            visibility: Visibility::Private,
+                        },
+                    )) {
                         println!(
-                            "😠 {} {:<8} crossbeam sending router command {}",
+                            "😠 {} {:<8} crossbeam sending kafka command {}",
                             session_code(self),
                             "ERROR",
                             e

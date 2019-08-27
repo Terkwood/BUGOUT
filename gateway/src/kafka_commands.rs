@@ -19,7 +19,7 @@ pub struct FindPublicGameKafkaCommand {
 /// Gateway may manually create private games,
 /// but it will never create a public game.
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CreatePrivateGameKafkaCommand {
+pub struct CreateGameKafkaCommand {
     #[serde(rename = "clientId")]
     pub client_id: ClientId,
     pub visibility: Visibility,
@@ -31,5 +31,5 @@ pub enum KafkaCommands {
     ProvideHistory(ProvideHistoryCommand),
     JoinPrivateGame(JoinPrivateGameKafkaCommand),
     FindPublicGame(FindPublicGameKafkaCommand),
-    CreatePrivateGame(CreatePrivateGameKafkaCommand),
+    CreateGame(CreateGameKafkaCommand),
 }
