@@ -211,10 +211,12 @@ pub fn start(
                             // request the channel, if it's valid we'll follow up below
                             router.clients.insert(client_id, events_in);
                         },
-                        Ok(RouterCommand::FindPublicGame { client_id, events_in }) => {
-                            router.clients.insert(client_id, events_in);
-                        },
-                        Ok(RouterCommand::CreatePrivateGame { client_id, events_in }) => {
+                        // A create private game request, or a find public
+                        // game request, will result in us tracking a
+                        // client_id -> event channel mapping
+                        // We'll use this to send messages back to the browser,
+                        // later
+                        Ok(RouterCommand::AddClient { client_id, events_in }) => {
                             router.clients.insert(client_id, events_in);
                         },
                         // TODO RIP
@@ -319,11 +321,7 @@ pub enum RouterCommand {
         events_in: Sender<ClientEvents>,
         req_id: ReqId,
     },
-    FindPublicGame {
-        client_id: ClientId,
-        events_in: Sender<ClientEvents>,
-    },
-    CreatePrivateGame {
+    AddClient {
         client_id: ClientId,
         events_in: Sender<ClientEvents>,
     },

@@ -216,16 +216,31 @@ impl Handler for WsSession {
                 // Ignore this request if we already have a game
                 // in progress.
                 if self.current_game.is_none() {
+                    // ..and let the router know we're interested in it,
+                    // so that we can receive updates
+                    if let Err(e) = self.kafka_commands_in.send(KafkaCommands::FindPublicGame(
+                        FindPublicGameKafkaCommand {
+                            client_id: self.client_id,
+                        },
+                    )) {
+                        println!(
+                            "😠 {} {:<8} kafka sending find public game command {}",
+                            session_code(self),
+                            "ERROR",
+                            e
+                        )
+                    }
+
                     let (events_in, events_out) = client_event_channels();
 
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
-                    if let Err(e) = self.router_commands_in.send(RouterCommand::FindPublicGame {
+                    if let Err(e) = self.router_commands_in.send(RouterCommand::AddClient {
                         client_id: self.client_id,
                         events_in,
                     }) {
                         println!(
-                            "😠 {} {:<8} crossbeam sending router command {}",
+                            "😠 {} {:<8} sending router command to add client {}",
                             session_code(self),
                             "ERROR",
                             e
@@ -245,14 +260,24 @@ impl Handler for WsSession {
 
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
-                    if let Err(e) = self.kafka_commands_in.send(KafkaCommands::CreateGame(
-                        CreateGameKafkaCommand {
+                    if let Err(e) = self
+                        .kafka_commands_in
+                        .send(KafkaCommands::CreateGame(CreateGameKafkaCommand {
                             client_id: self.client_id,
                             visibility: Visibility::Private,
-                        },
-                    )) {
+                        }))
+                        .map_err(|e| ws::Error::from(Box::new(e)))
+                    {
+                        println!("ERROR on kafka send join private game {:?}", e)
+                    }
+                    // ..and let the router know we're interested in it,
+                    // so that we can receive updates
+                    if let Err(e) = self.router_commands_in.send(RouterCommand::AddClient {
+                        client_id: self.client_id,
+                        events_in,
+                    }) {
                         println!(
-                            "😠 {} {:<8} crossbeam sending kafka command {}",
+                            "😠 {} {:<8} sending router command to add client {}",
                             session_code(self),
                             "ERROR",
                             e
