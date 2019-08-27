@@ -184,7 +184,7 @@ impl Handler for WsSession {
 
                 Ok(self.observe())
             }
-            Ok(ClientCommands::FindPublicGame(_)) => {
+            Ok(ClientCommands::FindPublicGame) => {
                 // Ignore this request if we already have a game
                 // in progress.
                 if self.current_game.is_none() {
@@ -224,7 +224,7 @@ impl Handler for WsSession {
                 }
                 Ok(self.observe())
             }
-            Ok(ClientCommands::CreatePrivateGame(_)) => {
+            Ok(ClientCommands::CreatePrivateGame) => {
                 // Ignore this request if we already have a game
                 // in progress.
                 if self.current_game.is_none() {

@@ -17,12 +17,6 @@ pub struct JoinPrivateGameClientCommand {
     pub game_id: CompactId,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct FindPublicGameClientCommand {}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct CreatePrivateGameClientCommand {}
-
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(tag = "type")]
 pub enum ClientCommands {
@@ -31,8 +25,8 @@ pub enum ClientCommands {
     Reconnect(ReconnectCommand),
     ProvideHistory(ProvideHistoryCommand),
     JoinPrivateGame(JoinPrivateGameClientCommand),
-    FindPublicGame(FindPublicGameClientCommand),
-    CreatePrivateGame(CreatePrivateGameClientCommand),
+    FindPublicGame,
+    CreatePrivateGame,
 }
 
 #[cfg(test)]
