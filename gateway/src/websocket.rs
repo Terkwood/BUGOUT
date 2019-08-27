@@ -237,7 +237,33 @@ impl Handler for WsSession {
                 }
                 Ok(self.observe())
             }
-            Ok(ClientCommands::CreatePrivateGame(_)) => unimplemented!(),
+            Ok(ClientCommands::CreatePrivateGame(_)) => {
+                // Ignore this request if we already have a game
+                // in progress.
+                if self.current_game.is_none() {
+                    let (events_in, events_out) = client_event_channels();
+
+                    // ..and let the router know we're interested in it,
+                    // so that we can receive updates
+                    if let Err(e) = self
+                        .router_commands_in
+                        .send(RouterCommand::CreatePrivateGame {
+                            client_id: self.client_id,
+                            events_in,
+                        }) {
+                        println!(
+                            "😠 {} {:<8} crossbeam sending router command {}",
+                            session_code(self),
+                            "ERROR",
+                            e
+                        )
+                    }
+
+                    //.. and track the out-channel so we can select! on it
+                    self.events_out = Some(events_out);
+                }
+                Ok(self.observe())
+            }
             Ok(ClientCommands::JoinPrivateGame(JoinPrivateGameClientCommand { game_id })) => {
                 // Ignore this request if we already have a game
                 // in progress.
