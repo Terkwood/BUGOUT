@@ -9,6 +9,7 @@ use crossbeam_channel::select;
 use uuid::Uuid;
 
 use crate::client_events::ClientEvents;
+use crate::kafka_events::KafkaEvents;
 use crate::logging::{short_uuid, EMPTY_SHORT_UUID};
 use crate::model::*;
 
