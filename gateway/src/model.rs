@@ -170,7 +170,25 @@ pub struct GameReadyKafkaEvent {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct WaitForOpponentKafkaEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    #[serde(rename = "clientId")]
+    pub client_id: ClientId,
+    #[serde(rename = "eventId")]
+    pub event_id: EventId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameReadyClientEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    #[serde(rename = "eventId")]
+    pub event_id: EventId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct WaitForOpponentClientEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
     #[serde(rename = "eventId")]
@@ -194,6 +212,7 @@ pub enum ClientEvents {
     HistoryProvided(HistoryProvidedEvent),
     GameReady(GameReadyClientEvent),
     PrivateGameRejected(PrivateGameRejectedClientEvent),
+    WaitForOpponent(WaitForOpponentClientEvent),
 }
 
 impl ClientEvents {
@@ -204,6 +223,7 @@ impl ClientEvents {
             ClientEvents::Reconnected(e) => Some(e.game_id),
             ClientEvents::HistoryProvided(e) => Some(e.game_id),
             ClientEvents::GameReady(e) => Some(e.game_id),
+            ClientEvents::WaitForOpponent(w) => Some(w.game_id),
             _ => None, // TODO priv game rejected
         }
     }
@@ -225,6 +245,7 @@ pub enum KafkaEvents {
     HistoryProvided(HistoryProvidedEvent),
     GameReady(GameReadyKafkaEvent),
     PrivateGameRejected(PrivateGameRejectedKafkaEvent),
+    WaitForOpponent(WaitForOpponentKafkaEvent),
 }
 
 impl KafkaEvents {
@@ -243,6 +264,11 @@ impl KafkaEvents {
                     event_id: p.event_id,
                 })
             }
+            KafkaEvents::WaitForOpponent(WaitForOpponentKafkaEvent {
+                game_id,
+                client_id: _,
+                event_id,
+            }) => ClientEvents::WaitForOpponent(WaitForOpponentClientEvent { game_id, event_id }),
         }
     }
 
@@ -253,6 +279,7 @@ impl KafkaEvents {
             KafkaEvents::HistoryProvided(e) => e.game_id,
             KafkaEvents::GameReady(e) => e.game_id,
             KafkaEvents::PrivateGameRejected(e) => e.game_id,
+            KafkaEvents::WaitForOpponent(e) => e.game_id,
         }
     }
 }

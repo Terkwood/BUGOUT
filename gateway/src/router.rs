@@ -295,6 +295,9 @@ pub fn start(
                             // forward via client ID
                             router.forward_by_client_id(p.client_id, KafkaEvents::PrivateGameRejected(p).to_client_event())
                         }
+                        Ok(KafkaEvents::WaitForOpponent(w)) => {
+                            unimplemented!()
+                        }
                         Ok(e) => {
                             router.observed(e.game_id());
                             router.forward_by_game_id(e.to_client_event())
