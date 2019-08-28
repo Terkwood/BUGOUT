@@ -248,8 +248,8 @@ pub fn start(
                             router.forward_by_client_id(p.client_id, KafkaEvents::PrivateGameRejected(p).to_client_event())
                         }
                         Ok(KafkaEvents::WaitForOpponent(w)) => {
-                            // Wait until GameReady to associate this client with a game id
-                            router.forward_by_client_id(w.client_id, KafkaEvents::WaitForOpponent(w).to_client_event())
+                            router.route_new_game(w.client_id, w.game_id);
+                            router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
                         }
                         Ok(e) => {
                             router.observed(e.game_id());

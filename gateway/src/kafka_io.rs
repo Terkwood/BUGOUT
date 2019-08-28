@@ -146,7 +146,6 @@ fn start_consumer(
                         let deserialized: Result<GameReadyKafkaEvent, _> =
                             serde_json::from_str(payload);
 
-                        println!("message on GAME READY topic {:?}", deserialized);
                         match deserialized {
                             Err(e) => println!("failed to deserialize game ready {}", e),
                             Ok(g) => flail_on_fail(events_in.send(KafkaEvents::GameReady(g))),
@@ -158,7 +157,6 @@ fn start_consumer(
                             _,
                         > = serde_json::from_str(payload);
 
-                        println!("message on wait for oppo topic {:?}", deserialized);
                         match deserialized {
                             Err(e) => println!("failed to deserialize wait for opponent {}", e),
                             Ok(w) => flail_on_fail(events_in.send(KafkaEvents::WaitForOpponent(w))),

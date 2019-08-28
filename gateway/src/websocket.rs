@@ -228,7 +228,7 @@ impl Handler for WsSession {
             }
             Ok(ClientCommands::CreatePrivateGame) => {
                 println!("🔒 {} CRETPRIV", session_code(self));
-                
+
                 // Ignore this request if we already have a game
                 // in progress.
                 if self.current_game.is_none() {
@@ -383,7 +383,17 @@ impl Handler for WsSession {
                             ClientEvents::GameReady(GameReadyClientEvent {
                                 game_id,
                                 event_id: _,
-                            }) => self.current_game = Some(game_id),
+                            }) => {
+                                self.current_game = Some(game_id);
+                                println!("🎳 {} {:<8}", session_code(self), "GAMEREDY");
+                            }
+                            ClientEvents::WaitForOpponent(WaitForOpponentClientEvent {
+                                game_id,
+                                event_id: _,
+                            }) => {
+                                self.current_game = Some(game_id);
+                                println!("⏳ {} {:<8}", session_code(self), "WAITOPPO");
+                            }
                             _ => (),
                         }
 
