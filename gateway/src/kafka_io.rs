@@ -49,6 +49,7 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
                             .key(&j.client_id.to_string()), 0); // fire & forget
                     },
                     Ok(KafkaCommands::FindPublicGame(f)) => {
+                        println!("KAFKA FIND PUBLIC GAME ! ! ! ");
                         producer.send(FutureRecord::to(FIND_PUBLIC_GAME_TOPIC)
                             .payload(&serde_json::to_string(&f).unwrap())
                             .key(&f.client_id.to_string()), 0); // fire & forget
@@ -144,6 +145,8 @@ fn start_consumer(
                     GAME_READY_TOPIC => {
                         let deserialized: Result<GameReadyKafkaEvent, _> =
                             serde_json::from_str(payload);
+
+                        println!("message on GAME READY topic {:?}", deserialized);
                         match deserialized {
                             Err(e) => println!("failed to deserialize game ready {}", e),
                             Ok(g) => flail_on_fail(events_in.send(KafkaEvents::GameReady(g))),
@@ -154,6 +157,8 @@ fn start_consumer(
                             WaitForOpponentKafkaEvent,
                             _,
                         > = serde_json::from_str(payload);
+
+                        println!("message on wait for oppo topic {:?}", deserialized);
                         match deserialized {
                             Err(e) => println!("failed to deserialize wait for opponent {}", e),
                             Ok(w) => flail_on_fail(events_in.send(KafkaEvents::WaitForOpponent(w))),
