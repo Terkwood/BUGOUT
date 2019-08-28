@@ -185,6 +185,8 @@ impl Handler for WsSession {
                 Ok(self.observe())
             }
             Ok(ClientCommands::FindPublicGame) => {
+                println!("🤝 {} FINDPUBG", session_code(self));
+
                 // Ignore this request if we already have a game
                 // in progress.
                 if self.current_game.is_none() {
@@ -225,6 +227,8 @@ impl Handler for WsSession {
                 Ok(self.observe())
             }
             Ok(ClientCommands::CreatePrivateGame) => {
+                println!("🔒 {} CRETPRIV", session_code(self));
+                
                 // Ignore this request if we already have a game
                 // in progress.
                 if self.current_game.is_none() {
@@ -262,11 +266,11 @@ impl Handler for WsSession {
                 Ok(self.observe())
             }
             Ok(ClientCommands::JoinPrivateGame(JoinPrivateGameClientCommand { game_id })) => {
+                println!("🔑 {} JOINPRIV", session_code(self));
+
                 // Ignore this request if we already have a game
                 // in progress.
                 if self.current_game.is_none() {
-                    println!("🤝 {} JOINPRIV", session_code(self));
-
                     if let Some(game_id) = game_id.decode() {
                         if let Err(e) = self
                             .kafka_commands_in
