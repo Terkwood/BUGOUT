@@ -391,6 +391,8 @@ impl Handler for WsSession {
                                 game_id,
                                 event_id: _,
                             }) => {
+                                // TODO not sure this assignment will survive
+                                // TODO https://github.com/Terkwood/BUGOUT/issues/94
                                 self.current_game = Some(game_id);
                                 println!("⏳ {} {:<8}", session_code(self), "WAITOPPO");
                             }
