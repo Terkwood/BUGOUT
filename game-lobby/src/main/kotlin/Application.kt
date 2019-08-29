@@ -106,7 +106,6 @@ class Application(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
-                    println("READ A JOIN PRIV REQUEST   ... ")
                     jsonMapper.readValue(
                         v,
                         JoinPrivateGame::class.java
@@ -228,7 +227,6 @@ class Application(private val brokers: String) {
         // reject invalid game IDs
         joinPrivateFailure
             .map { _, jl ->
-                println("HEY THERE GUY ➿")
                 KeyValue(
                     jl.command.clientId,
                     // game ID randomly generated here
@@ -268,7 +266,6 @@ class Application(private val brokers: String) {
                 )
             )
         }.mapValues { v ->
-            println("WAIT !!!")
             jsonMapper.writeValueAsString(v)
         }.to(
             Topics
