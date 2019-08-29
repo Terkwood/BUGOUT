@@ -75,31 +75,7 @@ class Application(private val brokers: String) {
                 GameStateLobby(leftValue, rightValue)
             }
 
-        val turnOneGameStateLobby =
-            gameStatesTurnOne.join(
-                gameLobby,
-                gslKVMapper, gslValueJoiner
-            )
-
-        // TODO move me up
-        /* val waitForOpponent =
-             turnOneGameStateLobby.filter { k, v ->
-                 v.lobby.games.any { it.gameId == k }
-             }.map { k, v ->
-                 println("!          ️${k.short()} WAIT")
-                 // bypass null check based on gameStatesTurnOne + prev step
-                 val creator = v.lobby.games.find { it.gameId == k }?.creator!!
-                 KeyValue(
-                     creator,
-                     WaitForOpponent(
-                         gameId = k,
-                         eventId = UUID.randomUUID(),
-                         clientId = creator
-                     )
-                 )
-             }*/
-
-
+        
         val joinPrivateGameStream: KStream<ClientId, JoinPrivateGame> =
             streamsBuilder.stream<ClientId, String>(
                 Topics.JOIN_PRIVATE_GAME,
