@@ -1,4 +1,3 @@
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.*
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
@@ -18,54 +17,98 @@ class WaitForOpponentTest {
 
 
     @Test
-    fun createGameRequestGeneratesWaitForOpponentEvent() {
-        listOf(Visibility.Public, Visibility.Private).forEach { v ->
-            val factory =
-                ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
+    fun firstFindPublicGameCausesWaitForOpponentEvent() {
+        val factory =
+            ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
-            val creatorClientId = UUID.randomUUID()
+        val creatorClientId = UUID.randomUUID()
 
-            val newGameId = UUID.randomUUID()
-            val cgReq = CreateGame(
-                clientId = creatorClientId,
-                visibility = v,
-                gameId = newGameId
-            )
+        val fpg = FindPublicGame(
+            clientId = creatorClientId
+        )
 
-            testDriver.pipeInput(
-                factory.create(
-                    Topics.CREATE_GAME,
-                    creatorClientId,
-                    jsonMapper.writeValueAsString(cgReq)
-                )
-            )
-
-            val output =
-                testDriver.readOutput(
-                    Topics.WAIT_FOR_OPPONENT,
-                    UUIDDeserializer(),
-                    StringDeserializer()
-                )
-
-            val actual = jsonMapper.readValue(
-                output.value(), WaitForOpponent::class
-                    .java
-            )
-
-            OutputVerifier.compareKeyValue(
-                output,
+        testDriver.pipeInput(
+            factory.create(
+                Topics.FIND_PUBLIC_GAME,
                 creatorClientId,
-                jsonMapper.writeValueAsString(
-                    WaitForOpponent
-                        (
-                        gameId = newGameId,
-                        clientId = creatorClientId,
-                        eventId =
-                        actual.eventId
-                    )
+                jsonMapper.writeValueAsString(fpg)
+            )
+        )
+
+        val output =
+            testDriver.readOutput(
+                Topics.WAIT_FOR_OPPONENT,
+                UUIDDeserializer(),
+                StringDeserializer()
+            )
+
+        val actual = jsonMapper.readValue(
+            output.value(), WaitForOpponent::class
+                .java
+        )
+
+        OutputVerifier.compareKeyValue(
+            output,
+            creatorClientId,
+            jsonMapper.writeValueAsString(
+                WaitForOpponent
+                    (
+                    gameId = actual.gameId,
+                    clientId = creatorClientId,
+                    eventId = actual.eventId
                 )
             )
-        }
+        )
+    }
+
+
+    @Test
+    fun createPrivateGameCausesWaitForOpponentEvent() {
+        val factory =
+            ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
+
+        val creatorClientId = UUID.randomUUID()
+        val someGameId = UUID.randomUUID()
+
+        val cpg = CreateGame(
+            clientId = creatorClientId,
+            visibility = Visibility.Private,
+            gameId = someGameId
+        )
+
+        testDriver.pipeInput(
+            factory.create(
+                Topics.CREATE_GAME,
+                creatorClientId,
+                jsonMapper.writeValueAsString(cpg)
+            )
+        )
+
+        val output =
+            testDriver.readOutput(
+                Topics.WAIT_FOR_OPPONENT,
+                UUIDDeserializer(),
+                StringDeserializer()
+            )
+
+        val actual = jsonMapper.readValue(
+            output.value(), WaitForOpponent::class
+                .java
+        )
+
+        OutputVerifier.compareKeyValue(
+            output,
+            creatorClientId,
+            jsonMapper.writeValueAsString(
+                WaitForOpponent
+                    (
+                    gameId = someGameId,
+                    clientId = creatorClientId,
+                    eventId =
+                    actual.eventId
+                )
+            )
+        )
     }
 
 
