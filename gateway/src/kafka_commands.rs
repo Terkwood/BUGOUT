@@ -18,7 +18,7 @@ pub struct FindPublicGameKafkaCommand {
 
 /// Gateway may manually create private games,
 /// but it will never create a public game.
-/// We omit specifying the game ID here, and 
+/// We omit specifying the game ID here, and
 /// let game lobby choose it for us.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CreateGameKafkaCommand {
