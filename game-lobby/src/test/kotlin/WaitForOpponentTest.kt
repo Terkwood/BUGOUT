@@ -1,4 +1,3 @@
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.*
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
@@ -18,7 +17,7 @@ class WaitForOpponentTest {
 
 
     @Test
-    fun createGameRequestGeneratesWaitForOpponentEvent() {
+    fun firstFindPublicGameCausesWaitForOpponentEvent() {
         listOf(Visibility.Public, Visibility.Private).forEach { v ->
             val factory =
                 ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
@@ -26,17 +25,15 @@ class WaitForOpponentTest {
             val creatorClientId = UUID.randomUUID()
 
             val newGameId = UUID.randomUUID()
-            val cgReq = CreateGame(
-                clientId = creatorClientId,
-                visibility = v,
-                gameId = newGameId
+            val fpg = FindPublicGame(
+                clientId = creatorClientId
             )
 
             testDriver.pipeInput(
                 factory.create(
-                    Topics.CREATE_GAME,
+                    Topics.FIND_PUBLIC_GAME,
                     creatorClientId,
-                    jsonMapper.writeValueAsString(cgReq)
+                    jsonMapper.writeValueAsString(fpg)
                 )
             )
 
