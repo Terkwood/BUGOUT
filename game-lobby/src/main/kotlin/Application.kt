@@ -363,7 +363,6 @@ class Application(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
-                    println("FIND PUBLIC GAME")
                     jsonMapper.readValue(
                         v,
                         FindPublicGame::class.java
