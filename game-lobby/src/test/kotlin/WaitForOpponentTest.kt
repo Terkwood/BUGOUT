@@ -63,52 +63,54 @@ class WaitForOpponentTest {
 
 
     @Test
-    fun createPrivateGameCausesWaitForOpponentEvent() {
-        val factory =
-            ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
+    fun createGameCausesWaitForOpponentEvent() {
+        listOf(Visibility.Private, Visibility.Public).forEach {
+            val factory =
+                ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
-        val creatorClientId = UUID.randomUUID()
-        val someGameId = UUID.randomUUID()
+            val creatorClientId = UUID.randomUUID()
+            val someGameId = UUID.randomUUID()
 
-        val cpg = CreateGame(
-            clientId = creatorClientId,
-            visibility = Visibility.Private,
-            gameId = someGameId
-        )
-
-        testDriver.pipeInput(
-            factory.create(
-                Topics.CREATE_GAME,
-                creatorClientId,
-                jsonMapper.writeValueAsString(cpg)
-            )
-        )
-
-        val output =
-            testDriver.readOutput(
-                Topics.WAIT_FOR_OPPONENT,
-                UUIDDeserializer(),
-                StringDeserializer()
+            val cpg = CreateGame(
+                clientId = creatorClientId,
+                visibility = it,
+                gameId = someGameId
             )
 
-        val actual = jsonMapper.readValue(
-            output.value(), WaitForOpponent::class
-                .java
-        )
-
-        OutputVerifier.compareKeyValue(
-            output,
-            creatorClientId,
-            jsonMapper.writeValueAsString(
-                WaitForOpponent
-                    (
-                    gameId = someGameId,
-                    clientId = creatorClientId,
-                    eventId =
-                    actual.eventId
+            testDriver.pipeInput(
+                factory.create(
+                    Topics.CREATE_GAME,
+                    creatorClientId,
+                    jsonMapper.writeValueAsString(cpg)
                 )
             )
-        )
+
+            val output =
+                testDriver.readOutput(
+                    Topics.WAIT_FOR_OPPONENT,
+                    UUIDDeserializer(),
+                    StringDeserializer()
+                )
+
+            val actual = jsonMapper.readValue(
+                output.value(), WaitForOpponent::class
+                    .java
+            )
+
+            OutputVerifier.compareKeyValue(
+                output,
+                creatorClientId,
+                jsonMapper.writeValueAsString(
+                    WaitForOpponent
+                        (
+                        gameId = someGameId,
+                        clientId = creatorClientId,
+                        eventId =
+                        actual.eventId
+                    )
+                )
+            )
+        }
     }
 
 

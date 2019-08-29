@@ -375,6 +375,7 @@ class Application(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
+                    println("FIND PUBLIC GAME")
                     jsonMapper.readValue(
                         v,
                         FindPublicGame::class.java
@@ -428,6 +429,7 @@ class Application(private val brokers: String) {
         // didn't find one
         noPublicGameExists
             .map { _, fo ->
+                println("NO PUBLIC GAME EXISTS")
                 KeyValue(
                     fo.command.clientId,
                     // game ID randomly generated here
