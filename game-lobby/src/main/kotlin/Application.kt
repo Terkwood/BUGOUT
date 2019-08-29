@@ -169,6 +169,7 @@ class Application(private val brokers: String) {
         val joinPrivateFailure: KStream<ClientId, JoinPrivateGameLobby> =
             joinPrivateLobbyBranches[1]
 
+        // TODO rework me
         /**
          * The ClientId key is the person finding a game
          * The creator of the game is buried in the game lobby (someGame)
@@ -498,6 +499,8 @@ class Application(private val brokers: String) {
             Produced.with(Serdes.String(), Serdes.String())
         )
 
+
+        // TODO rework me
         popPublicGame
             .map { _, v -> KeyValue(v.game.gameId, GameState()) }
             .mapValues { v -> jsonMapper.writeValueAsString(v) }
