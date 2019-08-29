@@ -75,7 +75,7 @@ class Application(private val brokers: String) {
                 GameStateLobby(leftValue, rightValue)
             }
 
-        
+
         val joinPrivateGameStream: KStream<ClientId, JoinPrivateGame> =
             streamsBuilder.stream<ClientId, String>(
                 Topics.JOIN_PRIVATE_GAME,
@@ -417,7 +417,6 @@ class Application(private val brokers: String) {
         // didn't find one
         noPublicGameExists
             .map { _, fo ->
-                println("NO PUBLIC GAME EXISTS")
                 KeyValue(
                     fo.command.clientId,
                     // game ID randomly generated here
