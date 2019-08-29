@@ -86,8 +86,7 @@ class Application(private val brokers: String) {
                 v.lobby.games.any { it.gameId == k }
             }.map { k, v ->
                 println("!          ️${k.short()} WAIT")
-                // based on changelogTurnOne, we know that we can bypass this
-                // null check
+                // bypass null check based on gameStatesTurnOne + prev step
                 val creator = v.lobby.games.find { it.gameId == k }?.creator!!
                 KeyValue(
                     creator,
