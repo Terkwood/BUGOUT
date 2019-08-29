@@ -18,51 +18,50 @@ class WaitForOpponentTest {
 
     @Test
     fun firstFindPublicGameCausesWaitForOpponentEvent() {
-        listOf(Visibility.Public, Visibility.Private).forEach { v ->
-            val factory =
-                ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
+        val factory =
+            ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
-            val creatorClientId = UUID.randomUUID()
+        val creatorClientId = UUID.randomUUID()
 
-            val newGameId = UUID.randomUUID()
-            val fpg = FindPublicGame(
-                clientId = creatorClientId
-            )
+        val newGameId = UUID.randomUUID()
+        val fpg = FindPublicGame(
+            clientId = creatorClientId
+        )
 
-            testDriver.pipeInput(
-                factory.create(
-                    Topics.FIND_PUBLIC_GAME,
-                    creatorClientId,
-                    jsonMapper.writeValueAsString(fpg)
-                )
-            )
-
-            val output =
-                testDriver.readOutput(
-                    Topics.WAIT_FOR_OPPONENT,
-                    UUIDDeserializer(),
-                    StringDeserializer()
-                )
-
-            val actual = jsonMapper.readValue(
-                output.value(), WaitForOpponent::class
-                    .java
-            )
-
-            OutputVerifier.compareKeyValue(
-                output,
+        testDriver.pipeInput(
+            factory.create(
+                Topics.FIND_PUBLIC_GAME,
                 creatorClientId,
-                jsonMapper.writeValueAsString(
-                    WaitForOpponent
-                        (
-                        gameId = newGameId,
-                        clientId = creatorClientId,
-                        eventId =
-                        actual.eventId
-                    )
+                jsonMapper.writeValueAsString(fpg)
+            )
+        )
+
+        val output =
+            testDriver.readOutput(
+                Topics.WAIT_FOR_OPPONENT,
+                UUIDDeserializer(),
+                StringDeserializer()
+            )
+
+        val actual = jsonMapper.readValue(
+            output.value(), WaitForOpponent::class
+                .java
+        )
+
+        OutputVerifier.compareKeyValue(
+            output,
+            creatorClientId,
+            jsonMapper.writeValueAsString(
+                WaitForOpponent
+                    (
+                    gameId = newGameId,
+                    clientId = creatorClientId,
+                    eventId =
+                    actual.eventId
                 )
             )
-        }
+        )
+
     }
 
 
