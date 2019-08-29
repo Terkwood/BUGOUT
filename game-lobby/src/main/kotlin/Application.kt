@@ -81,29 +81,23 @@ class Application(private val brokers: String) {
                 gslKVMapper, gslValueJoiner
             )
 
-        val waitForOpponent =
-            turnOneGameStateLobby.filter { k, v ->
-                v.lobby.games.any { it.gameId == k }
-            }.map { k, v ->
-                println("!          ️${k.short()} WAIT")
-                // bypass null check based on gameStatesTurnOne + prev step
-                val creator = v.lobby.games.find { it.gameId == k }?.creator!!
-                KeyValue(
-                    creator,
-                    WaitForOpponent(
-                        gameId = k,
-                        eventId = UUID.randomUUID(),
-                        clientId = creator
-                    )
-                )
-            }
-        waitForOpponent.mapValues { v -> jsonMapper.writeValueAsString(v) }.to(
-            Topics
-                .WAIT_FOR_OPPONENT, Produced.with(
-                Serdes.UUID(), Serdes
-                    .String()
-            )
-        )
+        // TODO move me up
+        /* val waitForOpponent =
+             turnOneGameStateLobby.filter { k, v ->
+                 v.lobby.games.any { it.gameId == k }
+             }.map { k, v ->
+                 println("!          ️${k.short()} WAIT")
+                 // bypass null check based on gameStatesTurnOne + prev step
+                 val creator = v.lobby.games.find { it.gameId == k }?.creator!!
+                 KeyValue(
+                     creator,
+                     WaitForOpponent(
+                         gameId = k,
+                         eventId = UUID.randomUUID(),
+                         clientId = creator
+                     )
+                 )
+             }*/
 
 
         val joinPrivateGameStream: KStream<ClientId, JoinPrivateGame> =
@@ -169,7 +163,6 @@ class Application(private val brokers: String) {
         val joinPrivateFailure: KStream<ClientId, JoinPrivateGameLobby> =
             joinPrivateLobbyBranches[1]
 
-        // TODO rework me
         /**
          * The ClientId key is the person finding a game
          * The creator of the game is buried in the game lobby (someGame)
@@ -263,6 +256,27 @@ class Application(private val brokers: String) {
                         CreateGame::class.java
                     )
                 }
+
+        // send a wait for opponent event when game is created
+        createGameStream.map { creator, v ->
+            KeyValue(
+                creator,
+                WaitForOpponent(
+                    gameId = v.gameId,
+                    eventId = UUID.randomUUID(),
+                    clientId = creator
+                )
+            )
+        }.mapValues { v ->
+            println("WAIT !!!")
+            jsonMapper.writeValueAsString(v)
+        }.to(
+            Topics
+                .WAIT_FOR_OPPONENT, Produced.with(
+                Serdes.UUID(), Serdes
+                    .String()
+            )
+        )
 
         // open a new game
         createGameStream.map { _, v ->
@@ -500,7 +514,6 @@ class Application(private val brokers: String) {
         )
 
 
-        // TODO rework me
         popPublicGame
             .map { _, v -> KeyValue(v.game.gameId, GameState()) }
             .mapValues { v -> jsonMapper.writeValueAsString(v) }
