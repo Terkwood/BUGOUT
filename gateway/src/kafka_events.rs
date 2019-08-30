@@ -33,7 +33,19 @@ impl KafkaEvents {
                 game_id,
                 client_id: _,
                 event_id,
-            }) => ClientEvents::WaitForOpponent(WaitForOpponentClientEvent { game_id, event_id }),
+                visibility,
+            }) => {
+                let compact_id = match visibility {
+                    Visibility::Public => None,
+                    Visibility::Private => Some(CompactId::encode(game_id)),
+                };
+                ClientEvents::WaitForOpponent(WaitForOpponentClientEvent {
+                    game_id,
+                    event_id,
+                    visibility,
+                    compact_id,
+                })
+            }
         }
     }
 
@@ -66,6 +78,7 @@ pub struct WaitForOpponentKafkaEvent {
     pub client_id: ClientId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
+    pub visibility: Visibility,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

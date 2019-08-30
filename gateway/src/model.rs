@@ -27,9 +27,9 @@ impl Player {
     }
 }
 
-/// Gateway doesn't know about creating public games
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Visibility {
+    Public,
     Private,
 }
 

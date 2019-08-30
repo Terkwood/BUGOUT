@@ -390,6 +390,8 @@ impl Handler for WsSession {
                             ClientEvents::WaitForOpponent(WaitForOpponentClientEvent {
                                 game_id,
                                 event_id: _,
+                                visibility: _,
+                                compact_id: _,
                             }) => {
                                 self.current_game = Some(game_id);
                                 println!("⏳ {} {:<8}", session_code(self), "WAITOPPO");

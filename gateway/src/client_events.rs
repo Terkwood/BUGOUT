@@ -29,12 +29,16 @@ impl ClientEvents {
     }
 }
 
+/// If it's private visibility, you'll see a compactID field.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WaitForOpponentClientEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
+    pub visibility: Visibility,
+    #[serde(rename = "compactId")]
+    pub compact_id: Option<CompactId>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
