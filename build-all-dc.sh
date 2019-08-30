@@ -15,3 +15,4 @@ docker-compose build game-lobby
 docker-compose build color-chooser
 docker-compose build gateway
 docker-compose build kafkacat
+docker-compose build startup
