@@ -40,7 +40,8 @@ data class JoinPrivateGame(
 data class WaitForOpponent(
     val gameId: GameId,
     val clientId: ClientId,
-    val eventId: EventId = UUID.randomUUID()
+    val eventId: EventId = UUID.randomUUID(),
+    val visibility: Visibility
 )
 
 data class GameReady(

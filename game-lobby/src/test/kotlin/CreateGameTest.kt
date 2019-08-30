@@ -64,7 +64,8 @@ class CreateGameTest {
                         gameId = newGameId,
                         clientId = creatorClientId,
                         eventId =
-                        actualWait.eventId
+                        actualWait.eventId,
+                        visibility = v
                     )
                 )
             )

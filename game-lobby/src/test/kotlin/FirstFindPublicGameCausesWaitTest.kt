@@ -55,7 +55,8 @@ class FirstFindPublicGameCausesWaitTest {
                     (
                     gameId = actual.gameId,
                     clientId = creatorClientId,
-                    eventId = actual.eventId
+                    eventId = actual.eventId,
+                    visibility = Visibility.Public
                 )
             )
         )

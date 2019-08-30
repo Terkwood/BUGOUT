@@ -238,7 +238,8 @@ class Application(private val brokers: String) {
                 WaitForOpponent(
                     gameId = v.gameId,
                     eventId = UUID.randomUUID(),
-                    clientId = creator
+                    clientId = creator,
+                    visibility = v.visibility
                 )
             )
         }.mapValues { v ->
