@@ -2,10 +2,11 @@ extern crate gateway;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
-use gateway::model::{KafkaCommands, KafkaEvents};
+use gateway::kafka_commands::KafkaCommands;
+use gateway::kafka_events::KafkaEvents;
 use gateway::router::RouterCommand;
 use gateway::websocket::WsSession;
-use gateway::{kafka, router};
+use gateway::{kafka_io, router};
 
 const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -26,11 +27,7 @@ fn main() {
         Receiver<RouterCommand>,
     ) = unbounded();
 
-    kafka::start(
-        kafka_events_in,
-        router_commands_in.clone(),
-        kafka_commands_out,
-    );
+    kafka_io::start(kafka_events_in, kafka_commands_out);
 
     router::start(router_commands_out, kafka_events_out);
 

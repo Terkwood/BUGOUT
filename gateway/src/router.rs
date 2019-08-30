@@ -8,7 +8,9 @@ use crossbeam_channel::select;
 
 use uuid::Uuid;
 
-use crate::logging::{short_uuid, EMPTY_SHORT_UUID, MEGA_DEATH_STRING};
+use crate::client_events::ClientEvents;
+use crate::kafka_events::KafkaEvents;
+use crate::logging::{short_uuid, EMPTY_SHORT_UUID};
 use crate::model::*;
 
 const GAME_CLIENT_CLEANUP_PERIOD_MS: u64 = 10_000;
@@ -122,24 +124,6 @@ impl Router {
         }
     }
 
-    pub fn add_client(&mut self, client_id: ClientId, events_in: Sender<ClientEvents>) -> GameId {
-        let newbie = ClientSender {
-            client_id,
-            events_in,
-        };
-
-        let game_id = self.pop_open_game_id();
-        match self.game_clients.get_mut(&game_id) {
-            Some(gs) => gs.add_client(newbie),
-            None => {
-                let with_newbie = GameClients::new(newbie);
-                self.game_clients.insert(game_id, with_newbie);
-            }
-        }
-
-        game_id
-    }
-
     fn reconnect(&mut self, client_id: ClientId, game_id: GameId, events_in: Sender<ClientEvents>) {
         let cs = ClientSender {
             client_id,
@@ -208,27 +192,6 @@ impl Router {
 
         self.cleanup_game_clients();
     }
-
-    /// This is a big fat hack...
-    /// We want the game IDs to be data driven via kafka.
-    /// But this is better than having the game IDs hardcoded.
-    pub fn register_open_game(&mut self, game_id: GameId) {
-        // Register duplicates as we'll plan to consume two at a time
-        self.available_games.push(game_id);
-        self.available_games.push(game_id);
-    }
-
-    fn pop_open_game_id(&mut self) -> GameId {
-        let popped = self.available_games.pop();
-        if let Some(open_game_id) = popped {
-            open_game_id
-        } else {
-            panic!(
-                "☠️ {} {} {:<8} Out of game IDs!",
-                MEGA_DEATH_STRING, MEGA_DEATH_STRING, "UBERFAIL"
-            )
-        }
-    }
 }
 
 /// start the select! loop responsible for sending kafka messages to relevant websocket clients
@@ -244,21 +207,16 @@ pub fn start(
                 recv(router_commands_out) -> command =>
                     match command {
                         Ok(RouterCommand::Observe(game_id)) => router.observed(game_id),
-                        Ok(RouterCommand::JoinPrivateGame { client_id, game_id: _, events_in }) => {
-                            // request the channel, if it's valid we'll follow up below
+                        // A create private game request, or a find public
+                        // game request, will result in us tracking a
+                        // client_id -> event channel mapping
+                        // We'll use this to send messages back to the browser,
+                        // later
+                        Ok(RouterCommand::AddClient { client_id, events_in }) => {
                             router.clients.insert(client_id, events_in);
-                        },
-                        Ok(RouterCommand::RequestOpenGame{client_id, events_in, req_id}) => {
-                            let game_id = router.add_client(client_id, events_in.clone());
-                            if let Err(err) = events_in.send(ClientEvents::OpenGameReply(OpenGameReplyEvent{game_id, reply_to:req_id, event_id: Uuid::new_v4()})) {
-                                println!("😯 {} {} {:<8} could not send open game reply {}",
-                                    short_uuid(client_id), EMPTY_SHORT_UUID, "ERROR", err)
-                            }
                         },
                         Ok(RouterCommand::DeleteClient{client_id, game_id}) =>
                             router.delete_client(client_id, game_id),
-                        Ok(RouterCommand::RegisterOpenGame{game_id}) =>
-                            router.register_open_game(game_id),
                         Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
                             router.reconnect(client_id, game_id, events_in.clone());
                             if let Err(err) = events_in.send(ClientEvents::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
@@ -288,6 +246,10 @@ pub fn start(
                             // this game, yet, so we need to
                             // forward via client ID
                             router.forward_by_client_id(p.client_id, KafkaEvents::PrivateGameRejected(p).to_client_event())
+                        }
+                        Ok(KafkaEvents::WaitForOpponent(w)) => {
+                            router.route_new_game(w.client_id, w.game_id);
+                            router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
                         }
                         Ok(e) => {
                             router.observed(e.game_id());
@@ -336,16 +298,8 @@ struct ClientSender {
 #[derive(Debug, Clone)]
 pub enum RouterCommand {
     Observe(GameId),
-    RequestOpenGame {
-        client_id: ClientId,
-        events_in: Sender<ClientEvents>,
-        req_id: ReqId,
-    },
     DeleteClient {
         client_id: ClientId,
-        game_id: GameId,
-    },
-    RegisterOpenGame {
         game_id: GameId,
     },
     Reconnect {
@@ -354,9 +308,8 @@ pub enum RouterCommand {
         events_in: Sender<ClientEvents>,
         req_id: ReqId,
     },
-    JoinPrivateGame {
+    AddClient {
         client_id: ClientId,
-        game_id: GameId,
         events_in: Sender<ClientEvents>,
     },
 }

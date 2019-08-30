@@ -75,37 +75,6 @@ class Application(private val brokers: String) {
                 GameStateLobby(leftValue, rightValue)
             }
 
-        val turnOneGameStateLobby =
-            gameStatesTurnOne.join(
-                gameLobby,
-                gslKVMapper, gslValueJoiner
-            )
-
-        val waitForOpponent =
-            turnOneGameStateLobby.filter { k, v ->
-                v.lobby.games.any { it.gameId == k }
-            }.map { k, v ->
-                println("!          ️${k.short()} WAIT")
-                // based on changelogTurnOne, we know that we can bypass this
-                // null check
-                val creator = v.lobby.games.find { it.gameId == k }?.creator!!
-                KeyValue(
-                    creator,
-                    WaitForOpponent(
-                        gameId = k,
-                        eventId = UUID.randomUUID(),
-                        clientId = creator
-                    )
-                )
-            }
-        waitForOpponent.mapValues { v -> jsonMapper.writeValueAsString(v) }.to(
-            Topics
-                .WAIT_FOR_OPPONENT, Produced.with(
-                Serdes.UUID(), Serdes
-                    .String()
-            )
-        )
-
 
         val joinPrivateGameStream: KStream<ClientId, JoinPrivateGame> =
             streamsBuilder.stream<ClientId, String>(
@@ -113,7 +82,6 @@ class Application(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
-                    println("READ A JOIN PRIV REQUEST   ... ")
                     jsonMapper.readValue(
                         v,
                         JoinPrivateGame::class.java
@@ -235,7 +203,6 @@ class Application(private val brokers: String) {
         // reject invalid game IDs
         joinPrivateFailure
             .map { _, jl ->
-                println("HEY THERE GUY ➿")
                 KeyValue(
                     jl.command.clientId,
                     // game ID randomly generated here
@@ -263,6 +230,27 @@ class Application(private val brokers: String) {
                         CreateGame::class.java
                     )
                 }
+
+        // send a wait for opponent event when game is created
+        createGameStream.map { creator, v ->
+            KeyValue(
+                creator,
+                WaitForOpponent(
+                    gameId = v.gameId,
+                    eventId = UUID.randomUUID(),
+                    clientId = creator,
+                    visibility = v.visibility
+                )
+            )
+        }.mapValues { v ->
+            jsonMapper.writeValueAsString(v)
+        }.to(
+            Topics
+                .WAIT_FOR_OPPONENT, Produced.with(
+                Serdes.UUID(), Serdes
+                    .String()
+            )
+        )
 
         // open a new game
         createGameStream.map { _, v ->
@@ -496,6 +484,7 @@ class Application(private val brokers: String) {
             Topics.GAME_LOBBY_COMMANDS,
             Produced.with(Serdes.String(), Serdes.String())
         )
+
 
         popPublicGame
             .map { _, v -> KeyValue(v.game.gameId, GameState()) }

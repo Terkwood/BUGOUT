@@ -42,6 +42,34 @@ class CreateGameTest {
                 )
             )
 
+
+            val waitOutput =
+                testDriver.readOutput(
+                    Topics.WAIT_FOR_OPPONENT,
+                    UUIDDeserializer(),
+                    StringDeserializer()
+                )
+
+            val actualWait = jsonMapper.readValue(
+                waitOutput.value(), WaitForOpponent::class
+                    .java
+            )
+
+            OutputVerifier.compareKeyValue(
+                waitOutput,
+                creatorClientId,
+                jsonMapper.writeValueAsString(
+                    WaitForOpponent
+                        (
+                        gameId = newGameId,
+                        clientId = creatorClientId,
+                        eventId =
+                        actualWait.eventId,
+                        visibility = v
+                    )
+                )
+            )
+
             val gameLobbyCommandOutput =
                 testDriver.readOutput(
                     Topics.GAME_LOBBY_COMMANDS,

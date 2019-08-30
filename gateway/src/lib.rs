@@ -14,12 +14,15 @@ extern crate serde_json;
 extern crate time;
 extern crate ws;
 
+mod client_commands;
+mod client_events;
 pub mod compact_ids;
 mod env;
-mod json;
-pub mod kafka;
+pub mod kafka_commands;
+pub mod kafka_events;
+pub mod kafka_io;
 mod logging;
-pub mod model;
+mod model;
 pub mod router;
 mod topics;
 pub mod websocket;

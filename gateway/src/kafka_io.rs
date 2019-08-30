@@ -2,41 +2,32 @@ use std::thread;
 
 use crossbeam_channel::select;
 use futures::stream::Stream;
-use futures::*;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::{CommitMode, Consumer};
 use rdkafka::message::Message;
 use rdkafka::producer::{FutureProducer, FutureRecord};
-use uuid::Uuid;
 
-use crate::json::GameStateJson;
+use crate::kafka_commands::*;
+use crate::kafka_events::*;
 use crate::model::*;
-use crate::router::RouterCommand;
 use crate::topics::*;
 
 pub const BROKERS: &str = "kafka:9092";
 pub const APP_NAME: &str = "gateway";
 
-const NUM_PREMADE_GAMES: usize = 64;
-
 pub fn start(
     events_in: crossbeam::Sender<KafkaEvents>,
-    router_commands_in: crossbeam::Sender<RouterCommand>,
     commands_out: crossbeam::Receiver<KafkaCommands>,
 ) {
-    thread::spawn(move || start_producer(router_commands_in, commands_out));
+    thread::spawn(move || start_producer(commands_out));
 
     thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS, events_in));
 }
 
-fn start_producer(
-    router_commands_in: crossbeam::Sender<RouterCommand>,
-    kafka_out: crossbeam::Receiver<KafkaCommands>,
-) {
+/// Pay attention to the topic keys in the loop 🔄 👀
+fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
     let producer = configure_producer(BROKERS);
-
-    create_premade_games(&producer, router_commands_in);
 
     loop {
         select! {
@@ -55,51 +46,22 @@ fn start_producer(
                     Ok(KafkaCommands::JoinPrivateGame(j)) => {
                         producer.send(FutureRecord::to(JOIN_PRIVATE_GAME_TOPIC)
                             .payload(&serde_json::to_string(&j).unwrap())
-                            .key(&j.game_id.to_string()), 0); // fire & forget
+                            .key(&j.client_id.to_string()), 0); // fire & forget
+                    },
+                    Ok(KafkaCommands::FindPublicGame(f)) => {
+                        producer.send(FutureRecord::to(FIND_PUBLIC_GAME_TOPIC)
+                            .payload(&serde_json::to_string(&f).unwrap())
+                            .key(&f.client_id.to_string()), 0); // fire & forget
+                    },
+                    Ok(KafkaCommands::CreateGame(c)) =>{
+                        producer.send(FutureRecord::to(CREATE_GAME_TOPIC)
+                            .payload(&serde_json::to_string(&c).unwrap())
+                            .key(&c.client_id.to_string()), 0); // fire & forget
                     },
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
         }
     }
-}
-
-fn create_premade_games(
-    producer: &FutureProducer,
-    router_commands_in: crossbeam::Sender<RouterCommand>,
-) -> Vec<GameId> {
-    let mut premade_game_ids = vec![];
-    for _ in 0..NUM_PREMADE_GAMES {
-        premade_game_ids.push(Uuid::new_v4());
-    }
-
-    // Log empty game states for several games with arbitrary game IDs
-    let setup_game_futures = premade_game_ids
-        .iter()
-        .map(|game_id| {
-            producer.send(
-                FutureRecord::to(GAME_STATES_TOPIC)
-                    .payload(&serde_json::to_string(&GameStateJson::default()).unwrap())
-                    .key(&game_id.to_string()),
-                0,
-            )
-        })
-        .collect::<Vec<_>>();
-
-    for future in setup_game_futures {
-        future.wait().unwrap().unwrap();
-    }
-
-    // THIS IS A BIG FAT HACK
-    // (but it's less bad than hardcoding these IDs in the browser app)
-    for game_id in premade_game_ids.iter() {
-        router_commands_in
-            .send(RouterCommand::RegisterOpenGame { game_id: *game_id })
-            .expect("couldnt send open game id")
-    }
-
-    println!("📝 {:<8} {}", "PREMADES", premade_game_ids.len());
-
-    premade_game_ids
 }
 
 fn configure_producer(brokers: &str) -> FutureProducer {
@@ -156,7 +118,7 @@ fn start_consumer(
                         let deserialized: Result<MoveMadeEvent, _> = serde_json::from_str(payload);
                         match deserialized {
                             Err(e) => println!("failed to deserialize move made {}", e),
-                            Ok(m) => events_in.send(KafkaEvents::MoveMade(m)).unwrap(),
+                            Ok(m) => flail_on_fail(events_in.send(KafkaEvents::MoveMade(m))),
                         }
                     }
                     HISTORY_PROVIDED_TOPIC => {
@@ -164,7 +126,7 @@ fn start_consumer(
                             serde_json::from_str(payload);
                         match deserialized {
                             Err(e) => println!("failed to deserialize history prov {}", e),
-                            Ok(h) => events_in.send(KafkaEvents::HistoryProvided(h)).unwrap(),
+                            Ok(h) => flail_on_fail(events_in.send(KafkaEvents::HistoryProvided(h))),
                         }
                     }
                     PRIVATE_GAME_REJECTED_TOPIC => {
@@ -174,20 +136,41 @@ fn start_consumer(
                         > = serde_json::from_str(payload);
                         match deserialized {
                             Err(e) => println!("failed to deserialize priv game reject {}", e),
-                            Ok(r) => events_in.send(KafkaEvents::PrivateGameRejected(r)).unwrap(),
+                            Ok(r) => {
+                                flail_on_fail(events_in.send(KafkaEvents::PrivateGameRejected(r)))
+                            }
                         }
                     }
                     GAME_READY_TOPIC => {
                         let deserialized: Result<GameReadyKafkaEvent, _> =
                             serde_json::from_str(payload);
+
                         match deserialized {
                             Err(e) => println!("failed to deserialize game ready {}", e),
-                            Ok(g) => events_in.send(KafkaEvents::GameReady(g)).unwrap(),
+                            Ok(g) => flail_on_fail(events_in.send(KafkaEvents::GameReady(g))),
+                        }
+                    }
+                    WAIT_FOR_OPPONENT_TOPIC => {
+                        let deserialized: Result<
+                            WaitForOpponentKafkaEvent,
+                            _,
+                        > = serde_json::from_str(payload);
+
+                        match deserialized {
+                            Err(e) => println!("failed to deserialize wait for opponent {}", e),
+                            Ok(w) => flail_on_fail(events_in.send(KafkaEvents::WaitForOpponent(w))),
                         }
                     }
                     other => println!("ERROR Couldn't match kafka events topic: {}", other),
                 }
             }
         }
+    }
+}
+
+/// Because no one should .unwrap() a crossbeam send result
+fn flail_on_fail(send_result: std::result::Result<(), crossbeam::SendError<KafkaEvents>>) {
+    if let Err(e) = send_result {
+        println!("HALP! Failed to send kafka event in crossbeam: {}", e)
     }
 }

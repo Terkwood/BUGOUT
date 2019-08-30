@@ -3,10 +3,14 @@ import java.util.*
 // requests & commands
 data class FindPublicGame(val clientId: ClientId)
 
+/**
+ * Random UUID is used in the case of gateway being lazy
+ * and not sending one
+ */
 data class CreateGame(
     val clientId: ClientId,
     val visibility: Visibility,
-    val gameId: GameId
+    val gameId: GameId = UUID.randomUUID()
 )
 
 /**
@@ -36,7 +40,8 @@ data class JoinPrivateGame(
 data class WaitForOpponent(
     val gameId: GameId,
     val clientId: ClientId,
-    val eventId: EventId = UUID.randomUUID()
+    val eventId: EventId = UUID.randomUUID(),
+    val visibility: Visibility
 )
 
 data class GameReady(

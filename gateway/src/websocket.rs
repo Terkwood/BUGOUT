@@ -9,6 +9,9 @@ use crossbeam_channel::unbounded;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
+use crate::client_commands::*;
+use crate::client_events::*;
+use crate::kafka_commands::*;
 use crate::logging::*;
 use crate::model::*;
 use crate::router::RouterCommand;
@@ -137,34 +140,6 @@ impl Handler for WsSession {
 
                 Ok(self.observe())
             }
-            Ok(ClientCommands::RequestOpenGame(req)) => {
-                // Ignore this request if we already have a game
-                // in progress.
-                if self.current_game.is_none() {
-                    let (events_in, events_out) = client_event_channels();
-
-                    // ..and let the router know we're interested in it,
-                    // so that we can receive updates
-                    if let Err(e) = self
-                        .router_commands_in
-                        .send(RouterCommand::RequestOpenGame {
-                            client_id: self.client_id,
-                            events_in,
-                            req_id: req.req_id,
-                        }) {
-                        println!(
-                            "😠 {} {:<8} sending router command to add client {}",
-                            session_code(self),
-                            "ERROR",
-                            e
-                        )
-                    }
-
-                    //.. and track the out-channel so we can select! on it
-                    self.events_out = Some(events_out);
-                }
-                Ok(self.observe())
-            }
             Ok(ClientCommands::Reconnect(ReconnectCommand { game_id, req_id })) => {
                 // accept whatever game_id the client shares with us
                 self.current_game = Some(game_id);
@@ -209,12 +184,93 @@ impl Handler for WsSession {
 
                 Ok(self.observe())
             }
-            Ok(ClientCommands::JoinPrivateGame(JoinPrivateGameClientCommand { game_id })) => {
+            Ok(ClientCommands::FindPublicGame) => {
+                println!("🤝 {} FINDPUBG", session_code(self));
+
                 // Ignore this request if we already have a game
                 // in progress.
                 if self.current_game.is_none() {
-                    println!("🤝 {} JOINPRIV", session_code(self));
+                    // ..and let the router know we're interested in it,
+                    // so that we can receive updates
+                    if let Err(e) = self.kafka_commands_in.send(KafkaCommands::FindPublicGame(
+                        FindPublicGameKafkaCommand {
+                            client_id: self.client_id,
+                        },
+                    )) {
+                        println!(
+                            "😠 {} {:<8} kafka sending find public game command {}",
+                            session_code(self),
+                            "ERROR",
+                            e
+                        )
+                    }
 
+                    let (events_in, events_out) = client_event_channels();
+
+                    // ..and let the router know we're interested in it,
+                    // so that we can receive updates
+                    if let Err(e) = self.router_commands_in.send(RouterCommand::AddClient {
+                        client_id: self.client_id,
+                        events_in,
+                    }) {
+                        println!(
+                            "😠 {} {:<8} sending router command to add client {}",
+                            session_code(self),
+                            "ERROR",
+                            e
+                        )
+                    }
+
+                    //.. and track the out-channel so we can select! on it
+                    self.events_out = Some(events_out);
+                }
+                Ok(self.observe())
+            }
+            Ok(ClientCommands::CreatePrivateGame) => {
+                println!("🔒 {} CRETPRIV", session_code(self));
+
+                // Ignore this request if we already have a game
+                // in progress.
+                if self.current_game.is_none() {
+                    let (events_in, events_out) = client_event_channels();
+
+                    // ..and let the router know we're interested in it,
+                    // so that we can receive updates
+                    if let Err(e) = self
+                        .kafka_commands_in
+                        .send(KafkaCommands::CreateGame(CreateGameKafkaCommand {
+                            client_id: self.client_id,
+                            visibility: Visibility::Private,
+                        }))
+                        .map_err(|e| ws::Error::from(Box::new(e)))
+                    {
+                        println!("ERROR on kafka send join private game {:?}", e)
+                    }
+                    // ..and let the router know we're interested in it,
+                    // so that we can receive updates
+                    if let Err(e) = self.router_commands_in.send(RouterCommand::AddClient {
+                        client_id: self.client_id,
+                        events_in,
+                    }) {
+                        println!(
+                            "😠 {} {:<8} sending router command to add client {}",
+                            session_code(self),
+                            "ERROR",
+                            e
+                        )
+                    }
+
+                    //.. and track the out-channel so we can select! on it
+                    self.events_out = Some(events_out);
+                }
+                Ok(self.observe())
+            }
+            Ok(ClientCommands::JoinPrivateGame(JoinPrivateGameClientCommand { game_id })) => {
+                println!("🔑 {} JOINPRIV", session_code(self));
+
+                // Ignore this request if we already have a game
+                // in progress.
+                if self.current_game.is_none() {
                     if let Some(game_id) = game_id.decode() {
                         if let Err(e) = self
                             .kafka_commands_in
@@ -233,13 +289,10 @@ impl Handler for WsSession {
 
                         // ..and let the router know we're interested in it,
                         // so that we can receive updates
-                        if let Err(e) =
-                            self.router_commands_in
-                                .send(RouterCommand::JoinPrivateGame {
-                                    client_id: self.client_id,
-                                    game_id,
-                                    events_in,
-                                }) {
+                        if let Err(e) = self.router_commands_in.send(RouterCommand::AddClient {
+                            client_id: self.client_id,
+                            events_in,
+                        }) {
                             println!(
                                 "😠 {} {:<8} sending router command to add client {}",
                                 session_code(self),
@@ -327,15 +380,22 @@ impl Handler for WsSession {
                 if let Some(eo) = &self.events_out {
                     while let Ok(event) = eo.try_recv() {
                         match event {
-                            ClientEvents::OpenGameReply(OpenGameReplyEvent {
-                                game_id,
-                                reply_to: _,
-                                event_id: _,
-                            }) => self.current_game = Some(game_id),
                             ClientEvents::GameReady(GameReadyClientEvent {
                                 game_id,
                                 event_id: _,
-                            }) => self.current_game = Some(game_id),
+                            }) => {
+                                self.current_game = Some(game_id);
+                                println!("🎳 {} {:<8}", session_code(self), "GAMEREDY");
+                            }
+                            ClientEvents::WaitForOpponent(WaitForOpponentClientEvent {
+                                game_id,
+                                event_id: _,
+                                visibility: _,
+                                link: _,
+                            }) => {
+                                self.current_game = Some(game_id);
+                                println!("⏳ {} {:<8}", session_code(self), "WAITOPPO");
+                            }
                             _ => (),
                         }
 
