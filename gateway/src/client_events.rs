@@ -35,7 +35,7 @@ pub struct Link(String);
 impl Link {
     pub fn new(game_id: GameId) -> Link {
         Link(format!(
-            "{}/join?={}",
+            "{}/?join={}",
             LINK_TO.to_string(),
             CompactId::encode(game_id).0
         ))
