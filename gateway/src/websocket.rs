@@ -391,7 +391,7 @@ impl Handler for WsSession {
                                 game_id,
                                 event_id: _,
                                 visibility: _,
-                                compact_id: _,
+                                link: _,
                             }) => {
                                 self.current_game = Some(game_id);
                                 println!("⏳ {} {:<8}", session_code(self), "WAITOPPO");

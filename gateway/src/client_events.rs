@@ -1,6 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 
 use crate::compact_ids::CompactId;
+use crate::env::*;
 use crate::model::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -29,7 +30,19 @@ impl ClientEvents {
     }
 }
 
-/// If it's private visibility, you'll see a compactID field.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Link(String);
+impl Link {
+    pub fn new(game_id: GameId) -> Link {
+        Link(format!(
+            "{}/join?={}",
+            LINK_TO.to_string(),
+            CompactId::encode(game_id).0
+        ))
+    }
+}
+
+/// If it's private visibility, you'll see a link
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WaitForOpponentClientEvent {
     #[serde(rename = "gameId")]
@@ -37,8 +50,7 @@ pub struct WaitForOpponentClientEvent {
     #[serde(rename = "eventId")]
     pub event_id: EventId,
     pub visibility: Visibility,
-    #[serde(rename = "compactId")]
-    pub compact_id: Option<CompactId>,
+    pub link: Option<Link>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

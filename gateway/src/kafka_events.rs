@@ -35,15 +35,15 @@ impl KafkaEvents {
                 event_id,
                 visibility,
             }) => {
-                let compact_id = match visibility {
+                let link = match visibility {
                     Visibility::Public => None,
-                    Visibility::Private => Some(CompactId::encode(game_id)),
+                    Visibility::Private => Some(Link::new(game_id)),
                 };
                 ClientEvents::WaitForOpponent(WaitForOpponentClientEvent {
                     game_id,
                     event_id,
                     visibility,
-                    compact_id,
+                    link,
                 })
             }
         }
