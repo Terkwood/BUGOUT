@@ -11,7 +11,7 @@ pub enum KafkaEvents {
     GameReady(GameReadyKafkaEvent),
     PrivateGameRejected(PrivateGameRejectedKafkaEvent),
     WaitForOpponent(WaitForOpponentKafkaEvent),
-    ColorsChosen(ColorsChosen),
+    ColorsChosen(ColorsChosenEvent),
 }
 
 impl KafkaEvents {
@@ -92,12 +92,4 @@ pub struct PrivateGameRejectedKafkaEvent {
     pub client_id: ClientId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ColorsChosen {
-    #[serde(rename = "gameId")]
-    pub game_id: GameId,
-    pub black: ClientId,
-    pub white: ClientId,
 }

@@ -162,6 +162,15 @@ fn start_consumer(
                             Ok(w) => flail_on_fail(events_in.send(KafkaEvents::WaitForOpponent(w))),
                         }
                     }
+                    COLORS_CHOSEN_TOPIC => {
+                        let deserialized: Result<ColorsChosenEvent, _> =
+                            serde_json::from_str(payload);
+
+                        match deserialized {
+                            Err(e) => println!("failed to deserialize wait for opponent {}", e),
+                            Ok(c) => flail_on_fail(events_in.send(KafkaEvents::ColorsChosen(c))),
+                        }
+                    }
                     other => println!("ERROR Couldn't match kafka events topic: {}", other),
                 }
             }

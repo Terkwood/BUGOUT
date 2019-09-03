@@ -14,7 +14,8 @@ pub enum ClientEvents {
     GameReady(GameReadyClientEvent),
     PrivateGameRejected(PrivateGameRejectedClientEvent),
     WaitForOpponent(WaitForOpponentClientEvent),
-    ColorChosen(Player),
+    ColorsChosen(ColorsChosenEvent),
+    YourColor(Player),
 }
 
 impl ClientEvents {

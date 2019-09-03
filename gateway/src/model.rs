@@ -40,6 +40,14 @@ pub enum ColorPref {
     Any,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ColorsChosenEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    pub black: ClientId,
+    pub white: ClientId,
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct MakeMoveCommand {
     #[serde(rename = "gameId")]

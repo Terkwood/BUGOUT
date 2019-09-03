@@ -399,7 +399,12 @@ impl Handler for WsSession {
                             _ => (),
                         }
 
-                        self.ws_out.send(serde_json::to_string(&event).unwrap())?;
+                        match event {
+                            // TODO transform this to a YourColor event
+                            // TODO based on the client ID linked to session
+                            ClientEvents::ColorsChosen(_) => unimplemented!(),
+                            _ => self.ws_out.send(serde_json::to_string(&event).unwrap())?,
+                        }
                     }
                 }
                 self.channel_recv_timeout.take();
