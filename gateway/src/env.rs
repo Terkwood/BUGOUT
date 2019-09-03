@@ -1,6 +1,10 @@
 use envy;
 use serde_derive::Deserialize;
 
+pub fn init() {
+    dotenv::dotenv().ok();
+}
+
 #[derive(Deserialize, Debug)]
 struct Env {
     hash_salt: Option<String>,
