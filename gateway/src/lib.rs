@@ -2,6 +2,7 @@
 #![feature(checked_duration_since)]
 extern crate crossbeam;
 extern crate crossbeam_channel;
+extern crate dotenv;
 extern crate envy;
 extern crate harsh;
 #[macro_use]
@@ -17,7 +18,7 @@ extern crate ws;
 mod client_commands;
 mod client_events;
 pub mod compact_ids;
-mod env;
+pub mod env;
 pub mod kafka_commands;
 pub mod kafka_events;
 pub mod kafka_io;

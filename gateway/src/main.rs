@@ -2,6 +2,7 @@ extern crate gateway;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
+use gateway::env;
 use gateway::kafka_commands::KafkaCommands;
 use gateway::kafka_events::KafkaEvents;
 use gateway::router::RouterCommand;
@@ -13,6 +14,8 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 fn main() {
     println!("🔢 {:<8} {}", NAME, VERSION);
+
+    env::init();
 
     let (kafka_commands_in, kafka_commands_out): (
         Sender<KafkaCommands>,
