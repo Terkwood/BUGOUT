@@ -11,6 +11,7 @@ pub enum KafkaEvents {
     GameReady(GameReadyKafkaEvent),
     PrivateGameRejected(PrivateGameRejectedKafkaEvent),
     WaitForOpponent(WaitForOpponentKafkaEvent),
+    ColorsChosen(ColorsChosenKafkaEvent),
 }
 
 impl KafkaEvents {
@@ -46,6 +47,7 @@ impl KafkaEvents {
                     link,
                 })
             }
+            KafkaEvents::ColorsChosen(_) => unimplemented!(),
         }
     }
 
@@ -57,6 +59,7 @@ impl KafkaEvents {
             KafkaEvents::GameReady(e) => e.game_id,
             KafkaEvents::PrivateGameRejected(e) => e.game_id,
             KafkaEvents::WaitForOpponent(e) => e.game_id,
+            KafkaEvents::ColorsChosen(e) => e.game_id,
         }
     }
 }
@@ -89,4 +92,12 @@ pub struct PrivateGameRejectedKafkaEvent {
     pub client_id: ClientId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ColorsChosenKafkaEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    pub black: ClientId,
+    pub white: ClientId,
 }
