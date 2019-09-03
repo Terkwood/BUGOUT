@@ -58,6 +58,7 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
                             .payload(&serde_json::to_string(&c).unwrap())
                             .key(&c.client_id.to_string()), 0); // fire & forget
                     },
+                    Ok(KafkaCommands::ChooseColorPref(_)) => unimplemented!(),
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
         }
