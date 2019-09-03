@@ -33,6 +33,13 @@ pub enum Visibility {
     Private,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum ColorPref {
+    Black,
+    White,
+    Any,
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct MakeMoveCommand {
     #[serde(rename = "gameId")]

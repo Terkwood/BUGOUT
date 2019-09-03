@@ -307,9 +307,9 @@ impl Handler for WsSession {
                 } else {
                     println!("🏴‍☠️ FAILED TO DECODE PRIVATE GAME ID 🏴‍☠️")
                 }
-
                 Ok(self.observe())
             }
+            Ok(ClientCommands::ChooseColorPref(_)) => unimplemented!(),
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",
