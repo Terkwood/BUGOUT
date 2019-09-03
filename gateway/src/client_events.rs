@@ -15,7 +15,7 @@ pub enum ClientEvents {
     PrivateGameRejected(PrivateGameRejectedClientEvent),
     WaitForOpponent(WaitForOpponentClientEvent),
     ColorsChosen(ColorsChosenEvent),
-    YourColor(Player),
+    YourColor(YourColorEvent),
 }
 
 impl ClientEvents {
@@ -27,6 +27,7 @@ impl ClientEvents {
             ClientEvents::HistoryProvided(e) => Some(e.game_id),
             ClientEvents::GameReady(e) => Some(e.game_id),
             ClientEvents::WaitForOpponent(w) => Some(w.game_id),
+            ClientEvents::YourColor(y) => Some(y.game_id),
             _ => None, // TODO priv game rejected
         }
     }
@@ -69,4 +70,12 @@ pub struct GameReadyClientEvent {
     pub game_id: GameId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct YourColorEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    #[serde(rename = "yourColor")]
+    pub your_color: Player,
 }

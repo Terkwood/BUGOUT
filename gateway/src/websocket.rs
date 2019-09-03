@@ -400,9 +400,31 @@ impl Handler for WsSession {
                         }
 
                         match event {
-                            // TODO transform this to a YourColor event
-                            // TODO based on the client ID linked to session
-                            ClientEvents::ColorsChosen(_) => unimplemented!(),
+                            ClientEvents::ColorsChosen(ColorsChosenEvent {
+                                game_id,
+                                black,
+                                white,
+                            }) => match self.client_id {
+                                b if b == black => self.ws_out.send(
+                                    serde_json::to_string(&ClientEvents::YourColor(
+                                        YourColorEvent {
+                                            game_id,
+                                            your_color: Player::BLACK,
+                                        },
+                                    ))
+                                    .unwrap(),
+                                )?,
+                                w if w == white => self.ws_out.send(
+                                    serde_json::to_string(&ClientEvents::YourColor(
+                                        YourColorEvent {
+                                            game_id,
+                                            your_color: Player::WHITE,
+                                        },
+                                    ))
+                                    .unwrap(),
+                                )?,
+                                _ => panic!(" COULD NOT MATCH COLOR TO CLIENT "),
+                            },
                             _ => self.ws_out.send(serde_json::to_string(&event).unwrap())?,
                         }
                     }
