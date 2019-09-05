@@ -53,12 +53,16 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
                             .payload(&serde_json::to_string(&f).unwrap())
                             .key(&f.client_id.to_string()), 0); // fire & forget
                     },
-                    Ok(KafkaCommands::CreateGame(c)) =>{
+                    Ok(KafkaCommands::CreateGame(c)) => {
                         producer.send(FutureRecord::to(CREATE_GAME_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
                             .key(&c.client_id.to_string()), 0); // fire & forget
                     },
-                    Ok(KafkaCommands::ChooseColorPref(_)) => unimplemented!(),
+                    Ok(KafkaCommands::ChooseColorPref(_)) => {
+                        producer.send(FutureRecord::to(unimplemented!())
+                            .payload(&serde_json::to_string(&c).unwrap())
+                            .key(&c.client_id.to_string()), 0); // fire & forget
+                    },
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
         }
