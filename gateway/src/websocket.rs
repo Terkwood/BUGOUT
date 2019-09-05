@@ -309,11 +309,16 @@ impl Handler for WsSession {
                 }
                 Ok(self.observe())
             }
-            Ok(ClientCommands::ChooseColorPref(_)) => {
+            Ok(ClientCommands::ChooseColorPref(ChooseColorPrefClientCommand { color_pref })) => {
                 println!("🗳 {} CHSCLRPF", session_code(self));
 
                 self.kafka_commands_in
-                    .send(KafkaCommands::ChooseColorPref(unimplemented!()))
+                    .send(KafkaCommands::ChooseColorPref(
+                        ChooseColorPrefKafkaCommand {
+                            client_id: self.client_id,
+                            color_pref,
+                        },
+                    ))
                     .map_err(|e| ws::Error::from(Box::new(e)))
             }
             Err(_err) => {
