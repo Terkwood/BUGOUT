@@ -20,6 +20,7 @@ impl KafkaEvents {
             KafkaEvents::MoveMade(m) => ClientEvents::MoveMade(m),
             KafkaEvents::MoveRejected(m) => ClientEvents::MoveRejected(m),
             KafkaEvents::HistoryProvided(h) => ClientEvents::HistoryProvided(h),
+            KafkaEvents::ColorsChosen(c) => ClientEvents::ColorsChosen(c),
             KafkaEvents::GameReady(g) => ClientEvents::GameReady(GameReadyClientEvent {
                 game_id: g.game_id,
                 event_id: g.event_id,
@@ -47,7 +48,6 @@ impl KafkaEvents {
                     link,
                 })
             }
-            KafkaEvents::ColorsChosen(_) => unimplemented!(),
         }
     }
 
