@@ -309,7 +309,13 @@ impl Handler for WsSession {
                 }
                 Ok(self.observe())
             }
-            Ok(ClientCommands::ChooseColorPref(_)) => unimplemented!(),
+            Ok(ClientCommands::ChooseColorPref(_)) => {
+                println!("🗳 {} CHSCLRPF", session_code(self));
+
+                self.kafka_commands_in
+                    .send(KafkaCommands::ChooseColorPref(unimplemented!()))
+                    .map_err(|e| ws::Error::from(Box::new(e)))
+            }
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",
