@@ -434,7 +434,7 @@ impl Handler for WsSession {
                                     ))
                                     .unwrap(),
                                 )?,
-                                _ => panic!(" COULD NOT MATCH COLOR TO CLIENT "),
+                                _ => println!("😤 COULD NOT MATCH CLIENT TO COLOR"),
                             },
                             _ => self.ws_out.send(serde_json::to_string(&event).unwrap())?,
                         }
