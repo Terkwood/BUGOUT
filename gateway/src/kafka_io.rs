@@ -59,7 +59,7 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
                             .key(&c.client_id.to_string()), 0); // fire & forget
                     },
                     Ok(KafkaCommands::ChooseColorPref(c)) => {
-                        producer.send(FutureRecord::to(unimplemented!())
+                        producer.send(FutureRecord::to(CHOOSE_COLOR_PREF_TOPIC)
                             .payload(&serde_json::to_string(&c).unwrap())
                             .key(&c.client_id.to_string()), 0); // fire & forget
                     },

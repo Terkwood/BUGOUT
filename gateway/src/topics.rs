@@ -3,6 +3,7 @@ pub const PROVIDE_HISTORY_TOPIC: &str = "bugout-provide-history-cmd";
 pub const JOIN_PRIVATE_GAME_TOPIC: &str = "bugout-join-private-game-cmd";
 pub const FIND_PUBLIC_GAME_TOPIC: &str = "bugout-find-public-game-cmd";
 pub const CREATE_GAME_TOPIC: &str = "bugout-create-game-cmd";
+pub const CHOOSE_COLOR_PREF_TOPIC: &str = "bugout-choose-color-pref-cmd";
 
 pub const MOVE_MADE_TOPIC: &str = "bugout-move-made-ev";
 pub const HISTORY_PROVIDED_TOPIC: &str = "bugout-history-provided-ev";
