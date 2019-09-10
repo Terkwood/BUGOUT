@@ -263,7 +263,7 @@ pub fn start(
                             // We want to forward by client ID
                             // so that we don't send TWO yourcolor events
                             // to each client
-                            router.forward_by_client_id( black,ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
+                            router.forward_by_client_id(black,ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
                             router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
                         },
                         Ok(e) => {
