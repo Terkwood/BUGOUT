@@ -46,7 +46,7 @@ impl Router {
                 )
             }
         } else {
-            println!("NONE :( :(") // TODO
+            println!("Could not forward to client ID, perhaps it was already cleaned up by route_new_game ?")
         }
     }
 
