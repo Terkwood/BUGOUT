@@ -410,8 +410,6 @@ impl Handler for WsSession {
                             _ => (),
                         }
 
-                        println!("OH HEY IT'S AN EVENT {:?}", event);
-
                         self.ws_out.send(serde_json::to_string(&event).unwrap())?
                     }
                 }

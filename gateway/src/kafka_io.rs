@@ -167,11 +167,8 @@ fn start_consumer(
                         }
                     }
                     COLORS_CHOSEN_TOPIC => {
-                        println!("COLOR CHOSEN KAFKA EVENT COMING THRU!");
                         let deserialized: Result<ColorsChosenEvent, _> =
                             serde_json::from_str(payload);
-
-                        println!("{:?}", deserialized);
 
                         match deserialized {
                             Err(e) => println!("failed to deserialize wait for opponent {}", e),
