@@ -125,9 +125,9 @@ impl Router {
     }
 
     fn reconnect(&mut self, client_id: ClientId, game_id: GameId, events_in: Sender<ClientEvents>) {
-        // TODO we should store this in the clients hash as well 
-// TODO
-// TODO
+        // TODO we should store this in the clients hash as well
+        // TODO
+        // TODO
 
         let cs = ClientSender {
             client_id,
