@@ -410,36 +410,47 @@ impl Handler for WsSession {
                             _ => (),
                         }
 
+                        println!("OH HEY IT'S AN EVENT {:?}", event);
                         match event {
                             ClientEvents::ColorsChosen(ColorsChosenEvent {
                                 game_id,
                                 black,
                                 white,
                             }) => match self.client_id {
-                                b if b == black => { 
-                                    println!("⏳ {} {:<8} {:?}", session_code(self), "YOURCOLR", Player::BLACK);
+                                b if b == black => {
+                                    println!(
+                                        "🏴 {} {:<8} {:?}",
+                                        session_code(self),
+                                        "YOURCOLR",
+                                        Player::BLACK
+                                    );
                                     self.ws_out.send(
-                                    serde_json::to_string(&ClientEvents::YourColor(
-                                        YourColorEvent {
-                                            game_id,
-                                            your_color: Player::BLACK,
-                                        },
-                                    ))
-                                    .unwrap(),
-                                )? },
+                                        serde_json::to_string(&ClientEvents::YourColor(
+                                            YourColorEvent {
+                                                game_id,
+                                                your_color: Player::BLACK,
+                                            },
+                                        ))
+                                        .unwrap(),
+                                    )?
+                                }
                                 w if w == white => {
-
-                                    println!("⏳ {} {:<8} {:?}", session_code(self), "YOURCOLR", Player::WHITE);
+                                    println!(
+                                        "🏳 {} {:<8} {:?}",
+                                        session_code(self),
+                                        "YOURCOLR",
+                                        Player::WHITE
+                                    );
                                     self.ws_out.send(
-                                    serde_json::to_string(&ClientEvents::YourColor(
-                                        YourColorEvent {
-                                            game_id,
-                                            your_color: Player::WHITE,
-                                        },
-                                    ))
-                                    .unwrap(),
-                                )?
-                                },
+                                        serde_json::to_string(&ClientEvents::YourColor(
+                                            YourColorEvent {
+                                                game_id,
+                                                your_color: Player::WHITE,
+                                            },
+                                        ))
+                                        .unwrap(),
+                                    )?
+                                }
                                 _ => println!("😤 COULD NOT MATCH CLIENT TO COLOR"),
                             },
                             _ => self.ws_out.send(serde_json::to_string(&event).unwrap())?,
