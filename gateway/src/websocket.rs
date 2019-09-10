@@ -416,7 +416,9 @@ impl Handler for WsSession {
                                 black,
                                 white,
                             }) => match self.client_id {
-                                b if b == black => self.ws_out.send(
+                                b if b == black => { 
+                                    println!("⏳ {} {:<8} {:?}", session_code(self), "YOURCOLR", Player::BLACK);
+                                    self.ws_out.send(
                                     serde_json::to_string(&ClientEvents::YourColor(
                                         YourColorEvent {
                                             game_id,
@@ -424,8 +426,11 @@ impl Handler for WsSession {
                                         },
                                     ))
                                     .unwrap(),
-                                )?,
-                                w if w == white => self.ws_out.send(
+                                )? },
+                                w if w == white => {
+
+                                    println!("⏳ {} {:<8} {:?}", session_code(self), "YOURCOLR", Player::WHITE);
+                                    self.ws_out.send(
                                     serde_json::to_string(&ClientEvents::YourColor(
                                         YourColorEvent {
                                             game_id,
@@ -433,7 +438,8 @@ impl Handler for WsSession {
                                         },
                                     ))
                                     .unwrap(),
-                                )?,
+                                )?
+                                },
                                 _ => println!("😤 COULD NOT MATCH CLIENT TO COLOR"),
                             },
                             _ => self.ws_out.send(serde_json::to_string(&event).unwrap())?,
