@@ -8,7 +8,7 @@ use crossbeam_channel::select;
 
 use uuid::Uuid;
 
-use crate::client_events::ClientEvents;
+use crate::client_events::{ClientEvents, YourColorEvent};
 use crate::kafka_events::KafkaEvents;
 use crate::logging::{short_uuid, EMPTY_SHORT_UUID};
 use crate::model::*;
@@ -45,6 +45,8 @@ impl Router {
                     e
                 )
             }
+        } else {
+            println!("Could not forward to client ID, perhaps it was already cleaned up ?")
         }
     }
 
@@ -119,12 +121,12 @@ impl Router {
                     self.game_clients.insert(game_id, with_newbie);
                 }
             }
-
-            self.clients.remove(&client_id);
         }
     }
 
     fn reconnect(&mut self, client_id: ClientId, game_id: GameId, events_in: Sender<ClientEvents>) {
+        self.clients.insert(client_id, events_in.clone());
+
         let cs = ClientSender {
             client_id,
             events_in,
@@ -167,6 +169,11 @@ impl Router {
                 let to_delete = self.find_dead_game_clients();
                 let mut count = 0;
                 for game_id in to_delete {
+                    if let Some(g) = self.game_clients.get(&game_id) {
+                        for c in &g.clients {
+                            self.clients.remove_entry(&c.client_id);
+                        }
+                    }
                     self.game_clients.remove_entry(&game_id);
 
                     count += 1;
@@ -251,6 +258,13 @@ pub fn start(
                             router.route_new_game(w.client_id, w.game_id);
                             router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
                         }
+                        Ok(KafkaEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
+                            // We want to forward by client ID
+                            // so that we don't send TWO yourcolor events
+                            // to each client
+                            router.forward_by_client_id(black,ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
+                            router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
+                        },
                         Ok(e) => {
                             router.observed(e.game_id());
                             router.forward_by_game_id(e.to_client_event())

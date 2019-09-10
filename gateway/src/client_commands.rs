@@ -17,6 +17,12 @@ pub struct JoinPrivateGameClientCommand {
     pub game_id: CompactId,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct ChooseColorPrefClientCommand {
+    #[serde(rename = "colorPref")]
+    pub color_pref: ColorPref,
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(tag = "type")]
 pub enum ClientCommands {
@@ -27,6 +33,7 @@ pub enum ClientCommands {
     JoinPrivateGame(JoinPrivateGameClientCommand),
     FindPublicGame,
     CreatePrivateGame,
+    ChooseColorPref(ChooseColorPrefClientCommand),
 }
 
 #[cfg(test)]

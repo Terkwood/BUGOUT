@@ -12,7 +12,7 @@ pub struct Coord {
     pub y: u16,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub enum Player {
     BLACK,
     WHITE,
@@ -31,6 +31,21 @@ impl Player {
 pub enum Visibility {
     Public,
     Private,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum ColorPref {
+    Black,
+    White,
+    Any,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ColorsChosenEvent {
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+    pub black: ClientId,
+    pub white: ClientId,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]

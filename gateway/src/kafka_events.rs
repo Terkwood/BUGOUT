@@ -4,6 +4,7 @@ use crate::client_events::*;
 use crate::compact_ids::CompactId;
 use crate::model::*;
 
+#[derive(Debug)]
 pub enum KafkaEvents {
     MoveMade(MoveMadeEvent),
     MoveRejected(MoveRejectedEvent),
@@ -11,6 +12,7 @@ pub enum KafkaEvents {
     GameReady(GameReadyKafkaEvent),
     PrivateGameRejected(PrivateGameRejectedKafkaEvent),
     WaitForOpponent(WaitForOpponentKafkaEvent),
+    ColorsChosen(ColorsChosenEvent),
 }
 
 impl KafkaEvents {
@@ -19,6 +21,11 @@ impl KafkaEvents {
             KafkaEvents::MoveMade(m) => ClientEvents::MoveMade(m),
             KafkaEvents::MoveRejected(m) => ClientEvents::MoveRejected(m),
             KafkaEvents::HistoryProvided(h) => ClientEvents::HistoryProvided(h),
+            // Dummy impl, don't trust it
+            KafkaEvents::ColorsChosen(c) => ClientEvents::YourColor(YourColorEvent {
+                game_id: c.game_id,
+                your_color: Player::BLACK,
+            }),
             KafkaEvents::GameReady(g) => ClientEvents::GameReady(GameReadyClientEvent {
                 game_id: g.game_id,
                 event_id: g.event_id,
@@ -57,6 +64,7 @@ impl KafkaEvents {
             KafkaEvents::GameReady(e) => e.game_id,
             KafkaEvents::PrivateGameRejected(e) => e.game_id,
             KafkaEvents::WaitForOpponent(e) => e.game_id,
+            KafkaEvents::ColorsChosen(e) => e.game_id,
         }
     }
 }

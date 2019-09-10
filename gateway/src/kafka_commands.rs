@@ -16,6 +16,14 @@ pub struct FindPublicGameKafkaCommand {
     pub client_id: ClientId,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ChooseColorPrefKafkaCommand {
+    #[serde(rename = "clientId")]
+    pub client_id: ClientId,
+    #[serde(rename = "colorPref")]
+    pub color_pref: ColorPref,
+}
+
 /// Gateway may manually create private games,
 /// but it will never create a public game.
 /// We omit specifying the game ID here, and
@@ -34,4 +42,5 @@ pub enum KafkaCommands {
     JoinPrivateGame(JoinPrivateGameKafkaCommand),
     FindPublicGame(FindPublicGameKafkaCommand),
     CreateGame(CreateGameKafkaCommand),
+    ChooseColorPref(ChooseColorPrefKafkaCommand),
 }
