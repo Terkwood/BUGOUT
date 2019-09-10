@@ -46,7 +46,7 @@ impl Router {
                 )
             }
         } else {
-            println!("Could not forward to client ID, perhaps it was already cleaned up by route_new_game ?")
+            println!("Could not forward to client ID, perhaps it was already cleaned up ?")
         }
     }
 
@@ -121,13 +121,14 @@ impl Router {
                     self.game_clients.insert(game_id, with_newbie);
                 }
             }
-
-            // Pre-emptive clean-up.  Watch out
-            self.clients.remove(&client_id);
         }
     }
 
     fn reconnect(&mut self, client_id: ClientId, game_id: GameId, events_in: Sender<ClientEvents>) {
+        // TODO we should store this in the clients hash as well 
+// TODO
+// TODO
+
         let cs = ClientSender {
             client_id,
             events_in,
@@ -170,6 +171,11 @@ impl Router {
                 let to_delete = self.find_dead_game_clients();
                 let mut count = 0;
                 for game_id in to_delete {
+                    if let Some(g) = self.game_clients.get(&game_id) {
+                        for c in &g.clients {
+                            self.clients.remove_entry(&c.client_id);
+                        }
+                    }
                     self.game_clients.remove_entry(&game_id);
 
                     count += 1;
@@ -255,9 +261,11 @@ pub fn start(
                             router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
                         }
                         Ok(KafkaEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
-                            println!("Greetings");
-                            router.forward_by_game_id( ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
-                            router.forward_by_game_id(ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
+                            // We want to forward by client ID
+                            // so that we don't send TWO yourcolor events
+                            // to each client
+                            router.forward_by_client_id( black,ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
+                            router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
                             println!("And hi");
                             /*match event {
                             ClientEvents::ColorsChosen(ColorsChosenEvent {
