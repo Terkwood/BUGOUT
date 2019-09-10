@@ -8,7 +8,7 @@ use crossbeam_channel::select;
 
 use uuid::Uuid;
 
-use crate::client_events::ClientEvents;
+use crate::client_events::{ClientEvents, YourColorEvent};
 use crate::kafka_events::KafkaEvents;
 use crate::logging::{short_uuid, EMPTY_SHORT_UUID};
 use crate::model::*;
@@ -251,7 +251,55 @@ pub fn start(
                             router.route_new_game(w.client_id, w.game_id);
                             router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
                         }
+                        Ok(KafkaEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
+                            router.forward_by_client_id(black, ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
+                            router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
+                            /*match event {
+                            ClientEvents::ColorsChosen(ColorsChosenEvent {
+                                game_id,
+                                black,
+                                white,
+                            }) => match self.client_id {
+                                b if b == black => {
+                                    println!(
+                                        "🏴 {} {:<8} {:?}",
+                                        session_code(self),
+                                        "YOURCOLR",
+                                        Player::BLACK
+                                    );
+                                    self.ws_out.send(
+                                        serde_json::to_string(&ClientEvents::YourColor(
+                                            YourColorEvent {
+                                                game_id,
+                                                your_color: Player::BLACK,
+                                            },
+                                        ))
+                                        .unwrap(),
+                                    )?
+                                }
+                                w if w == white => {
+                                    println!(
+                                        "🏳 {} {:<8} {:?}",
+                                        session_code(self),
+                                        "YOURCOLR",
+                                        Player::WHITE
+                                    );
+                                    self.ws_out.send(
+                                        serde_json::to_string(&ClientEvents::YourColor(
+                                            YourColorEvent {
+                                                game_id,
+                                                your_color: Player::WHITE,
+                                            },
+                                        ))
+                                        .unwrap(),
+                                    )?
+                                }
+                                _ => println!("😤 COULD NOT MATCH CLIENT TO COLOR"),
+                            },*/
+
+                        },
                         Ok(e) => {
+                            println!("EVENT OBSERVED IN ROUTER {:?}", e);
                             router.observed(e.game_id());
                             router.forward_by_game_id(e.to_client_event())
                         },
