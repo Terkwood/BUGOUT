@@ -12,7 +12,7 @@ pub struct Coord {
     pub y: u16,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub enum Player {
     BLACK,
     WHITE,

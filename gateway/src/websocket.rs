@@ -407,6 +407,22 @@ impl Handler for WsSession {
                                 self.current_game = Some(game_id);
                                 println!("⏳ {} {:<8}", session_code(self), "WAITOPPO");
                             }
+                            ClientEvents::YourColor(YourColorEvent {
+                                game_id: _,
+                                your_color,
+                            })
+                                if your_color == Player::BLACK =>
+                            {
+                                println!("🏴 {} {:<8} Black", session_code(self), "YOURCOLR")
+                            }
+                            ClientEvents::YourColor(YourColorEvent {
+                                game_id: _,
+                                your_color,
+                            })
+                                if your_color == Player::WHITE =>
+                            {
+                                println!("🏳 {} {:<8} White", session_code(self), "YOURCOLR")
+                            }
                             _ => (),
                         }
 
