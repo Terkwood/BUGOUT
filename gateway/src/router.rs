@@ -267,7 +267,6 @@ pub fn start(
                             router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
                         },
                         Ok(e) => {
-                            println!("EVENT OBSERVED IN ROUTER {:?}", e);
                             router.observed(e.game_id());
                             router.forward_by_game_id(e.to_client_event())
                         },
