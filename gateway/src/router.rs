@@ -45,6 +45,8 @@ impl Router {
                     e
                 )
             }
+        } else {
+            println!("NONE :( :(") // TODO
         }
     }
 
@@ -120,6 +122,7 @@ impl Router {
                 }
             }
 
+            // Pre-emptive clean-up.  Watch out
             self.clients.remove(&client_id);
         }
     }
@@ -252,8 +255,10 @@ pub fn start(
                             router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
                         }
                         Ok(KafkaEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
-                            router.forward_by_client_id(black, ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
-                            router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
+                            println!("Greetings");
+                            router.forward_by_game_id( ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
+                            router.forward_by_game_id(ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
+                            println!("And hi");
                             /*match event {
                             ClientEvents::ColorsChosen(ColorsChosenEvent {
                                 game_id,
