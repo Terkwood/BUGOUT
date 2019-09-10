@@ -125,7 +125,6 @@ impl Router {
     }
 
     fn reconnect(&mut self, client_id: ClientId, game_id: GameId, events_in: Sender<ClientEvents>) {
-        // TODO but does it work?
         self.clients.insert(client_id, events_in.clone());
 
         let cs = ClientSender {
