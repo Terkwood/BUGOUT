@@ -1,3 +1,7 @@
+mod shutdown;
+
+use shutdown::shutdown;
+
 fn main() {
-    println!("Hello, world!");
+    shutdown();
 }
