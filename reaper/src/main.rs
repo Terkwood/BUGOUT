@@ -1,6 +1,8 @@
 extern crate dotenv;
 #[macro_use]
 extern crate lazy_static;
+extern crate rusoto_core;
+extern crate rusoto_ec2;
 
 mod env;
 mod shutdown;
