@@ -1,11 +1,10 @@
 use dotenv::dotenv;
 use std::env;
 
-const ENV_INSTANCE_NAME: &str = "INSTANCE_NAME";
-const DEFAULT_INSTANCE_NAME: &str = "UNKNOWN";
+const ENV_INSTANCE_ID: &str = "INSTANCE_ID";
 
 lazy_static! {
-    pub static ref INSTANCE_NAME: String = instance_name();
+    pub static ref INSTANCE_ID: String = instance_name();
 }
 
 pub fn init() {
@@ -13,9 +12,9 @@ pub fn init() {
 }
 
 fn instance_name() -> String {
-    if let Ok(i) = env::var(ENV_INSTANCE_NAME) {
+    if let Ok(i) = env::var(ENV_INSTANCE_ID) {
         i
     } else {
-        DEFAULT_INSTANCE_NAME.to_string()
+        panic!("Specify instance ID in env")
     }
 }

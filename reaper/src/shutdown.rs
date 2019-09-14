@@ -1,13 +1,13 @@
 use std::default::Default;
 
-use crate::env::INSTANCE_NAME;
+use crate::env::INSTANCE_ID;
 use rusoto_core::Region;
 use rusoto_ec2::{Ec2, Ec2Client, StopInstancesRequest};
 
 pub fn shutdown() {
     let client = Ec2Client::new(Region::UsEast1);
     let request: StopInstancesRequest = StopInstancesRequest {
-        instance_ids: vec![INSTANCE_NAME.to_string()],
+        instance_ids: vec![INSTANCE_ID.to_string()],
         ..Default::default()
     };
 
@@ -16,5 +16,5 @@ pub fn shutdown() {
         Err(error) => println!("Error: {:?}", error),
     }
 
-    println!("Shutting down instance {}...", INSTANCE_NAME.to_string())
+    println!("Shutting down instance {}...", INSTANCE_ID.to_string())
 }
