@@ -10,7 +10,11 @@ pub fn shutdown() {
         instance_ids: vec![INSTANCE_NAME.to_string()],
         ..Default::default()
     };
-    client.stop_instances(request);
+
+    match client.stop_instances(request).sync() {
+        Ok(output) => println!("OK: {:?}", output),
+        Err(error) => println!("Error: {:?}", error),
+    }
 
     println!("Shutting down instance {}...", INSTANCE_NAME.to_string())
 }
