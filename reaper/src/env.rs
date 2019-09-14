@@ -1,7 +1,7 @@
-use std::env;
 use dotenv::dotenv;
+use std::env;
 
-const ENV_INSTANCE_NAME : &str = "INSTANCE_NAME";
+const ENV_INSTANCE_NAME: &str = "INSTANCE_NAME";
 const DEFAULT_INSTANCE_NAME: &str = "UNKNOWN";
 
 lazy_static! {
@@ -9,7 +9,7 @@ lazy_static! {
 }
 
 pub fn init() {
-    dotenv::dotenv().ok();
+    dotenv().ok();
 }
 
 fn instance_name() -> String {
