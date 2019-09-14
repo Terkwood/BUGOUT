@@ -1,20 +1,73 @@
 use std::default::Default;
 
-use crate::env::INSTANCE_ID;
+use crate::env::TAG_NAME;
 use rusoto_core::Region;
-use rusoto_ec2::{Ec2, Ec2Client, StopInstancesRequest};
+use rusoto_ec2::{DescribeInstancesRequest, Ec2, Ec2Client, StopInstancesRequest, Tag};
+
+const NAME_TAG: &str = "NAME";
 
 pub fn shutdown() {
     let client = Ec2Client::new(Region::UsEast1);
-    let request: StopInstancesRequest = StopInstancesRequest {
+
+    let instance_id: Option<String> = big_box_instance_id(client);
+
+    /*
+    let stop_request: StopInstancesRequest = StopInstancesRequest {
         instance_ids: vec![INSTANCE_ID.to_string()],
         ..Default::default()
     };
-
-    match client.stop_instances(request).sync() {
+    
+    match client.stop_instances(stop_request).sync() {
         Ok(output) => println!("OK: {:?}", output),
         Err(error) => println!("Error: {:?}", error),
     }
-
+    
     println!("Shutting down instance {}...", INSTANCE_ID.to_string())
+    */
+}
+
+fn big_box_instance_id(client: Ec2Client) -> Option<String> {
+    let desc_request: DescribeInstancesRequest = Default::default();
+
+    let mut instance_id: Option<String> = None;
+
+    match client.describe_instances(desc_request).sync() {
+        Ok(d) => {
+            if let Some(rs) = d.reservations {
+                for r in rs {
+                    if let Some(is) = r.instances {
+                        for i in is {
+                            let id = i.instance_id;
+                            if let Some(tags) = i.tags {
+                                if has_required_name(tags) {
+                                    instance_id = id
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Err(error) => println!("Error: {:?}", error),
+    }
+
+    instance_id
+}
+
+fn has_required_name(tags: Vec<Tag>) -> bool {
+    for tag in tags {
+        match tag {
+            Tag {
+                key: Some(name),
+                value,
+            }
+                if name == NAME_TAG =>
+            {
+                return true
+            }
+            _ => (),
+        }
+    }
+
+    return false;
 }
