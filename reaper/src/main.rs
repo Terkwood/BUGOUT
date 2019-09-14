@@ -6,7 +6,9 @@ extern crate rusoto_core;
 extern crate rusoto_ec2;
 
 mod env;
+mod kafka;
 mod shutdown;
+mod topics;
 
 use shutdown::shutdown;
 
