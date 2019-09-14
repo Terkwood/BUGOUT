@@ -27,8 +27,6 @@ pub fn start(
     thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS, activity_in));
 }
 
-const SHUTDOWN_KEY: &str = "SHUTDOWN";
-
 /// Pay attention to the topic keys in the loop 🔄 👀
 fn start_producer(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
     let producer = configure_producer(BROKERS);
@@ -37,10 +35,10 @@ fn start_producer(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
         select! {
             recv(shutdown_out) -> command =>
                 match command {
-                    Ok(ShutdownCommand) =>   {
+                    Ok(ShutdownCommand(epoch_millis)) =>   {
                         producer.send(FutureRecord::to(SHUTDOWN_TOPIC)
-                            .payload(&serde_json::to_string(&ShutdownCommand).unwrap())
-                            .key(SHUTDOWN_KEY), 0); // fire & forget
+                            .payload(&serde_json::to_string(&ShutdownCommand(epoch_millis)).unwrap())
+                            .key(&format!("{}",epoch_millis)), 0); // fire & forget
                     },
                     _ => unimplemented!()
                 }

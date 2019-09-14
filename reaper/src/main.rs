@@ -17,12 +17,24 @@ use crossbeam_channel::{unbounded, Receiver, Sender};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::kafka::KafkaActivity;
+use std::time::SystemTime;
 
 const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ShutdownCommand;
+pub struct ShutdownCommand(pub u128);
+
+impl ShutdownCommand {
+    pub fn new() -> ShutdownCommand {
+        ShutdownCommand(
+            SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap_or(Default::default())
+                .as_millis(),
+        )
+    }
+}
 
 fn main() {
     println!("⚰️ {:<8} {}", NAME, VERSION);
