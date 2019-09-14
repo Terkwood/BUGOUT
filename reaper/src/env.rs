@@ -1,7 +1,7 @@
 use dotenv::dotenv;
 use std::env;
 
-const ENV_TAG_NAME: &str = "hello-reaper";
+const ENV_TAG_NAME: &str = "INSTANCE_TAG_NAME";
 
 lazy_static! {
     pub static ref TAG_NAME: String = tag_name();
@@ -15,6 +15,6 @@ fn tag_name() -> String {
     if let Ok(i) = env::var(ENV_TAG_NAME) {
         i
     } else {
-        panic!("Specify instance ID in env")
+        panic!("Specify desired instance nametag value in env")
     }
 }

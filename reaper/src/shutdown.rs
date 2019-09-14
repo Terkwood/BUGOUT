@@ -4,29 +4,29 @@ use crate::env::TAG_NAME;
 use rusoto_core::Region;
 use rusoto_ec2::{DescribeInstancesRequest, Ec2, Ec2Client, StopInstancesRequest, Tag};
 
-const NAME_TAG: &str = "NAME";
+const NAME_TAG: &str = "Name";
 
 pub fn shutdown() {
     let client = Ec2Client::new(Region::UsEast1);
 
-    let instance_id: Option<String> = big_box_instance_id(client);
+    let instance_id: Option<String> = big_box_instance_id(&client);
 
-    /*
-    let stop_request: StopInstancesRequest = StopInstancesRequest {
-        instance_ids: vec![INSTANCE_ID.to_string()],
-        ..Default::default()
-    };
-    
-    match client.stop_instances(stop_request).sync() {
-        Ok(output) => println!("OK: {:?}", output),
-        Err(error) => println!("Error: {:?}", error),
+    if let Some(id) = instance_id {
+        let stop_request: StopInstancesRequest = StopInstancesRequest {
+            instance_ids: vec![id.to_string()],
+            ..Default::default()
+        };
+
+        match client.stop_instances(stop_request).sync() {
+            Ok(output) => println!("OK: {:?}", output),
+            Err(error) => println!("Error: {:?}", error),
+        }
+
+        println!("Shutting down instance {}...", id.to_string())
     }
-    
-    println!("Shutting down instance {}...", INSTANCE_ID.to_string())
-    */
 }
 
-fn big_box_instance_id(client: Ec2Client) -> Option<String> {
+fn big_box_instance_id(client: &Ec2Client) -> Option<String> {
     let desc_request: DescribeInstancesRequest = Default::default();
 
     let mut instance_id: Option<String> = None;
