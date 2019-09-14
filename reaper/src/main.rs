@@ -11,21 +11,23 @@ mod shutdown;
 mod topics;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
-use shutdown::shutdown;
 
-use crate::kafka::{KafkaActivity, ShutdownCommand};
+use crate::kafka::KafkaActivity;
 
 const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
+pub struct ShutdownCommand;
 
 fn main() {
     println!("⚰️ {:<8} {}", NAME, VERSION);
 
     let (activity_in, _): (Sender<KafkaActivity>, Receiver<KafkaActivity>) = unbounded();
 
-    let (_, shutdown_out): (Sender<ShutdownCommand>, Receiver<ShutdownCommand>) = unbounded();
+    let (shutdown_in, shutdown_out): (Sender<ShutdownCommand>, Receiver<ShutdownCommand>) =
+        unbounded();
 
     env::init();
     kafka::start(activity_in, shutdown_out);
-    // TODO shutdown();
+    shutdown::listen(shutdown_in);
 }

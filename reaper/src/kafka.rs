@@ -8,6 +8,7 @@ use rdkafka::consumer::Consumer;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
 use crate::topics::CONSUME_TOPICS;
+use crate::ShutdownCommand;
 
 pub const BROKERS: &str = "kafka:9092";
 pub const APP_NAME: &str = "reaper";
@@ -16,8 +17,6 @@ pub struct KafkaActivity {
     pub topic: String,
     pub timestamp: u64,
 }
-
-pub struct ShutdownCommand;
 
 pub fn start(
     activity_in: crossbeam::Sender<KafkaActivity>,

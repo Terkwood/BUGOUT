@@ -1,12 +1,17 @@
 use std::default::Default;
 
-use crate::env::INSTANCE_TAG_NAME;
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use rusoto_core::Region;
 use rusoto_ec2::{DescribeInstancesRequest, Ec2, Ec2Client, StopInstancesRequest, Tag};
 
+use crate::env::INSTANCE_TAG_NAME;
+use crate::ShutdownCommand;
+
 const TAG_KEY: &str = "Name";
 
-pub fn shutdown() {
+pub fn listen(shutdown_in: crossbeam::Sender<ShutdownCommand>) {}
+
+fn shutdown() {
     let client = Ec2Client::new(Region::UsEast1);
 
     let instance_id: Option<String> = big_box_instance_id(&client);
