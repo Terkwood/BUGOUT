@@ -1,3 +1,8 @@
+use std::default::Default;
+
+use rusoto_core::Region;
+use rusoto_ec2::StopInstancesRequest;
+
 use crate::env::INSTANCE_NAME;
 
 pub fn shutdown() {
