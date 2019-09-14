@@ -1,6 +1,6 @@
 use std::default::Default;
 
-use crossbeam_channel::{select, unbounded, Receiver, Sender};
+use crossbeam_channel::select;
 use rusoto_core::Region;
 use rusoto_ec2::{DescribeInstancesRequest, Ec2, Ec2Client, StopInstancesRequest, Tag};
 
@@ -14,7 +14,7 @@ pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
         select! {
             recv(shutdown_out) -> command =>
                 match command {
-                    Ok(_) => unimplemented!(),
+                    Ok(_) => shutdown(),
                     _ => unimplemented!()
                 }
         }

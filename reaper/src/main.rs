@@ -10,6 +10,7 @@ extern crate serde_json;
 
 mod env;
 mod kafka;
+mod reaper;
 mod shutdown;
 mod topics;
 
@@ -46,5 +47,6 @@ fn main() {
 
     env::init();
     kafka::start(activity_in, shutdown_out.clone());
+    reaper::start();
     shutdown::listen(shutdown_out);
 }
