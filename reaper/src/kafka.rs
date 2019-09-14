@@ -5,20 +5,16 @@ use futures::stream::Stream;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::Consumer;
-use rdkafka::message::{Message, Timestamp};
+use rdkafka::message::Message;
 
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
+use crate::model::*;
 use crate::topics::{CONSUME_TOPICS, SHUTDOWN_TOPIC};
 use crate::ShutdownCommand;
 
 pub const BROKERS: &str = "kafka:9092";
 pub const APP_NAME: &str = "reaper";
-
-pub struct KafkaActivity {
-    pub topic: String,
-    pub timestamp: i64,
-}
 
 pub fn start(
     activity_in: crossbeam::Sender<KafkaActivity>,
