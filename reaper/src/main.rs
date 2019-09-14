@@ -31,6 +31,6 @@ fn main() {
 
     env::init();
     kafka::start(activity_in, shutdown_out.clone());
-    monitor::start(activity_out);
+    monitor::start(shutdown_in, activity_out);
     shutdown::listen(shutdown_out);
 }
