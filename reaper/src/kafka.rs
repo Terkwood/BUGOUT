@@ -5,6 +5,8 @@ use futures::stream::Stream;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::Consumer;
+use rdkafka::message::{Message, Timestamp};
+
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
 use crate::topics::{CONSUME_TOPICS, SHUTDOWN_TOPIC};
@@ -15,7 +17,7 @@ pub const APP_NAME: &str = "reaper";
 
 pub struct KafkaActivity {
     pub topic: String,
-    pub timestamp: u64,
+    pub timestamp: i64,
 }
 
 pub fn start(
@@ -81,8 +83,11 @@ fn start_consumer(
             Err(e) => panic!("Error waiting on kafka stream: {:?}", e),
             Ok(Err(e)) => panic!("Nested error (!) waiting on kafka stream: {:?}", e),
             Ok(Ok(msg)) => {
-                if let Err(_) = activity_in.send(unimplemented!()) {
-                    unimplemented!()
+                if let Err(_) = activity_in.send(KafkaActivity {
+                    topic: msg.topic().to_string(),
+                    timestamp: msg.timestamp().to_millis().unwrap_or(Default::default()),
+                }) {
+                    panic!("ERROR SENDING KAFKA ACTIVITY")
                 }
             }
         }

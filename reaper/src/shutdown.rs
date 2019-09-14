@@ -1,6 +1,6 @@
 use std::default::Default;
 
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use crossbeam_channel::{select, unbounded, Receiver, Sender};
 use rusoto_core::Region;
 use rusoto_ec2::{DescribeInstancesRequest, Ec2, Ec2Client, StopInstancesRequest, Tag};
 
@@ -9,7 +9,17 @@ use crate::ShutdownCommand;
 
 const TAG_KEY: &str = "Name";
 
-pub fn listen(shutdown_in: crossbeam::Sender<ShutdownCommand>) {}
+pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
+    loop {
+        select! {
+            recv(shutdown_out) -> command =>
+                match command {
+                    Ok(_) => unimplemented!(),
+                    _ => unimplemented!()
+                }
+        }
+    }
+}
 
 fn shutdown() {
     let client = Ec2Client::new(Region::UsEast1);

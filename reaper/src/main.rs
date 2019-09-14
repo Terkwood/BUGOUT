@@ -45,6 +45,6 @@ fn main() {
         unbounded();
 
     env::init();
-    kafka::start(activity_in, shutdown_out);
-    shutdown::listen(shutdown_in);
+    kafka::start(activity_in, shutdown_out.clone());
+    shutdown::listen(shutdown_out);
 }
