@@ -8,15 +8,17 @@ pub struct KafkaActivity {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ShutdownCommand(pub u128);
+pub struct ShutdownCommand(pub SystemTime);
 
 impl ShutdownCommand {
     pub fn new() -> ShutdownCommand {
-        ShutdownCommand(
-            SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap_or(Default::default())
-                .as_millis(),
-        )
+        ShutdownCommand(SystemTime::now())
+    }
+
+    pub fn as_millis(&self) -> u128 {
+        self.0
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap_or(Default::default())
+            .as_millis()
     }
 }

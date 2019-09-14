@@ -1,4 +1,5 @@
 #![feature(bind_by_move_pattern_guards)]
+extern crate chrono;
 extern crate dotenv;
 #[macro_use]
 extern crate lazy_static;

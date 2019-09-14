@@ -15,7 +15,7 @@ pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
             recv(shutdown_out) -> command =>
                 match command {
                     Ok(_) => shutdown(),
-                    _ => unimplemented!()
+                    Err(e) => println!("Failed to select shutdown_out {}", e)
                 }
         }
     }

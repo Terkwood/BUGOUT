@@ -33,10 +33,10 @@ fn start_producer(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
         select! {
             recv(shutdown_out) -> command =>
                 match command {
-                    Ok(ShutdownCommand(epoch_millis)) =>   {
+                    Ok(shutdown) =>   {
                         producer.send(FutureRecord::to(SHUTDOWN_TOPIC)
-                            .payload(&serde_json::to_string(&ShutdownCommand(epoch_millis)).unwrap())
-                            .key(&format!("{}",epoch_millis)), 0); // fire & forget
+                            .payload(&serde_json::to_string(&shutdown).unwrap())
+                            .key(&format!("{}",shutdown.as_millis())), 0); // fire & forget
                     },
                     _ => unimplemented!()
                 }
