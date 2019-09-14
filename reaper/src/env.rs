@@ -4,7 +4,7 @@ use std::env;
 const ENV_TAG_NAME: &str = "INSTANCE_TAG_NAME";
 
 lazy_static! {
-    pub static ref TAG_NAME: String = tag_name();
+    pub static ref INSTANCE_TAG_NAME: String = tag_name();
 }
 
 pub fn init() {

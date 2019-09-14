@@ -1,10 +1,10 @@
 use std::default::Default;
 
-use crate::env::TAG_NAME;
+use crate::env::INSTANCE_TAG_NAME;
 use rusoto_core::Region;
 use rusoto_ec2::{DescribeInstancesRequest, Ec2, Ec2Client, StopInstancesRequest, Tag};
 
-const NAME_TAG: &str = "Name";
+const TAG_KEY: &str = "Name";
 
 pub fn shutdown() {
     let client = Ec2Client::new(Region::UsEast1);
@@ -58,10 +58,10 @@ fn has_required_name(tags: Vec<Tag>) -> bool {
     for tag in tags {
         match tag {
             Tag {
-                key: Some(name),
-                value,
+                key: Some(tag_key),
+                value: Some(v),
             }
-                if name == NAME_TAG =>
+                if tag_key == TAG_KEY && v == INSTANCE_TAG_NAME.to_string() =>
             {
                 return true
             }
