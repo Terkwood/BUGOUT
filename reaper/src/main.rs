@@ -4,6 +4,9 @@ extern crate dotenv;
 extern crate lazy_static;
 extern crate rusoto_core;
 extern crate rusoto_ec2;
+extern crate serde;
+extern crate serde_derive;
+extern crate serde_json;
 
 mod env;
 mod kafka;
@@ -11,12 +14,14 @@ mod shutdown;
 mod topics;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
+use serde_derive::{Deserialize, Serialize};
 
 use crate::kafka::KafkaActivity;
 
 const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ShutdownCommand;
 
 fn main() {

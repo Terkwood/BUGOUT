@@ -7,7 +7,7 @@ use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::Consumer;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
-use crate::topics::CONSUME_TOPICS;
+use crate::topics::{CONSUME_TOPICS, SHUTDOWN_TOPIC};
 use crate::ShutdownCommand;
 
 pub const BROKERS: &str = "kafka:9092";
@@ -27,6 +27,8 @@ pub fn start(
     thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS, activity_in));
 }
 
+const SHUTDOWN_KEY: &str = "SHUTDOWN";
+
 /// Pay attention to the topic keys in the loop 🔄 👀
 fn start_producer(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
     let producer = configure_producer(BROKERS);
@@ -35,7 +37,11 @@ fn start_producer(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
         select! {
             recv(shutdown_out) -> command =>
                 match command {
-                    Ok(_) => unimplemented!("WRITE SHUTDOWN COMMAND"),
+                    Ok(ShutdownCommand) =>   {
+                        producer.send(FutureRecord::to(SHUTDOWN_TOPIC)
+                            .payload(&serde_json::to_string(&ShutdownCommand).unwrap())
+                            .key(SHUTDOWN_KEY), 0); // fire & forget
+                    },
                     _ => unimplemented!()
                 }
         }
