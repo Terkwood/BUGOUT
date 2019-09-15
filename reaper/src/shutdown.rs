@@ -1,4 +1,5 @@
 use std::default::Default;
+use std::thread;
 
 use crossbeam_channel::select;
 use rusoto_core::Region;
@@ -10,7 +11,7 @@ use crate::model::ShutdownCommand;
 const TAG_KEY: &str = "Name";
 
 pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
-    loop {
+    thread::spawn(move || loop {
         select! {
             recv(shutdown_out) -> command =>
                 match command {
@@ -18,7 +19,7 @@ pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
                     Err(e) => println!("Failed to select shutdown_out {}", e)
                 }
         }
-    }
+    });
 }
 
 fn shutdown() {

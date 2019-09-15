@@ -16,6 +16,7 @@ pub fn start(
     let mut monitor = Monitor::new();
     let ticker = tick(Duration::from_secs(TICK_SECS));
 
+    // TODO thread spawn
     loop {
         select! {
             recv(ticker) -> _ => if monitor.is_system_idle() {
