@@ -68,6 +68,12 @@ services:
       - "kafka"
     depends_on:
       - "kafka"
+  reaper:
+    build: reaper/.
+    links:
+      - "kafka"
+    depends_on:
+      - "kafka"
   kafkacat:
     build: kafkacat/.
     links:
