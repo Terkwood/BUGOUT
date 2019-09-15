@@ -9,9 +9,9 @@ use rdkafka::message::Message;
 
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
+use crate::model::ShutdownCommand;
 use crate::model::*;
 use crate::topics::{CONSUME_TOPICS, SHUTDOWN_TOPIC};
-use crate::ShutdownCommand;
 
 pub const BROKERS: &str = "kafka:9092";
 pub const APP_NAME: &str = "reaper";

@@ -1,24 +1,9 @@
-#![feature(bind_by_move_pattern_guards)]
-extern crate chrono;
-extern crate dotenv;
-#[macro_use]
-extern crate lazy_static;
-extern crate rusoto_core;
-extern crate rusoto_ec2;
-extern crate serde;
-extern crate serde_derive;
-extern crate serde_json;
-
-mod env;
-mod kafka;
-mod model;
-mod monitor;
-mod shutdown;
-mod topics;
+extern crate reaper;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
-use crate::model::*;
+use reaper::model::*;
+use reaper::*;
 const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 

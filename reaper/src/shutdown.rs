@@ -5,7 +5,7 @@ use rusoto_core::Region;
 use rusoto_ec2::{DescribeInstancesRequest, Ec2, Ec2Client, StopInstancesRequest, Tag};
 
 use crate::env::INSTANCE_TAG_NAME;
-use crate::ShutdownCommand;
+use crate::model::ShutdownCommand;
 
 const TAG_KEY: &str = "Name";
 
