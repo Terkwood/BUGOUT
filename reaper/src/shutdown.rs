@@ -11,7 +11,7 @@ use crate::model::ShutdownCommand;
 const TAG_KEY: &str = "Name";
 
 pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
-    thread::spawn(move || loop {
+    loop {
         select! {
             recv(shutdown_out) -> command =>
                 match command {
@@ -19,7 +19,7 @@ pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
                     Err(e) => println!("Failed to select shutdown_out {}", e)
                 }
         }
-    });
+    }
 }
 
 fn shutdown() {

@@ -12,7 +12,8 @@ pub fn main() {
         unbounded();
 
     env::init();
-    shutdown::listen(shutdown_out);
 
-    shutdown_in.send(ShutdownCommand::new()).unwrap()
+    shutdown_in.send(ShutdownCommand::new()).unwrap();
+
+    shutdown::listen(shutdown_out);
 }
