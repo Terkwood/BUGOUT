@@ -1,4 +1,5 @@
 use std::default::Default;
+use std::str::FromStr;
 
 use crossbeam_channel::select;
 
@@ -10,7 +11,7 @@ use rusoto_ec2::{
 
 use rusoto_sts::{StsAssumeRoleSessionCredentialsProvider, StsClient};
 
-use crate::env::INSTANCE_TAG_NAME;
+use crate::env::*;
 use crate::model::ShutdownCommand;
 
 const TAG_KEY: &str = "Name";
@@ -95,11 +96,18 @@ fn has_required_name(tags: Vec<Tag>) -> bool {
     return false;
 }
 
+fn region() -> Region {
+    match Region::from_str(&AWS_REGION.to_string()) {
+        Ok(r) => r,
+        Err(_e) => panic!("Failed to set AWS region"),
+    }
+}
+
 /// Assume a role which can shut something down
 fn assume_role() {
     // TODO
     // TODO
-    let sts = StsClient::new(Region::UsEast1);
+    let sts = StsClient::new(region());
 
     let provider = StsAssumeRoleSessionCredentialsProvider::new(
         sts,

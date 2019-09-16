@@ -15,9 +15,6 @@ RUN chmod 755 wait-for-it.sh
 RUN git fetch && git pull
 RUN git rev-parse HEAD
 
-# checked_duration_since feature requires nightly
-RUN rustup default nightly   
-
 # make sure we have the most recent of everything,
 # not just what's on the git branch
 COPY . /var/BUGOUT/reaper/.
