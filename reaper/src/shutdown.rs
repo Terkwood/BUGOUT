@@ -1,8 +1,14 @@
 use std::default::Default;
 
 use crossbeam_channel::select;
-use rusoto_core::Region;
-use rusoto_ec2::{DescribeInstancesRequest, Ec2, Ec2Client, StopInstancesRequest, Tag};
+
+use rusoto_core::{HttpClient, Region};
+use rusoto_ec2::{
+    DescribeInstancesRequest, DescribeSpotInstanceRequestsRequest, Ec2, Ec2Client,
+    StopInstancesRequest, Tag,
+};
+
+use rusoto_sts::{StsAssumeRoleSessionCredentialsProvider, StsClient};
 
 use crate::env::INSTANCE_TAG_NAME;
 use crate::model::ShutdownCommand;
@@ -89,6 +95,26 @@ fn has_required_name(tags: Vec<Tag>) -> bool {
     return false;
 }
 
+/// Assume a role which can shut something down
 fn assume_role() {
-    unimplemented!()
+    // TODO
+    // TODO
+    let sts = StsClient::new(Region::UsEast1);
+
+    let provider = StsAssumeRoleSessionCredentialsProvider::new(
+        sts,
+        "arn:aws:iam::something:role/something".to_owned(),
+        "default".to_owned(),
+        None,
+        None,
+        None,
+        None,
+    );
+
+    let client = Ec2Client::new_with(HttpClient::new().unwrap(), provider, Region::UsEast1);
+
+    let sir_input = DescribeSpotInstanceRequestsRequest::default();
+    let x = client.describe_spot_instance_requests(sir_input).sync();
+
+    println!("{:?}", x);
 }

@@ -5,6 +5,7 @@ extern crate dotenv;
 extern crate lazy_static;
 extern crate rusoto_core;
 extern crate rusoto_ec2;
+extern crate rusoto_sts;
 extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
