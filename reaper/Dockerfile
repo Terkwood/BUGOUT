@@ -22,6 +22,9 @@ RUN rustup default nightly
 # not just what's on the git branch
 COPY . /var/BUGOUT/reaper/.
 
+# TODO
+RUN cargo build --all-targets
+
 RUN cargo install --path .
 
 CMD ["sh", "run.sh"]
