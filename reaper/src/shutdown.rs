@@ -1,5 +1,4 @@
 use std::default::Default;
-use std::thread;
 
 use crossbeam_channel::select;
 use rusoto_core::Region;
@@ -11,6 +10,8 @@ use crate::model::ShutdownCommand;
 const TAG_KEY: &str = "Name";
 
 pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
+    assume_role();
+
     loop {
         select! {
             recv(shutdown_out) -> command =>
@@ -86,4 +87,8 @@ fn has_required_name(tags: Vec<Tag>) -> bool {
     }
 
     return false;
+}
+
+fn assume_role() {
+    unimplemented!()
 }
