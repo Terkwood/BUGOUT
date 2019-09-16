@@ -105,14 +105,12 @@ fn region() -> Region {
 
 /// Assume a role which can shut something down
 fn assume_role() {
-    // TODO
-    // TODO
     let sts = StsClient::new(region());
 
     let provider = StsAssumeRoleSessionCredentialsProvider::new(
         sts,
-        "arn:aws:iam::something:role/something".to_owned(),
-        "default".to_owned(),
+        AWS_ROLE_ARN.to_string(),
+        "default".to_string(),
         None,
         None,
         None,
