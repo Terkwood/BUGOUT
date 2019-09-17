@@ -34,6 +34,8 @@ fn start_producer(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
             recv(shutdown_out) -> command =>
                 match command {
                     Ok(shutdown) =>   {
+                        // TODO
+                        println!("SENDING SHUTDOWN MESSAGE TO KAKFA");
                         producer.send(FutureRecord::to(SHUTDOWN_TOPIC)
                             .payload(&serde_json::to_string(&shutdown).unwrap())
                             .key(&format!("{}",shutdown.as_millis())), 0); // fire & forget
@@ -79,6 +81,9 @@ fn start_consumer(
             Err(e) => panic!("Error waiting on kafka stream: {:?}", e),
             Ok(Err(e)) => panic!("Nested error (!) waiting on kafka stream: {:?}", e),
             Ok(Ok(msg)) => {
+                // TODO
+                println!("ACTIVITY ON TOPIC {}", msg.topic());
+
                 if let Err(_) = activity_in.send(KafkaActivity {
                     topic: msg.topic().to_string(),
                     timestamp: msg.timestamp().to_millis().unwrap_or(Default::default()),

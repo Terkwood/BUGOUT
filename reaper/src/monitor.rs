@@ -20,6 +20,7 @@ pub fn start(
     thread::spawn(move || loop {
         select! {
             recv(ticker) -> _ => if monitor.is_system_idle() {
+                println!("⚰️ SHUTDOWN");
                 if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
                     println!("Failed to send shutdown command: {:?}", e)
                 }
