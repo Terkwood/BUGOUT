@@ -8,7 +8,7 @@ const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 fn main() {
-    println!("⚰️ {:<8} {}", NAME, VERSION);
+    println!("🔢 {:<8} {}", NAME, VERSION);
 
     let (activity_in, activity_out): (Sender<KafkaActivity>, Receiver<KafkaActivity>) = unbounded();
 
