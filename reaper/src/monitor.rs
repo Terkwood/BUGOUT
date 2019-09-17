@@ -1,3 +1,4 @@
+use std::thread;
 use std::time::Duration;
 
 use chrono::{DateTime, TimeZone, Utc};
@@ -16,8 +17,7 @@ pub fn start(
     let mut monitor = Monitor::new();
     let ticker = tick(Duration::from_secs(TICK_SECS));
 
-    // TODO thread spawn
-    loop {
+    thread::spawn(move || loop {
         select! {
             recv(ticker) -> _ => if monitor.is_system_idle() {
                 if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
@@ -30,7 +30,7 @@ pub fn start(
                     Err(e) => println!("Failed to select in monitor: {:?}", e),
                 }
         }
-    }
+    });
 }
 
 struct Monitor(Vec<DateTime<Utc>>);
