@@ -9,7 +9,7 @@ instance request.
 
 ## HOW IT WORKS
 
-_TODO we should describe the .env vars_.  that would be helpful.
+You need a role attached to your instance which gives you the EC2 `StopInstances` and `DescribeInstances` permissions via .  If you launch this container on a host
 
 ```scala
 TODO()
