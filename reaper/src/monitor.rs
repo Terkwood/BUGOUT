@@ -3,9 +3,9 @@ use std::time::Duration;
 use chrono::{DateTime, TimeZone, Utc};
 use crossbeam_channel::{select, tick};
 
+use crate::env::ALLOWED_IDLE_SECS;
 use crate::model::*;
 
-const ALLOWED_IDLE_SECS: i64 = 60;
 const TICK_SECS: u64 = 5;
 
 /// Start a process which
@@ -62,5 +62,5 @@ impl Monitor {
 fn is_expired(timestamp: DateTime<Utc>) -> bool {
     let since_then = Utc::now().signed_duration_since(timestamp);
 
-    since_then.num_seconds() > ALLOWED_IDLE_SECS
+    since_then.num_seconds() > *ALLOWED_IDLE_SECS
 }
