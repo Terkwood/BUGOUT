@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cargo run --example shutdown
+cargo run
