@@ -108,11 +108,11 @@ fn assume_role() {
     let sts = StsClient::new(region());
 
     let sts_creds_provider = StsSessionCredentialsProvider::new(sts.clone(), None, None);
-
+    /*
     match sts_creds_provider.credentials().wait() {
         Err(e) => panic!("sts credentials provider error: {:?}", e),
         Ok(r) => println!("sts credentials provider result: {:?}", r),
-    }
+    }*/
 
     let provider = StsAssumeRoleSessionCredentialsProvider::new(
         sts,
