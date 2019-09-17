@@ -65,3 +65,17 @@ fn is_expired(timestamp: DateTime<Utc>) -> bool {
 
     since_then.num_seconds() > *ALLOWED_IDLE_SECS
 }
+
+#[cfg(test)]
+mod tests {
+    extern crate time;
+    use super::*;
+
+    #[test]
+    fn test_is_expired() {
+        assert_eq!(
+            true,
+            is_expired(Utc::now() - time::Duration::seconds(1_000_000_000))
+        );
+    }
+}
