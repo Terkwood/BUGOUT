@@ -7,6 +7,12 @@ that an appropriate amount of time has passed,
 deems the system inactive, then issues an AWS stop
 instance request.
 
+## How it works
+
+TODO description of timing
+
+The service will search for the `INSTANCE_TAG_NAME` specified in the `.env` file, and terminate all instances with the given `Name` tag.
+
 ## AWS configuration
 
 Within AWS, the instance(s) that you wish to terminate must have a tag with key `Name` and a given value.  This value must be configured in a `.env` file which will be baked into the docker container build for `reaper`.  See the next section for an example.
