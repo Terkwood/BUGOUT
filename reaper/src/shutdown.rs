@@ -21,7 +21,7 @@ use crate::model::ShutdownCommand;
 const TAG_KEY: &str = "Name";
 
 pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
-    let client = ec2_client_with_role();
+    let client = Ec2Client::new(region());
 
     loop {
         select! {
