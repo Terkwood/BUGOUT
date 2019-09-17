@@ -1,15 +1,19 @@
 use std::default::Default;
 use std::str::FromStr;
 
+use futures::future::Future;
+
 use crossbeam_channel::select;
 
-use rusoto_core::{HttpClient, Region};
+use rusoto_core::{HttpClient, ProvideAwsCredentials, Region};
 use rusoto_ec2::{
     DescribeInstancesRequest, DescribeSpotInstanceRequestsRequest, Ec2, Ec2Client,
     StopInstancesRequest, Tag,
 };
 
-use rusoto_sts::{StsAssumeRoleSessionCredentialsProvider, StsClient};
+use rusoto_sts::{
+    StsAssumeRoleSessionCredentialsProvider, StsClient, StsSessionCredentialsProvider,
+};
 
 use crate::env::*;
 use crate::model::ShutdownCommand;
@@ -102,6 +106,13 @@ fn region() -> Region {
 /// Assume a role which can shut something down
 fn assume_role() {
     let sts = StsClient::new(region());
+
+    let sts_creds_provider = StsSessionCredentialsProvider::new(sts.clone(), None, None);
+
+    match sts_creds_provider.credentials().wait() {
+        Err(e) => panic!("sts credentials provider error: {:?}", e),
+        Ok(r) => println!("sts credentials provider result: {:?}", r),
+    }
 
     let provider = StsAssumeRoleSessionCredentialsProvider::new(
         sts,
