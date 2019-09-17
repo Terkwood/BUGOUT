@@ -5,7 +5,7 @@ use futures::future::Future;
 
 use crossbeam_channel::select;
 
-use rusoto_core::{HttpClient, ProvideAwsCredentials, Region};
+use rusoto_core::{HttpClient, ProvideAwsCredentials, Region, RusotoError};
 use rusoto_credential::ChainProvider;
 use rusoto_ec2::{
     DescribeInstancesRequest, DescribeSpotInstanceRequestsRequest, Ec2, Ec2Client,
@@ -13,7 +13,8 @@ use rusoto_ec2::{
 };
 
 use rusoto_sts::{
-    StsAssumeRoleSessionCredentialsProvider, StsClient, StsSessionCredentialsProvider,
+    AssumeRoleRequest, Sts, StsAssumeRoleSessionCredentialsProvider, StsClient,
+    StsSessionCredentialsProvider,
 };
 
 use crate::env::*;
@@ -108,6 +109,28 @@ fn region() -> Region {
         Ok(r) => r,
         Err(_e) => panic!("Failed to set AWS region"),
     }
+}
+
+fn assume_role() {
+    let sts = StsClient::new(region());
+
+    let assume_role_res = sts.assume_role(AssumeRoleRequest {
+        role_arn: AWS_ROLE_ARN.to_string(),
+        role_session_name: "todo we dunno do we".to_string(),
+        ..Default::default()
+    });
+
+    match assume_role_res.sync() {
+        Err(RusotoError::Unknown(http_res)) => {
+            let msg = ::std::str::from_utf8(&http_res.body).unwrap();
+            panic!("Greetings: {}", msg)
+        }
+        _ => panic!(
+            "this should have been an Unknown STS Error (thought you were sposed to be my cousin)"
+        ),
+    }
+
+    unimplemented!()
 }
 
 // TODO WASTED // TODO WASTED // TODO WASTED
