@@ -1121,6 +1121,7 @@ dependencies = [
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rdkafka 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_core 0.40.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rusoto_credential 0.40.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_ec2 0.40.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_sts 0.40.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.100 (registry+https://github.com/rust-lang/crates.io-index)",

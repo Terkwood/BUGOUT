@@ -6,6 +6,7 @@ use futures::future::Future;
 use crossbeam_channel::select;
 
 use rusoto_core::{HttpClient, ProvideAwsCredentials, Region};
+use rusoto_credential::ChainProvider;
 use rusoto_ec2::{
     DescribeInstancesRequest, DescribeSpotInstanceRequestsRequest, Ec2, Ec2Client,
     StopInstancesRequest, Tag,
@@ -21,7 +22,13 @@ use crate::model::ShutdownCommand;
 const TAG_KEY: &str = "Name";
 
 pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
-    let client = Ec2Client::new(region());
+    let mut chain = ChainProvider::new();
+
+    let client = Ec2Client::new_with(
+        HttpClient::new().expect("failed to create request dispatcher"),
+        chain,
+        region(),
+    );
 
     loop {
         select! {
