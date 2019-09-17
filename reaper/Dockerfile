@@ -22,7 +22,7 @@ RUN rustup default nightly
 COPY . /var/BUGOUT/reaper/.
 
 # TODO below
-RUN cargo build --all-targets
+#RUN cargo build --all-targets
 
 # TODO
 #RUN cargo install --path .
