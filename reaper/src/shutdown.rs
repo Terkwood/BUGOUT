@@ -22,13 +22,15 @@ use crate::model::ShutdownCommand;
 const TAG_KEY: &str = "Name";
 
 pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
-    let mut chain = ChainProvider::new();
+    /*let mut chain = ChainProvider::new();
 
     let client = Ec2Client::new_with(
         HttpClient::new().expect("failed to create request dispatcher"),
         chain,
         region(),
-    );
+    );*/
+
+    let client = ec2_client_with_role();
 
     loop {
         select! {
