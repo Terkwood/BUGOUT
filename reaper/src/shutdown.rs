@@ -1,21 +1,10 @@
 use std::default::Default;
 use std::str::FromStr;
 
-use futures::future::Future;
-
 use crossbeam_channel::select;
 
-use rusoto_core::{HttpClient, ProvideAwsCredentials, Region, RusotoError};
-use rusoto_credential::ChainProvider;
-use rusoto_ec2::{
-    DescribeInstancesRequest, DescribeSpotInstanceRequestsRequest, Ec2, Ec2Client,
-    StopInstancesRequest, Tag,
-};
-
-use rusoto_sts::{
-    AssumeRoleRequest, Sts, StsAssumeRoleSessionCredentialsProvider, StsClient,
-    StsSessionCredentialsProvider,
-};
+use rusoto_core::Region;
+use rusoto_ec2::{DescribeInstancesRequest, Ec2, Ec2Client, StopInstancesRequest, Tag};
 
 use crate::env::*;
 use crate::model::ShutdownCommand;
@@ -23,16 +12,6 @@ use crate::model::ShutdownCommand;
 const TAG_KEY: &str = "Name";
 
 pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
-    /*let mut chain = ChainProvider::new();
-
-    let client = Ec2Client::new_with(
-        HttpClient::new().expect("failed to create request dispatcher"),
-        chain,
-        region(),
-    );*/
-
-//    let client = ec2_client_with_role();
-
     let client = Ec2Client::new(region());
 
     loop {
@@ -111,57 +90,4 @@ fn region() -> Region {
         Ok(r) => r,
         Err(_e) => panic!("Failed to set AWS region"),
     }
-}
-
-fn assume_role() {
-    let sts = StsClient::new(region());
-
-    let assume_role_res = sts.assume_role(AssumeRoleRequest {
-        role_arn: AWS_ROLE_ARN.to_string(),
-        role_session_name: "todo we dunno do we".to_string(),
-        ..Default::default()
-    });
-
-    match assume_role_res.sync() {
-        Err(RusotoError::Unknown(http_res)) => {
-            let msg = ::std::str::from_utf8(&http_res.body).unwrap();
-            panic!("Greetings: {}", msg)
-        }
-        _ => panic!(
-            "this should have been an Unknown STS Error (thought you were sposed to be my cousin)"
-        ),
-    }
-
-    unimplemented!()
-}
-
-// TODO WASTED // TODO WASTED // TODO WASTED
-/// Assume a role which can shut something down
-fn ec2_client_with_role() -> Ec2Client {
-    let sts = StsClient::new(region());
-
-    let sts_creds_provider = StsSessionCredentialsProvider::new(sts.clone(), None, None);
-    /*
-    match sts_creds_provider.credentials().wait() {
-        Err(e) => panic!("sts credentials provider error: {:?}", e),
-        Ok(r) => println!("sts credentials provider result: {:?}", r),
-    }*/
-
-    println!("OH HEY THERE");
-
-    let provider = StsAssumeRoleSessionCredentialsProvider::new(
-        sts,
-        AWS_ROLE_ARN.to_string(),
-        "default".to_string(),
-        None,
-        None,
-        None,
-        None,
-    );
-
-    println!("AND HI");
-
-    let client = Ec2Client::new_with(HttpClient::new().unwrap(), provider, region());
-
-    client
 }
