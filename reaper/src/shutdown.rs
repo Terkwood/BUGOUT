@@ -114,7 +114,7 @@ fn assume_role() {
         Ok(r) => println!("sts credentials provider result: {:?}", r),
     }*/
 
-    println!("OH HEY THERE")
+    println!("OH HEY THERE");
 
     let provider = StsAssumeRoleSessionCredentialsProvider::new(
         sts,
@@ -126,11 +126,11 @@ fn assume_role() {
         None,
     );
 
-    println!("AND HI")
+    println!("AND HI");
 
     let client = Ec2Client::new_with(HttpClient::new().unwrap(), provider, region());
 
-    println!("GO")
+    println!("GO");
 
     let sir_input = DescribeSpotInstanceRequestsRequest::default();
     let x = client.describe_spot_instance_requests(sir_input).sync();
