@@ -131,6 +131,4 @@ fn assume_role() {
     let client = Ec2Client::new_with(HttpClient::new().unwrap(), provider, region());
 
     println!("GO");
-
-    println!("{:?}", x);
 }
