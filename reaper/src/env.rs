@@ -7,8 +7,6 @@ const ENV_AWS_REGION: &str = "AWS_REGION";
 
 lazy_static! {
     pub static ref INSTANCE_TAG_NAME: String = env_var(ENV_TAG_NAME);
-    // TODO DEAD CODE
-    pub static ref AWS_ROLE_ARN: String = env_var(ENV_AWS_ROLE_ARN);
     pub static ref AWS_REGION: String = env_var(ENV_AWS_REGION);
 }
 
