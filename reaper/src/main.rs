@@ -16,6 +16,8 @@ fn main() {
         unbounded();
 
     env::init();
+    println!("☠️ REAP after {} seconds", *env::ALLOWED_IDLE_SECS);
+
     kafka::start(activity_in, shutdown_out.clone());
     monitor::start(shutdown_in, activity_out);
     shutdown::listen(shutdown_out);
