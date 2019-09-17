@@ -132,8 +132,5 @@ fn assume_role() {
 
     println!("GO");
 
-    let sir_input = DescribeSpotInstanceRequestsRequest::default();
-    let x = client.describe_spot_instance_requests(sir_input).sync();
-
     println!("{:?}", x);
 }
