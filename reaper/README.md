@@ -9,7 +9,7 @@ instance request.
 
 ## How it works
 
-TODO description of timing
+If there is no activity detected on system streams, the service will eventually shut down.  The system will wait `ALLOWED_IDLE_SECS` before shutting down the specified instance.
 
 The service will search for the `INSTANCE_TAG_NAME` specified in the `.env` file, and terminate all instances with the given `Name` tag.
 
