@@ -7,21 +7,17 @@ that an appropriate amount of time has passed,
 deems the system inactive, then issues an AWS stop
 instance request.
 
-## HOW IT WORKS
+## AWS configuration
 
-You need a role attached to your instance which gives you the EC2 `StopInstances` and `DescribeInstances` permissions via .  If you launch this container on a host
+Within AWS, your instance must have a tag with key `Name` and a given value.  This value must be configured in a `.env` file which will be baked into the docker container build for `reaper`.
 
-```scala
-TODO()
-TODO()
-TODO()
-TODO()
-TODO()
-TODO()
-TODO()
-TODO()
-TODO()
-TODO()
-TODO()
-TODO()
+You need a role attached to your EC2 instance which gives it the EC2 `StopInstances` and `DescribeInstances` permissions via an IAM policy.  [See AWS documentation for more detail.](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
+
+You may optionally specify an AWS region in the `.env` file as well.
+
+### Example .env file
+
+```text
+INSTANCE_TAG_NAME=Whatever-you-like
+AWS_REGION=eu-west-1
 ```
