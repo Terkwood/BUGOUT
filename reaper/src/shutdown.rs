@@ -31,7 +31,9 @@ pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
         region(),
     );*/
 
-    let client = ec2_client_with_role();
+//    let client = ec2_client_with_role();
+
+    let client = Ec2Client::new(region());
 
     loop {
         select! {
