@@ -124,7 +124,7 @@ fn assume_role() {
         None,
     );
 
-    let client = Ec2Client::new_with(HttpClient::new().unwrap(), provider, Region::UsEast1);
+    let client = Ec2Client::new_with(HttpClient::new().unwrap(), provider, region());
 
     let sir_input = DescribeSpotInstanceRequestsRequest::default();
     let x = client.describe_spot_instance_requests(sir_input).sync();
