@@ -101,6 +101,7 @@ fn region() -> Region {
     }
 }
 
+// TODO WASTED // TODO WASTED // TODO WASTED
 /// Assume a role which can shut something down
 fn ec2_client_with_role() -> Ec2Client {
     let sts = StsClient::new(region());
