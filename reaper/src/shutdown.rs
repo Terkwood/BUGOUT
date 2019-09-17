@@ -21,22 +21,20 @@ use crate::model::ShutdownCommand;
 const TAG_KEY: &str = "Name";
 
 pub fn listen(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
-    assume_role();
+    let client = ec2_client_with_role();
 
     loop {
         select! {
             recv(shutdown_out) -> command =>
                 match command {
-                    Ok(_) => shutdown(),
+                    Ok(_) => shutdown(&client),
                     Err(e) => println!("Failed to select shutdown_out {}", e)
                 }
         }
     }
 }
 
-fn shutdown() {
-    let client = Ec2Client::new(Region::UsEast1);
-
+fn shutdown(client: &Ec2Client) {
     let instance_id: Option<String> = big_box_instance_id(&client);
 
     if let Some(id) = instance_id {
@@ -104,7 +102,7 @@ fn region() -> Region {
 }
 
 /// Assume a role which can shut something down
-fn assume_role() {
+fn ec2_client_with_role() -> Ec2Client {
     let sts = StsClient::new(region());
 
     let sts_creds_provider = StsSessionCredentialsProvider::new(sts.clone(), None, None);
@@ -130,5 +128,5 @@ fn assume_role() {
 
     let client = Ec2Client::new_with(HttpClient::new().unwrap(), provider, region());
 
-    println!("GO");
+    client
 }
