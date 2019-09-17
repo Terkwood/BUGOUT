@@ -21,9 +21,10 @@ You need a role attached to your EC2 instance which gives it the EC2 `StopInstan
 
 You may optionally specify an AWS region in the `.env` file as well.
 
-### Example .env file
+## Example .env file
 
 ```text
+ALLOWED_IDLE_SECS=150
 INSTANCE_TAG_NAME=Whatever-you-like
 AWS_REGION=eu-west-1
 ```
