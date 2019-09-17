@@ -51,9 +51,13 @@ impl Monitor {
     }
 
     fn prune(&mut self) {
+        // TODO
+        println!("Pruning at {}", Utc::now());
+
         // ignore order, but minimal shuffling
         for i in (0..self.0.len()).rev() {
             if is_expired(self.0[i]) {
+                println!("Expired: {:?}", self.0[i]);
                 self.0.swap_remove(i);
             }
         }
