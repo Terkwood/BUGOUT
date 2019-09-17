@@ -58,6 +58,8 @@ services:
       - "kafka"
     depends_on:
       - "kafka"
+    volumes:
+      - ".env:/var/BUGOUT/reaper/.env"
   kafkacat:
     build: kafkacat/.
     links:
