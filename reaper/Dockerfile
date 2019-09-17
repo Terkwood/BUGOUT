@@ -23,10 +23,9 @@ COPY . /var/BUGOUT/reaper/.
 
 # TODO below
 #RUN cargo build --all-targets
+#CMD ["tail", "-f", "/dev/null"]
 
-# TODO
-#RUN cargo install --path .
+RUN cargo install --path .
 
-#CMD ["sh", "run.sh"]
+CMD ["sh", "run.sh"]
 
-CMD ["tail", "-f", "/dev/null"]
