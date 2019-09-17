@@ -9,7 +9,7 @@ instance request.
 
 ## AWS configuration
 
-Within AWS, your instance must have a tag with key `Name` and a given value.  This value must be configured in a `.env` file which will be baked into the docker container build for `reaper`.
+Within AWS, the instance(s) that you wish to terminate must have a tag with key `Name` and a given value.  This value must be configured in a `.env` file which will be baked into the docker container build for `reaper`.  See the next section for an example.
 
 You need a role attached to your EC2 instance which gives it the EC2 `StopInstances` and `DescribeInstances` permissions via an IAM policy.  [See AWS documentation for more detail.](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
