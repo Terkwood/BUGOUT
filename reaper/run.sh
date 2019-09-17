@@ -1,4 +1,6 @@
 #!/bin/bash
 
-./wait-for-it.sh kafka:9092 -s -- sleep 16
+# Give it some extra time to let the rest of the system start
+# up and process messages
+./wait-for-it.sh kafka:9092 -s -- sleep 60
 reaper
