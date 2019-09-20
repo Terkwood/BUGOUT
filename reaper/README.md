@@ -8,6 +8,8 @@ If there is no activity detected on system streams, the service will eventually 
 
 The service will search for the `INSTANCE_TAG_NAME` specified in the `.env` file, and terminate all instances with the given `Name` tag.
 
+The service tracks the passage of time by creating `Instant::now()`s as it witnesses traffic on kafka.  This helps ensure that we don't bother with timezones, or somehow misinterpreting that an event happened later than it did. 
+
 ## AWS configuration
 
 Within AWS, the instance(s) that you wish to terminate must have a tag with key `Name` and a  value which matches the one configured in the `.env` file `INSTANCE_TAG_NAME` setting. See the next section for an example.
