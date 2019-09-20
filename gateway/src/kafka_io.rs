@@ -34,26 +34,26 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
             recv(kafka_out) -> command =>
                 match command {
                     Ok(KafkaCommands::MakeMove(c)) =>
-                        write(&producer,MAKE_MOVE_TOPIC,&serde_json::to_string(&c).unwrap(),&c.game_id.to_string())
+                        write(&producer,MAKE_MOVE_TOPIC,&serde_json::to_string(&c),&c.game_id.to_string())
                     ,
                     Ok(KafkaCommands::ProvideHistory(c)) =>
-                        write(&producer,PROVIDE_HISTORY_TOPIC,&serde_json::to_string(&c).unwrap(),&c.game_id.to_string())
+                        write(&producer,PROVIDE_HISTORY_TOPIC,&serde_json::to_string(&c),&c.game_id.to_string())
                     ,
                     Ok(KafkaCommands::JoinPrivateGame(j)) =>
-                        write(&producer,JOIN_PRIVATE_GAME_TOPIC,&serde_json::to_string(&j).unwrap(),
+                        write(&producer,JOIN_PRIVATE_GAME_TOPIC,&serde_json::to_string(&j),
                             &j.client_id.to_string())
                     ,
                     Ok(KafkaCommands::FindPublicGame(f)) =>
-                        write(&producer,FIND_PUBLIC_GAME_TOPIC,&serde_json::to_string(&f).unwrap(),&f.client_id.to_string())
+                        write(&producer,FIND_PUBLIC_GAME_TOPIC,&serde_json::to_string(&f),&f.client_id.to_string())
                     ,
                     Ok(KafkaCommands::CreateGame(c)) =>
-                        write(&producer,CREATE_GAME_TOPIC,&serde_json::to_string(&c).unwrap(), &c.client_id.to_string())
+                        write(&producer,CREATE_GAME_TOPIC,&serde_json::to_string(&c), &c.client_id.to_string())
                     ,
                     Ok(KafkaCommands::ChooseColorPref(c)) =>
-                        write(&producer, CHOOSE_COLOR_PREF_TOPIC, &serde_json::to_string(&c).unwrap(),&c.client_id.to_string())
+                        write(&producer, CHOOSE_COLOR_PREF_TOPIC, &serde_json::to_string(&c),&c.client_id.to_string())
                     ,
                     Ok(KafkaCommands::ClientHeartbeat(h)) =>
-                        write(&producer, CLIENT_HEARTBEAT_TOPIC, &serde_json::to_string(&h).unwrap(),&h.client_id.to_string()),
+                        write(&producer, CLIENT_HEARTBEAT_TOPIC, &serde_json::to_string(&h),&h.client_id.to_string()),
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
         }
@@ -61,8 +61,18 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
 }
 
 /// write some data to kafka.  fire and forget
-fn write(producer: &FutureProducer, topic: &str, payload: &str, key: &str) {
-    producer.send(FutureRecord::to(topic).payload(payload).key(key), 0); // fire & forget
+fn write(
+    producer: &FutureProducer,
+    topic: &str,
+    payload: &std::result::Result<std::string::String, serde_json::Error>,
+    key: &str,
+) {
+    match payload {
+        Ok(p) => {
+            producer.send(FutureRecord::to(topic).payload(p).key(key), 0); // fire & forget
+        }
+        Err(e) => panic!("Failed to serialize trivial kafka command: {}", e),
+    }
 }
 
 fn configure_producer(brokers: &str) -> FutureProducer {
