@@ -1,7 +1,6 @@
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant, SystemTime};
 
-use chrono::{DateTime, TimeZone, Utc};
 use crossbeam_channel::{select, tick};
 
 use crate::env::{ALLOWED_IDLE_SECS, DISABLED};
@@ -21,9 +20,9 @@ pub fn start(
         select! {
             recv(ticker) -> _ => if monitor.is_system_idle() {
                 if *DISABLED {
-                    println!("💸 SHUTDOWN event ignored at {}", Utc::now())
+                    println!("💸 SHUTDOWN event ignored at {:#?}", SystemTime::now())
                 } else {
-                    println!("☠️ SHUTDOWN at {}", Utc::now());
+                    println!("☠️ SHUTDOWN at {:#?}", SystemTime::now());
                     if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
                         println!("Failed to send shutdown command: {:?}", e)
                     }
@@ -31,21 +30,25 @@ pub fn start(
             },
             recv(activity_out) -> command =>
                 match command {
-                    Ok(_) => monitor.push(),
+                    Ok(_) => monitor.observe(),
                     Err(e) => println!("Failed to select in monitor: {:?}", e),
                 }
         }
     });
 }
 
-struct Monitor(Vec<DateTime<Utc>>);
+struct Monitor(Vec<Instant>);
 impl Monitor {
     pub fn new() -> Monitor {
         Monitor(vec![])
     }
 
-    pub fn push(&mut self) {
-        self.0.push(Utc::now())
+    /// Update the monitor to signal that we've
+    /// witnessed some type of activity on the system.
+    /// We use the current system time as a conservative
+    /// measure for
+    pub fn observe(&mut self) {
+        self.0.push(Instant::now())
     }
 
     pub fn is_system_idle(&mut self) -> bool {
@@ -57,7 +60,7 @@ impl Monitor {
     fn prune(&mut self) {
         // ignore order, but minimal shuffling
         for i in (0..self.0.len()).rev() {
-            if is_expired(self.0[i]) {
+            if is_expired(self.0[i], *ALLOWED_IDLE_SECS) {
                 println!("Expired: {:?}", self.0[i]);
                 self.0.swap_remove(i);
             }
@@ -65,10 +68,10 @@ impl Monitor {
     }
 }
 
-fn is_expired(timestamp: DateTime<Utc>) -> bool {
-    let since_then = Utc::now().signed_duration_since(timestamp);
+fn is_expired(instant: Instant, allowed_idle_secs: u64) -> bool {
+    let since_then = instant.elapsed().as_secs();
 
-    since_then.num_seconds() > *ALLOWED_IDLE_SECS
+    since_then > allowed_idle_secs
 }
 
 #[cfg(test)]
@@ -78,9 +81,9 @@ mod tests {
 
     #[test]
     fn test_is_expired() {
-        assert_eq!(
-            true,
-            is_expired(Utc::now() - time::Duration::seconds(1_000_000_000))
-        );
+        let then = Instant::now();
+        let allowed_secs: u64 = 1;
+        std::thread::sleep(Duration::from_secs(allowed_secs * 2));
+        assert_eq!(true, is_expired(then, allowed_secs));
     }
 }

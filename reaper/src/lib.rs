@@ -1,4 +1,3 @@
-extern crate chrono;
 extern crate dotenv;
 #[macro_use]
 extern crate lazy_static;
