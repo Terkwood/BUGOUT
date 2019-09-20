@@ -4,6 +4,12 @@ services:
     build: gateway/.
     ports:
       - "3012:3012"
+  bugle:
+    build: bugle/.
+    links:
+      - "redis"
+    depends_on:
+      - "redis"
   reverse-proxy:
     image: abiosoft/caddy
     ports:

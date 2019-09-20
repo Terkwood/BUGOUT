@@ -8,7 +8,7 @@ RUN chmod 755 wait-for-it.sh
 
 RUN rustup default nightly
 
-RUN COPY . /var/BUGOUT/bugle/.
+COPY . /var/BUGOUT/bugle/.
 
 RUN cargo install --path .
 
