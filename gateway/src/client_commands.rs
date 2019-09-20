@@ -104,5 +104,4 @@ mod tests {
 
         assert_eq!(d, ClientCommands::Beep)
     }
-
 }
