@@ -13,11 +13,20 @@ pub const WAIT_FOR_OPPONENT_TOPIC: &str = "bugout-wait-for-opponent-ev";
 pub const COLORS_CHOSEN_TOPIC: &str = "bugout-colors-chosen-ev";
 pub const CLIENT_HEARTBEAT_TOPIC: &str = "bugout-client-heartbeat-ev";
 
+pub const SHUTDOWN_TOPIC: &str = "bugout-shutdown-ev";
+
 pub const CONSUME_TOPICS: &[&str] = &[
+    MAKE_MOVE_TOPIC,
+    PROVIDE_HISTORY_TOPIC,
+    JOIN_PRIVATE_GAME_TOPIC,
+    FIND_PUBLIC_GAME_TOPIC,
+    CREATE_GAME_TOPIC,
+    CHOOSE_COLOR_PREF_TOPIC,
     MOVE_MADE_TOPIC,
     HISTORY_PROVIDED_TOPIC,
     PRIVATE_GAME_REJECTED_TOPIC,
     GAME_READY_TOPIC,
     WAIT_FOR_OPPONENT_TOPIC,
     COLORS_CHOSEN_TOPIC,
+    CLIENT_HEARTBEAT_TOPIC,
 ];

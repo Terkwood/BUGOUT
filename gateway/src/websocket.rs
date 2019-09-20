@@ -74,11 +74,27 @@ impl WsSession {
         }
     }
 
-    fn observe(&mut self) {
+    /// Observe that someone is still connected to this game
+    fn observe_game(&mut self) {
         if let Some(gid) = self.current_game {
-            if let Err(_e) = self.router_commands_in.send(RouterCommand::Observe(gid)) {
+            if let Err(_e) = self
+                .router_commands_in
+                .send(RouterCommand::ObserveGame(gid))
+            {
                 println!("eeeeerrrrrr")
             }
+        }
+    }
+
+    fn produce_client_heartbeat(&mut self, heartbeat_type: HeartbeatType) {
+        if let Err(e) =
+            self.kafka_commands_in
+                .send(KafkaCommands::ClientHeartbeat(ClientHeartbeat {
+                    client_id: self.client_id,
+                    heartbeat_type,
+                }))
+        {
+            println!("Failed to send client heartbeat via crossbeam {}", e)
         }
     }
 }
@@ -133,12 +149,13 @@ impl Handler for WsSession {
                             .map_err(|e| ws::Error::from(Box::new(e)));
                     }
                 }
-                Ok(self.observe())
+                Ok(self.observe_game())
             }
             Ok(ClientCommands::Beep) => {
                 println!("🤖 {} BEEP   ", session_code(self));
 
-                Ok(self.observe())
+                self.produce_client_heartbeat(HeartbeatType::WebSocketPong);
+                Ok(self.observe_game())
             }
             Ok(ClientCommands::Reconnect(ReconnectCommand { game_id, req_id })) => {
                 // accept whatever game_id the client shares with us
@@ -166,7 +183,7 @@ impl Handler for WsSession {
                 //.. and track the out-channel so we can select! on it
                 self.events_out = Some(events_out);
 
-                Ok(self.observe())
+                Ok(self.observe_game())
             }
             Ok(ClientCommands::ProvideHistory(ProvideHistoryCommand { game_id, req_id })) => {
                 println!("📋 {} PROVHIST", session_code(self));
@@ -182,7 +199,7 @@ impl Handler for WsSession {
                     println!("ERROR on kafka send provhist {:?}", e)
                 }
 
-                Ok(self.observe())
+                Ok(self.observe_game())
             }
             Ok(ClientCommands::FindPublicGame) => {
                 println!("🤝 {} FINDPUBG", session_code(self));
@@ -224,7 +241,7 @@ impl Handler for WsSession {
                     //.. and track the out-channel so we can select! on it
                     self.events_out = Some(events_out);
                 }
-                Ok(self.observe())
+                Ok(self.observe_game())
             }
             Ok(ClientCommands::CreatePrivateGame) => {
                 println!("🔒 {} CRETPRIV", session_code(self));
@@ -263,7 +280,7 @@ impl Handler for WsSession {
                     //.. and track the out-channel so we can select! on it
                     self.events_out = Some(events_out);
                 }
-                Ok(self.observe())
+                Ok(self.observe_game())
             }
             Ok(ClientCommands::JoinPrivateGame(JoinPrivateGameClientCommand { game_id })) => {
                 println!("🔑 {} JOINPRIV", session_code(self));
@@ -307,7 +324,7 @@ impl Handler for WsSession {
                 } else {
                     println!("🏴‍☠️ FAILED TO DECODE PRIVATE GAME ID 🏴‍☠️")
                 }
-                Ok(self.observe())
+                Ok(self.observe_game())
             }
             Ok(ClientCommands::ChooseColorPref(ChooseColorPrefClientCommand { color_pref })) => {
                 println!("🗳 {} CHSCLRPF", session_code(self));
@@ -380,11 +397,7 @@ impl Handler for WsSession {
                     }
                 }
 
-                println!(
-                    "🤐 {} {:<8} expire timeout",
-                    session_code(self),
-                    "IGNORED"
-                );
+                println!("🤐 {} {:<8} expire timeout", session_code(self), "IGNORED");
                 Ok(())
             }
             CHANNEL_RECV => {
@@ -410,17 +423,13 @@ impl Handler for WsSession {
                             ClientEvents::YourColor(YourColorEvent {
                                 game_id: _,
                                 your_color,
-                            })
-                                if your_color == Player::BLACK =>
-                            {
+                            }) if your_color == Player::BLACK => {
                                 println!("🏴 {} {:<8} Black", session_code(self), "YOURCOLR")
                             }
                             ClientEvents::YourColor(YourColorEvent {
                                 game_id: _,
                                 your_color,
-                            })
-                                if your_color == Player::WHITE =>
-                            {
+                            }) if your_color == Player::WHITE => {
                                 println!("🏳 {} {:<8} White", session_code(self), "YOURCOLR")
                             }
                             _ => (),
@@ -469,7 +478,9 @@ impl Handler for WsSession {
         // The pong should contain data from out ping, but it isn't guaranteed to.
         if frame.opcode() == OpCode::Pong {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
-                self.observe();
+                self.observe_game();
+                self.produce_client_heartbeat(HeartbeatType::WebSocketPong);
+
                 let now = time::precise_time_ns();
                 println!(
                     "🏓 {} {:<8} {:.0}ms",

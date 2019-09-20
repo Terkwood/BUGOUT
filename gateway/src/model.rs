@@ -6,7 +6,7 @@ pub type ReqId = Uuid;
 pub type EventId = Uuid;
 pub type ClientId = Uuid;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub struct Coord {
     pub x: u16,
     pub y: u16,
@@ -27,13 +27,13 @@ impl Player {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub enum Visibility {
     Public,
     Private,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub enum ColorPref {
     Black,
     White,
@@ -130,7 +130,7 @@ pub struct GameClients {
     pub second: ClientId,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct Captures {
     pub black: u16,
     pub white: u16,
@@ -142,7 +142,7 @@ impl Default for Captures {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct Move {
     player: Player,
     coord: Option<Coord>,
