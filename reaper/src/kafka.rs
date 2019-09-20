@@ -79,9 +79,6 @@ fn start_consumer(
             Err(e) => panic!("Error waiting on kafka stream: {:?}", e),
             Ok(Err(e)) => panic!("Nested error (!) waiting on kafka stream: {:?}", e),
             Ok(Ok(msg)) => {
-                // TODO
-                println!("ACTIVITY ON TOPIC {}", msg.topic());
-
                 if let Err(_) = activity_in.send(KafkaActivity {
                     topic: msg.topic().to_string(),
                     timestamp: msg.timestamp().to_millis().unwrap_or(Default::default()),
