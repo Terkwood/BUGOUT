@@ -83,8 +83,10 @@ impl Router {
 
     /// Note that the game state somehow changed, so that
     /// we don't purge it prematurely in cleanup_game_clients()
-    pub fn observed(&mut self, game_id: GameId) {
-        self.game_clients.get_mut(&game_id).map(|gs| gs.observed());
+    pub fn observe_game(&mut self, game_id: GameId) {
+        self.game_clients
+            .get_mut(&game_id)
+            .map(|gs| gs.observe_game());
     }
 
     pub fn set_playerup(&mut self, game_id: GameId, player: Player) {
@@ -101,7 +103,7 @@ impl Router {
             }
             Some(gs) => {
                 gs.playerup = player;
-                gs.observed();
+                gs.observe_game();
             }
         }
     }
@@ -213,7 +215,7 @@ pub fn start(
             select! {
                 recv(router_commands_out) -> command =>
                     match command {
-                        Ok(RouterCommand::Observe(game_id)) => router.observed(game_id),
+                        Ok(RouterCommand::ObserveGame(game_id)) => router.observe_game(game_id),
                         // A create private game request, or a find public
                         // game request, will result in us tracking a
                         // client_id -> event channel mapping
@@ -266,7 +268,7 @@ pub fn start(
                             router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
                         },
                         Ok(e) => {
-                            router.observed(e.game_id());
+                            router.observe_game(e.game_id());
                             router.forward_by_game_id(e.to_client_event())
                         },
                         Err(e) =>
@@ -298,7 +300,7 @@ impl GameClients {
     }
 
     /// Observe that this game still has an open connection somewhere
-    pub fn observed(&mut self) {
+    pub fn observe_game(&mut self) {
         self.modified_at = Instant::now()
     }
 }
@@ -311,7 +313,7 @@ struct ClientSender {
 
 #[derive(Debug, Clone)]
 pub enum RouterCommand {
-    Observe(GameId),
+    ObserveGame(GameId),
     DeleteClient {
         client_id: ClientId,
         game_id: GameId,
