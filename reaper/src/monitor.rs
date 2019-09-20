@@ -20,14 +20,13 @@ pub fn start(
     thread::spawn(move || loop {
         select! {
             recv(ticker) -> _ => if monitor.is_system_idle() {
-                match *DISABLED {
-                    false => {
-                        println!("☠️ SHUTDOWN at {}", Utc::now());
-                        if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
-                            println!("Failed to send shutdown command: {:?}", e)
-                        }
-                    },
-                    true => println!("💸 SHUTDOWN event ignored at {}", Utc::now())
+                if *DISABLED {
+                    println!("💸 SHUTDOWN event ignored at {}", Utc::now())
+                } else {
+                    println!("☠️ SHUTDOWN at {}", Utc::now());
+                    if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
+                        println!("Failed to send shutdown command: {:?}", e)
+                    }
                 }
             },
             recv(activity_out) -> command =>
