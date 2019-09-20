@@ -25,7 +25,6 @@ pub fn start(
     thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS, activity_in));
 }
 
-/// Pay attention to the topic keys in the loop 🔄 👀
 fn start_producer(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
     let producer = configure_producer(BROKERS);
 
