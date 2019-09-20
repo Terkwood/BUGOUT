@@ -86,7 +86,7 @@ impl WsSession {
         }
     }
 
-    fn observe_client_heartbeat(&mut self, heartbeat_type: HeartbeatType) {
+    fn produce_client_heartbeat(&mut self, heartbeat_type: HeartbeatType) {
         if let Err(e) =
             self.kafka_commands_in
                 .send(KafkaCommands::ClientHeartbeat(ClientHeartbeat {
@@ -154,6 +154,7 @@ impl Handler for WsSession {
             Ok(ClientCommands::Beep) => {
                 println!("🤖 {} BEEP   ", session_code(self));
 
+                self.produce_client_heartbeat(HeartbeatType::WebSocketPong);
                 Ok(self.observe_game())
             }
             Ok(ClientCommands::Reconnect(ReconnectCommand { game_id, req_id })) => {
@@ -478,6 +479,8 @@ impl Handler for WsSession {
         if frame.opcode() == OpCode::Pong {
             if let Ok(pong) = from_utf8(frame.payload())?.parse::<u64>() {
                 self.observe_game();
+                self.produce_client_heartbeat(HeartbeatType::WebSocketPong);
+
                 let now = time::precise_time_ns();
                 println!(
                     "🏓 {} {:<8} {:.0}ms",
