@@ -35,6 +35,20 @@ pub struct CreateGameKafkaCommand {
     pub visibility: Visibility,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+pub enum HeartbeatType {
+    WebSocketPong,
+    UserInterfaceBeep,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ClientHeartbeat {
+    #[serde(rename = "clientId")]
+    pub client_id: ClientId,
+    #[serde(rename = "heartbeatType")]
+    pub heartbeat_type: HeartbeatType,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub enum KafkaCommands {
     MakeMove(MakeMoveCommand),
