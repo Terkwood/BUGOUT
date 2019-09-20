@@ -33,40 +33,36 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
         select! {
             recv(kafka_out) -> command =>
                 match command {
-                    Ok(KafkaCommands::MakeMove(c)) => {
-                        producer.send(FutureRecord::to(MAKE_MOVE_TOPIC)
-                            .payload(&serde_json::to_string(&c).unwrap())
-                            .key(&c.game_id.to_string()), 0); // fire & forget
-                    },
-                    Ok(KafkaCommands::ProvideHistory(c)) => {
-                        producer.send(FutureRecord::to(PROVIDE_HISTORY_TOPIC)
-                            .payload(&serde_json::to_string(&c).unwrap())
-                            .key(&c.game_id.to_string()), 0); // fire & forget
-                    },
-                    Ok(KafkaCommands::JoinPrivateGame(j)) => {
-                        producer.send(FutureRecord::to(JOIN_PRIVATE_GAME_TOPIC)
-                            .payload(&serde_json::to_string(&j).unwrap())
-                            .key(&j.client_id.to_string()), 0); // fire & forget
-                    },
-                    Ok(KafkaCommands::FindPublicGame(f)) => {
-                        producer.send(FutureRecord::to(FIND_PUBLIC_GAME_TOPIC)
-                            .payload(&serde_json::to_string(&f).unwrap())
-                            .key(&f.client_id.to_string()), 0); // fire & forget
-                    },
-                    Ok(KafkaCommands::CreateGame(c)) => {
-                        producer.send(FutureRecord::to(CREATE_GAME_TOPIC)
-                            .payload(&serde_json::to_string(&c).unwrap())
-                            .key(&c.client_id.to_string()), 0); // fire & forget
-                    },
-                    Ok(KafkaCommands::ChooseColorPref(c)) => {
-                        producer.send(FutureRecord::to(CHOOSE_COLOR_PREF_TOPIC)
-                            .payload(&serde_json::to_string(&c).unwrap())
-                            .key(&c.client_id.to_string()), 0); // fire & forget
-                    },
+                    Ok(KafkaCommands::MakeMove(c)) =>
+                        write(&producer,MAKE_MOVE_TOPIC,&serde_json::to_string(&c).unwrap(),&c.game_id.to_string())
+                    ,
+                    Ok(KafkaCommands::ProvideHistory(c)) =>
+                        write(&producer,PROVIDE_HISTORY_TOPIC,&serde_json::to_string(&c).unwrap(),&c.game_id.to_string())
+                    ,
+                    Ok(KafkaCommands::JoinPrivateGame(j)) =>
+                        write(&producer,JOIN_PRIVATE_GAME_TOPIC,&serde_json::to_string(&j).unwrap(),
+                            &j.client_id.to_string())
+                    ,
+                    Ok(KafkaCommands::FindPublicGame(f)) =>
+                        write(&producer,FIND_PUBLIC_GAME_TOPIC,&serde_json::to_string(&f).unwrap(),&f.client_id.to_string())
+                    ,
+                    Ok(KafkaCommands::CreateGame(c)) =>
+                        write(&producer,CREATE_GAME_TOPIC,&serde_json::to_string(&c).unwrap(), &c.client_id.to_string())
+                    ,
+                    Ok(KafkaCommands::ChooseColorPref(c)) =>
+                        write(&producer, CHOOSE_COLOR_PREF_TOPIC, &serde_json::to_string(&c).unwrap(),&c.client_id.to_string())
+                    ,
+                    Ok(KafkaCommands::ClientHeartbeat(h)) =>
+                        write(&producer, CLIENT_HEARTBEAT_TOPIC, &serde_json::to_string(&h).unwrap(),&h.client_id.to_string()),
                     Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
                 }
         }
     }
+}
+
+/// write some data to kafka.  fire and forget
+fn write(producer: &FutureProducer, topic: &str, payload: &str, key: &str) {
+    producer.send(FutureRecord::to(topic).payload(payload).key(key), 0); // fire & forget
 }
 
 fn configure_producer(brokers: &str) -> FutureProducer {

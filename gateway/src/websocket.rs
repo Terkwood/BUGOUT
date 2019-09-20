@@ -85,6 +85,18 @@ impl WsSession {
             }
         }
     }
+
+    fn observe_client_heartbeat(&mut self, heartbeat_type: HeartbeatType) {
+        if let Err(e) =
+            self.kafka_commands_in
+                .send(KafkaCommands::ClientHeartbeat(ClientHeartbeat {
+                    client_id: self.client_id,
+                    heartbeat_type,
+                }))
+        {
+            println!("Failed to send client heartbeat via crossbeam {}", e)
+        }
+    }
 }
 
 impl Handler for WsSession {

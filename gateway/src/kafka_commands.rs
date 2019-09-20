@@ -57,4 +57,5 @@ pub enum KafkaCommands {
     FindPublicGame(FindPublicGameKafkaCommand),
     CreateGame(CreateGameKafkaCommand),
     ChooseColorPref(ChooseColorPrefKafkaCommand),
+    ClientHeartbeat(ClientHeartbeat),
 }

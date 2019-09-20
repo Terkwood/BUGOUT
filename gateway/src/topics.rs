@@ -11,6 +11,7 @@ pub const PRIVATE_GAME_REJECTED_TOPIC: &str = "bugout-private-game-rejected-ev";
 pub const GAME_READY_TOPIC: &str = "bugout-game-ready-ev";
 pub const WAIT_FOR_OPPONENT_TOPIC: &str = "bugout-wait-for-opponent-ev";
 pub const COLORS_CHOSEN_TOPIC: &str = "bugout-colors-chosen-ev";
+pub const CLIENT_HEARTBEAT_TOPIC: &str = "bugout-client-heartbeat-ev";
 
 pub const CONSUME_TOPICS: &[&str] = &[
     MOVE_MADE_TOPIC,
