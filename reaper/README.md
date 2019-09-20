@@ -16,10 +16,13 @@ You need a role attached to your EC2 instance which gives it the EC2 `StopInstan
 
 You may optionally specify an AWS region in the `.env` file as well.
 
-## Example .env file
+## Configuration via .env file
+
+The following example shows a `.env` config file using default values.
 
 ```text
-ALLOWED_IDLE_SECS=150
-INSTANCE_TAG_NAME=Whatever-you-like
-AWS_REGION=eu-west-1
+ALLOWED_IDLE_SECS=300
+INSTANCE_TAG_NAME=TOO_EXPENSIVE
+AWS_REGION=us-east-1
+DISABLED=false
 ```

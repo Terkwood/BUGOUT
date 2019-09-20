@@ -4,7 +4,7 @@ use std::time::Duration;
 use chrono::{DateTime, TimeZone, Utc};
 use crossbeam_channel::{select, tick};
 
-use crate::env::ALLOWED_IDLE_SECS;
+use crate::env::{ALLOWED_IDLE_SECS, DISABLED};
 use crate::model::*;
 
 const TICK_SECS: u64 = 5;
@@ -20,9 +20,13 @@ pub fn start(
     thread::spawn(move || loop {
         select! {
             recv(ticker) -> _ => if monitor.is_system_idle() {
-                println!("⚰️ SHUTDOWN at {}", Utc::now());
-                if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
-                    println!("Failed to send shutdown command: {:?}", e)
+                if !*DISABLED {
+                    println!("☠️ SHUTDOWN at {}", Utc::now());
+                    if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
+                        println!("Failed to send shutdown command: {:?}", e)
+                    }
+                } else {
+                    println!("💸 SHUTDOWN event ignored at {}", Utc::now())
                 }
             },
             recv(activity_out) -> command =>
