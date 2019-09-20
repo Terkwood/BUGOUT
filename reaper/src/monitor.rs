@@ -76,7 +76,6 @@ fn is_expired(instant: Instant, allowed_idle_secs: u64) -> bool {
 
 #[cfg(test)]
 mod tests {
-    extern crate time;
     use super::*;
 
     #[test]
