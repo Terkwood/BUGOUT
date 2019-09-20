@@ -78,11 +78,11 @@ fn start_consumer(
             Err(e) => panic!("Error waiting on kafka stream: {:?}", e),
             Ok(Err(e)) => panic!("Nested error (!) waiting on kafka stream: {:?}", e),
             Ok(Ok(msg)) => {
-                if let Err(_) = activity_in.send(KafkaActivity {
+                if let Err(e) = activity_in.send(KafkaActivity {
                     topic: msg.topic().to_string(),
                     timestamp: msg.timestamp().to_millis().unwrap_or(Default::default()),
                 }) {
-                    panic!("ERROR SENDING KAFKA ACTIVITY")
+                    println!("ERROR SENDING CROSSBEAM KAFKA ACTIVITY {}", e)
                 }
             }
         }
