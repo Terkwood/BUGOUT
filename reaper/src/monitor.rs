@@ -20,9 +20,9 @@ pub fn start(
         select! {
             recv(ticker) -> _ => if monitor.is_system_idle() {
                 if *DISABLED {
-                    println!("💸 SHUTDOWN event ignored at {:#?}", SystemTime::now())
+                    println!("SHUTDOWN event ignored at {:#?}", SystemTime::now())
                 } else {
-                    println!("☠️ SHUTDOWN at {:#?}", SystemTime::now());
+                    println!("SHUTDOWN at {:#?}", SystemTime::now());
                     if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
                         println!("Failed to send shutdown command: {:?}", e)
                     }
