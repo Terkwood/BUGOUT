@@ -31,7 +31,7 @@ pub fn start(
             },
             recv(activity_out) -> command =>
                 match command {
-                    Ok(k) => monitor.push(k),
+                    Ok(_) => monitor.push(),
                     Err(e) => println!("Failed to select in monitor: {:?}", e),
                 }
         }
@@ -44,8 +44,8 @@ impl Monitor {
         Monitor(vec![])
     }
 
-    pub fn push(&mut self, k: KafkaActivity) {
-        self.0.push(Utc.timestamp_millis(k.timestamp))
+    pub fn push(&mut self) {
+        self.0.push(Utc::now())
     }
 
     pub fn is_system_idle(&mut self) -> bool {
