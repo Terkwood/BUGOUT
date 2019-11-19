@@ -20,6 +20,8 @@ services:
     build: gateway/.
     ports:
       - "3012:3012"
+    volumes:
+      - ${PWD}/gateway/.env:/var/BUGOUT/gateway/.env
     links:
       - "kafka"
     depends_on:
