@@ -2,6 +2,7 @@
 
 docker-compose down && \
     docker-compose up -d && \
+    sleep 30 && \
     docker-compose restart judge && \
     docker-compose restart changelog && \
     docker-compose restart game-lobby && \
