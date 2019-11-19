@@ -4,6 +4,8 @@ services:
     build: gateway/.
     ports:
       - "3012:3012"
+    volumes:
+      - ${PWD}/gateway/.env:/var/BUGOUT/gateway/.env
   reverse-proxy:
     image: abiosoft/caddy
     ports:
