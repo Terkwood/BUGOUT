@@ -14,50 +14,50 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-  judge:
-    build: judge/.
-    links:
-      - "kafka"
-    depends_on:
-      - "kafka"
-  changelog:
-    build: changelog/.
-    links:
-      - "kafka"
-    depends_on:
-      - "kafka"
-  history-provider:
-    build: history-provider/.
-    links:
-      - "kafka"
-    depends_on:
-      - "kafka"
-  game-lobby:
-    build: game-lobby/.
-    links:
-      - "kafka"
-    depends_on:
-      - "kafka"
-  color-chooser:
-    build: color-chooser/.
-    links:
-      - "kafka"
-    depends_on:
-      - "kafka"
-  startup:
-    build: startup/.
-    links:
-      - "kafka"
-    depends_on:
-      - "kafka"
-  reaper:
-    build: reaper/.
-    links:
-      - "kafka"
-    depends_on:
-      - "kafka"
-    volumes:
-      - "./reaper/.env:/var/BUGOUT/reaper/.env"
+  # judge:
+  #   build: judge/.
+  #   links:
+  #     - "kafka"
+  #   depends_on:
+  #     - "kafka"
+  # changelog:
+  #   build: changelog/.
+  #   links:
+  #     - "kafka"
+  #   depends_on:
+  #     - "kafka"
+  # history-provider:
+  #   build: history-provider/.
+  #   links:
+  #     - "kafka"
+  #   depends_on:
+  #     - "kafka"
+  # game-lobby:
+  #   build: game-lobby/.
+  #   links:
+  #     - "kafka"
+  #   depends_on:
+  #     - "kafka"
+  # color-chooser:
+  #   build: color-chooser/.
+  #   links:
+  #     - "kafka"
+  #   depends_on:
+  #     - "kafka"
+  # startup:
+  #   build: startup/.
+  #   links:
+  #     - "kafka"
+  #   depends_on:
+  #     - "kafka"
+  # reaper:
+  #   build: reaper/.
+  #   links:
+  #     - "kafka"
+  #   depends_on:
+  #     - "kafka"
+  #   volumes:
+  #     - "./reaper/.env:/var/BUGOUT/reaper/.env"
   kafkacat:
     build: kafkacat/.
     links:
