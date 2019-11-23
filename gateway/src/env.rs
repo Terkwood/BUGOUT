@@ -35,7 +35,7 @@ lazy_static! {
         .to_string();
     pub static ref BROKERS: String = ENV
         .as_ref()
-        .and_then(|env| env.link_to.as_ref())
+        .and_then(|env| env.brokers.as_ref())
         .unwrap_or(&DEFAULT_BROKERS.to_string())
         .to_string();
 }
