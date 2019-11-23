@@ -141,10 +141,8 @@ fn start_consumer(
                         }
                     }
                     PRIVATE_GAME_REJECTED_TOPIC => {
-                        let deserialized: Result<
-                            PrivateGameRejectedKafkaEvent,
-                            _,
-                        > = serde_json::from_str(payload);
+                        let deserialized: Result<PrivateGameRejectedKafkaEvent, _> =
+                            serde_json::from_str(payload);
                         match deserialized {
                             Err(e) => println!("failed to deserialize priv game reject {}", e),
                             Ok(r) => {
@@ -162,10 +160,8 @@ fn start_consumer(
                         }
                     }
                     WAIT_FOR_OPPONENT_TOPIC => {
-                        let deserialized: Result<
-                            WaitForOpponentKafkaEvent,
-                            _,
-                        > = serde_json::from_str(payload);
+                        let deserialized: Result<WaitForOpponentKafkaEvent, _> =
+                            serde_json::from_str(payload);
 
                         match deserialized {
                             Err(e) => println!("failed to deserialize wait for opponent {}", e),
