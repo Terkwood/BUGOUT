@@ -6,6 +6,8 @@ services:
       - "3012:3012"
     volumes:
       - ${PWD}/gateway/.env:/var/BUGOUT/gateway/.env
+    environment:
+      - BROKERS
   reverse-proxy:
     image: abiosoft/caddy
     ports:
