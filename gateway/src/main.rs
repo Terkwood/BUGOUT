@@ -17,8 +17,10 @@ fn main() {
 
     env::init();
 
-    let (kafka_commands_in, kafka_commands_out): (Sender<KafkaCommands>, Receiver<KafkaCommands>) =
-        unbounded();
+    let (kafka_commands_in, kafka_commands_out): (
+        Sender<KafkaCommands>,
+        Receiver<KafkaCommands>,
+    ) = unbounded();
 
     let (kafka_events_in, kafka_events_out): (Sender<KafkaEvents>, Receiver<KafkaEvents>) =
         unbounded();

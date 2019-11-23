@@ -92,8 +92,7 @@ impl WsSession {
                 .send(KafkaCommands::ClientHeartbeat(ClientHeartbeat {
                     client_id: self.client_id,
                     heartbeat_type,
-                }))
-        {
+                })) {
             println!("Failed to send client heartbeat via crossbeam {}", e)
         }
     }
@@ -397,7 +396,11 @@ impl Handler for WsSession {
                     }
                 }
 
-                println!("🤐 {} {:<8} expire timeout", session_code(self), "IGNORED");
+                println!(
+                    "🤐 {} {:<8} expire timeout",
+                    session_code(self),
+                    "IGNORED"
+                );
                 Ok(())
             }
             CHANNEL_RECV => {
@@ -423,13 +426,17 @@ impl Handler for WsSession {
                             ClientEvents::YourColor(YourColorEvent {
                                 game_id: _,
                                 your_color,
-                            }) if your_color == Player::BLACK => {
+                            })
+                                if your_color == Player::BLACK =>
+                            {
                                 println!("🏴 {} {:<8} Black", session_code(self), "YOURCOLR")
                             }
                             ClientEvents::YourColor(YourColorEvent {
                                 game_id: _,
                                 your_color,
-                            }) if your_color == Player::WHITE => {
+                            })
+                                if your_color == Player::WHITE =>
+                            {
                                 println!("🏳 {} {:<8} White", session_code(self), "YOURCOLR")
                             }
                             _ => (),

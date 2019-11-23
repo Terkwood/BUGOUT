@@ -7,7 +7,6 @@ edition = "2018"
 [dependencies]
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.0"
-futures = "0.3.1"
 mio-extras = "2.0.5"
 rand = "0.7.2"
 rdkafka = "0.21.0"
@@ -21,6 +20,7 @@ harsh = "0.1.6"
 lazy_static = "1.4.0"
 envy = "0.4.0"
 dotenv = "0.15.0"
+futures = "0.1"
 
 [dev-dependencies]
 rand = "0.7.2"
