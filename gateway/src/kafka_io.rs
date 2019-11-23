@@ -1,19 +1,19 @@
 use std::thread;
 
 use crossbeam_channel::select;
-use futures::stream::Stream;
+use futures::Stream;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::{CommitMode, Consumer};
 use rdkafka::message::Message;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
+use crate::env::BROKERS;
 use crate::kafka_commands::*;
 use crate::kafka_events::*;
 use crate::model::*;
 use crate::topics::*;
 
-pub const BROKERS: &str = "kafka:9092";
 pub const APP_NAME: &str = "gateway";
 
 pub fn start(
@@ -22,12 +22,12 @@ pub fn start(
 ) {
     thread::spawn(move || start_producer(commands_out));
 
-    thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS, events_in));
+    thread::spawn(move || start_consumer(&BROKERS, APP_NAME, CONSUME_TOPICS, events_in));
 }
 
 /// Pay attention to the topic keys in the loop 🔄 👀
 fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
-    let producer = configure_producer(BROKERS);
+    let producer = configure_producer(&BROKERS);
 
     loop {
         select! {

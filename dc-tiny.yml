@@ -6,6 +6,8 @@ services:
       - "3012:3012"
     volumes:
       - ${PWD}/gateway/.env:/var/BUGOUT/gateway/.env
+    environment:
+      - BROKERS
   reverse-proxy:
     image: abiosoft/caddy
     ports:
@@ -14,3 +16,5 @@ services:
     volumes:
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy
+  kafkacat:
+    build: kafkacat/.
