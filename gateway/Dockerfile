@@ -9,9 +9,10 @@ RUN git submodule update --init
 RUN apt-get update -y 
 RUN apt-get install -y clang
 
+# useful for wait-run.sh
 RUN curl -O https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
-
 RUN chmod 755 wait-for-it.sh
+
 RUN git fetch && git pull
 RUN git rev-parse HEAD
 
@@ -23,4 +24,4 @@ COPY . /var/BUGOUT/gateway/.
 
 RUN cargo install --path .
 
-CMD ["sh", "run.sh"]
+CMD ["gateway"]
