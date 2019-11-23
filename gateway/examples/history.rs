@@ -30,7 +30,7 @@ fn main() {
     if let Err(error) = connect("ws://127.0.0.1:3012", |out| {
         // Queue a message to be sent when the WebSocket is open
 
-        let game_id: Uuid = game_id_parsed.unwrap();
+        let game_id: Uuid = game_id_parsed.clone().unwrap();
         let request_id = Uuid::new_v4();
 
         // We need to "reconnect" to a game in progress, or we won't receive

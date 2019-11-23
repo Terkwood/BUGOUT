@@ -26,6 +26,8 @@ services:
       - "kafka"
     depends_on:
       - "kafka"
+    environment:
+      - BROKERS
   judge:
     build: judge/.
     links:
