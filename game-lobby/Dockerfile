@@ -6,8 +6,9 @@ RUN chmod 755 wait-for-it.sh
 
 COPY . .
 
-#RUN sh build.sh
+RUN sh build.sh
 
-#CMD ["sh", "run.sh"]
+CMD ["sh", "run.sh"]
 
-CMD ["tail", "-f", "/dev/null"]
+#TODO
+#CMD ["tail", "-f", "/dev/null"]

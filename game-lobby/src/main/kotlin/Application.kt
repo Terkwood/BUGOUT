@@ -530,20 +530,27 @@ class Application(private val brokers: String) {
     }
 
     private fun waitForTopics(topics: Array<String>, props: java.util
-    .Properties) : Boolean{
+    .Properties) {
+        print("Waiting for topics ")
         val client = AdminClient.create(props)
-        val found = client.listTopics().names().get()
-        println("found topics $found")
 
-        val diff = found?.filterNotNull()?.subtract(topics.toSet())
+        var topicsReady = false
+        while(!topicsReady) {
 
-        println("diff $diff")
+            val found = client.listTopics().names().get()
+            //println("found topics $found")
 
-        val ok = diff?.isEmpty()
+            val diff = topics.subtract(found.filterNotNull())
 
-        println("...$ok")
+            //println("diff $diff")
 
-        return ok ?: false
+            topicsReady = diff.isEmpty()
+
+            if (!topicsReady) Thread.sleep(333)
+            println(".")
+        }
+
+        println(" done!")
     }
 }
 
