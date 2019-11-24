@@ -8,8 +8,15 @@ object Topics {
 
     const val GAME_LOBBY_COMMANDS = "bugout-game-lobby-commands"
     const val GAME_LOBBY_CHANGELOG = "bugout-game-lobby"
+
+    const val GAME_STATES_CHANGELOG = "bugout-game-states"
+
+    // kv stores
     const val GAME_LOBBY_STORE_LOCAL = "bugout-game-lobby-store-local"
     const val GAME_LOBBY_STORE_GLOBAL = "bugout-game-lobby-store-global"
 
-    const val GAME_STATES_CHANGELOG = "bugout-game-states"
+
+    val all = arrayOf(FIND_PUBLIC_GAME, CREATE_GAME, WAIT_FOR_OPPONENT,
+        GAME_READY, PRIVATE_GAME_REJECTED, JOIN_PRIVATE_GAME,
+        GAME_LOBBY_COMMANDS, GAME_LOBBY_CHANGELOG, GAME_STATES_CHANGELOG)
 }

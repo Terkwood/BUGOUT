@@ -33,6 +33,8 @@ class Application(private val brokers: String) {
 
         val streams = KafkaStreams(topology, props)
 
+        waitForTopics(Topics.all, props)
+
         streams.start()
 
         waitUntilStoreIsQueryable(Topics.GAME_LOBBY_STORE_LOCAL, streams)
@@ -527,10 +529,20 @@ class Application(private val brokers: String) {
         }
     }
 
-    private fun waitForTopics(topics: Array<String>, props: java.util.Properties) {
+    private fun waitForTopics(topics: Array<String>, props: java.util
+    .Properties) : Boolean{
+        print("Topics ready?")
+
         val client = AdminClient.create(props)
         val found = client.listTopics().names().get()
         println("found topics $found")
+
+        val ok = found?.filterNotNull()?.subtract(topics.toSet())?.isEmpty()
+            ?: false
+
+        println("...$ok")
+
+        return ok
     }
 }
 
