@@ -7,6 +7,9 @@ import serdes.AllOpenGamesDeserializer
 import serdes.AllOpenGamesSerializer
 import serdes.jsonMapper
 import java.util.*
+import org.apache.kafka.streams.errors.InvalidStateStoreException
+import org.apache.kafka.streams.state.QueryableStoreTypes
+
 
 fun main() {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
@@ -25,6 +28,10 @@ class Application(private val brokers: String) {
         props[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = "exactly_once"
 
         val streams = KafkaStreams(topology, props)
+
+        waitUntilStoreIsQueryable(Topics.GAME_LOBBY_STORE_LOCAL, streams)
+        waitUntilStoreIsQueryable(Topics.GAME_LOBBY_STORE_GLOBAL, streams)
+
         streams.start()
     }
 
@@ -494,6 +501,22 @@ class Application(private val brokers: String) {
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
 
+    }
+
+    private fun waitUntilStoreIsQueryable(storeName: String, streams:
+    KafkaStreams) {
+        println("Waiting for $storeName")
+
+        while (true) {
+            try {
+                streams.store(storeName, QueryableStoreTypes
+                    .keyValueStore<Bytes, ByteArray>())
+                return
+            } catch (ignored: InvalidStateStoreException) {
+                // store not yet ready for querying
+                Thread.sleep(100)
+            }
+        }
     }
 }
 
