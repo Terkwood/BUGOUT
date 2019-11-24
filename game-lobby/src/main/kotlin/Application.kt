@@ -536,18 +536,14 @@ class Application(private val brokers: String) {
 
         var topicsReady = false
         while(!topicsReady) {
-
             val found = client.listTopics().names().get()
-            //println("found topics $found")
 
             val diff = topics.subtract(found.filterNotNull())
-
-            //println("diff $diff")
 
             topicsReady = diff.isEmpty()
 
             if (!topicsReady) Thread.sleep(333)
-            println(".")
+            print(".")
         }
 
         println(" done!")
