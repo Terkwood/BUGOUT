@@ -505,16 +505,20 @@ class Application(private val brokers: String) {
 
     private fun waitUntilStoreIsQueryable(storeName: String, streams:
     KafkaStreams) {
-        println("Waiting for $storeName")
+        print("Waiting for $storeName ...")
+
+        var timeSpentWaitingMs = 0L
+        val waitMs = 100L
 
         while (true) {
             try {
                 streams.store(storeName, QueryableStoreTypes
                     .keyValueStore<Bytes, ByteArray>())
-                return
+                return println("$timeSpentWaitingMs ms")
             } catch (ignored: InvalidStateStoreException) {
                 // store not yet ready for querying
-                Thread.sleep(100)
+                Thread.sleep(waitMs)
+                timeSpentWaitingMs += waitMs
             }
         }
     }
