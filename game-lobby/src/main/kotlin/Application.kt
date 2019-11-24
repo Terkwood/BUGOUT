@@ -1,3 +1,5 @@
+import org.apache.kafka.clients.KafkaClient
+import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.*
@@ -11,9 +13,11 @@ import org.apache.kafka.streams.errors.InvalidStateStoreException
 import org.apache.kafka.streams.state.QueryableStoreTypes
 
 
+const val BROKERS = "kafka:9092"
+
 fun main() {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
-    Application("kafka:9092").process()
+    Application(BROKERS).process()
 }
 
 class Application(private val brokers: String) {
@@ -29,10 +33,10 @@ class Application(private val brokers: String) {
 
         val streams = KafkaStreams(topology, props)
 
+        streams.start()
+
         waitUntilStoreIsQueryable(Topics.GAME_LOBBY_STORE_LOCAL, streams)
         waitUntilStoreIsQueryable(Topics.GAME_LOBBY_STORE_GLOBAL, streams)
-
-        streams.start()
     }
 
 
@@ -521,6 +525,12 @@ class Application(private val brokers: String) {
                 timeSpentWaitingMs += waitMs
             }
         }
+    }
+
+    private fun waitForTopics(topics: Array<String>, props: java.util.Properties) {
+        val client = AdminClient.create(props)
+        val found = client.listTopics().names().get()
+        println("found topics $found")
     }
 }
 
