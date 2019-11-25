@@ -36,12 +36,8 @@ class Application(private val brokers: String) {
         waitForTopics(Topics.all, props)
 
         streams.start()
-
-        waitUntilStoreIsQueryable(Topics.GAME_LOBBY_STORE_LOCAL, streams)
-        waitUntilStoreIsQueryable(Topics.GAME_LOBBY_STORE_GLOBAL, streams)
     }
-
-
+    
     fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
 
@@ -507,26 +503,6 @@ class Application(private val brokers: String) {
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
 
-    }
-
-    private fun waitUntilStoreIsQueryable(storeName: String, streams:
-    KafkaStreams) {
-        print("Waiting for $storeName ...")
-
-        var timeSpentWaitingMs = 0L
-        val waitMs = 100L
-
-        while (true) {
-            try {
-                streams.store(storeName, QueryableStoreTypes
-                    .keyValueStore<Bytes, ByteArray>())
-                return println("$timeSpentWaitingMs ms")
-            } catch (ignored: InvalidStateStoreException) {
-                // store not yet ready for querying
-                Thread.sleep(waitMs)
-                timeSpentWaitingMs += waitMs
-            }
-        }
     }
 
     private fun waitForTopics(topics: Array<String>, props: java.util
