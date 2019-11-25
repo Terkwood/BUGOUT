@@ -24,8 +24,8 @@ WantedBy=multi-user.target
 Enable it
 
 ```sh
-sudo systemctl enable /etc/systemd/system/docker-compose.service
-sudo systemctl start docker-compose.service
+sudo systemctl enable /etc/systemd/system/bugout.service
+sudo systemctl start bugout.service
 ```
 
 Check the output
