@@ -21,7 +21,7 @@ Judge emits move data to `bugout-move-accepted-ev`, which is an input to changel
 [This system is slowly being migrated to a more cost-efficient design](https://github.com/Terkwood/BUGOUT/issues/75).  For now, you can run a t3.large box in AWS to host Kafka.  We provide a simple script to help with this:
 
 ```sh
-sh start-kafka-host.sh
+sh admin/start-kafka-host.sh
 ```
 
 ## Resources
