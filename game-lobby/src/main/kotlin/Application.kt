@@ -37,7 +37,7 @@ class Application(private val brokers: String) {
 
         streams.start()
     }
-    
+
     fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
 
@@ -162,7 +162,7 @@ class Application(private val brokers: String) {
                                 g.gameId == jpg.gameId
                     }
 
-                println("Popping public game  ${someGame.gameId.short()}")
+                println("Popping private game  ${someGame.gameId.short()}")
 
                 KeyValue(
                     jpg.clientId,
