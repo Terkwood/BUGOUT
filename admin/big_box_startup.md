@@ -27,3 +27,9 @@ Enable it
 sudo systemctl enable /etc/systemd/system/docker-compose.service
 sudo systemctl start docker-compose.service
 ```
+
+Check the output
+
+```sh
+sudo journalctl -u bugout.service
+```
