@@ -1,4 +1,4 @@
 #!/bin/bash
 
-./wait-for-it.sh kafka:9092 -s -- sleep 16
+./wait-for-it.sh kafka:9092 -s
 java -jar bugout.color-chooser.jar
