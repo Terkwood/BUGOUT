@@ -80,6 +80,11 @@ services:
       - "kafka"
     volumes:
       - "./reaper/.env:/var/BUGOUT/reaper/.env"
+    environment:
+      - ALLOWED_IDLE_SECS
+      - AWS_REGION
+      - DISABLED
+      - TAG_NAME
   kafkacat:
     build: kafkacat/.
     links:
