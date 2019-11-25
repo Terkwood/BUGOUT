@@ -1,3 +1,8 @@
+import Topics.GAME_STATES_CHANGELOG_TOPIC
+import Topics.GAME_STATES_STORE
+import Topics.MAKE_MOVE_CMD_TOPIC
+import Topics.MOVE_ACCEPTED_EV_TOPIC
+import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
@@ -123,9 +128,31 @@ class Judge(private val brokers: String) {
         props["application.id"] = "bugout-judge"
         props["processing.guarantee"] = "exactly_once"
 
+        waitForTopics(Topics.all, props)
+
         val streams = KafkaStreams(topology, props)
         streams.start()
 
         println("Judge started")
+    }
+
+    private fun waitForTopics(topics: Array<String>, props: java.util
+    .Properties) {
+        print("Waiting for topics ")
+        val client = AdminClient.create(props)
+
+        var topicsReady = false
+        while(!topicsReady) {
+            val found = client.listTopics().names().get()
+
+            val diff = topics.subtract(found.filterNotNull())
+
+            topicsReady = diff.isEmpty()
+
+            if (!topicsReady) Thread.sleep(333)
+            print(".")
+        }
+
+        println(" done!")
     }
 }
