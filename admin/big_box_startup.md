@@ -15,7 +15,7 @@ After=docker.service
 Requires=docker.service
 
 [Service]
-ExecStart=/usr/bin/sh /home/core/BUGOUT/start-kafka-host.sh
+ExecStart=/usr/bin/sh /home/core/BUGOUT/admin/start-kafka-host.sh
 
 [Install]
 WantedBy=multi-user.target
