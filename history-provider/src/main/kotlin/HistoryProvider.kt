@@ -1,3 +1,8 @@
+import Topics.GAME_STATES_CHANGELOG_TOPIC
+import Topics.GAME_STATES_STORE_NAME
+import Topics.HISTORY_PROVIDED_TOPIC
+import Topics.PROVIDE_HISTORY_TOPIC
+import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
@@ -105,5 +110,26 @@ class HistoryProvider(private val brokers: String) {
 
         val streams = KafkaStreams(topology, props)
         streams.start()
+    }
+
+
+    private fun waitForTopics(topics: Array<String>, props: java.util
+    .Properties) {
+        print("Waiting for topics ")
+        val client = AdminClient.create(props)
+
+        var topicsReady = false
+        while(!topicsReady) {
+            val found = client.listTopics().names().get()
+
+            val diff = topics.subtract(found.filterNotNull())
+
+            topicsReady = diff.isEmpty()
+
+            if (!topicsReady) Thread.sleep(333)
+            print(".")
+        }
+
+        println(" done!")
     }
 }
