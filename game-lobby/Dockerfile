@@ -9,6 +9,3 @@ COPY . .
 RUN sh build.sh
 
 CMD ["sh", "run.sh"]
-
-#TODO
-#CMD ["tail", "-f", "/dev/null"]
