@@ -77,11 +77,7 @@ fn has_required_name(tags: Vec<Tag>) -> bool {
             Tag {
                 key: Some(tag_key),
                 value: Some(v),
-            }
-                if tag_key == TAG_KEY && v == INSTANCE_TAG_NAME.to_string() =>
-            {
-                return true
-            }
+            } if tag_key == TAG_KEY && v == INSTANCE_TAG_NAME.to_string() => return true,
             _ => (),
         }
     }

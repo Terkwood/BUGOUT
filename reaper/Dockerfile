@@ -24,4 +24,3 @@ COPY . /var/BUGOUT/reaper/.
 RUN cargo install --path .
 
 CMD ["sh", "run.sh"]
-
