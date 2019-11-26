@@ -84,6 +84,7 @@ services:
       - ALLOWED_IDLE_SECS
       - AWS_REGION
       - DISABLED
+      - STARTUP_GRACE_SECS
       - TAG_NAME
   kafkacat:
     build: kafkacat/.
