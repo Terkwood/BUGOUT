@@ -35,13 +35,13 @@ pub fn start(
                         }
                     }
 
-                    grace_period_countdown = grace_period_countdown - 1;
-                    if grace_period_countdown < 0 as u64 && !grace_period_over {
-                        grace_period_over = true;
-                        // dummy event to stop immediate shutdown
-                        monitor.observe();
-                        println!("⏰ Grace period is over at {:#?}", SystemTime::now())
-                    }
+                grace_period_countdown = grace_period_countdown - 1;
+                if grace_period_countdown < 0 as u64 && !grace_period_over {
+                    grace_period_over = true;
+                    // dummy event to stop immediate shutdown
+                    monitor.observe();
+                    println!("⏰ Grace period is over at {:#?}", SystemTime::now())
+                }
             },
             recv(activity_out) -> command =>
                 match command {
