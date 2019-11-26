@@ -24,8 +24,6 @@ pub fn start(
         loop {
             select! {
                 recv(ticker) -> _ => {
-                    println!("GRACE PERIOD COUNTDOWN {}\nGRACE PERIOD OVER\t{}", grace_period_countdown, grace_period_over);
-
                     if monitor.is_system_idle() && grace_period_over && !* DISABLED {
                         println!("⚰️ SHUTDOWN at {:#?}", SystemTime::now());
                         if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
