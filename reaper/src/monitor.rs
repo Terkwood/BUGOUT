@@ -25,9 +25,9 @@ pub fn start(
                 recv(ticker) -> _ => {
                     if monitor.is_system_idle() && grace_period_countdown <= 0 {
                         if *DISABLED {
-                            println!("SHUTDOWN event ignored at {:#?}", SystemTime::now())
+                            println!("😇 SHUTDOWN event ignored at {:#?}", SystemTime::now())
                         } else {
-                            println!("SHUTDOWN at {:#?}", SystemTime::now());
+                            println!("⚰️ SHUTDOWN at {:#?}", SystemTime::now());
                             if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
                                 println!("Failed to send shutdown command: {:?}", e)
                             }
@@ -38,14 +38,15 @@ pub fn start(
                     if grace_period_countdown < 0 as u64 && !grace_period_over {
                         grace_period_over = true;
                         // dummy event to stop immediate shutdown
-                        monitor.observe()
+                        monitor.observe();
+                        println!("⏰ Grace period is over")
                     }
             },
-                recv(activity_out) -> command =>
-                    match command {
-                        Ok(_) => monitor.observe(),
-                        Err(e) => println!("Failed to select in monitor: {:?}", e),
-                    }
+            recv(activity_out) -> command =>
+                match command {
+                    Ok(_) => monitor.observe(),
+                    Err(e) => println!("Failed to select in monitor: {:?}", e),
+                }
             }
         }
     });
