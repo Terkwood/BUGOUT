@@ -3,12 +3,11 @@ use std::time::{Duration, Instant, SystemTime};
 
 use crossbeam_channel::{select, tick};
 
-use crate::env::{ALLOWED_IDLE_SECS, DISABLED};
+use crate::env::{ALLOWED_IDLE_SECS, DISABLED, STARTUP_GRACE_SECS};
 use crate::model::*;
 
 const TICK_SECS: u64 = 5;
 
-/// Start a process which
 pub fn start(
     shutdown_in: crossbeam::Sender<ShutdownCommand>,
     activity_out: crossbeam::Receiver<KafkaActivity>,
@@ -16,23 +15,38 @@ pub fn start(
     let mut monitor = Monitor::new();
     let ticker = tick(Duration::from_secs(TICK_SECS));
 
-    thread::spawn(move || loop {
-        select! {
-            recv(ticker) -> _ => if monitor.is_system_idle() {
-                if *DISABLED {
-                    println!("SHUTDOWN event ignored at {:#?}", SystemTime::now())
-                } else {
-                    println!("SHUTDOWN at {:#?}", SystemTime::now());
-                    if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
-                        println!("Failed to send shutdown command: {:?}", e)
+    thread::spawn(move || {
+        // Allow some grace period
+        let mut grace_period_countdown = *STARTUP_GRACE_SECS / TICK_SECS;
+        let mut grace_period_over = false;
+
+        loop {
+            select! {
+                recv(ticker) -> _ => {
+                    if monitor.is_system_idle() && grace_period_countdown <= 0 {
+                        if *DISABLED {
+                            println!("SHUTDOWN event ignored at {:#?}", SystemTime::now())
+                        } else {
+                            println!("SHUTDOWN at {:#?}", SystemTime::now());
+                            if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
+                                println!("Failed to send shutdown command: {:?}", e)
+                            }
+                        }
                     }
-                }
+
+                    grace_period_countdown = grace_period_countdown - 1;
+                    if grace_period_countdown < 0 as u64 && !grace_period_over {
+                        grace_period_over = true;
+                        // dummy event to stop immediate shutdown
+                        monitor.observe()
+                    }
             },
-            recv(activity_out) -> command =>
-                match command {
-                    Ok(_) => monitor.observe(),
-                    Err(e) => println!("Failed to select in monitor: {:?}", e),
-                }
+                recv(activity_out) -> command =>
+                    match command {
+                        Ok(_) => monitor.observe(),
+                        Err(e) => println!("Failed to select in monitor: {:?}", e),
+                    }
+            }
         }
     });
 }
