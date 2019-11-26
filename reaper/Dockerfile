@@ -21,10 +21,6 @@ RUN rustup default stable
 # not just what's on the git branch
 COPY . /var/BUGOUT/reaper/.
 
-#TODO
-#RUN cargo install --path .
+RUN cargo install --path .
 
-#CMD ["sh", "run.sh"]
-
-#TODO
-CMD ["tail","-f","/dev/null"]
+CMD ["sh", "run.sh"]
