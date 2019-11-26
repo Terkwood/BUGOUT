@@ -24,7 +24,7 @@ pub fn start(
         loop {
             select! {
                 recv(ticker) -> _ => {
-                    if monitor.is_system_idle() && grace_period_countdown <= 0 {
+                    if monitor.is_system_idle() && grace_period_over {
                         if *DISABLED {
                             println!("😇 SHUTDOWN event ignored at {:#?}", SystemTime::now())
                         } else {
