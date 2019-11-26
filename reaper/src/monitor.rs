@@ -18,7 +18,7 @@ pub fn start(
 
     thread::spawn(move || {
         // Allow some grace period
-        let mut grace_period_countdown = *STARTUP_GRACE_SECS / TICK_SECS;
+        let mut grace_period_countdown: i64 = *STARTUP_GRACE_SECS as i64 / TICK_SECS as i64;
         let mut grace_period_over = false;
 
         loop {
@@ -26,19 +26,16 @@ pub fn start(
                 recv(ticker) -> _ => {
                     println!("GRACE PERIOD COUNTDOWN {}\nGRACE PERIOD OVER\t{}", grace_period_countdown, grace_period_over);
 
-                    if monitor.is_system_idle() && grace_period_over {
-                        if *DISABLED {
-                            println!("😇 SHUTDOWN event ignored at {:#?}", SystemTime::now())
-                        } else {
-                            println!("⚰️ SHUTDOWN at {:#?}", SystemTime::now());
-                            if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
-                                println!("Failed to send shutdown command: {:?}", e)
-                            }
+                    if monitor.is_system_idle() && grace_period_over && !* DISABLED {
+                        println!("⚰️ SHUTDOWN at {:#?}", SystemTime::now());
+                        if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
+                            println!("Failed to send shutdown command: {:?}", e)
                         }
+                        
                     }
 
                 grace_period_countdown = grace_period_countdown - 1;
-                if grace_period_countdown < 0 as u64 && !grace_period_over {
+                if grace_period_countdown <= 0 as i64 && !grace_period_over {
                     grace_period_over = true;
                     // dummy event to stop immediate shutdown
                     monitor.observe();
