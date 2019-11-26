@@ -14,6 +14,7 @@ pub fn start(
 ) {
     let mut monitor = Monitor::new();
     let ticker = tick(Duration::from_secs(TICK_SECS));
+    println!("Startup at {:#?}", SystemTime::now());
 
     thread::spawn(move || {
         // Allow some grace period
@@ -39,7 +40,7 @@ pub fn start(
                         grace_period_over = true;
                         // dummy event to stop immediate shutdown
                         monitor.observe();
-                        println!("⏰ Grace period is over")
+                        println!("⏰ Grace period is over at {:#?}", SystemTime::now())
                     }
             },
             recv(activity_out) -> command =>

@@ -31,4 +31,12 @@ lazy_static! {
 
 pub fn init() {
     dotenv().ok();
+
+    println!("🏞 environment vars 🏞");
+    println!("ALLOWED_IDLE_SECS {}", *ALLOWED_IDLE_SECS);
+    println!("STARTUP_GRACE_SECS {}", *STARTUP_GRACE_SECS);
+    println!("AWS_REGION {}", *AWS_REGION);
+    println!("INSTANCE_TAG_NAME {}", *INSTANCE_TAG_NAME);
+    println!("DISABLED {}", *DISABLED);
+    println!("\n\n");
 }
