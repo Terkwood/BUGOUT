@@ -1,4 +1,4 @@
-# configuring coreos startup script for big box
+# config procedure
 
 Create a systemd init script
 
@@ -6,20 +6,7 @@ Create a systemd init script
 sudo vim /etc/systemd/system/bugout.service
 ```
 
-Give it some values
-
-```text
-[Unit]
-Description=BUGOUT
-After=docker.service
-Requires=docker.service
-
-[Service]
-ExecStart=/usr/bin/sh /home/core/BUGOUT/admin/start-kafka-host.sh
-
-[Install]
-WantedBy=multi-user.target
-```
+...Fill in values (see below)...
 
 Enable it
 
@@ -32,4 +19,34 @@ Check the output
 
 ```sh
 sudo journalctl -u bugout.service
+```
+
+## example systemd startup script for gateway box
+
+```text
+[Unit]
+Description=BUGOUT
+After=docker.service
+Requires=docker.service
+
+[Service]
+ExecStart=/usr/bin/sh /home/core/BUGOUT/admin/start-gateway-host.sh
+
+[Install]
+WantedBy=multi-user.target
+```
+
+## example systemd startup script for kafka box
+
+```text
+[Unit]
+Description=BUGOUT
+After=docker.service
+Requires=docker.service
+
+[Service]
+ExecStart=/usr/bin/sh /home/core/BUGOUT/admin/start-kafka-host.sh
+
+[Install]
+WantedBy=multi-user.target
 ```
