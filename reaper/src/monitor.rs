@@ -29,7 +29,7 @@ pub fn start(
                         if let Err(e) = shutdown_in.send(ShutdownCommand::new()) {
                             println!("Failed to send shutdown command: {:?}", e)
                         }
-                        
+
                     }
 
                 grace_period_countdown = grace_period_countdown - 1;
