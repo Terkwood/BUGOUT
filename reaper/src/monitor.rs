@@ -14,7 +14,7 @@ pub fn start(
 ) {
     let mut monitor = Monitor::new();
     let ticker = tick(Duration::from_secs(TICK_SECS));
-    println!("Startup at {:#?}", SystemTime::now());
+    println!("👺 Startup at {:#?}", SystemTime::now());
 
     thread::spawn(move || {
         // Allow some grace period
