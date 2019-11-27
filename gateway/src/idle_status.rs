@@ -1,5 +1,6 @@
 use crate::kafka_events::*;
 use chrono::{DateTime, Utc};
+use crossbeam_channel::select;
 use serde_derive::{Deserialize, Serialize};
 use std::thread;
 
@@ -15,6 +16,18 @@ pub enum IdleStatus {
     Online,
 }
 
-pub fn start_monitor(events_out: crossbeam::Receiver<KafkaEvents>) {
-    thread::spawn(move || println!("Hello Please"));
+pub fn start_monitor(kafka_out: crossbeam::Receiver<KafkaEvents>) {
+    thread::spawn(move || {
+        println!("Hello Please");
+
+        loop {
+            select! {
+            recv(kafka_out) -> event =>
+                match event {
+                    Ok(_) => unimplemented!(),
+                    Err(_) => unimplemented!(),
+                }
+            }
+        }
+    });
 }
