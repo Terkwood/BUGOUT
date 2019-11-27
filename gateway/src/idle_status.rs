@@ -18,7 +18,7 @@ pub enum IdleStatus {
 
 pub fn start_monitor(kafka_out: crossbeam::Receiver<KafkaEvents>) {
     thread::spawn(move || {
-        println!("Hello Please");
+        // Please Watch For shutdown event
 
         loop {
             select! {
