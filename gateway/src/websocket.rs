@@ -338,6 +338,8 @@ impl Handler for WsSession {
                     ))
                     .map_err(|e| ws::Error::from(Box::new(e)))
             }
+            Ok(ClientCommands::ProvideIdleStatus) => unimplemented!(),
+
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",
