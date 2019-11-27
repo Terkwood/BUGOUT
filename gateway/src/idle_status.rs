@@ -1,3 +1,4 @@
+use crate::kafka_events::*;
 use chrono::{DateTime, Utc};
 use serde_derive::{Deserialize, Serialize};
 
@@ -11,4 +12,8 @@ pub enum IdleStatus {
     Idle(DateTime<Utc>),
     Booting(DateTime<Utc>),
     Online,
+}
+
+pub fn start_monitor(events_in: crossbeam::Sender<KafkaEvents>) {
+    println!("Hello Please")
 }

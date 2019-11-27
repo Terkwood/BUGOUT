@@ -16,6 +16,7 @@ extern crate ws;
 
 pub mod compact_ids;
 pub mod env;
+pub mod idle_status;
 pub mod kafka_commands;
 pub mod kafka_events;
 pub mod kafka_io;
@@ -24,7 +25,6 @@ pub mod websocket;
 
 mod client_commands;
 mod client_events;
-mod idle_status;
 mod logging;
 mod model;
 mod topics;

@@ -3,6 +3,7 @@ extern crate gateway;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
 use gateway::env;
+use gateway::idle_status;
 use gateway::kafka_commands::KafkaCommands;
 use gateway::kafka_events::KafkaEvents;
 use gateway::router::RouterCommand;
@@ -28,7 +29,9 @@ fn main() {
         Receiver<RouterCommand>,
     ) = unbounded();
 
-    kafka_io::start(kafka_events_in, kafka_commands_out);
+    kafka_io::start(kafka_events_in.clone(), kafka_commands_out);
+
+    idle_status::start_monitor(kafka_events_in.clone());
 
     router::start(router_commands_out, kafka_events_out);
 
