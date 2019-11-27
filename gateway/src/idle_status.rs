@@ -1,6 +1,7 @@
 use crate::kafka_events::*;
 use chrono::{DateTime, Utc};
 use serde_derive::{Deserialize, Serialize};
+use std::thread;
 
 /// The running status of an expensive container host
 ///
@@ -14,6 +15,6 @@ pub enum IdleStatus {
     Online,
 }
 
-pub fn start_monitor(events_in: crossbeam::Sender<KafkaEvents>) {
-    println!("Hello Please")
+pub fn start_monitor(events_out: crossbeam::Receiver<KafkaEvents>) {
+    thread::spawn(move || println!("Hello Please"));
 }

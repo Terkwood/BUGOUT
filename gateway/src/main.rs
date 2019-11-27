@@ -29,9 +29,9 @@ fn main() {
         Receiver<RouterCommand>,
     ) = unbounded();
 
-    kafka_io::start(kafka_events_in.clone(), kafka_commands_out);
+    kafka_io::start(kafka_events_in, kafka_commands_out);
 
-    idle_status::start_monitor(kafka_events_in.clone());
+    idle_status::start_monitor(kafka_events_out.clone());
 
     router::start(router_commands_out, kafka_events_out);
 
