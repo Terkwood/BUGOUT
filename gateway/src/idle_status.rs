@@ -24,8 +24,12 @@ pub fn start_monitor(kafka_out: crossbeam::Receiver<KafkaEvents>) {
             select! {
             recv(kafka_out) -> event =>
                 match event {
-                    Ok(_) => unimplemented!(),
-                    Err(_) => unimplemented!(),
+                    Ok(KafkaEvents::Shutdown(_)) => {
+                        println!(" ..SHUTDOWN EVENT DETECTED.. ");
+                        unimplemented!()
+                    },
+                    Ok(_) => (),
+                    Err(e) => println!("Error reading kafka event in idle monitor: {:?}", e),
                 }
             }
         }
