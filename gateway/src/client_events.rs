@@ -2,6 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::compact_ids::CompactId;
 use crate::env::*;
+use crate::idle_status::IdleStatus;
 use crate::model::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -15,6 +16,7 @@ pub enum ClientEvents {
     PrivateGameRejected(PrivateGameRejectedClientEvent),
     WaitForOpponent(WaitForOpponentClientEvent),
     YourColor(YourColorEvent),
+    IdleStatusProvided(IdleStatus),
 }
 
 impl ClientEvents {

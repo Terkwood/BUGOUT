@@ -11,6 +11,7 @@ use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode
 
 use crate::client_commands::*;
 use crate::client_events::*;
+use crate::idle_status::IdleStatus;
 use crate::kafka_commands::*;
 use crate::logging::*;
 use crate::model::*;
@@ -338,7 +339,17 @@ impl Handler for WsSession {
                     ))
                     .map_err(|e| ws::Error::from(Box::new(e)))
             }
-            Ok(ClientCommands::ProvideIdleStatus) => unimplemented!(),
+            Ok(ClientCommands::ProvideIdleStatus) => {
+                if let Ok(x) =
+                    serde_json::to_string(&ClientEvents::IdleStatusProvided(IdleStatus::Online))
+                {
+                    self.ws_out
+                        .send(x)
+                        .map_err(|e| ws::Error::from(Box::new(e)))
+                } else {
+                    Ok(())
+                }
+            }
 
             Err(_err) => {
                 println!(

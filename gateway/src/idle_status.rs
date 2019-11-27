@@ -1,12 +1,14 @@
-use chrono::predule::*;
+use chrono::{DateTime, Utc};
+use serde_derive::{Deserialize, Serialize};
 
 /// The running status of an expensive container host
-/// 
+///
 /// - Idle (since when)
-/// - Booting (an optional message indicating what's going on)
+/// - Booting (since when)
 /// - Awake (you may proceed to have fun)
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub enum IdleStatus {
     Idle(DateTime<Utc>),
-    Booting(Option<String>),
-    Awake
+    Booting(DateTime<Utc>),
+    Online,
 }
