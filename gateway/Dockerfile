@@ -23,8 +23,8 @@ RUN rustup default stable
 COPY . /var/BUGOUT/gateway/.
 
 ##TODO TODO
-#RUN cargo install --path .
+RUN cargo install --path .
 
-#CMD ["gateway"]
-
-CMD [ "tail","-f","/dev/null"]
+CMD ["gateway"]
+#
+#CMD [ "tail","-f","/dev/null"]
