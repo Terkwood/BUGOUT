@@ -14,10 +14,10 @@ pub enum KafkaEvents {
     GameReady(GameReadyKafkaEvent),
     PrivateGameRejected(PrivateGameRejectedKafkaEvent),
     WaitForOpponent(WaitForOpponentKafkaEvent),
-    ColorsChosen(ColorsChosenEvent)
+    ColorsChosen(ColorsChosenEvent),
 }
 
-pub struct KafkaShutdownEvent(SystemTime);
+pub struct ShutdownEvent(SystemTime);
 
 impl KafkaEvents {
     pub fn to_client_event(self) -> ClientEvents {
@@ -34,12 +34,12 @@ impl KafkaEvents {
                 game_id: g.game_id,
                 event_id: g.event_id,
             }),
-            KafkaEvents::PrivateGameRejected(p) => ClientEvents::PrivateGameRejected(
-                PrivateGameRejectedClientEvent {
+            KafkaEvents::PrivateGameRejected(p) => {
+                ClientEvents::PrivateGameRejected(PrivateGameRejectedClientEvent {
                     game_id: CompactId::encode(p.game_id),
                     event_id: p.event_id,
-                },
-            ),
+                })
+            }
 
             KafkaEvents::WaitForOpponent(WaitForOpponentKafkaEvent {
                 game_id,
@@ -61,15 +61,15 @@ impl KafkaEvents {
         }
     }
 
-    pub fn game_id(&self) -> Option<GameId> {
+    pub fn game_id(&self) -> GameId {
         match self {
-            KafkaEvents::MoveMade(e) => Some(e.game_id),
-            KafkaEvents::MoveRejected(e) => Some(e.game_id),
-            KafkaEvents::HistoryProvided(e) => Some(e.game_id),
-            KafkaEvents::GameReady(e) => Some(e.game_id),
-            KafkaEvents::PrivateGameRejected(e) => Some(e.game_id),
-            KafkaEvents::WaitForOpponent(e) => Some(e.game_id),
-            KafkaEvents::ColorsChosen(e) => Some(e.game_id),
+            KafkaEvents::MoveMade(e) => (e.game_id),
+            KafkaEvents::MoveRejected(e) => (e.game_id),
+            KafkaEvents::HistoryProvided(e) => (e.game_id),
+            KafkaEvents::GameReady(e) => (e.game_id),
+            KafkaEvents::PrivateGameRejected(e) => (e.game_id),
+            KafkaEvents::WaitForOpponent(e) => (e.game_id),
+            KafkaEvents::ColorsChosen(e) => (e.game_id),
         }
     }
 }

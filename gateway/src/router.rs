@@ -35,46 +35,42 @@ impl Router {
     }
 
     pub fn forward_by_client_id(&self, client_id: ClientId, ev: ClientEvents) {
-  
-            if let Some(events_in) = self.clients.get(&client_id) {
-                if let Err(e) = events_in.send(ev.clone()) {
-                    println!(
-                        "😗 {} {:<8} {:<8} forwarding event by client ID {}",
-                        short_uuid(client_id),
-                        "",
-                        "ERROR",
-                        e
-                    )
-                }
-            } else {
-                println!("Could not forward to client ID, perhaps it was already cleaned up ?")
+        if let Some(events_in) = self.clients.get(&client_id) {
+            if let Err(e) = events_in.send(ev.clone()) {
+                println!(
+                    "😗 {} {:<8} {:<8} forwarding event by client ID {}",
+                    short_uuid(client_id),
+                    "",
+                    "ERROR",
+                    e
+                )
             }
-        
+        } else {
+            println!("Could not forward to client ID, perhaps it was already cleaned up ?")
+        }
     }
 
     pub fn forward_by_game_id(&self, ev: ClientEvents) {
-       
-            if let Some(gid) = &ev.game_id() {
-                if let Some(GameClients {
-                    clients,
-                    playerup: _,
-                    modified_at: _,
-                }) = self.game_clients.get(gid)
-                {
-                    for c in clients {
-                        if let Err(err) = c.events_in.send(ev.clone()) {
-                            println!(
-                                "😑 {} {} {:<8} forwarding event {}",
-                                short_uuid(c.client_id),
-                                short_uuid(*gid),
-                                "ERROR",
-                                err
-                            )
-                        }
+        if let Some(gid) = &ev.game_id() {
+            if let Some(GameClients {
+                clients,
+                playerup: _,
+                modified_at: _,
+            }) = self.game_clients.get(gid)
+            {
+                for c in clients {
+                    if let Err(err) = c.events_in.send(ev.clone()) {
+                        println!(
+                            "😑 {} {} {:<8} forwarding event {}",
+                            short_uuid(c.client_id),
+                            short_uuid(*gid),
+                            "ERROR",
+                            err
+                        )
                     }
                 }
             }
-        
+        }
     }
 
     pub fn playerup(&self, game_id: GameId) -> Player {
@@ -272,9 +268,7 @@ pub fn start(
                             router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
                         },
                         Ok(e) => {
-                            if let Some(g) = e.game_id() {
-                                router.observe_game(g)
-                            }
+                            router.observe_game(e.game_id());
 
                             router.forward_by_game_id(e.to_client_event())
                         },

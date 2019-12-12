@@ -16,7 +16,7 @@ pub enum IdleStatus {
     Online,
 }
 
-pub fn start_monitor(kafka_out: crossbeam::Receiver<KafkaEvents>) {
+pub fn start_monitor(kafka_out: crossbeam::Receiver<ShutdownEvent>) {
     thread::spawn(move || {
         // Please Watch For shutdown event
 
@@ -24,11 +24,10 @@ pub fn start_monitor(kafka_out: crossbeam::Receiver<KafkaEvents>) {
             select! {
             recv(kafka_out) -> event =>
                 match event {
-                    Ok(KafkaEvents::Shutdown(_)) => {
+                    Ok(_) => {
                         println!(" ..SHUTDOWN EVENT DETECTED.. ");
                         unimplemented!()
                     },
-                    Ok(_) => (),
                     Err(e) => println!("Error reading kafka event in idle monitor: {:?}", e),
                 }
             }

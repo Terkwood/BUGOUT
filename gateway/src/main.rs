@@ -5,7 +5,7 @@ use crossbeam_channel::{unbounded, Receiver, Sender};
 use gateway::env;
 use gateway::idle_status;
 use gateway::kafka_commands::KafkaCommands;
-use gateway::kafka_events::KafkaEvents;
+use gateway::kafka_events::{KafkaEvents, ShutdownEvent};
 use gateway::router::RouterCommand;
 use gateway::websocket::WsSession;
 use gateway::{kafka_io, router};
@@ -29,9 +29,11 @@ fn main() {
         Receiver<RouterCommand>,
     ) = unbounded();
 
+    let (_, shutdown_out): (Sender<ShutdownEvent>, Receiver<ShutdownEvent>) = unbounded();
+
     kafka_io::start(kafka_events_in, kafka_commands_out);
 
-    idle_status::start_monitor(kafka_events_out.clone());
+    idle_status::start_monitor(shutdown_out);
 
     router::start(router_commands_out, kafka_events_out);
 
