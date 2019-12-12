@@ -1,6 +1,5 @@
 use crate::kafka_events::*;
 use chrono::{DateTime, Utc};
-use crossbeam_channel::select;
 use serde_derive::{Deserialize, Serialize};
 use std::thread;
 

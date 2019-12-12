@@ -203,8 +203,9 @@ impl Router {
     }
 }
 
-/// start the select! loop responsible for sending kafka messages to relevant websocket clients
-/// it must respond to requests to let it add and drop listeners
+/// start the select! loop responsible for sending
+/// kafka messages to relevant websocket clients.
+/// it must respond to requests to add and drop listeners
 pub fn start(
     router_commands_out: Receiver<RouterCommand>,
     kafka_events_out: Receiver<KafkaEvents>,
