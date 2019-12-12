@@ -184,13 +184,17 @@ fn start_consumer(
                     SHUTDOWN_TOPIC => {
                         let deserialized: Result<ShutdownEvent, _> = serde_json::from_str(payload);
 
+                        println!("consume shutdown kafka topic");
                         match deserialized {
                             Err(e) => println!("failed to deserialize shutdown event {}", e),
-                            Ok(s) => {
+                            Ok(_s) => {
                                 let send_result =
                                     shutdown_in.send(ShutdownEvent(std::time::SystemTime::now()));
+
                                 if let Err(e) = send_result {
                                     println!("HALP! Failed to send kafka event in crossbeam: {}", e)
+                                } else {
+                                    println!("sent kafka shutdown msg to crossbeam channel");
                                 }
                             }
                         }
