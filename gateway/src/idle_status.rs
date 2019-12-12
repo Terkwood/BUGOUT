@@ -21,6 +21,8 @@ pub fn start_monitor(shutdown_out: crossbeam::Receiver<ShutdownEvent>) {
         // Please Watch For shutdown event
 
         loop {
+            // Block on this channel, since there won't
+            // be any activity for a long time
             let msg = shutdown_out.recv();
             if let Ok(_) = msg {
                 println!(" ..SHUTDOWN EVENT DETECTED.. ");
