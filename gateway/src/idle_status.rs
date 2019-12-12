@@ -25,16 +25,23 @@ pub fn start_monitor(
     status_resp_in: Sender<IdleStatusResponse>,
     shutdown_out: Receiver<ShutdownEvent>,
     req_status_out: Receiver<RequestIdleStatus>,
+    kafka_out: Receiver<KafkaEvents>,
 ) {
     thread::spawn(move || {
         let mut status = IdleStatus::Idle(Utc::now());
 
         loop {
             select! {
-                recv(req_status_out) -> req => if let Ok(RequestIdleStatus(client_id)) = req { if let Err(e) = status_resp_in.send(IdleStatusResponse(client_id, status)) {
-                    println!("OH NOES!1! failed to send idle status response {}", e)
+                recv(kafka_out) -> kafka_event => if let Ok(_) = kafka_event {
+                    unimplemented!()
+                } else {
+                    println!("err in idle recv for kafka")
+                },
+                recv(req_status_out) -> req => if let Ok(RequestIdleStatus(client_id)) = req {
+                    if let Err(e) = status_resp_in.send(IdleStatusResponse(client_id, status)) {
+                    println!("err sending idle status resp", e)
                 }} else {
-                    println!("HELP US err on recv req status")
+                    println!("err on idle recv req status")
                 },
                 recv(shutdown_out) -> msg => if let Ok(_) = msg {
                     println!(" ..SHUTDOWN EVENT DETECTED.. ");

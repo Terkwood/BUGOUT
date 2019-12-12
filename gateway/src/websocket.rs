@@ -11,7 +11,7 @@ use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode
 
 use crate::client_commands::*;
 use crate::client_events::*;
-use crate::idle_status::{IdleStatus, RequestIdleStatus};
+use crate::idle_status::RequestIdleStatus;
 use crate::kafka_commands::*;
 use crate::logging::*;
 use crate::model::*;
