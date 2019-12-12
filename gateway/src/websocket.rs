@@ -11,7 +11,7 @@ use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode
 
 use crate::client_commands::*;
 use crate::client_events::*;
-use crate::idle_status::IdleStatus;
+use crate::idle_status::{IdleStatus, RequestIdleStatus};
 use crate::kafka_commands::*;
 use crate::logging::*;
 use crate::model::*;
@@ -35,6 +35,7 @@ pub struct WsSession {
     pub kafka_commands_in: crossbeam_channel::Sender<KafkaCommands>,
     pub events_out: Option<crossbeam_channel::Receiver<ClientEvents>>,
     pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
+    pub req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
     pub current_game: Option<GameId>,
     pub expire_after: std::time::Instant,
 }
@@ -45,6 +46,7 @@ impl WsSession {
         ws_out: ws::Sender,
         kafka_commands_in: crossbeam_channel::Sender<KafkaCommands>,
         router_commands_in: crossbeam_channel::Sender<RouterCommand>,
+        req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
     ) -> WsSession {
         WsSession {
             client_id,
@@ -55,6 +57,7 @@ impl WsSession {
             kafka_commands_in,
             events_out: None,
             router_commands_in,
+            req_idle_status_in,
             current_game: None,
             expire_after: next_expiry(),
         }
@@ -340,15 +343,11 @@ impl Handler for WsSession {
                     .map_err(|e| ws::Error::from(Box::new(e)))
             }
             Ok(ClientCommands::ProvideIdleStatus) => {
-                if let Ok(x) =
-                    serde_json::to_string(&ClientEvents::IdleStatusProvided(IdleStatus::Online))
-                {
-                    self.ws_out
-                        .send(x)
-                        .map_err(|e| ws::Error::from(Box::new(e)))
-                } else {
-                    Ok(())
-                }
+                println!("🏕 {} PROVIDLE", session_code(self));
+
+                self.req_idle_status_in
+                    .send(RequestIdleStatus(self.client_id))
+                    .map_err(|e| ws::Error::from(Box::new(e)))
             }
 
             Err(_err) => {

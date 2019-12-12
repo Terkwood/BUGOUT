@@ -50,6 +50,7 @@ fn main() {
             ws_out,
             kafka_commands_in.clone(),
             router_commands_in.clone(),
+            req_idle_in.clone(),
         )
     })
     .unwrap();
