@@ -278,8 +278,8 @@ pub fn start(
                     Err(e) =>
                         panic!("Unable to receive kafka event via router channel: {:?}", e),
                 },
-            recv(idle_resp_out) -> idle_status_response => if let Ok(r) = idle_status_response {
-                unimplemented!()
+            recv(idle_resp_out) -> idle_status_response => if let Ok(IdleStatusResponse(client_id, status)) = idle_status_response {
+                router.forward_by_client_id(client_id, ClientEvents::IdleStatusProvided(status))
             } else {
                 println!("router error reading idle response")
             }}

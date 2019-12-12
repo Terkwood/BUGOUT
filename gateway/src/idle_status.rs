@@ -18,8 +18,8 @@ pub enum IdleStatus {
     Online,
 }
 
-pub struct RequestIdleStatus(ClientId);
-pub struct IdleStatusResponse(ClientId, IdleStatus);
+pub struct RequestIdleStatus(pub ClientId);
+pub struct IdleStatusResponse(pub ClientId, pub IdleStatus);
 
 pub fn start_monitor(
     status_resp_in: Sender<IdleStatusResponse>,
