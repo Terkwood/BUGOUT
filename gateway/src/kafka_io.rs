@@ -18,11 +18,14 @@ pub const APP_NAME: &str = "gateway";
 
 pub fn start(
     events_in: crossbeam::Sender<KafkaEvents>,
+    shutdown_in: crossbeam::Sender<ShutdownEvent>,
     commands_out: crossbeam::Receiver<KafkaCommands>,
 ) {
     thread::spawn(move || start_producer(commands_out));
 
-    thread::spawn(move || start_consumer(&BROKERS, APP_NAME, CONSUME_TOPICS, events_in));
+    thread::spawn(move || {
+        start_consumer(&BROKERS, APP_NAME, CONSUME_TOPICS, events_in, shutdown_in)
+    });
 }
 
 /// Pay attention to the topic keys in the loop 🔄 👀
@@ -89,6 +92,7 @@ fn start_consumer(
     group_id: &str,
     topics: &[&str],
     events_in: crossbeam::Sender<KafkaEvents>,
+    shutdown_in: crossbeam::Sender<ShutdownEvent>,
 ) {
     let consumer: StreamConsumer = ClientConfig::new()
         .set("group.id", group_id)
@@ -175,6 +179,20 @@ fn start_consumer(
                         match deserialized {
                             Err(e) => println!("failed to deserialize wait for opponent {}", e),
                             Ok(c) => flail_on_fail(events_in.send(KafkaEvents::ColorsChosen(c))),
+                        }
+                    }
+                    SHUTDOWN_TOPIC => {
+                        let deserialized: Result<ShutdownEvent, _> = serde_json::from_str(payload);
+
+                        match deserialized {
+                            Err(e) => println!("failed to deserialize shutdown event {}", e),
+                            Ok(s) => {
+                                let send_result =
+                                    shutdown_in.send(ShutdownEvent(std::time::SystemTime::now()));
+                                if let Err(e) = send_result {
+                                    println!("HALP! Failed to send kafka event in crossbeam: {}", e)
+                                }
+                            }
                         }
                     }
                     other => println!("ERROR Couldn't match kafka events topic: {}", other),

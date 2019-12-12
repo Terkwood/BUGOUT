@@ -29,11 +29,12 @@ fn main() {
         Receiver<RouterCommand>,
     ) = unbounded();
 
-    let (_, shutdown_out): (Sender<ShutdownEvent>, Receiver<ShutdownEvent>) = unbounded();
+    let (shutdown_in, shutdown_out): (Sender<ShutdownEvent>, Receiver<ShutdownEvent>) = unbounded();
 
-    kafka_io::start(kafka_events_in, kafka_commands_out);
+    kafka_io::start(kafka_events_in, shutdown_in, kafka_commands_out);
 
-    idle_status::start_monitor(shutdown_out);
+    // TODO
+    //idle_status::start_monitor(shutdown_out);
 
     router::start(router_commands_out, kafka_events_out);
 

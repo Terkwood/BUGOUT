@@ -17,7 +17,8 @@ pub enum KafkaEvents {
     ColorsChosen(ColorsChosenEvent),
 }
 
-pub struct ShutdownEvent(SystemTime);
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ShutdownEvent(pub SystemTime);
 
 impl KafkaEvents {
     pub fn to_client_event(self) -> ClientEvents {
