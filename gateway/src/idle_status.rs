@@ -32,23 +32,26 @@ pub fn start_monitor(
 
         loop {
             select! {
-                recv(kafka_out) -> kafka_event => if let Ok(_) = kafka_event {
-                    unimplemented!()
-                } else {
-                    println!("err in idle recv for kafka")
-                },
-                recv(req_status_out) -> req => if let Ok(RequestIdleStatus(client_id)) = req {
-                    if let Err(e) = status_resp_in.send(IdleStatusResponse(client_id, status)) {
-                    println!("err sending idle status resp", e)
-                }} else {
-                    println!("err on idle recv req status")
-                },
-                recv(shutdown_out) -> msg => if let Ok(_) = msg {
-                    println!(" ..SHUTDOWN EVENT DETECTED.. ");
-                    status = IdleStatus::Idle(Utc::now());
-                } else {
-                    println!("...HALP err on recv shutdown...")
-                }
+                recv(kafka_out) -> kafka_event =>
+                    if let Ok(_) = kafka_event {
+                        unimplemented!()
+                    } else {
+                        println!("err in idle recv for kafka")
+                    },
+                recv(req_status_out) -> req =>
+                    if let Ok(RequestIdleStatus(client_id)) = req {
+                        if let Err(e) = status_resp_in.send(IdleStatusResponse(client_id, status)) {
+                        println!("err sending idle status resp {}", e)
+                    }} else {
+                        println!("err on idle recv req status")
+                    },
+                recv(shutdown_out) -> msg =>
+                    if let Ok(_) = msg {
+                        println!(" ..SHUTDOWN EVENT DETECTED.. ");
+                        status = IdleStatus::Idle(Utc::now());
+                    } else {
+                        println!("...HALP err on recv shutdown...")
+                    }
             }
         }
     });
