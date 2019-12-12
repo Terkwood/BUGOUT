@@ -42,7 +42,7 @@ fn main() {
 
     idle_status::start_monitor(idle_resp_in, shutdown_out, req_idle_out);
 
-    router::start(router_commands_out, kafka_events_out);
+    router::start(router_commands_out, kafka_events_out, idle_resp_out);
 
     ws::listen("0.0.0.0:3012", |ws_out| {
         WsSession::new(
