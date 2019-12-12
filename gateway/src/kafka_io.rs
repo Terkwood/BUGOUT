@@ -9,6 +9,7 @@ use rdkafka::message::Message;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
 use crate::env::BROKERS;
+use crate::idle_status::KafkaActivityObserved;
 use crate::kafka_commands::*;
 use crate::kafka_events::*;
 use crate::model::*;
@@ -19,12 +20,20 @@ pub const APP_NAME: &str = "gateway";
 pub fn start(
     events_in: crossbeam::Sender<KafkaEvents>,
     shutdown_in: crossbeam::Sender<ShutdownEvent>,
+    activity_in: crossbeam::Sender<KafkaActivityObserved>,
     commands_out: crossbeam::Receiver<KafkaCommands>,
 ) {
     thread::spawn(move || start_producer(commands_out));
 
     thread::spawn(move || {
-        start_consumer(&BROKERS, APP_NAME, CONSUME_TOPICS, events_in, shutdown_in)
+        start_consumer(
+            &BROKERS,
+            APP_NAME,
+            CONSUME_TOPICS,
+            events_in,
+            shutdown_in,
+            activity_in,
+        )
     });
 }
 
@@ -93,6 +102,7 @@ fn start_consumer(
     topics: &[&str],
     events_in: crossbeam::Sender<KafkaEvents>,
     shutdown_in: crossbeam::Sender<ShutdownEvent>,
+    activity_in: crossbeam::Sender<KafkaActivityObserved>,
 ) {
     let consumer: StreamConsumer = ClientConfig::new()
         .set("group.id", group_id)
@@ -201,6 +211,10 @@ fn start_consumer(
                     }
                     other => println!("ERROR Couldn't match kafka events topic: {}", other),
                 }
+
+                if topic != SHUTDOWN_TOPIC {
+                    observe(activity_in.clone())
+                }
             }
         }
     }
@@ -210,5 +224,14 @@ fn start_consumer(
 fn flail_on_fail(send_result: std::result::Result<(), crossbeam::SendError<KafkaEvents>>) {
     if let Err(e) = send_result {
         println!("HALP! Failed to send kafka event in crossbeam: {}", e)
+    }
+}
+
+fn observe(activity_in: crossbeam_channel::Sender<KafkaActivityObserved>) {
+    if let Err(e) = activity_in.send(KafkaActivityObserved) {
+        println!(
+            "Error sending kafka activity observation in crossbeam \t{}",
+            e
+        )
     }
 }

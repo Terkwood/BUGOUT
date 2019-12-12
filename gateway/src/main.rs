@@ -4,7 +4,7 @@ use crossbeam_channel::{unbounded, Receiver, Sender};
 
 use gateway::env;
 use gateway::idle_status;
-use gateway::idle_status::{IdleStatusResponse, RequestIdleStatus};
+use gateway::idle_status::{IdleStatusResponse, KafkaActivityObserved, RequestIdleStatus};
 use gateway::kafka_commands::KafkaCommands;
 use gateway::kafka_events::{KafkaEvents, ShutdownEvent};
 use gateway::router::RouterCommand;
@@ -38,14 +38,19 @@ fn main() {
     let (idle_resp_in, idle_resp_out): (Sender<IdleStatusResponse>, Receiver<IdleStatusResponse>) =
         unbounded();
 
-    kafka_io::start(kafka_events_in, shutdown_in, kafka_commands_out);
+    let (kafka_activity_in, kafka_activity_out): (
+        Sender<KafkaActivityObserved>,
+        Receiver<KafkaActivityObserved>,
+    ) = unbounded();
 
-    idle_status::start_monitor(
-        idle_resp_in,
-        shutdown_out,
-        req_idle_out,
-        kafka_events_out.clone(),
+    kafka_io::start(
+        kafka_events_in,
+        shutdown_in,
+        kafka_activity_in,
+        kafka_commands_out,
     );
+
+    idle_status::start_monitor(idle_resp_in, shutdown_out, req_idle_out, kafka_activity_out);
 
     router::start(router_commands_out, kafka_events_out, idle_resp_out);
 

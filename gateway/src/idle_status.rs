@@ -21,11 +21,13 @@ pub enum IdleStatus {
 pub struct RequestIdleStatus(pub ClientId);
 pub struct IdleStatusResponse(pub ClientId, pub IdleStatus);
 
+pub struct KafkaActivityObserved;
+
 pub fn start_monitor(
     status_resp_in: Sender<IdleStatusResponse>,
     shutdown_out: Receiver<ShutdownEvent>,
     req_status_out: Receiver<RequestIdleStatus>,
-    kafka_out: Receiver<KafkaEvents>,
+    kafka_out: Receiver<KafkaActivityObserved>,
 ) {
     thread::spawn(move || {
         let mut status = IdleStatus::Idle(Utc::now());
@@ -36,7 +38,10 @@ pub fn start_monitor(
                     if let Ok(_) = kafka_event {
                         match status {
                             IdleStatus::Online => (),
-                            _ => status = IdleStatus::Online,
+                            _ => {
+                                println!("Updating idle status to ONLINE");
+                                status = IdleStatus::Online
+                            },
                         }
                     } else {
                         println!("err in idle recv for kafka")
