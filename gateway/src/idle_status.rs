@@ -30,15 +30,4 @@ pub fn start_monitor(shutdown_out: crossbeam::Receiver<ShutdownEvent>) {
             }
         }
     });
-    /*loop {select! {
-            recv(shutdown_out) -> event =>
-                match event {
-                    Ok(_) => {
-                        println!(" ..SHUTDOWN EVENT DETECTED.. ");
-                        unimplemented!()
-                    },
-                    Err(e) => (),
-                }
-            }
-    }*/
 }
