@@ -34,7 +34,10 @@ pub fn start_monitor(
             select! {
                 recv(kafka_out) -> kafka_event =>
                     if let Ok(_) = kafka_event {
-                        unimplemented!()
+                        match status {
+                            IdleStatus::Online => (),
+                            _ => status = IdleStatus::Online,
+                        }
                     } else {
                         println!("err in idle recv for kafka")
                     },
