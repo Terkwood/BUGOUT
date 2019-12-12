@@ -14,31 +14,32 @@ pub enum KafkaEvents {
     GameReady(GameReadyKafkaEvent),
     PrivateGameRejected(PrivateGameRejectedKafkaEvent),
     WaitForOpponent(WaitForOpponentKafkaEvent),
-    ColorsChosen(ColorsChosenEvent),
-    Shutdown(SystemTime),
+    ColorsChosen(ColorsChosenEvent)
 }
 
+pub struct KafkaShutdownEvent(SystemTime);
+
 impl KafkaEvents {
-    pub fn to_client_event(self) -> Option<ClientEvents> {
+    pub fn to_client_event(self) -> ClientEvents {
         match self {
-            KafkaEvents::MoveMade(m) => Some(ClientEvents::MoveMade(m)),
-            KafkaEvents::MoveRejected(m) => Some(ClientEvents::MoveRejected(m)),
-            KafkaEvents::HistoryProvided(h) => Some(ClientEvents::HistoryProvided(h)),
+            KafkaEvents::MoveMade(m) => ClientEvents::MoveMade(m),
+            KafkaEvents::MoveRejected(m) => ClientEvents::MoveRejected(m),
+            KafkaEvents::HistoryProvided(h) => ClientEvents::HistoryProvided(h),
             // Dummy impl, don't trust it
-            KafkaEvents::ColorsChosen(c) => Some(ClientEvents::YourColor(YourColorEvent {
+            KafkaEvents::ColorsChosen(c) => ClientEvents::YourColor(YourColorEvent {
                 game_id: c.game_id,
                 your_color: Player::BLACK,
-            })),
-            KafkaEvents::GameReady(g) => Some(ClientEvents::GameReady(GameReadyClientEvent {
+            }),
+            KafkaEvents::GameReady(g) => ClientEvents::GameReady(GameReadyClientEvent {
                 game_id: g.game_id,
                 event_id: g.event_id,
-            })),
-            KafkaEvents::PrivateGameRejected(p) => Some(ClientEvents::PrivateGameRejected(
+            }),
+            KafkaEvents::PrivateGameRejected(p) => ClientEvents::PrivateGameRejected(
                 PrivateGameRejectedClientEvent {
                     game_id: CompactId::encode(p.game_id),
                     event_id: p.event_id,
                 },
-            )),
+            ),
 
             KafkaEvents::WaitForOpponent(WaitForOpponentKafkaEvent {
                 game_id,
@@ -50,14 +51,13 @@ impl KafkaEvents {
                     Visibility::Public => None,
                     Visibility::Private => Some(Link::new(game_id)),
                 };
-                Some(ClientEvents::WaitForOpponent(WaitForOpponentClientEvent {
+                ClientEvents::WaitForOpponent(WaitForOpponentClientEvent {
                     game_id,
                     event_id,
                     visibility,
                     link,
-                }))
+                })
             }
-            KafkaEvents::Shutdown(_) => None,
         }
     }
 
@@ -70,7 +70,6 @@ impl KafkaEvents {
             KafkaEvents::PrivateGameRejected(e) => Some(e.game_id),
             KafkaEvents::WaitForOpponent(e) => Some(e.game_id),
             KafkaEvents::ColorsChosen(e) => Some(e.game_id),
-            KafkaEvents::Shutdown(_) => None,
         }
     }
 }

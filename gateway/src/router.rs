@@ -34,8 +34,8 @@ impl Router {
         }
     }
 
-    pub fn forward_by_client_id(&self, client_id: ClientId, oev: Option<ClientEvents>) {
-        if let Some(ev) = oev {
+    pub fn forward_by_client_id(&self, client_id: ClientId, ev: ClientEvents) {
+  
             if let Some(events_in) = self.clients.get(&client_id) {
                 if let Err(e) = events_in.send(ev.clone()) {
                     println!(
@@ -49,11 +49,11 @@ impl Router {
             } else {
                 println!("Could not forward to client ID, perhaps it was already cleaned up ?")
             }
-        }
+        
     }
 
-    pub fn forward_by_game_id(&self, oev: Option<ClientEvents>) {
-        if let Some(ev) = oev {
+    pub fn forward_by_game_id(&self, ev: ClientEvents) {
+       
             if let Some(gid) = &ev.game_id() {
                 if let Some(GameClients {
                     clients,
@@ -74,7 +74,7 @@ impl Router {
                     }
                 }
             }
-        }
+        
     }
 
     pub fn playerup(&self, game_id: GameId) -> Player {
@@ -268,8 +268,8 @@ pub fn start(
                             // We want to forward by client ID
                             // so that we don't send TWO yourcolor events
                             // to each client
-                            router.forward_by_client_id(black,Some(ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK})));
-                            router.forward_by_client_id(white, Some(ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE})));
+                            router.forward_by_client_id(black,ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
+                            router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
                         },
                         Ok(e) => {
                             if let Some(g) = e.game_id() {
