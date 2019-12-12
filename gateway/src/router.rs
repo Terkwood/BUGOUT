@@ -185,7 +185,7 @@ impl Router {
                 self.last_cleanup = Instant::now();
                 if count > 0 {
                     println!(
-                        "🗑 {} {} {:<8} {:<4} entries",
+                        "🗑 {} {}  {:<8} {:<4} entries",
                         EMPTY_SHORT_UUID, EMPTY_SHORT_UUID, "CLEANUP", count
                     )
                 }
