@@ -21,7 +21,16 @@ pub fn start_monitor(shutdown_out: crossbeam::Receiver<ShutdownEvent>) {
         // Please Watch For shutdown event
 
         loop {
-            select! {
+            let msg = shutdown_out.recv();
+            if let Ok(_) = msg {
+                println!(" ..SHUTDOWN EVENT DETECTED.. ");
+                unimplemented!()
+            } else {
+                println!("...HALP...")
+            }
+        }
+    });
+    /*loop {select! {
             recv(shutdown_out) -> event =>
                 match event {
                     Ok(_) => {
@@ -31,6 +40,5 @@ pub fn start_monitor(shutdown_out: crossbeam::Receiver<ShutdownEvent>) {
                     Err(e) => (),
                 }
             }
-        }
-    });
+    }*/
 }

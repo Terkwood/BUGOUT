@@ -328,7 +328,7 @@ impl Handler for WsSession {
                 Ok(self.observe_game())
             }
             Ok(ClientCommands::ChooseColorPref(ChooseColorPrefClientCommand { color_pref })) => {
-                println!("🗳 {} CHSCLRPF", session_code(self));
+                println!("🗳  {} CHSCLRPF", session_code(self));
 
                 self.kafka_commands_in
                     .send(KafkaCommands::ChooseColorPref(
@@ -443,7 +443,7 @@ impl Handler for WsSession {
                                 game_id: _,
                                 your_color,
                             }) if your_color == Player::WHITE => {
-                                println!("🏳 {} {:<8} White", session_code(self), "YOURCOLR")
+                                println!("🏳  {} {:<8} White", session_code(self), "YOURCOLR")
                             }
                             _ => (),
                         }
