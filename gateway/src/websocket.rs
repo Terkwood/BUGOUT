@@ -399,17 +399,22 @@ impl Handler for WsSession {
                 self.ping_timeout.take();
                 self.ws_out.timeout(PING_TIMEOUT_MS, PING)
             }
-            // EXPIRE timeout has occured, this means that the connection is inactive, let's close
             EXPIRE => {
                 if let Some(dur) = self.expire_after.checked_duration_since(Instant::now()) {
+                    // EXPIRE timeout has occured.
+                    // this means that the connection is inactive
+                    // so we close it
                     if dur.as_millis() >= EXPIRE_TIMEOUT_MS.into() {
-                        println!("⌛️ {} {:<8} connection", session_code(self), "EXPIRE");
+                        println!(
+                            "⌛️ {} {:<8} Closing connection",
+                            session_code(self),
+                            "EXPIRE"
+                        );
                         self.notify_router_close();
                         return self.ws_out.close(CloseCode::Away);
                     }
                 }
 
-                println!("🤐 {} {:<8} expire timeout", session_code(self), "IGNORED");
                 Ok(())
             }
             CHANNEL_RECV => {
