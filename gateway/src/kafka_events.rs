@@ -64,13 +64,13 @@ impl KafkaEvents {
 
     pub fn game_id(&self) -> GameId {
         match self {
-            KafkaEvents::MoveMade(e) => (e.game_id),
-            KafkaEvents::MoveRejected(e) => (e.game_id),
-            KafkaEvents::HistoryProvided(e) => (e.game_id),
-            KafkaEvents::GameReady(e) => (e.game_id),
-            KafkaEvents::PrivateGameRejected(e) => (e.game_id),
-            KafkaEvents::WaitForOpponent(e) => (e.game_id),
-            KafkaEvents::ColorsChosen(e) => (e.game_id),
+            KafkaEvents::MoveMade(e) => e.game_id,
+            KafkaEvents::MoveRejected(e) => e.game_id,
+            KafkaEvents::HistoryProvided(e) => e.game_id,
+            KafkaEvents::GameReady(e) => e.game_id,
+            KafkaEvents::PrivateGameRejected(e) => e.game_id,
+            KafkaEvents::WaitForOpponent(e) => e.game_id,
+            KafkaEvents::ColorsChosen(e) => e.game_id,
         }
     }
 }
