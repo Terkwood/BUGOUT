@@ -29,7 +29,7 @@ impl ClientEvents {
             ClientEvents::GameReady(e) => Some(e.game_id),
             ClientEvents::WaitForOpponent(w) => Some(w.game_id),
             ClientEvents::YourColor(y) => Some(y.game_id),
-            _ => None, // TODO priv game rejected
+            _ => None, // priv game rejected, see https://github.com/Terkwood/BUGOUT/issues/90
         }
     }
 }
