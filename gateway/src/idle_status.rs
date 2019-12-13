@@ -12,9 +12,10 @@ use std::thread;
 /// - Booting (since when)
 /// - Awake (you may proceed to have fun)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
+#[serde(tag = "status")] // Avoid conflict with ClientEvents tag
 pub enum IdleStatus {
-    Idle(DateTime<Utc>),
-    Booting(DateTime<Utc>),
+    Idle { since: DateTime<Utc> },
+    Booting { since: DateTime<Utc> },
     Online,
 }
 
@@ -30,7 +31,7 @@ pub fn start_monitor(
     kafka_out: Receiver<KafkaActivityObserved>,
 ) {
     thread::spawn(move || {
-        let mut status = IdleStatus::Idle(Utc::now());
+        let mut status = IdleStatus::Idle { since: Utc::now() };
 
         loop {
             select! {
@@ -56,7 +57,7 @@ pub fn start_monitor(
                 recv(shutdown_out) -> msg =>
                     if let Ok(_) = msg {
                         println!(" ..SHUTDOWN EVENT DETECTED.. ");
-                        status = IdleStatus::Idle(Utc::now());
+                        status = IdleStatus::Idle { since: Utc::now() };
                     } else {
                         println!("...HALP err on recv shutdown...")
                     }
