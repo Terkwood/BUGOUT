@@ -303,8 +303,10 @@ impl GameClients {
     }
 
     pub fn add_client(&mut self, client: ClientSender) {
+        let client_id = client.client_id;
         self.clients.push(client);
-        self.modified_at = Instant::now()
+        self.modified_at = Instant::now();
+        println!("Added client {}", short_uuid(client_id))
     }
 
     /// Observe that this game still has an open connection somewhere
