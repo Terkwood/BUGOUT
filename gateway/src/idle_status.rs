@@ -40,7 +40,6 @@ pub fn start_monitor(
                         match status {
                             IdleStatus::Online => (),
                             _ => {
-                                println!("Updating idle status to ONLINE");
                                 status = IdleStatus::Online
                             },
                         }
@@ -56,7 +55,7 @@ pub fn start_monitor(
                     },
                 recv(shutdown_out) -> msg =>
                     if let Ok(_) = msg {
-                        println!(" ..SHUTDOWN EVENT DETECTED.. ");
+                        println!("☠️ SHUTDOWN");
                         status = IdleStatus::Idle { since: Utc::now() };
                     } else {
                         println!("...HALP err on recv shutdown...")

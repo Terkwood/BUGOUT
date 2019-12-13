@@ -324,7 +324,7 @@ impl Handler for WsSession {
                     .map_err(|e| ws::Error::from(Box::new(e)))
             }
             Ok(ClientCommands::ProvideIdleStatus) => {
-                println!("🏕 {} PROVIDLE", session_code(self));
+                println!("🏕 {}  PROVIDLE", session_code(self));
 
                 // Request the idle status
                 self.req_idle_status_in
