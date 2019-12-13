@@ -13,6 +13,8 @@ pub const WAIT_FOR_OPPONENT_TOPIC: &str = "bugout-wait-for-opponent-ev";
 pub const COLORS_CHOSEN_TOPIC: &str = "bugout-colors-chosen-ev";
 pub const CLIENT_HEARTBEAT_TOPIC: &str = "bugout-client-heartbeat-ev";
 
+pub const SHUTDOWN_TOPIC: &str = "bugout-shutdown-ev";
+
 pub const CONSUME_TOPICS: &[&str] = &[
     MOVE_MADE_TOPIC,
     HISTORY_PROVIDED_TOPIC,
@@ -20,4 +22,6 @@ pub const CONSUME_TOPICS: &[&str] = &[
     GAME_READY_TOPIC,
     WAIT_FOR_OPPONENT_TOPIC,
     COLORS_CHOSEN_TOPIC,
+    SHUTDOWN_TOPIC,
+    CLIENT_HEARTBEAT_TOPIC, // Helps track idle status
 ];

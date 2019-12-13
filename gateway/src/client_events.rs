@@ -2,6 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::compact_ids::CompactId;
 use crate::env::*;
+use crate::idle_status::IdleStatus;
 use crate::model::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -15,6 +16,7 @@ pub enum ClientEvents {
     PrivateGameRejected(PrivateGameRejectedClientEvent),
     WaitForOpponent(WaitForOpponentClientEvent),
     YourColor(YourColorEvent),
+    IdleStatusProvided(IdleStatus),
 }
 
 impl ClientEvents {
@@ -27,7 +29,7 @@ impl ClientEvents {
             ClientEvents::GameReady(e) => Some(e.game_id),
             ClientEvents::WaitForOpponent(w) => Some(w.game_id),
             ClientEvents::YourColor(y) => Some(y.game_id),
-            _ => None, // TODO priv game rejected
+            _ => None, // priv game rejected, see https://github.com/Terkwood/BUGOUT/issues/90
         }
     }
 }

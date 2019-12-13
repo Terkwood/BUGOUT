@@ -34,6 +34,7 @@ pub enum ClientCommands {
     FindPublicGame,
     CreatePrivateGame,
     ChooseColorPref(ChooseColorPrefClientCommand),
+    ProvideIdleStatus,
 }
 
 #[cfg(test)]
