@@ -209,6 +209,7 @@ fn start_consumer(
                             }
                         }
                     }
+                    CLIENT_HEARTBEAT_TOPIC => println!("We heard a client heartbeat"),
                     other => println!("ERROR Couldn't match kafka events topic: {}", other),
                 }
 

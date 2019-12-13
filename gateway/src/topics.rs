@@ -23,4 +23,6 @@ pub const CONSUME_TOPICS: &[&str] = &[
     WAIT_FOR_OPPONENT_TOPIC,
     COLORS_CHOSEN_TOPIC,
     SHUTDOWN_TOPIC,
+    // TODO does BEEP get tracked on the topic below?
+    CLIENT_HEARTBEAT_TOPIC, // Helps track idle status
 ];
