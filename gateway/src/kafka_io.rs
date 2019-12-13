@@ -203,8 +203,6 @@ fn start_consumer(
 
                                 if let Err(e) = send_result {
                                     println!("HALP! Failed to send kafka event in crossbeam: {}", e)
-                                } else {
-                                    println!("sent kafka shutdown msg to crossbeam channel");
                                 }
                             }
                         }
