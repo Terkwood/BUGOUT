@@ -34,6 +34,12 @@ services:
       - "kafka"
     environment:
       - BROKERS
+  bugle:
+    build: bugle/.
+    links:
+      - redis
+    depends_on:
+      - redis
   judge:
     build: judge/.
     links:
