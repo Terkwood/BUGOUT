@@ -53,24 +53,8 @@ WantedBy=multi-user.target
 
 ## Configuring Redis in CoreOS
 
-### Transparent Huge Pages
+Redis requires three tweaks to kernel config in CoreOS: Transparent Huge Pages disabled, overcommmit_memory enabled, and the TCP backlog raised.
 
-Redis requires Transparent Huge Pages to be disabled in
-the kernel, via
-
-```sh
-echo never > /sys/kernel/mm/transparent_hugepage/enabled
-```
-
-Under CoreOS, this is managed with a [systemd
-script](disable-thp.service), which calls out to a
-small [shell script that disables THP](disable-thp.sh).
-
-### overcommit_memory kernel module
-
-Redis asks for the kernel module `overcommit_memory` to
-be enabled.  To accomplish this, write a file `/etc/sysctl.d/overcommit_memory.conf`:
-
-```text
-vm.overcommit_memory = 1
-```
+These configs are managed with a [systemd
+script](config-redis.service), which calls out to a
+small [shell script](config-redis.sh).
