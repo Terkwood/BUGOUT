@@ -1,3 +1,7 @@
+# This file is for local development only.
+# To see the cloud configs, look at dc-giant.yml
+# and dc-tiny.yml
+
 version: '2'
 services:
   zookeeper:

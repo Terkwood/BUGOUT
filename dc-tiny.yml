@@ -1,3 +1,6 @@
+# docker-compose for a micro instance which
+# handles 24/7 traffic
+
 version: '2'
 services:
   redis:
