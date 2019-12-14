@@ -1,3 +1,4 @@
+extern crate chrono;
 extern crate r2d2_redis;
 extern crate redis;
 extern crate rusoto_ec2;
