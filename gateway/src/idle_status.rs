@@ -49,8 +49,17 @@ pub fn start_monitor(
                 recv(req_status_out) -> req =>
                     if let Ok(RequestIdleStatus(client_id)) = req {
                         if let Err(e) = status_resp_in.send(IdleStatusResponse(client_id, status)) {
-                        println!("err sending idle status resp {}", e)
-                    }} else {
+                            println!("err sending idle status resp {}", e)
+                        }
+
+                        match status {
+                            IdleStatus::Idle{since: _} => {
+                                // TODO
+                                println!("!! REDIS PUB HERE !!")
+                            },
+                            _ => (),
+                        }
+                } else {
                         println!("err on idle recv req status")
                     },
                 recv(shutdown_out) -> msg =>
