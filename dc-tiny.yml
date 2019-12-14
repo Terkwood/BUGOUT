@@ -1,5 +1,11 @@
 version: '2'
 services:
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - /mnt/stateful_partition/BUGOUT/redis:/data
   gateway:
     build: gateway/.
     ports:
@@ -11,9 +17,9 @@ services:
   bugle:
     build: bugle/.
     links:
-      - "redis"
+      - redis
     depends_on:
-      - "redis"
+      - redis
   reverse-proxy:
     image: abiosoft/caddy
     ports:
@@ -22,12 +28,5 @@ services:
     volumes:
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy
-<<<<<<< HEAD
-  redis:
-    image: redis
-    ports:
-      - "6379:6379"
-=======
   kafkacat:
     build: kafkacat/.
->>>>>>> unstable

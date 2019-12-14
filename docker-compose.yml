@@ -16,6 +16,12 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - /mnt/stateful_partition/BUGOUT/redis:/data
   gateway:
     build: gateway/.
     ports:
