@@ -23,9 +23,10 @@ services:
   redis:
     image: redis
     ports:
-      - "6379:6379"
-    volumes: # TODO command
+      - "6379"
+    volumes:
       - /mnt/stateful_partition/BUGOUT/redis:/data
+    command: /bin/bash -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled && echo 65535 > /proc/sys/net/core/somaxconn ; redis-server'
   gateway:
     build: gateway/.
     ports:
