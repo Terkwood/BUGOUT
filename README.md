@@ -16,6 +16,17 @@
 
 Judge emits move data to `bugout-move-accepted-ev`, which is an input to changelog.  Changelog emits moves to `bugout-move-made-ev` after recording them.  Gateway listens to `bugout-move-made-ev`.
 
+### Kafka streams topologies
+
+This is an example of the data flow used to judge individual moves:
+
+![Kafka streams topo for judge](judge/topology.jpg)
+
+You can view topologies for the various services:
+
+- [color-chooser](color-chooser/topology.jpg)
+- [game-lobby](game-lobby/topo.jpg)
+- [history-provider](history-provider/topo.jpg)
 
 ## Resources
 
