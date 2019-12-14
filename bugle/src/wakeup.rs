@@ -9,17 +9,14 @@ use std::str::FromStr;
 use rusoto_core::Region;
 use rusoto_ec2::{DescribeInstancesRequest, Ec2, Ec2Client, StartInstancesRequest, Tag};
 
-const EC2_TAG_KEY: &str = "Name";
-
 type RedisPool = r2d2_redis::r2d2::Pool<r2d2_redis::RedisConnectionManager>;
 
+const EC2_TAG_KEY: &str = "Name";
 const REDIS_LAST_STARTUP_KEY: &str = "bugle/last_wakeup_timestamp";
 
 fn get_last_wakeup_timestamp(pool: &RedisPool) -> Option<DateTime<Utc>> {
     let mut conn = pool.get().unwrap();
     if let Ok(epoch) = conn.get(REDIS_LAST_STARTUP_KEY) {
-        println!("Got val {}", epoch);
-
         Some(Utc.timestamp(epoch, 0))
     } else {
         None
