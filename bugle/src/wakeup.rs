@@ -15,7 +15,7 @@ type RedisPool = r2d2_redis::r2d2::Pool<r2d2_redis::RedisConnectionManager>;
 
 const DELAY_SECS: u32 = 60;
 
-const REDIS_LAST_STARTUP_KEY: &str = "bugle/last_startup";
+const REDIS_LAST_STARTUP_KEY: &str = "bugle/last_wakeup_timestamp";
 
 fn get_last_wakeup_timestamp(pool: &RedisPool) -> Option<DateTime<Utc>> {
     let mut conn = pool.get().unwrap();
