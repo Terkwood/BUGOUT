@@ -1,3 +1,4 @@
+use crate::ec2_startup::StartupManager;
 use crate::WakeUpEvent;
 
 use r2d2_redis::{r2d2, RedisConnectionManager};
@@ -16,12 +17,15 @@ pub fn start() {
 
     println!("Subscribed to redis channel: {}", TOPIC);
 
+    let mut startup_manager = StartupManager::default();
+
     loop {
         if let Ok(msg) = sub.get_message() {
             let payload = msg.get_payload().unwrap_or("".to_string());
             let event: Result<WakeUpEvent, _> = serde_json::from_str(&payload);
             if let Ok(e) = event {
                 println!("{:?}", e);
+                startup_manager.wake_up()
             }
         }
     }
