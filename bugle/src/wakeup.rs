@@ -17,7 +17,7 @@ const DELAY_SECS: u32 = 60;
 
 const REDIS_LAST_STARTUP_KEY: &str = "bugle/last_startup";
 
-fn get_last_startup(pool: &RedisPool) -> Option<DateTime<Utc>> {
+fn get_last_wakeup_timestamp(pool: &RedisPool) -> Option<DateTime<Utc>> {
     let mut conn = pool.get().unwrap();
     if let Ok(epoch) = conn.get(REDIS_LAST_STARTUP_KEY) {
         println!("Got val {}", epoch);
@@ -30,7 +30,7 @@ fn get_last_startup(pool: &RedisPool) -> Option<DateTime<Utc>> {
 
 fn go(pool: &RedisPool) {
     ec2_init_instance();
-    if let Err(e) = set_last_startup(pool) {
+    if let Err(e) = set_last_wakeup_timestamp(pool) {
         println!("err {}", e)
     }
 }
@@ -54,14 +54,15 @@ fn ec2_init_instance() {
         println!("Starting instance {}...", id.to_string())
     }
 }
-fn set_last_startup(pool: &RedisPool) -> Result<(), redis::RedisError> {
+
+fn set_last_wakeup_timestamp(pool: &RedisPool) -> Result<(), redis::RedisError> {
     let mut conn = pool.get().unwrap();
     let ts = Utc::now().timestamp();
     conn.set(REDIS_LAST_STARTUP_KEY, ts)
 }
 
-pub fn startup(pool: &RedisPool) {
-    match get_last_startup(&pool) {
+pub fn wakeup(pool: &RedisPool) {
+    match get_last_wakeup_timestamp(&pool) {
         None => go(pool),
         Some(t) if Utc::now().timestamp() - t.timestamp() > DELAY_SECS as i64 => go(pool),
         Some(_) => println!("pass"),

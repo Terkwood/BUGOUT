@@ -10,9 +10,9 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate uuid;
 
-pub mod ec2_startup;
 pub mod env;
 pub mod subscriber;
+pub mod wakeup;
 
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;

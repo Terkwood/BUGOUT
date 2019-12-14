@@ -1,4 +1,4 @@
-use crate::ec2_startup::startup;
+use crate::wakeup::wakeup;
 use crate::WakeUpEvent;
 
 use r2d2_redis::{r2d2, RedisConnectionManager};
@@ -23,7 +23,7 @@ pub fn start() {
             let event: Result<WakeUpEvent, _> = serde_json::from_str(&payload);
             if let Ok(e) = event {
                 println!("{:?}", e);
-                startup(&pool)
+                wakeup(&pool)
             }
         }
     }
