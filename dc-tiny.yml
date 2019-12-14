@@ -26,7 +26,7 @@ services:
     depends_on:
       - redis
     volumes:
-      - "./bugle/.env:/var/BUGOUT/bugle/.env"
+      - ${PWD}/bugle/.env:/var/BUGOUT/bugle/.env
     environment:
       - DELAY_SECS
       - AWS_REGION
