@@ -1,3 +1,4 @@
+extern crate r2d2_redis;
 extern crate redis;
 
 pub mod subscriber;
