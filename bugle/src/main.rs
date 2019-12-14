@@ -1,5 +1,7 @@
 extern crate bugle;
 
+use bugle::subscriber;
+
 const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
