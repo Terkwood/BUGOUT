@@ -4,6 +4,10 @@ services:
     build: gateway/.
     ports:
       - "3012:3012"
+    volumes:
+      - ${PWD}/gateway/.env:/var/BUGOUT/gateway/.env
+    environment:
+      - BROKERS
   bugle:
     build: bugle/.
     links:
@@ -18,7 +22,12 @@ services:
     volumes:
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy
+<<<<<<< HEAD
   redis:
     image: redis
     ports:
       - "6379:6379"
+=======
+  kafkacat:
+    build: kafkacat/.
+>>>>>>> unstable

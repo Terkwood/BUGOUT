@@ -20,10 +20,14 @@ services:
     build: gateway/.
     ports:
       - "3012:3012"
+    volumes:
+      - ${PWD}/gateway/.env:/var/BUGOUT/gateway/.env
     links:
       - "kafka"
     depends_on:
       - "kafka"
+    environment:
+      - BROKERS
   judge:
     build: judge/.
     links:
@@ -76,6 +80,12 @@ services:
       - "kafka"
     volumes:
       - "./reaper/.env:/var/BUGOUT/reaper/.env"
+    environment:
+      - ALLOWED_IDLE_SECS
+      - AWS_REGION
+      - DISABLED
+      - STARTUP_GRACE_SECS
+      - TAG_NAME
   kafkacat:
     build: kafkacat/.
     links:

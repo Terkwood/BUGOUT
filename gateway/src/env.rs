@@ -9,6 +9,7 @@ pub fn init() {
 struct Env {
     hash_salt: Option<String>,
     link_to: Option<String>,
+    brokers: Option<String>,
 }
 
 lazy_static! {
@@ -20,6 +21,7 @@ lazy_static! {
 
 const DEFAULT_HASH_SALT: &str = "BUGOUT";
 const DEFAULT_LINK_TO: &str = "http://localhost:8000";
+const DEFAULT_BROKERS: &str = "kafka:9092";
 lazy_static! {
     pub static ref HASH_SALT: String = ENV
         .as_ref()
@@ -30,5 +32,10 @@ lazy_static! {
         .as_ref()
         .and_then(|env| env.link_to.as_ref())
         .unwrap_or(&DEFAULT_LINK_TO.to_string())
+        .to_string();
+    pub static ref BROKERS: String = ENV
+        .as_ref()
+        .and_then(|env| env.brokers.as_ref())
+        .unwrap_or(&DEFAULT_BROKERS.to_string())
         .to_string();
 }

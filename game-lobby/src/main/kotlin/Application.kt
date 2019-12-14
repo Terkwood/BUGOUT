@@ -1,3 +1,5 @@
+import org.apache.kafka.clients.KafkaClient
+import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.*
@@ -7,10 +9,15 @@ import serdes.AllOpenGamesDeserializer
 import serdes.AllOpenGamesSerializer
 import serdes.jsonMapper
 import java.util.*
+import org.apache.kafka.streams.errors.InvalidStateStoreException
+import org.apache.kafka.streams.state.QueryableStoreTypes
+
+
+const val BROKERS = "kafka:9092"
 
 fun main() {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
-    Application("kafka:9092").process()
+    Application(BROKERS).process()
 }
 
 class Application(private val brokers: String) {
@@ -25,9 +32,11 @@ class Application(private val brokers: String) {
         props[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = "exactly_once"
 
         val streams = KafkaStreams(topology, props)
+
+        waitForTopics(Topics.all, props)
+
         streams.start()
     }
-
 
     fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
@@ -153,7 +162,7 @@ class Application(private val brokers: String) {
                                 g.gameId == jpg.gameId
                     }
 
-                println("Popping public game  ${someGame.gameId.short()}")
+                println("Popping private game  ${someGame.gameId.short()}")
 
                 KeyValue(
                     jpg.clientId,
@@ -494,6 +503,26 @@ class Application(private val brokers: String) {
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
 
+    }
+
+    private fun waitForTopics(topics: Array<String>, props: java.util
+    .Properties) {
+        print("Waiting for topics ")
+        val client = AdminClient.create(props)
+
+        var topicsReady = false
+        while(!topicsReady) {
+            val found = client.listTopics().names().get()
+
+            val diff = topics.subtract(found.filterNotNull())
+
+            topicsReady = diff.isEmpty()
+
+            if (!topicsReady) Thread.sleep(333)
+            print(".")
+        }
+
+        println(" done!")
     }
 }
 

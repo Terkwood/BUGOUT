@@ -15,7 +15,7 @@ RUN chmod 755 wait-for-it.sh
 RUN git fetch && git pull
 RUN git rev-parse HEAD
 
-RUN rustup default nightly   
+RUN rustup default stable   
 
 # make sure we have the most recent of everything,
 # not just what's on the git branch
@@ -24,4 +24,3 @@ COPY . /var/BUGOUT/reaper/.
 RUN cargo install --path .
 
 CMD ["sh", "run.sh"]
-

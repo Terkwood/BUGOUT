@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use serde_derive::{Deserialize, Serialize};
 
 use crate::client_events::*;
@@ -14,6 +16,9 @@ pub enum KafkaEvents {
     WaitForOpponent(WaitForOpponentKafkaEvent),
     ColorsChosen(ColorsChosenEvent),
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ShutdownEvent(pub SystemTime);
 
 impl KafkaEvents {
     pub fn to_client_event(self) -> ClientEvents {
@@ -36,6 +41,7 @@ impl KafkaEvents {
                     event_id: p.event_id,
                 })
             }
+
             KafkaEvents::WaitForOpponent(WaitForOpponentKafkaEvent {
                 game_id,
                 client_id: _,

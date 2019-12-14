@@ -1,3 +1,4 @@
+extern crate chrono;
 extern crate crossbeam;
 extern crate crossbeam_channel;
 extern crate dotenv;
@@ -13,15 +14,17 @@ extern crate serde_json;
 extern crate time;
 extern crate ws;
 
-mod client_commands;
-mod client_events;
 pub mod compact_ids;
 pub mod env;
+pub mod idle_status;
 pub mod kafka_commands;
 pub mod kafka_events;
 pub mod kafka_io;
+pub mod router;
+pub mod websocket;
+
+mod client_commands;
+mod client_events;
 mod logging;
 mod model;
-pub mod router;
 mod topics;
-pub mod websocket;

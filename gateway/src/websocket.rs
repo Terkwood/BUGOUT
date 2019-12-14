@@ -11,6 +11,7 @@ use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode
 
 use crate::client_commands::*;
 use crate::client_events::*;
+use crate::idle_status::RequestIdleStatus;
 use crate::kafka_commands::*;
 use crate::logging::*;
 use crate::model::*;
@@ -34,6 +35,7 @@ pub struct WsSession {
     pub kafka_commands_in: crossbeam_channel::Sender<KafkaCommands>,
     pub events_out: Option<crossbeam_channel::Receiver<ClientEvents>>,
     pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
+    pub req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
     pub current_game: Option<GameId>,
     pub expire_after: std::time::Instant,
 }
@@ -44,6 +46,7 @@ impl WsSession {
         ws_out: ws::Sender,
         kafka_commands_in: crossbeam_channel::Sender<KafkaCommands>,
         router_commands_in: crossbeam_channel::Sender<RouterCommand>,
+        req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
     ) -> WsSession {
         WsSession {
             client_id,
@@ -54,6 +57,7 @@ impl WsSession {
             kafka_commands_in,
             events_out: None,
             router_commands_in,
+            req_idle_status_in,
             current_game: None,
             expire_after: next_expiry(),
         }
@@ -102,6 +106,25 @@ impl WsSession {
 impl Handler for WsSession {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
         println!("🎫 {} OPEN", session_code(self));
+
+        // Router needs to know about this client immediately
+        // so that it can handle PROVIDLE, FINDPUBG, JOINPRIV
+        let (events_in, events_out) = client_event_channels();
+
+        if let Err(e) = self.router_commands_in.send(RouterCommand::AddClient {
+            client_id: self.client_id,
+            events_in,
+        }) {
+            println!(
+                "😠 {} {:<8} sending router command to add client {}",
+                session_code(self),
+                "ERROR",
+                e
+            )
+        }
+
+        // Track the out-channel so we can select! on it
+        self.events_out = Some(events_out);
 
         // schedule a timeout to send a ping every 5 seconds
         self.ws_out.timeout(PING_TIMEOUT_MS, PING)?;
@@ -221,25 +244,6 @@ impl Handler for WsSession {
                             e
                         )
                     }
-
-                    let (events_in, events_out) = client_event_channels();
-
-                    // ..and let the router know we're interested in it,
-                    // so that we can receive updates
-                    if let Err(e) = self.router_commands_in.send(RouterCommand::AddClient {
-                        client_id: self.client_id,
-                        events_in,
-                    }) {
-                        println!(
-                            "😠 {} {:<8} sending router command to add client {}",
-                            session_code(self),
-                            "ERROR",
-                            e
-                        )
-                    }
-
-                    //.. and track the out-channel so we can select! on it
-                    self.events_out = Some(events_out);
                 }
                 Ok(self.observe_game())
             }
@@ -301,25 +305,6 @@ impl Handler for WsSession {
                         {
                             println!("ERROR on kafka send join private game {:?}", e)
                         }
-
-                        let (events_in, events_out) = client_event_channels();
-
-                        // ..and let the router know we're interested in it,
-                        // so that we can receive updates
-                        if let Err(e) = self.router_commands_in.send(RouterCommand::AddClient {
-                            client_id: self.client_id,
-                            events_in,
-                        }) {
-                            println!(
-                                "😠 {} {:<8} sending router command to add client {}",
-                                session_code(self),
-                                "ERROR",
-                                e
-                            )
-                        }
-
-                        //.. and track the out-channel so we can select! on it
-                        self.events_out = Some(events_out);
                     }
                 } else {
                     println!("🏴‍☠️ FAILED TO DECODE PRIVATE GAME ID 🏴‍☠️")
@@ -327,7 +312,7 @@ impl Handler for WsSession {
                 Ok(self.observe_game())
             }
             Ok(ClientCommands::ChooseColorPref(ChooseColorPrefClientCommand { color_pref })) => {
-                println!("🗳 {} CHSCLRPF", session_code(self));
+                println!("🗳  {} CHSCLRPF", session_code(self));
 
                 self.kafka_commands_in
                     .send(KafkaCommands::ChooseColorPref(
@@ -338,6 +323,15 @@ impl Handler for WsSession {
                     ))
                     .map_err(|e| ws::Error::from(Box::new(e)))
             }
+            Ok(ClientCommands::ProvideIdleStatus) => {
+                println!("🏕  {} PROVIDLE", session_code(self));
+
+                // Request the idle status
+                self.req_idle_status_in
+                    .send(RequestIdleStatus(self.client_id))
+                    .map_err(|e| ws::Error::from(Box::new(e)))
+            }
+
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",
@@ -387,17 +381,22 @@ impl Handler for WsSession {
                 self.ping_timeout.take();
                 self.ws_out.timeout(PING_TIMEOUT_MS, PING)
             }
-            // EXPIRE timeout has occured, this means that the connection is inactive, let's close
             EXPIRE => {
                 if let Some(dur) = self.expire_after.checked_duration_since(Instant::now()) {
+                    // EXPIRE timeout has occured.
+                    // this means that the connection is inactive
+                    // so we close it
                     if dur.as_millis() >= EXPIRE_TIMEOUT_MS.into() {
-                        println!("⌛️ {} {:<8} connection", session_code(self), "EXPIRE");
+                        println!(
+                            "⌛️ {} {:<8} Closing connection",
+                            session_code(self),
+                            "EXPIRE"
+                        );
                         self.notify_router_close();
                         return self.ws_out.close(CloseCode::Away);
                     }
                 }
 
-                println!("🤐 {} {:<8} expire timeout", session_code(self), "IGNORED");
                 Ok(())
             }
             CHANNEL_RECV => {
@@ -430,7 +429,7 @@ impl Handler for WsSession {
                                 game_id: _,
                                 your_color,
                             }) if your_color == Player::WHITE => {
-                                println!("🏳 {} {:<8} White", session_code(self), "YOURCOLR")
+                                println!("🏳  {} {:<8} White", session_code(self), "YOURCOLR")
                             }
                             _ => (),
                         }

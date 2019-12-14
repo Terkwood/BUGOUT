@@ -9,6 +9,7 @@ use crossbeam_channel::select;
 use uuid::Uuid;
 
 use crate::client_events::{ClientEvents, YourColorEvent};
+use crate::idle_status::IdleStatusResponse;
 use crate::kafka_events::KafkaEvents;
 use crate::logging::{short_uuid, EMPTY_SHORT_UUID};
 use crate::model::*;
@@ -18,7 +19,6 @@ const GAME_CLIENT_CLEANUP_PERIOD_MS: u64 = 10_000;
 /// Keeps track of clients interested in various games
 /// Each client has an associated crossbeam Sender for BUGOUT events
 struct Router {
-    pub available_games: Vec<GameId>,
     pub game_clients: HashMap<GameId, GameClients>,
     pub last_cleanup: Instant,
     pub clients: HashMap<ClientId, Sender<ClientEvents>>,
@@ -27,7 +27,6 @@ struct Router {
 impl Router {
     pub fn new() -> Router {
         Router {
-            available_games: vec![],
             game_clients: HashMap::new(),
             last_cleanup: Instant::now(),
             clients: HashMap::new(),
@@ -184,7 +183,7 @@ impl Router {
                 self.last_cleanup = Instant::now();
                 if count > 0 {
                     println!(
-                        "🗑 {} {} {:<8} {:<4} entries",
+                        "🗑 {} {}  {:<8} {:<4} entries",
                         EMPTY_SHORT_UUID, EMPTY_SHORT_UUID, "CLEANUP", count
                     )
                 }
@@ -203,78 +202,85 @@ impl Router {
     }
 }
 
-/// start the select! loop responsible for sending kafka messages to relevant websocket clients
-/// it must respond to requests to let it add and drop listeners
+/// start the select! loop responsible for sending
+/// kafka messages to relevant websocket clients.
+/// it must respond to requests to add and drop listeners
 pub fn start(
     router_commands_out: Receiver<RouterCommand>,
     kafka_events_out: Receiver<KafkaEvents>,
+    idle_resp_out: Receiver<IdleStatusResponse>,
 ) {
     thread::spawn(move || {
         let mut router = Router::new();
         loop {
             select! {
-                recv(router_commands_out) -> command =>
-                    match command {
-                        Ok(RouterCommand::ObserveGame(game_id)) => router.observe_game(game_id),
-                        // A create private game request, or a find public
-                        // game request, will result in us tracking a
-                        // client_id -> event channel mapping
-                        // We'll use this to send messages back to the browser,
-                        // later
-                        Ok(RouterCommand::AddClient { client_id, events_in }) => {
-                            router.clients.insert(client_id, events_in);
-                        },
-                        Ok(RouterCommand::DeleteClient{client_id, game_id}) =>
-                            router.delete_client(client_id, game_id),
-                        Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
-                            router.reconnect(client_id, game_id, events_in.clone());
-                            if let Err(err) = events_in.send(ClientEvents::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
-                                println!(
-                                    "😦 {} {} {:<8} could not send reconnect reply {}",
-                                    short_uuid(client_id),
-                                    short_uuid(game_id),
-                                    "ERROR", err)
-                            }
-                        },
-                        Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
+            recv(router_commands_out) -> command =>
+                match command {
+                    Ok(RouterCommand::ObserveGame(game_id)) => router.observe_game(game_id),
+                    // A create private game request, or a find public
+                    // game request, will result in us tracking a
+                    // client_id -> event channel mapping
+                    // We'll use this to send messages back to the browser,
+                    // later
+                    Ok(RouterCommand::AddClient { client_id, events_in }) => {
+                        router.clients.insert(client_id, events_in);
                     },
-                recv(kafka_events_out) -> event =>
-                    match event {
-                        Ok(KafkaEvents::MoveMade(m)) => {
-                            let u = m.clone();
-                            router.set_playerup(u.game_id, u.player.other());
-                            router.forward_by_game_id(KafkaEvents::MoveMade(m).to_client_event())
+                    Ok(RouterCommand::DeleteClient{client_id, game_id}) =>
+                        router.delete_client(client_id, game_id),
+                    Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
+                        router.reconnect(client_id, game_id, events_in.clone());
+                        if let Err(err) = events_in.send(ClientEvents::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
+                            println!(
+                                "😦 {} {} {:<8} could not send reconnect reply {}",
+                                short_uuid(client_id),
+                                short_uuid(game_id),
+                                "ERROR", err)
                         }
-                        Ok(KafkaEvents::GameReady(g)) => {
-                            router.route_new_game(g.clients.first, g.game_id);
-                            router.route_new_game(g.clients.second, g.game_id);
-                            router.forward_by_game_id(KafkaEvents::GameReady(g).to_client_event());
-                        }
-                        Ok(KafkaEvents::PrivateGameRejected(p)) => {
-                            // there's no game ID associated with
-                            // this game, yet, so we need to
-                            // forward via client ID
-                            router.forward_by_client_id(p.client_id, KafkaEvents::PrivateGameRejected(p).to_client_event())
-                        }
-                        Ok(KafkaEvents::WaitForOpponent(w)) => {
-                            router.route_new_game(w.client_id, w.game_id);
-                            router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
-                        }
-                        Ok(KafkaEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
-                            // We want to forward by client ID
-                            // so that we don't send TWO yourcolor events
-                            // to each client
-                            router.forward_by_client_id(black,ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
-                            router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
-                        },
-                        Ok(e) => {
-                            router.observe_game(e.game_id());
-                            router.forward_by_game_id(e.to_client_event())
-                        },
-                        Err(e) =>
-                            panic!("Unable to receive kafka event via router channel: {:?}", e),
+                    },
+                    Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
+                },
+            recv(kafka_events_out) -> event =>
+                match event {
+                    Ok(KafkaEvents::MoveMade(m)) => {
+                        let u = m.clone();
+                        router.set_playerup(u.game_id, u.player.other());
+                        router.forward_by_game_id(KafkaEvents::MoveMade(m).to_client_event())
                     }
-            }
+                    Ok(KafkaEvents::GameReady(g)) => {
+                        router.route_new_game(g.clients.first, g.game_id);
+                        router.route_new_game(g.clients.second, g.game_id);
+                        router.forward_by_game_id(KafkaEvents::GameReady(g).to_client_event());
+                    }
+                    Ok(KafkaEvents::PrivateGameRejected(p)) => {
+                        // there's no game ID associated with
+                        // this game, yet, so we need to
+                        // forward via client ID
+                        router.forward_by_client_id(p.client_id, KafkaEvents::PrivateGameRejected(p).to_client_event())
+                    }
+                    Ok(KafkaEvents::WaitForOpponent(w)) => {
+                        router.route_new_game(w.client_id, w.game_id);
+                        router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
+                    }
+                    Ok(KafkaEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
+                        // We want to forward by client ID
+                        // so that we don't send TWO yourcolor events
+                        // to each client
+                        router.forward_by_client_id(black,ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
+                        router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
+                    },
+                    Ok(e) => {
+                        router.observe_game(e.game_id());
+
+                        router.forward_by_game_id(e.to_client_event())
+                    },
+                    Err(e) =>
+                        panic!("Unable to receive kafka event via router channel: {:?}", e),
+                },
+            recv(idle_resp_out) -> idle_status_response => if let Ok(IdleStatusResponse(client_id, status)) = idle_status_response {
+                router.forward_by_client_id(client_id, ClientEvents::IdleStatusProvided(status))
+            } else {
+                println!("router error reading idle response")
+            }}
         }
     });
 }

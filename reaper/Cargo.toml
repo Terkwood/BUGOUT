@@ -1,20 +1,20 @@
 [package]
 name = "reaper"
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dotenv = "0.14.1"
+dotenv = "0.15.0"
 lazy_static = "1.4.0"
-rusoto_core = "0.40.0"
-rusoto_ec2 = "0.40.0"
-crossbeam = "0.7.2"
-crossbeam-channel = "0.3.9"
+rusoto_core = "0.42.0"
+rusoto_ec2 = "0.42.0"
+crossbeam = "0.7.3"
+crossbeam-channel = "0.4.0"
 rdkafka = "0.21.0"
-futures = "0.1.29"
-serde = "1.0.100"
-serde_derive = "1.0.100"
-serde_json = "1.0.40"
+futures = "0.1"
+serde = "1.0.102"
+serde_derive = "1.0.102"
+serde_json = "1.0.41"
