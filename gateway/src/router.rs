@@ -19,7 +19,6 @@ const GAME_CLIENT_CLEANUP_PERIOD_MS: u64 = 10_000;
 /// Keeps track of clients interested in various games
 /// Each client has an associated crossbeam Sender for BUGOUT events
 struct Router {
-    pub available_games: Vec<GameId>,
     pub game_clients: HashMap<GameId, GameClients>,
     pub last_cleanup: Instant,
     pub clients: HashMap<ClientId, Sender<ClientEvents>>,
@@ -28,7 +27,6 @@ struct Router {
 impl Router {
     pub fn new() -> Router {
         Router {
-            available_games: vec![],
             game_clients: HashMap::new(),
             last_cleanup: Instant::now(),
             clients: HashMap::new(),
