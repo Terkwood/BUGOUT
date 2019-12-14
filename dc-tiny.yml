@@ -10,7 +10,7 @@ services:
     volumes:
       - /mnt/stateful_partition/BUGOUT/redis:/data
     privileged: true
-    command: "echo 65535 > /proc/sys/net/core/somaxconn && redis-server"
+    command: /bin/bash -c 'echo 65535 > /proc/sys/net/core/somaxconn ; redis-server'
   gateway:
     build: gateway/.
     ports:
