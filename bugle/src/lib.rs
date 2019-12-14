@@ -16,5 +16,5 @@ pub type ClientId = Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 pub struct WakeUpEvent {
-    client_id: ClientId,
+    pub client_id: ClientId,
 }
