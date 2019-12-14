@@ -50,3 +50,16 @@ ExecStart=/usr/bin/sh /home/core/BUGOUT/admin/start-kafka-host.sh
 [Install]
 WantedBy=multi-user.target
 ```
+
+## Configuring Redis
+
+Redis requires Transparent Huge Pages to be disabled in
+the kernel, via
+
+```sh
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+```
+
+Under CoreOS, this is managed with a [systemd
+script](disable-thp.service), which calls out to a
+small [shell script that disables THP](disable-thp.sh).
