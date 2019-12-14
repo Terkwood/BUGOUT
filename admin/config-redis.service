@@ -1,5 +1,5 @@
 [Unit]
-Description=Disable THP for redis
+Description=Configure kernel for redis
 
 [Service]
 ExecStart=/usr/bin/sh /home/core/BUGOUT/admin/config-redis.sh

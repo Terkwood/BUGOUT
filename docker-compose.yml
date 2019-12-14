@@ -25,6 +25,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
+      - /proc/sys/net/core/somaxconn:/proc/sys/net/core/somaxconn
       - /mnt/stateful_partition/BUGOUT/redis:/data
   gateway:
     build: gateway/.
