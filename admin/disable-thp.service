@@ -1,0 +1,8 @@
+[Unit]
+Description=Disable THP for redis
+
+[Service]
+ExecStart=/usr/bin/sh /home/core/BUGOUT/admin/disable-thp.sh
+
+[Install]
+WantedBy=multi-user.target
