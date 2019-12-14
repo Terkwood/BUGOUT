@@ -1,4 +1,7 @@
 extern crate chrono;
+extern crate dotenv;
+#[macro_use]
+extern crate lazy_static;
 extern crate r2d2_redis;
 extern crate redis;
 extern crate rusoto_ec2;
@@ -8,6 +11,7 @@ extern crate serde_json;
 extern crate uuid;
 
 pub mod ec2_startup;
+pub mod env;
 pub mod subscriber;
 
 use serde_derive::{Deserialize, Serialize};
