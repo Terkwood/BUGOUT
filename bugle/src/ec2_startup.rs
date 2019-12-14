@@ -44,6 +44,7 @@ fn set_last_startup(pool: &RedisPool) -> Result<(), redis::RedisError> {
 }
 
 pub fn startup(pool: &RedisPool) {
+    let client = Ec2Client::new(region());
     match get_last_startup(&pool) {
         None => go(pool),
         Some(t) if Utc::now().timestamp() - t.timestamp() > DELAY_SECS as i64 => go(pool),
