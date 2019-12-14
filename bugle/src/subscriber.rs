@@ -1,11 +1,4 @@
-use redis;
-
-use std::thread;
-
-use r2d2_redis::redis::Commands;
 use r2d2_redis::{r2d2, RedisConnectionManager};
-
-use crate::WakeUp;
 
 pub fn start() {
     let manager = RedisConnectionManager::new("redis://redis").unwrap();
