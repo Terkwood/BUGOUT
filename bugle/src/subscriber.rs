@@ -15,15 +15,16 @@ pub fn start() {
 
     sub.subscribe(TOPIC).unwrap();
 
-    println!("Subscribed to redis channel: {}", TOPIC);
+    println!("📯 Subscribed to redis channel: {}", TOPIC);
 
     loop {
         if let Ok(msg) = sub.get_message() {
             let payload = msg.get_payload().unwrap_or("".to_string());
             let event: Result<WakeUpEvent, _> = serde_json::from_str(&payload);
-            if let Ok(e) = event {
-                println!("{:?}", e);
+            if let Ok(_) = event {
                 wakeup(&pool)
+            } else {
+                println!("😡 Deserialization failed")
             }
         }
     }

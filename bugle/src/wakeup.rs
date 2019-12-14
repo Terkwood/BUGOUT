@@ -33,7 +33,6 @@ fn go(pool: &RedisPool) {
     }
 }
 fn ec2_init_instance() {
-    println!("hiya");
     let client = Ec2Client::new(region());
 
     let instance_id: Option<String> = big_box_instance_id(&client);
@@ -49,7 +48,7 @@ fn ec2_init_instance() {
             Err(error) => println!("🚫 Instance start ERROR: {:?}", error),
         }
 
-        println!("Starting instance {}...", id.to_string())
+        println!("📯 Starting instance {}...", id.to_string())
     }
 }
 
@@ -63,7 +62,7 @@ pub fn wakeup(pool: &RedisPool) {
     match get_last_wakeup_timestamp(&pool) {
         None => go(pool),
         Some(t) if Utc::now().timestamp() - t.timestamp() > *DELAY_SECS as i64 => go(pool),
-        Some(_) => println!("pass"),
+        Some(_) => println!("📯 Declining to activate the instance."),
     }
 }
 
