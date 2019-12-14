@@ -25,6 +25,13 @@ services:
       - redis
     depends_on:
       - redis
+    volumes:
+      - "./bugle/.env:/var/BUGOUT/bugle/.env"
+    environment:
+      - DELAY_SECS
+      - AWS_REGION
+      - DISABLED
+      - TAG_NAME
   reverse-proxy:
     image: abiosoft/caddy
     ports:
