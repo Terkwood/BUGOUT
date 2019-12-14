@@ -7,7 +7,7 @@ use redis::Commands;
 use std::str::FromStr;
 
 use rusoto_core::Region;
-use rusoto_ec2::{DescribeInstancesRequest, Ec2, Ec2Client, StopInstancesRequest, Tag};
+use rusoto_ec2::{DescribeInstancesRequest, Ec2, Ec2Client, StartInstancesRequest, Tag};
 
 const EC2_TAG_KEY: &str = "Name";
 
@@ -35,7 +35,24 @@ fn go(pool: &RedisPool) {
     }
 }
 fn ec2_init_instance() {
-    println!("hiya")
+    println!("hiya");
+    let client = Ec2Client::new(region());
+
+    let instance_id: Option<String> = big_box_instance_id(&client);
+
+    if let Some(id) = instance_id {
+        let start_request: StartInstancesRequest = StartInstancesRequest {
+            instance_ids: vec![id.to_string()],
+            ..Default::default()
+        };
+
+        match client.start_instances(start_request).sync() {
+            Ok(output) => println!("✅ Instance start OK   : {:?}", output),
+            Err(error) => println!("🚫 Instance start ERROR: {:?}", error),
+        }
+
+        println!("Starting instance {}...", id.to_string())
+    }
 }
 fn set_last_startup(pool: &RedisPool) -> Result<(), redis::RedisError> {
     let mut conn = pool.get().unwrap();
@@ -44,7 +61,6 @@ fn set_last_startup(pool: &RedisPool) -> Result<(), redis::RedisError> {
 }
 
 pub fn startup(pool: &RedisPool) {
-    let client = Ec2Client::new(region());
     match get_last_startup(&pool) {
         None => go(pool),
         Some(t) if Utc::now().timestamp() - t.timestamp() > DELAY_SECS as i64 => go(pool),
