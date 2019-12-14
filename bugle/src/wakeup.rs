@@ -13,8 +13,6 @@ const EC2_TAG_KEY: &str = "Name";
 
 type RedisPool = r2d2_redis::r2d2::Pool<r2d2_redis::RedisConnectionManager>;
 
-const DELAY_SECS: u32 = 60;
-
 const REDIS_LAST_STARTUP_KEY: &str = "bugle/last_wakeup_timestamp";
 
 fn get_last_wakeup_timestamp(pool: &RedisPool) -> Option<DateTime<Utc>> {
@@ -64,7 +62,7 @@ fn set_last_wakeup_timestamp(pool: &RedisPool) -> Result<(), redis::RedisError> 
 pub fn wakeup(pool: &RedisPool) {
     match get_last_wakeup_timestamp(&pool) {
         None => go(pool),
-        Some(t) if Utc::now().timestamp() - t.timestamp() > DELAY_SECS as i64 => go(pool),
+        Some(t) if Utc::now().timestamp() - t.timestamp() > *DELAY_SECS as i64 => go(pool),
         Some(_) => println!("pass"),
     }
 }
