@@ -6,10 +6,6 @@ RUN rustup default stable
 
 COPY . /var/BUGOUT/bugle/.
 
-#TODO
-#RUN cargo install --path .
+RUN cargo install --path .
 
-#CMD ["bugle"]
-
-#TODO
-CMD ["tail","-f","/dev/null"]
+CMD ["bugle"]
