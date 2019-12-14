@@ -50,3 +50,11 @@ ExecStart=/usr/bin/sh /home/core/BUGOUT/admin/start-kafka-host.sh
 [Install]
 WantedBy=multi-user.target
 ```
+
+## Configuring Redis in CoreOS
+
+Redis requires three tweaks to kernel config in CoreOS: Transparent Huge Pages disabled, overcommmit_memory enabled, and the TCP backlog raised.
+
+These configs are managed with a [systemd
+script](config-redis.service), which calls out to a
+small [shell script](config-redis.sh).

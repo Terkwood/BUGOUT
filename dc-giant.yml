@@ -1,3 +1,8 @@
+# docker-compose for a larger instance which
+# can fit kafka, as well as all of the RAM-hogging
+# kafka streams microservices
+# 🧠🐷
+
 version: '2'
 services:
   zookeeper:

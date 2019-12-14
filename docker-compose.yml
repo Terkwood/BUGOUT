@@ -1,3 +1,7 @@
+# This file is for local development only.
+# To see the cloud configs, look at dc-giant.yml
+# and dc-tiny.yml
+
 version: '2'
 services:
   zookeeper:
@@ -16,6 +20,13 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+  redis:
+    image: redis
+    ports:
+      - "6379"
+    volumes:
+      - /mnt/stateful_partition/BUGOUT/redis:/data
+    command: /bin/bash -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled && echo 65535 > /proc/sys/net/core/somaxconn ; redis-server'
   gateway:
     build: gateway/.
     ports:
@@ -28,6 +39,19 @@ services:
       - "kafka"
     environment:
       - BROKERS
+  bugle:
+    build: bugle/.
+    links:
+      - redis
+    depends_on:
+      - redis
+    volumes:
+      - ${PWD}/bugle/.env:/var/BUGOUT/bugle/.env
+    environment:
+      - DELAY_SECS
+      - AWS_REGION
+      - DISABLED
+      - TAG_NAME
   judge:
     build: judge/.
     links:

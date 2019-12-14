@@ -1,5 +1,16 @@
+# docker-compose for a micro instance which
+# handles 24/7 traffic
+
 version: '2'
 services:
+  redis:
+    image: redis
+    ports:
+      - "6379"
+    volumes:
+      - /mnt/stateful_partition/BUGOUT/redis:/data
+    privileged: true
+    command: /bin/bash -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled && echo 65535 > /proc/sys/net/core/somaxconn ; redis-server'
   gateway:
     build: gateway/.
     ports:
@@ -8,6 +19,19 @@ services:
       - ${PWD}/gateway/.env:/var/BUGOUT/gateway/.env
     environment:
       - BROKERS
+  bugle:
+    build: bugle/.
+    links:
+      - redis
+    depends_on:
+      - redis
+    volumes:
+      - ${PWD}/bugle/.env:/var/BUGOUT/bugle/.env
+    environment:
+      - DELAY_SECS
+      - AWS_REGION
+      - DISABLED
+      - TAG_NAME
   reverse-proxy:
     image: abiosoft/caddy
     ports:

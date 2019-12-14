@@ -1,7 +1,7 @@
 FROM rust
 
 WORKDIR /var/
-# git clone to support the submodule
+# git clone to support the librdkafka submodule
 RUN git clone https://github.com/Terkwood/BUGOUT
 WORKDIR /var/BUGOUT/gateway
 RUN git submodule update --init
@@ -9,7 +9,7 @@ RUN git submodule update --init
 RUN apt-get update -y 
 RUN apt-get install -y clang
 
-# useful for wait-run.sh
+# optional: useful for wait-run.sh
 RUN curl -O https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
 RUN chmod 755 wait-for-it.sh
 
