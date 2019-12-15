@@ -66,7 +66,7 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
                     ,
                     Ok(KafkaCommands::ClientHeartbeat(h)) =>
                         write(&producer, CLIENT_HEARTBEAT_TOPIC, &serde_json::to_string(&h),&h.client_id.to_string()),
-                    Err(e) => panic!("Unable to receive command via kafka channel: {:?}", e),
+                    Err(e) => println!("💩 Unable to receive command via kafka channel: {:?}", e),
                 }
         }
     }
@@ -83,7 +83,7 @@ fn write(
         Ok(p) => {
             producer.send(FutureRecord::to(topic).payload(p).key(key), 0); // fire & forget
         }
-        Err(e) => panic!("Failed to serialize trivial kafka command: {}", e),
+        Err(e) => println!("💩 Failed to serialize trivial kafka command: {}", e),
     }
 }
 
@@ -121,13 +121,13 @@ fn start_consumer(
     let message_stream = consumer.start();
     for message in message_stream.wait() {
         match message {
-            Err(e) => panic!("Error waiting on kafka stream: {:?}", e),
-            Ok(Err(e)) => panic!("Nested error (!) waiting on kafka stream: {:?}", e),
+            Err(e) => println!("💩 Error waiting on kafka stream: {:?}", e),
+            Ok(Err(e)) => println!("💩 Nested error (!) waiting on kafka stream: {:?}", e),
             Ok(Ok(msg)) => {
                 let payload = match msg.payload_view::<str>() {
                     None => "",
                     Some(Ok(s)) => s,
-                    Some(Err(e)) => panic!("Error viewing kafka payload {:?}", e),
+                    Some(Err(e)) => println!("💩 Error viewing kafka payload {:?}", e),
                 };
 
                 consumer.commit_message(&msg, CommitMode::Async).unwrap();
