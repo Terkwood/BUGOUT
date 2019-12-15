@@ -4,7 +4,6 @@ use std::env;
 const ENV_DELAY_SECS: &str = "DELAY_SECS";
 const ENV_TAG_NAME: &str = "INSTANCE_TAG_NAME";
 const ENV_AWS_REGION: &str = "AWS_REGION";
-const ENV_DISABLED: &str = "DISABLED";
 
 const DEFAULT_DELAY_SECS: u64 = 30;
 const DEFAULT_INSTANCE_TAG_NAME: &str = "TOO_EXPENSIVE";
