@@ -1,5 +1,6 @@
 use crate::kafka_events::*;
 use crate::model::ClientId;
+use crate::wakeup::RedisWakeup;
 use chrono::{DateTime, Utc};
 use crossbeam::{Receiver, Sender};
 use crossbeam_channel::select;
@@ -32,6 +33,7 @@ pub fn start_monitor(
 ) {
     thread::spawn(move || {
         let mut status = IdleStatus::Idle { since: Utc::now() };
+        let redis_wakeup = RedisWakeup::new();
 
         loop {
             select! {
@@ -49,8 +51,21 @@ pub fn start_monitor(
                 recv(req_status_out) -> req =>
                     if let Ok(RequestIdleStatus(client_id)) = req {
                         if let Err(e) = status_resp_in.send(IdleStatusResponse(client_id, status)) {
-                        println!("err sending idle status resp {}", e)
-                    }} else {
+                            println!("err sending idle status resp {}", e)
+                        }
+
+                        match status {
+                            IdleStatus::Online => (),
+                            _ => {
+                                if let Err(e) = redis_wakeup.publish(client_id)
+                                {
+                                    println!("error publishing wakeup to redis {}", e)
+                                } else if let IdleStatus::Idle{since: _} = status {
+                                    status = IdleStatus::Booting{since: Utc::now()}
+                                }
+                            },
+                        }
+                } else {
                         println!("err on idle recv req status")
                     },
                 recv(shutdown_out) -> msg =>

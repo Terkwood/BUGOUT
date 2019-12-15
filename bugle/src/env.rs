@@ -4,12 +4,10 @@ use std::env;
 const ENV_DELAY_SECS: &str = "DELAY_SECS";
 const ENV_TAG_NAME: &str = "INSTANCE_TAG_NAME";
 const ENV_AWS_REGION: &str = "AWS_REGION";
-const ENV_DISABLED: &str = "DISABLED";
 
 const DEFAULT_DELAY_SECS: u64 = 30;
 const DEFAULT_INSTANCE_TAG_NAME: &str = "TOO_EXPENSIVE";
 const DEFAULT_REGION: &str = "us-east-1";
-const DEFAULT_DISABLED: bool = false;
 
 lazy_static! {
     pub static ref DELAY_SECS: u64 = env::var(ENV_DELAY_SECS)
@@ -19,9 +17,6 @@ lazy_static! {
         env::var(ENV_TAG_NAME).unwrap_or(DEFAULT_INSTANCE_TAG_NAME.to_string());
     pub static ref AWS_REGION: String =
         env::var(ENV_AWS_REGION).unwrap_or(DEFAULT_REGION.to_string());
-    pub static ref DISABLED: bool = env::var(ENV_DISABLED)
-        .map(|s| s.parse::<bool>().unwrap_or(DEFAULT_DISABLED))
-        .unwrap_or(DEFAULT_DISABLED);
 }
 
 pub fn init() {
@@ -31,6 +26,5 @@ pub fn init() {
     println!("DELAY_SECS {}", *DELAY_SECS);
     println!("AWS_REGION {}", *AWS_REGION);
     println!("INSTANCE_TAG_NAME {}", *INSTANCE_TAG_NAME);
-    println!("DISABLED {}", *DISABLED);
     println!("\n\n");
 }

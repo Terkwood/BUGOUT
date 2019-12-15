@@ -11,8 +11,8 @@ use uuid::Uuid;
 use crate::client_events::{ClientEvents, YourColorEvent};
 use crate::idle_status::IdleStatusResponse;
 use crate::kafka_events::KafkaEvents;
-use crate::logging::{short_uuid, EMPTY_SHORT_UUID};
 use crate::model::*;
+use crate::{short_uuid, EMPTY_SHORT_UUID};
 
 const GAME_CLIENT_CLEANUP_PERIOD_MS: u64 = 10_000;
 

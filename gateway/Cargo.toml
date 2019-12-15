@@ -1,6 +1,6 @@
 [package]
 name = "gateway"
-version = "0.9.2"
+version = "0.10.0"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
@@ -22,6 +22,7 @@ envy = "0.4.0"
 dotenv = "0.15.0"
 futures = "0.1"
 chrono = { version = "0.4.10", features = ["serde"] }
+r2d2_redis = "0.12.0"
 
 [dev-dependencies]
 rand = "0.7.2"
