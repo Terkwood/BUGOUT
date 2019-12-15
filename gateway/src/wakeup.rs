@@ -36,6 +36,12 @@ impl RedisWakeup {
             serde_json::to_string(&WakeUpEvent { client_id }).unwrap(),
         );
 
-        p.map(|_| println!("☀️ {} {:<8} WAKEUP", short_uuid(client_id), EMPTY_SHORT_UUID))
+        p.map(|_| {
+            println!(
+                "☀️  {} {:<8} WAKEUP",
+                short_uuid(client_id),
+                EMPTY_SHORT_UUID
+            )
+        })
     }
 }
