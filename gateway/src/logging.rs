@@ -1,5 +1,4 @@
 use rand::seq::SliceRandom;
-use uuid::Uuid;
 
 use crate::model::Player;
 use crate::websocket::WsSession;
@@ -17,19 +16,14 @@ pub fn emoji(player: &Player) -> String {
     }
 }
 
-pub const EMPTY_SHORT_UUID: &str = "        ";
-pub fn short_uuid(uuid: Uuid) -> String {
-    uuid.to_string()[..8].to_string()
-}
-
 pub fn session_code(ws_session: &WsSession) -> String {
     format!(
         "{} {}",
-        short_uuid(ws_session.client_id),
+        crate::short_uuid(ws_session.client_id),
         ws_session
             .current_game
-            .map(|gid| short_uuid(gid))
-            .unwrap_or(EMPTY_SHORT_UUID.to_string())
+            .map(|gid| crate::short_uuid(gid))
+            .unwrap_or(crate::EMPTY_SHORT_UUID.to_string())
     )
     .to_string()
 }

@@ -30,3 +30,10 @@ mod logging;
 mod model;
 mod topics;
 mod wakeup;
+
+use uuid::Uuid;
+
+pub const EMPTY_SHORT_UUID: &str = "        ";
+pub fn short_uuid(uuid: Uuid) -> String {
+    uuid.to_string()[..8].to_string()
+}

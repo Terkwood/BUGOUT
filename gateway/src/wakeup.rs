@@ -4,6 +4,7 @@ use serde_derive::{Deserialize, Serialize};
 use serde_json;
 
 use crate::model::ClientId;
+use crate::{short_uuid, EMPTY_SHORT_UUID};
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 pub struct WakeUpEvent {
@@ -30,9 +31,11 @@ impl RedisWakeup {
     pub fn publish(&self, client_id: ClientId) -> Result<(), r2d2_redis::redis::RedisError> {
         let mut conn = self.pool.get().unwrap();
 
-        conn.publish(
+        let p: Result<(), r2d2_redis::redis::RedisError> = conn.publish(
             TOPIC,
             serde_json::to_string(&WakeUpEvent { client_id }).unwrap(),
-        )
+        );
+
+        p.map(|_| println!("☀️ {} {:<8} WAKEUP", short_uuid(client_id), EMPTY_SHORT_UUID))
     }
 }
