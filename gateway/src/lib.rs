@@ -7,6 +7,7 @@ extern crate harsh;
 #[macro_use]
 extern crate lazy_static;
 extern crate mio_extras;
+extern crate r2d2_redis;
 extern crate rand;
 extern crate serde;
 extern crate serde_derive;
@@ -28,3 +29,4 @@ mod client_events;
 mod logging;
 mod model;
 mod topics;
+mod wakeup;

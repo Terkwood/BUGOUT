@@ -53,11 +53,11 @@ pub fn start_monitor(
                         }
 
                         match status {
-                            IdleStatus::Idle{since: _} => {
+                            Online => (),
+                            _ => {
                                 // TODO
                                 println!("!! REDIS PUB HERE !!")
                             },
-                            _ => (),
                         }
                 } else {
                         println!("err on idle recv req status")

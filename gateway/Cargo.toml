@@ -22,6 +22,7 @@ envy = "0.4.0"
 dotenv = "0.15.0"
 futures = "0.1"
 chrono = { version = "0.4.10", features = ["serde"] }
+r2d2_redis = "0.12.0"
 
 [dev-dependencies]
 rand = "0.7.2"
