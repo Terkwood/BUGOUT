@@ -127,7 +127,10 @@ fn start_consumer(
                 let payload = match msg.payload_view::<str>() {
                     None => "",
                     Some(Ok(s)) => s,
-                    Some(Err(e)) => println!("💩 Error viewing kafka payload {:?}", e),
+                    Some(Err(e)) => {
+                        println!("💩 Error viewing kafka payload {:?}\nReturning an empty string as consumer payload", e);
+                        ""
+                    }
                 };
 
                 consumer.commit_message(&msg, CommitMode::Async).unwrap();
