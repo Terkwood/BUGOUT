@@ -537,7 +537,30 @@ class Application(private val brokers: String) {
 
         val joined: KStream<ClientId, Pair<ClientDisconnected,GameLobby>> =
             clientDisconnected.join(gameLobby,kvm,valJoiner)
+        
+        val lobbyContainsClientId: KStream<ClientId, Pair<ClientDisconnected, GameLobby>> =
+            joined.filter { clientId, clientIdLobby  ->
+                clientIdLobby.second.games
+                    .map{it.creator}
+                    .contains(clientId)
+        }
 
+        val abandonGameCommand: KStream<String, GameLobbyCommand> =
+            lobbyContainsClientId.map{ clientId, cdgl ->
+            val theirGame = cdgl.second.games.first{it.creator == clientId}
+            KeyValue(GameLobby.TRIVIAL_KEY, GameLobbyCommand(
+                game = theirGame,
+                lobbyCommand = LobbyCommand.Abandon
+            ))
+        }
+
+        abandonGameCommand
+            .mapValues { v ->  jsonMapper.writeValueAsString(v) }
+            .to(Topics.GAME_LOBBY_COMMANDS,
+                Produced.with(
+                    Serdes.String(),
+                    Serdes.String())
+        )
     }
 
     private fun waitForTopics(topics: Array<String>, props: java.util
