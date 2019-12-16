@@ -55,3 +55,9 @@ data class PrivateGameRejected(
     val clientId: ClientId,
     val eventId: EventId = UUID.randomUUID()
 )
+
+/** This event is emitted from gateway whenever a client disconnects.
+ * It drives the cleanup of abandoned games in the lobby */
+data class ClientDisconnected(
+    val clientId: ClientId
+)

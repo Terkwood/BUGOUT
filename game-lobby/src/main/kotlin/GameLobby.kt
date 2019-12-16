@@ -20,7 +20,7 @@ class GameLobby {
             LobbyCommand.Ready ->
                 games - command.game
             LobbyCommand.Abandon ->
-                TODO()
+                games - command.game
         }
 
         return this

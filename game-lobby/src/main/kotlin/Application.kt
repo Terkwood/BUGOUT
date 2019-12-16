@@ -67,9 +67,8 @@ class Application(private val brokers: String) {
         // game states changelog is a stream, here
         val gslKVMapper: KeyValueMapper<GameId, GameStateTurnOnly,
                 String> =
-            KeyValueMapper { _: GameId, // left key
-                             _: GameStateTurnOnly ->
-                // left value
+            KeyValueMapper { _: GameId,              // left key
+                             _: GameStateTurnOnly -> // left value
 
                 // use a trivial join, so that all queries are routed to the same store
                 GameLobby.TRIVIAL_KEY
@@ -99,9 +98,8 @@ class Application(private val brokers: String) {
 
         val joinPrivateKVM: KeyValueMapper<ClientId, JoinPrivateGame,
                 String> =
-            KeyValueMapper { _: ClientId, // left key
-                             _: JoinPrivateGame ->
-                // left value
+            KeyValueMapper { _: ClientId,           // left key
+                             _: JoinPrivateGame ->  // left value
 
                 // use a trivial join, so that all queries are routed to the same store
                 GameLobby.TRIVIAL_KEY
@@ -162,7 +160,7 @@ class Application(private val brokers: String) {
                                 g.gameId == jpg.gameId
                     }
 
-                println("Popping private game  ${someGame.gameId.short()}")
+                println("🍿 Popping private game  ${someGame.gameId.short()}")
 
                 KeyValue(
                     jpg.clientId,
@@ -340,7 +338,7 @@ class Application(private val brokers: String) {
         aggregateAll.toStream()
             .map { k, v ->
                 val json = jsonMapper.writeValueAsString(v)
-                println("Aggregated $json")
+                println("🏟                   GAMELBBY $json")
                 KeyValue(k, json)
             }.to(
                 Topics.GAME_LOBBY_CHANGELOG,
@@ -380,9 +378,8 @@ class Application(private val brokers: String) {
                 }
 
         val fpgKeyJoiner: KeyValueMapper<ClientId, FindPublicGame, String> =
-            KeyValueMapper { _: ClientId, // left key
-                             _: FindPublicGame ->
-                // left value
+            KeyValueMapper { _: ClientId,          // left key
+                             _: FindPublicGame ->  // left value
 
                 // use a trivial join, so that all queries are routed to the same store
                 GameLobby.TRIVIAL_KEY
@@ -457,7 +454,7 @@ class Application(private val brokers: String) {
                             .Public
                     }
 
-                println("Popping public game  ${someGame.gameId.short()}")
+                println("🍿 Popping public game  ${someGame.gameId.short()}")
 
                 KeyValue(
                     fpg.clientId,
@@ -505,9 +502,46 @@ class Application(private val brokers: String) {
 
     }
 
+    private fun buildAbandonGameStreams(streamsBuilder: StreamsBuilder,
+                                        gameLobby: GlobalKTable<String,
+                                                GameLobby>) {
+        val clientDisconnected: KStream<ClientId, ClientDisconnected> =
+            streamsBuilder.stream<ClientId, String>(
+                Topics.CLIENT_DISCONNECTED,
+                Consumed.with(Serdes.UUID(), Serdes.String())
+            )
+                .mapValues { v ->
+                    jsonMapper.readValue(
+                        v,
+                        ClientDisconnected::class.java
+                    )
+                }
+
+        // Wait for opponent is keyed by client ID, easy to find
+        // a match there
+
+
+        val kvm: KeyValueMapper<ClientId, WaitForOpponent, String> =
+            KeyValueMapper { clientId: ClientId,   // left key
+                             _: WaitForOpponent -> // left value
+
+                clientId.toString()
+            }
+
+        val fpgValueJoiner: ValueJoiner<FindPublicGame, GameLobby, FindPublicGameLobby> =
+            ValueJoiner { leftValue:
+                          FindPublicGame,
+                          rightValue:
+                          GameLobby ->
+                FindPublicGameLobby(leftValue, rightValue)
+            }
+
+
+    }
+
     private fun waitForTopics(topics: Array<String>, props: java.util
     .Properties) {
-        print("Waiting for topics ")
+        print("⏲ Waiting for topics ")
         val client = AdminClient.create(props)
 
         var topicsReady = false
@@ -522,7 +556,7 @@ class Application(private val brokers: String) {
             print(".")
         }
 
-        println(" done!")
+        println(" done! 🏁")
     }
 }
 
