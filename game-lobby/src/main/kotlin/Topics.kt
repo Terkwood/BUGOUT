@@ -11,6 +11,8 @@ object Topics {
 
     const val GAME_STATES_CHANGELOG = "bugout-game-states"
 
+    const val CLIENT_DISCONNECTED = "bugout-client-disconnected-ev"
+
     // kv stores
     const val GAME_LOBBY_STORE_LOCAL = "bugout-game-lobby-store-local"
     const val GAME_LOBBY_STORE_GLOBAL = "bugout-game-lobby-store-global"
