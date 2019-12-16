@@ -370,9 +370,9 @@ impl Handler for WsSession {
         // and helps clean up abandoned games
         if let Err(e) = self
             .kafka_commands_in
-            .send(KafkaCommands::ClientDisconnect {
+            .send(KafkaCommands::ClientDisconnected(ClientDisconnected {
                 client_id: self.client_id,
-            })
+            }))
         {
             println!("Couldn't send client disconnect to kafka {}", e)
         }
