@@ -58,7 +58,7 @@ pub enum KafkaCommands {
     CreateGame(CreateGameKafkaCommand),
     ChooseColorPref(ChooseColorPrefKafkaCommand),
     ClientHeartbeat(ClientHeartbeat),
-    ClientDisconnect{
+    ClientDisconnected{
         #[serde(rename="clientId")]
         client_id: ClientId
     },
