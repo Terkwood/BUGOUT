@@ -537,7 +537,7 @@ class Application(private val brokers: String) {
 
         val joined: KStream<ClientId, Pair<ClientDisconnected,GameLobby>> =
             clientDisconnected.join(gameLobby,kvm,valJoiner)
-        
+
         val lobbyContainsClientId: KStream<ClientId, Pair<ClientDisconnected, GameLobby>> =
             joined.filter { clientId, clientIdLobby  ->
                 clientIdLobby.second.games
