@@ -517,25 +517,26 @@ class Application(private val brokers: String) {
                     )
                 }
 
-        // Wait for opponent is keyed by client ID, easy to find
-        // a match there
+        val kvm: KeyValueMapper<ClientId, ClientDisconnected,
+                String> =
+            KeyValueMapper { _: ClientId,           // left key
+                             _: ClientDisconnected ->  // left value
 
-
-        val kvm: KeyValueMapper<ClientId, WaitForOpponent, String> =
-            KeyValueMapper { clientId: ClientId,   // left key
-                             _: WaitForOpponent -> // left value
-
-                clientId.toString()
+                // use a trivial join, so that all queries are routed to the same store
+                GameLobby.TRIVIAL_KEY
             }
 
-        val fpgValueJoiner: ValueJoiner<FindPublicGame, GameLobby, FindPublicGameLobby> =
+        val valJoiner: ValueJoiner<ClientDisconnected, GameLobby,
+                Pair<ClientDisconnected, GameLobby>> =
             ValueJoiner { leftValue:
-                          FindPublicGame,
+                          ClientDisconnected,
                           rightValue:
                           GameLobby ->
-                FindPublicGameLobby(leftValue, rightValue)
+                Pair(leftValue, rightValue)
             }
 
+        val joined: KStream<ClientId, Pair<ClientDisconnected,GameLobby>> =
+            clientDisconnected.join(gameLobby,kvm,valJoiner)
 
     }
 
