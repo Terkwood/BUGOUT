@@ -177,7 +177,7 @@ impl Handler for WsSession {
             Ok(ClientCommands::Beep) => {
                 println!("🤖 {} BEEP   ", session_code(self));
 
-                self.produce_client_heartbeat(HeartbeatType::WebSocketPong);
+                self.produce_client_heartbeat(HeartbeatType::UserInterfaceBeep);
                 Ok(self.observe_game())
             }
             Ok(ClientCommands::Reconnect(ReconnectCommand { game_id, req_id })) => {
