@@ -6,12 +6,10 @@ import org.apache.kafka.common.serialization.UUIDSerializer
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
 import org.apache.kafka.streams.test.OutputVerifier
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import serdes.jsonMapper
 import java.util.*
+import org.apache.kafka.common.serialization.*
+import org.junit.jupiter.api.*
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -53,13 +51,13 @@ class ClientDisconnectedTest {
             clientId = clientId
         )
 
-        testDriver.pipeInput(
+        val dcr : ConsumerRecord<ByteArray, ByteArray> =
             uuidKeyFactory.create(
                 Topics.CLIENT_DISCONNECTED,
                 clientId,
                 jsonMapper.writeValueAsString(disconnectEv)
             )
-        )
+        testDriver.pipeInput(dcr)
 
 
         val gameLobbyOutput =
@@ -79,5 +77,10 @@ class ClientDisconnectedTest {
                 expectedGameLobby
             )
         )
+    }
+
+    @AfterAll
+    fun tearDown() {
+        testDriver.close()
     }
 }
