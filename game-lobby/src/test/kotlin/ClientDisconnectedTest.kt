@@ -38,7 +38,8 @@ class ClientDisconnectedTest {
         val cr: ConsumerRecord<ByteArray, ByteArray> =
             stringKeyFactory.create(
                 Topics.GAME_LOBBY_CHANGELOG,
-                GameLobby.TRIVIAL_KEY, jsonMapper.writeValueAsString(lobbyWithOneGame)
+                GameLobby.TRIVIAL_KEY,
+                jsonMapper.writeValueAsString(lobbyWithOneGame)
             )
 
         testDriver.pipeInput(cr)
@@ -63,7 +64,7 @@ class ClientDisconnectedTest {
         val gameLobbyOutput =
             testDriver.readOutput(
                 Topics.GAME_LOBBY_CHANGELOG,
-                UUIDDeserializer(),
+                StringDeserializer(),
                 StringDeserializer()
             )
 
@@ -72,7 +73,7 @@ class ClientDisconnectedTest {
 
         OutputVerifier.compareKeyValue(
             gameLobbyOutput,
-            clientId,
+            GameLobby.TRIVIAL_KEY,
             jsonMapper.writeValueAsString(
                 expectedGameLobby
             )

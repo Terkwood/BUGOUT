@@ -46,6 +46,8 @@ class Application(private val brokers: String) {
 
         buildPublicGameStreams(streamsBuilder, gameLobby)
 
+        buildAbandonGameStreams(streamsBuilder, gameLobby)
+
         val gameStatesChangeLog: KStream<GameId, GameStateTurnOnly> =
             streamsBuilder.stream<UUID, String>(
                 Topics.GAME_STATES_CHANGELOG,
