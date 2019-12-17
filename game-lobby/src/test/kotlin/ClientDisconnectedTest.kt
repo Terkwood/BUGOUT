@@ -1,3 +1,4 @@
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.TestInstance
 import serdes.jsonMapper
 import java.util.*
 
-@Disabled
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClientDisconnectedTest {
     private val testDriver: TopologyTestDriver = setup()
@@ -25,18 +26,35 @@ class ClientDisconnectedTest {
 
     @Test
     fun clientDisconnected() {
-        val factory =
-            ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
         val clientId = UUID.randomUUID()
         val gameId = UUID.randomUUID()
+
+        val stringKeyFactory =
+            ConsumerRecordFactory(StringSerializer(), StringSerializer())
+
+        val lobbyWithOneGame = GameLobby()
+        lobbyWithOneGame.games =  listOf(Game(gameId, Visibility
+            .Public,
+            clientId))
+        val cr: ConsumerRecord<ByteArray, ByteArray> =
+            stringKeyFactory.create(
+                Topics.GAME_LOBBY_CHANGELOG,
+                GameLobby.TRIVIAL_KEY, jsonMapper.writeValueAsString(lobbyWithOneGame)
+            )
+
+        testDriver.pipeInput(cr)
+
+
+        val uuidKeyFactory =
+            ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
         val disconnectEv = ClientDisconnected(
             clientId = clientId
         )
 
         testDriver.pipeInput(
-            factory.create(
+            uuidKeyFactory.create(
                 Topics.CLIENT_DISCONNECTED,
                 clientId,
                 jsonMapper.writeValueAsString(disconnectEv)
@@ -51,16 +69,14 @@ class ClientDisconnectedTest {
                 StringDeserializer()
             )
 
-        val actualGameLobby = jsonMapper.readValue(
-            gameLobbyOutput.value(), GameLobby::class
-                .java
-        )
+
+        val expectedGameLobby = GameLobby()
 
         OutputVerifier.compareKeyValue(
             gameLobbyOutput,
             clientId,
             jsonMapper.writeValueAsString(
-                TODO()
+                expectedGameLobby
             )
         )
     }
