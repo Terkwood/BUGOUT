@@ -296,7 +296,7 @@ class Application(private val brokers: String) {
         aggregateAll.toStream()
             .map { k, v ->
                 val json = jsonMapper.writeValueAsString(v)
-                println("🏟                   GAMLOBBY $json")
+                println("🏟                    GAMLOBBY $json")
                 KeyValue(k, json)
             }.to(
                 Topics.GAME_LOBBY_CHANGELOG,
