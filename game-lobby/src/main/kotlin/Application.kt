@@ -120,8 +120,6 @@ class Application(private val brokers: String) {
                                 g.gameId == jpg.gameId
                     }
 
-                println("🍿 Popping private game  ${someGame.gameId.short()}")
-
                 KeyValue(
                     jpg.clientId,
                     GameLobbyCommand(
@@ -413,8 +411,6 @@ class Application(private val brokers: String) {
                         g.visibility == Visibility
                             .Public
                     }
-
-                println("🍿 Popping public game  ${someGame.gameId.short()}")
 
                 KeyValue(
                     fpg.clientId,
