@@ -49,6 +49,12 @@ pub struct ClientHeartbeat {
     pub heartbeat_type: HeartbeatType,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ClientDisconnected {
+    #[serde(rename = "clientId")]
+    pub client_id: ClientId,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub enum KafkaCommands {
     MakeMove(MakeMoveCommand),
@@ -58,4 +64,5 @@ pub enum KafkaCommands {
     CreateGame(CreateGameKafkaCommand),
     ChooseColorPref(ChooseColorPrefKafkaCommand),
     ClientHeartbeat(ClientHeartbeat),
+    ClientDisconnected(ClientDisconnected),
 }

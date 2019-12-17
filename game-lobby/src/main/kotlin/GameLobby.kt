@@ -7,7 +7,7 @@ data class Game(
 )
 
 data class GameLobbyCommand(val game: Game, val lobbyCommand: LobbyCommand)
-enum class LobbyCommand { Open, Ready }
+enum class LobbyCommand { Open, Ready, Abandon }
 
 
 class GameLobby {
@@ -18,6 +18,8 @@ class GameLobby {
             LobbyCommand.Open ->
                 games + command.game
             LobbyCommand.Ready ->
+                games - command.game
+            LobbyCommand.Abandon ->
                 games - command.game
         }
 

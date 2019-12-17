@@ -1,1 +1,1 @@
-enum class Player { BLACK, WHITE }
+enum class Player { BLACK }

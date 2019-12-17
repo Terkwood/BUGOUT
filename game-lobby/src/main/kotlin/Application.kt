@@ -1,4 +1,3 @@
-import org.apache.kafka.clients.KafkaClient
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -9,9 +8,6 @@ import serdes.AllOpenGamesDeserializer
 import serdes.AllOpenGamesSerializer
 import serdes.jsonMapper
 import java.util.*
-import org.apache.kafka.streams.errors.InvalidStateStoreException
-import org.apache.kafka.streams.state.QueryableStoreTypes
-
 
 const val BROKERS = "kafka:9092"
 
@@ -46,44 +42,7 @@ class Application(private val brokers: String) {
 
         buildPublicGameStreams(streamsBuilder, gameLobby)
 
-        val gameStatesChangeLog: KStream<GameId, GameStateTurnOnly> =
-            streamsBuilder.stream<UUID, String>(
-                Topics.GAME_STATES_CHANGELOG,
-                Consumed.with(Serdes.UUID(), Serdes.String())
-            ).mapValues { v ->
-                jsonMapper.readValue(
-                    v,
-                    GameStateTurnOnly::class.java
-                )
-            }
-
-        val gameStatesTurnOne =
-            gameStatesChangeLog
-                .filter { _, gameState -> gameState.turn == 1 }
-
-        // we need to join game states changelog against the lobby
-        // so that we can figure out the creator of the game,
-        // and correctly announce game ready
-        // game states changelog is a stream, here
-        val gslKVMapper: KeyValueMapper<GameId, GameStateTurnOnly,
-                String> =
-            KeyValueMapper { _: GameId, // left key
-                             _: GameStateTurnOnly ->
-                // left value
-
-                // use a trivial join, so that all queries are routed to the same store
-                GameLobby.TRIVIAL_KEY
-            }
-
-        val gslValueJoiner: ValueJoiner<GameStateTurnOnly,
-                GameLobby, GameStateLobby> =
-            ValueJoiner { leftValue:
-                          GameStateTurnOnly,
-                          rightValue:
-                          GameLobby ->
-                GameStateLobby(leftValue, rightValue)
-            }
-
+        buildAbandonGameStreams(streamsBuilder, gameLobby)
 
         val joinPrivateGameStream: KStream<ClientId, JoinPrivateGame> =
             streamsBuilder.stream<ClientId, String>(
@@ -99,9 +58,8 @@ class Application(private val brokers: String) {
 
         val joinPrivateKVM: KeyValueMapper<ClientId, JoinPrivateGame,
                 String> =
-            KeyValueMapper { _: ClientId, // left key
-                             _: JoinPrivateGame ->
-                // left value
+            KeyValueMapper { _: ClientId,           // left key
+                             _: JoinPrivateGame ->  // left value
 
                 // use a trivial join, so that all queries are routed to the same store
                 GameLobby.TRIVIAL_KEY
@@ -161,8 +119,6 @@ class Application(private val brokers: String) {
                         g.visibility == Visibility.Private &&
                                 g.gameId == jpg.gameId
                     }
-
-                println("Popping private game  ${someGame.gameId.short()}")
 
                 KeyValue(
                     jpg.clientId,
@@ -307,7 +263,7 @@ class Application(private val brokers: String) {
      */
     private fun buildGameLobbyTable(streamsBuilder: StreamsBuilder): GlobalKTable<String, GameLobby> {
 
-        val aggregateAll =
+        @Suppress("DEPRECATION") val aggregateAll: KTable<String, GameLobby> =
             streamsBuilder.stream<String, String>(
                 Topics.GAME_LOBBY_COMMANDS,
                 Consumed.with(Serdes.String(), Serdes.String())
@@ -340,7 +296,7 @@ class Application(private val brokers: String) {
         aggregateAll.toStream()
             .map { k, v ->
                 val json = jsonMapper.writeValueAsString(v)
-                println("Aggregated $json")
+                println("🏟                   GAMLOBBY $json")
                 KeyValue(k, json)
             }.to(
                 Topics.GAME_LOBBY_CHANGELOG,
@@ -380,9 +336,8 @@ class Application(private val brokers: String) {
                 }
 
         val fpgKeyJoiner: KeyValueMapper<ClientId, FindPublicGame, String> =
-            KeyValueMapper { _: ClientId, // left key
-                             _: FindPublicGame ->
-                // left value
+            KeyValueMapper { _: ClientId,          // left key
+                             _: FindPublicGame ->  // left value
 
                 // use a trivial join, so that all queries are routed to the same store
                 GameLobby.TRIVIAL_KEY
@@ -457,8 +412,6 @@ class Application(private val brokers: String) {
                             .Public
                     }
 
-                println("Popping public game  ${someGame.gameId.short()}")
-
                 KeyValue(
                     fpg.clientId,
                     GameLobbyCommand(
@@ -505,9 +458,70 @@ class Application(private val brokers: String) {
 
     }
 
-    private fun waitForTopics(topics: Array<String>, props: java.util
-    .Properties) {
-        print("Waiting for topics ")
+    private fun buildAbandonGameStreams(streamsBuilder: StreamsBuilder,
+                                        gameLobby: GlobalKTable<String,
+                                                GameLobby>) {
+        val clientDisconnected: KStream<ClientId, ClientDisconnected> =
+            streamsBuilder.stream<ClientId, String>(
+                Topics.CLIENT_DISCONNECTED,
+                Consumed.with(Serdes.UUID(), Serdes.String())
+            )
+                .mapValues { v ->
+                    jsonMapper.readValue(
+                        v,
+                        ClientDisconnected::class.java
+                    )
+                }
+
+        val kvm: KeyValueMapper<ClientId, ClientDisconnected,
+                String> =
+            KeyValueMapper { _: ClientId,           // left key
+                             _: ClientDisconnected ->  // left value
+
+                // use a trivial join, so that all queries are routed to the same store
+                GameLobby.TRIVIAL_KEY
+            }
+
+        val valJoiner: ValueJoiner<ClientDisconnected, GameLobby,
+                Pair<ClientDisconnected, GameLobby>> =
+            ValueJoiner { leftValue:
+                          ClientDisconnected,
+                          rightValue:
+                          GameLobby ->
+                Pair(leftValue, rightValue)
+            }
+
+        val joined: KStream<ClientId, Pair<ClientDisconnected,GameLobby>> =
+            clientDisconnected.join(gameLobby,kvm,valJoiner)
+
+        val lobbyContainsClientId: KStream<ClientId, Pair<ClientDisconnected, GameLobby>> =
+            joined.filter { clientId, clientIdLobby  ->
+                clientIdLobby.second.games
+                    .map{it.creator}
+                    .contains(clientId)
+        }
+
+        val abandonGameCommand: KStream<String, GameLobbyCommand> =
+            lobbyContainsClientId.map{ clientId, cdgl ->
+            val theirGame = cdgl.second.games.first{it.creator == clientId}
+            KeyValue(GameLobby.TRIVIAL_KEY, GameLobbyCommand(
+                game = theirGame,
+                lobbyCommand = LobbyCommand.Abandon
+            ))
+        }
+
+        abandonGameCommand
+            .mapValues { v ->  jsonMapper.writeValueAsString(v) }
+            .to(Topics.GAME_LOBBY_COMMANDS,
+                Produced.with(
+                    Serdes.String(),
+                    Serdes.String())
+        )
+    }
+
+    private fun waitForTopics(topics: Array<String>, props:
+    Properties) {
+        print("⏲ Waiting for topics ")
         val client = AdminClient.create(props)
 
         var topicsReady = false
@@ -522,7 +536,7 @@ class Application(private val brokers: String) {
             print(".")
         }
 
-        println(" done!")
+        println(" done! 🏁")
     }
 }
 

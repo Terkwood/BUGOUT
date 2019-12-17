@@ -65,7 +65,11 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
                         write(&producer, CHOOSE_COLOR_PREF_TOPIC, &serde_json::to_string(&c),&c.client_id.to_string())
                     ,
                     Ok(KafkaCommands::ClientHeartbeat(h)) =>
-                        write(&producer, CLIENT_HEARTBEAT_TOPIC, &serde_json::to_string(&h),&h.client_id.to_string()),
+                        write(&producer, CLIENT_HEARTBEAT_TOPIC, &serde_json::to_string(&h),&h.client_id.to_string())
+                    ,
+                    Ok(KafkaCommands::ClientDisconnected(c)) =>
+                        write(&producer, CLIENT_DISCONNECTED_TOPIC, &serde_json::to_string(&c), &c.client_id.to_string())
+                    ,
                     Err(e) => println!("💩 Unable to receive command via kafka channel: {:?}", e),
                 }
         }
@@ -197,7 +201,6 @@ fn start_consumer(
                     SHUTDOWN_TOPIC => {
                         let deserialized: Result<ShutdownEvent, _> = serde_json::from_str(payload);
 
-                        println!("consume shutdown kafka topic");
                         match deserialized {
                             Err(e) => println!("failed to deserialize shutdown event {}", e),
                             Ok(_s) => {

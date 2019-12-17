@@ -365,6 +365,17 @@ impl Handler for WsSession {
         if let Some(t) = self.channel_recv_timeout.take() {
             self.ws_out.cancel(t).unwrap();
         }
+
+        // This is ultimately consumed by game lobby
+        // and helps clean up abandoned games
+        if let Err(e) = self
+            .kafka_commands_in
+            .send(KafkaCommands::ClientDisconnected(ClientDisconnected {
+                client_id: self.client_id,
+            }))
+        {
+            println!("Couldn't send client disconnect to kafka {}", e)
+        }
     }
 
     fn on_error(&mut self, err: Error) {
