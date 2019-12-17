@@ -74,7 +74,6 @@ impl Monitor {
         // ignore order, but minimal shuffling
         for i in (0..self.0.len()).rev() {
             if is_expired(self.0[i], *ALLOWED_IDLE_SECS) {
-                println!("Expired: {:?}", self.0[i]);
                 self.0.swap_remove(i);
             }
         }
