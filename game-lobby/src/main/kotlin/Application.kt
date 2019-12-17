@@ -1,4 +1,3 @@
-import org.apache.kafka.clients.KafkaClient
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -9,9 +8,6 @@ import serdes.AllOpenGamesDeserializer
 import serdes.AllOpenGamesSerializer
 import serdes.jsonMapper
 import java.util.*
-import org.apache.kafka.streams.errors.InvalidStateStoreException
-import org.apache.kafka.streams.state.QueryableStoreTypes
-
 
 const val BROKERS = "kafka:9092"
 
@@ -47,44 +43,6 @@ class Application(private val brokers: String) {
         buildPublicGameStreams(streamsBuilder, gameLobby)
 
         buildAbandonGameStreams(streamsBuilder, gameLobby)
-
-        val gameStatesChangeLog: KStream<GameId, GameStateTurnOnly> =
-            streamsBuilder.stream<UUID, String>(
-                Topics.GAME_STATES_CHANGELOG,
-                Consumed.with(Serdes.UUID(), Serdes.String())
-            ).mapValues { v ->
-                jsonMapper.readValue(
-                    v,
-                    GameStateTurnOnly::class.java
-                )
-            }
-
-        val gameStatesTurnOne =
-            gameStatesChangeLog
-                .filter { _, gameState -> gameState.turn == 1 }
-
-        // we need to join game states changelog against the lobby
-        // so that we can figure out the creator of the game,
-        // and correctly announce game ready
-        // game states changelog is a stream, here
-        val gslKVMapper: KeyValueMapper<GameId, GameStateTurnOnly,
-                String> =
-            KeyValueMapper { _: GameId,              // left key
-                             _: GameStateTurnOnly -> // left value
-
-                // use a trivial join, so that all queries are routed to the same store
-                GameLobby.TRIVIAL_KEY
-            }
-
-        val gslValueJoiner: ValueJoiner<GameStateTurnOnly,
-                GameLobby, GameStateLobby> =
-            ValueJoiner { leftValue:
-                          GameStateTurnOnly,
-                          rightValue:
-                          GameLobby ->
-                GameStateLobby(leftValue, rightValue)
-            }
-
 
         val joinPrivateGameStream: KStream<ClientId, JoinPrivateGame> =
             streamsBuilder.stream<ClientId, String>(
@@ -307,7 +265,7 @@ class Application(private val brokers: String) {
      */
     private fun buildGameLobbyTable(streamsBuilder: StreamsBuilder): GlobalKTable<String, GameLobby> {
 
-        val aggregateAll =
+        @Suppress("DEPRECATION") val aggregateAll: KTable<String, GameLobby> =
             streamsBuilder.stream<String, String>(
                 Topics.GAME_LOBBY_COMMANDS,
                 Consumed.with(Serdes.String(), Serdes.String())
@@ -565,8 +523,8 @@ class Application(private val brokers: String) {
         )
     }
 
-    private fun waitForTopics(topics: Array<String>, props: java.util
-    .Properties) {
+    private fun waitForTopics(topics: Array<String>, props:
+    Properties) {
         print("⏲ Waiting for topics ")
         val client = AdminClient.create(props)
 
