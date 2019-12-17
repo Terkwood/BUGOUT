@@ -10,11 +10,6 @@
 - Uses a [fork of Sabaki](https://github.com/Terkwood/Sabaki) for the web UI
 - A [public-facing websocket gateway](gateway/README.md) communicates with the browser
 - [Kotlin & Kafka streams adjudicates games](judge/README.md), [announces moves](changelog/README.md), [provides game lobby functionality](game-lobby/README.md), and [implements fair color choice for the players](color-chooser/README.md).
-- [A microservice to provide game history on request](history-provider/README.md)
-
-## Data Flow
-
-Judge emits move data to `bugout-move-accepted-ev`, which is an input to changelog.  Changelog emits moves to `bugout-move-made-ev` after recording them.  Gateway listens to `bugout-move-made-ev`.
 
 ### Kafka streams topologies
 
