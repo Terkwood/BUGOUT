@@ -237,6 +237,9 @@ pub fn start(
                                 "ERROR", err)
                         }
                     },
+                    Ok(RouterCommand::OverrideClientId {
+                        prev_id: _, new_id: _
+                    }) => unimplemented!(),
                     Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                 },
             recv(kafka_events_out) -> event =>
@@ -334,8 +337,8 @@ pub enum RouterCommand {
         client_id: ClientId,
         events_in: Sender<ClientEvents>,
     },
-    UpdateClientId {
+    OverrideClientId {
         prev_id: ClientId,
         new_id: ClientId,
-    }
+    },
 }
