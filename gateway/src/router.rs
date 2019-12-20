@@ -234,14 +234,17 @@ pub fn start(
                     },
                     Ok(RouterCommand::DeleteSession{session_id, game_id}) =>
                         router.delete_session(session_id, game_id),
-                    Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
-                        router.reconnect(client_id, game_id, events_in.clone());
-                        if let Err(err) = events_in.send(ClientEvents::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
-                            println!(
-                                "😦 {} {} {:<8} could not send reconnect reply {}",
-                                short_uuid(client_id),
-                                short_uuid(game_id),
-                                "ERROR", err)
+                    Ok(RouterCommand::Reconnect{client_id, game_id, req_id }) => {
+                        if let Some(session_sender) = router.client_sessions.get(&client_id) {
+                            let event_clone = session_sender.events_in.clone();
+                            router.reconnect(client_id, game_id, event_clone.clone());
+                            if let Err(err) = event_clone.send(ClientEvents::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
+                                println!(
+                                    "😦 {} {} {:<8} could not send reconnect reply {}",
+                                    short_uuid(client_id),
+                                    short_uuid(game_id),
+                                    "ERROR", err)
+                            }
                         }
                     },
                     Ok(RouterCommand::IdentifyClient {
@@ -339,7 +342,6 @@ pub enum RouterCommand {
     Reconnect {
         client_id: ClientId,
         game_id: GameId,
-        events_in: Sender<ClientEvents>,
         req_id: ReqId,
     },
     AddSession {

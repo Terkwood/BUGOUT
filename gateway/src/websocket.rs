@@ -189,14 +189,12 @@ impl Handler for WsSession {
                     self.current_game = Some(game_id);
 
                     println!("🔌 {} RECONN", session_code(self));
-                    let (events_in, events_out) = client_event_channels();
 
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
                     if let Err(e) = self.router_commands_in.send(RouterCommand::Reconnect {
                         client_id,
                         game_id,
-                        events_in,
                         req_id,
                     }) {
                         println!(
@@ -206,9 +204,6 @@ impl Handler for WsSession {
                             e
                         )
                     }
-
-                    //.. and track the out-channel so we can select! on it
-                    self.events_out = Some(events_out);
 
                     Ok(self.observe_game())
                 } else {
@@ -232,11 +227,11 @@ impl Handler for WsSession {
                 Ok(self.observe_game())
             }
             Ok(ClientCommands::FindPublicGame) => {
-                println!("🤝 {} FINDPUBG", session_code(self));
-
                 // Ignore this request if we already have a game
                 // in progress.
                 if let (None, Some(client_id)) = (self.current_game, self.client_id) {
+                    println!("🤝 {} FINDPUBG", session_code(self));
+
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
                     if let Err(e) = self.kafka_commands_in.send(KafkaCommands::FindPublicGame(
@@ -253,12 +248,10 @@ impl Handler for WsSession {
                 Ok(self.observe_game())
             }
             Ok(ClientCommands::CreatePrivateGame) => {
-                println!("🔒 {} CRETPRIV", session_code(self));
-
                 // Ignore this request if we already have a game
                 // in progress.
                 if let (None, Some(client_id)) = (self.current_game, self.client_id) {
-                    let (events_in, events_out) = client_event_channels();
+                    println!("🔒 {} CRETPRIV", session_code(self));
 
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
@@ -272,22 +265,6 @@ impl Handler for WsSession {
                     {
                         println!("ERROR on kafka send join private game {:?}", e)
                     }
-                    // ..and let the router know we're interested in it,
-                    // so that we can receive updates
-                    if let Err(e) = self.router_commands_in.send(RouterCommand::AddSession {
-                        session_id: self.session_id,
-                        events_in,
-                    }) {
-                        println!(
-                            "😠 {} {:<8} sending router command to add client {}",
-                            session_code(self),
-                            "ERROR",
-                            e
-                        )
-                    }
-
-                    //.. and track the out-channel so we can select! on it
-                    self.events_out = Some(events_out);
                 }
                 Ok(self.observe_game())
             }
