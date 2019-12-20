@@ -341,12 +341,11 @@ impl Handler for WsSession {
                     complain_no_client_id()
                 }
             }
-            Ok(ClientCommands::Identify(_id)) => {
+            Ok(ClientCommands::Identify(IdentifyCommand{client_id})) => {
                 println!("🆔  {} IDENTIFY", session_code(self));
 
-                unimplemented!()
+                Ok(self.client_id = Some(client_id))
             }
-
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",
