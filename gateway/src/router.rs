@@ -19,7 +19,7 @@ const GAME_CLIENT_CLEANUP_PERIOD_MS: u64 = 10_000;
 /// Keeps track of clients interested in various games
 /// Each client has an associated crossbeam Sender for BUGOUT events
 struct Router {
-    pub game_clients: HashMap<GameId, GameClients>,
+    pub game_sessions: HashMap<GameId, GameSessions>,
     pub last_cleanup: Instant,
     pub sessions: HashMap<SessionId, Sender<ClientEvents>>,
 }
@@ -27,7 +27,7 @@ struct Router {
 impl Router {
     pub fn new() -> Router {
         Router {
-            game_clients: HashMap::new(),
+            game_sessions: HashMap::new(),
             last_cleanup: Instant::now(),
             sessions: HashMap::new(),
         }
@@ -51,14 +51,14 @@ impl Router {
 
     pub fn forward_by_game_id(&self, ev: ClientEvents) {
         if let Some(gid) = &ev.game_id() {
-            if let Some(GameClients {
-                clients,
+            if let Some(GameSessions {
+                sessions,
                 playerup: _,
                 modified_at: _,
-            }) = self.game_clients.get(gid)
+            }) = self.game_sessions.get(gid)
             {
-                for c in clients {
-                    if let Err(err) = c.events_in.send(ev.clone()) {
+                for s in sessions {
+                    if let Err(err) = s.events_in.send(ev.clone()) {
                         println!(
                             "😑 {} {} {:<8} forwarding event {}",
                             &crate::EMPTY_SHORT_UUID,
@@ -73,7 +73,7 @@ impl Router {
     }
 
     pub fn playerup(&self, game_id: GameId) -> Player {
-        self.game_clients
+        self.game_sessions
             .get(&game_id)
             .map(|game_client| &game_client.playerup)
             .unwrap_or(&Player::BLACK)
@@ -83,22 +83,22 @@ impl Router {
     /// Note that the game state somehow changed, so that
     /// we don't purge it prematurely in cleanup_game_clients()
     pub fn observe_game(&mut self, game_id: GameId) {
-        self.game_clients
+        self.game_sessions
             .get_mut(&game_id)
             .map(|gs| gs.observe_game());
     }
 
     pub fn set_playerup(&mut self, game_id: GameId, player: Player) {
         let c = player.clone();
-        let default = GameClients {
-            clients: vec![],
+        let default = GameSessions {
+            sessions: vec![],
             playerup: c,
             modified_at: Instant::now(),
         };
-        let gs = self.game_clients.get_mut(&game_id);
+        let gs = self.game_sessions.get_mut(&game_id);
         match gs {
             None => {
-                self.game_clients.insert(game_id, default);
+                self.game_sessions.insert(game_id, default);
             }
             Some(gs) => {
                 gs.playerup = player;
@@ -115,11 +115,11 @@ impl Router {
                 events_in: events_in.clone(),
             };
 
-            match self.game_clients.get_mut(&game_id) {
-                Some(gs) => gs.add_client(newbie),
+            match self.game_sessions.get_mut(&game_id) {
+                Some(gs) => gs.add_session(newbie),
                 None => {
-                    let with_newbie = GameClients::new(newbie);
-                    self.game_clients.insert(game_id, with_newbie);
+                    let with_newbie = GameSessions::new(newbie);
+                    self.game_sessions.insert(game_id, with_newbie);
                 }
             }
         }
@@ -138,19 +138,19 @@ impl Router {
             events_in,
         };
 
-        match self.game_clients.get_mut(&game_id) {
-            Some(gs) => gs.add_client(cs),
+        match self.game_sessions.get_mut(&game_id) {
+            Some(gs) => gs.add_session(cs),
             None => {
-                self.game_clients.insert(game_id, GameClients::new(cs));
+                self.game_sessions.insert(game_id, GameSessions::new(cs));
             }
         }
     }
 
-    fn find_dead_game_clients(&mut self) -> Vec<GameId> {
+    fn find_dead_game_sessions(&mut self) -> Vec<GameId> {
         let mut to_delete = vec![];
 
-        for (game_id, game_client) in self.game_clients.iter() {
-            if game_client.clients.len() == 0 {
+        for (game_id, game_client) in self.game_sessions.iter() {
+            if game_client.sessions.len() == 0 {
                 let since = Instant::now().checked_duration_since(
                     game_client
                         .modified_at
@@ -172,15 +172,15 @@ impl Router {
         let since = Instant::now().checked_duration_since(self.last_cleanup);
         if let Some(dur) = since {
             if dur.as_millis() > GAME_CLIENT_CLEANUP_PERIOD_MS.into() {
-                let to_delete = self.find_dead_game_clients();
+                let to_delete = self.find_dead_game_sessions();
                 let mut count = 0;
                 for game_id in to_delete {
-                    if let Some(g) = self.game_clients.get(&game_id) {
-                        for c in &g.clients {
+                    if let Some(g) = self.game_sessions.get(&game_id) {
+                        for c in &g.sessions {
                             self.sessions.remove_entry(&c.session_id);
                         }
                     }
-                    self.game_clients.remove_entry(&game_id);
+                    self.game_sessions.remove_entry(&game_id);
 
                     count += 1;
                 }
@@ -197,8 +197,8 @@ impl Router {
     }
 
     pub fn delete_session(&mut self, session_id: SessionId, game_id: GameId) {
-        if let Some(game_client) = self.game_clients.get_mut(&game_id) {
-            game_client.clients.retain(|c| c.session_id != session_id);
+        if let Some(game_client) = self.game_sessions.get_mut(&game_id) {
+            game_client.sessions.retain(|c| c.session_id != session_id);
         }
 
         self.sessions.remove(&session_id);
@@ -293,23 +293,23 @@ pub fn start(
     });
 }
 
-struct GameClients {
-    pub clients: Vec<SessionSender>,
+struct GameSessions {
+    pub sessions: Vec<SessionSender>,
     pub playerup: Player,
     pub modified_at: Instant,
 }
 
-impl GameClients {
-    pub fn new(client: SessionSender) -> GameClients {
-        GameClients {
-            clients: vec![client],
+impl GameSessions {
+    pub fn new(session: SessionSender) -> GameSessions {
+        GameSessions {
+            sessions: vec![session],
             playerup: Player::BLACK,
             modified_at: Instant::now(),
         }
     }
 
-    pub fn add_client(&mut self, client: SessionSender) {
-        self.clients.push(client);
+    pub fn add_session(&mut self, session: SessionSender) {
+        self.sessions.push(session);
         self.modified_at = Instant::now()
     }
 
