@@ -342,9 +342,10 @@ impl Handler for WsSession {
                 }
             }
             Ok(ClientCommands::Identify(IdentifyCommand{client_id})) => {
-                println!("🆔  {} IDENTIFY", session_code(self));
+                self.client_id = Some(client_id);
+                println!("🆔 {} IDENTIFY", session_code(self));
 
-                Ok(self.client_id = Some(client_id))
+                Ok(())
             }
             Err(_err) => {
                 println!(
