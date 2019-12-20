@@ -65,9 +65,9 @@ impl WsSession {
     }
 
     fn notify_router_close(&mut self) {
-        if let Some(game_id) = self.current_game {
+        if let (Some(game_id), Some(client_id)) = (self.current_game, self.client_id) {
             if let Err(e) = self.router_commands_in.send(RouterCommand::DeleteClient {
-                client_id: self.client_id,
+                client_id,
                 game_id,
             }) {
                 println!(
@@ -293,13 +293,13 @@ impl Handler for WsSession {
                 // Ignore this request if we already have a game
                 // in progress.
                 if self.current_game.is_none() {
-                    if let Some(game_id) = game_id.decode() {
+                    if let (Some(game_id), Some(client_id)) = (game_id.decode(), self.client_id) {
                         if let Err(e) = self
                             .kafka_commands_in
                             .send(KafkaCommands::JoinPrivateGame(
                                 JoinPrivateGameKafkaCommand {
                                     game_id,
-                                    client_id: self.client_id,
+                                    client_id,
                                 },
                             ))
                             .map_err(|e| ws::Error::from(Box::new(e)))
@@ -313,16 +313,18 @@ impl Handler for WsSession {
                 Ok(self.observe_game())
             }
             Ok(ClientCommands::ChooseColorPref(ChooseColorPrefClientCommand { color_pref })) => {
-                println!("🗳  {} CHSCLRPF", session_code(self));
+                if let Some(client_id) = self.client_id {
+                    println!("🗳  {} CHSCLRPF", session_code(self));
 
-                self.kafka_commands_in
-                    .send(KafkaCommands::ChooseColorPref(
-                        ChooseColorPrefKafkaCommand {
-                            client_id: self.client_id,
-                            color_pref,
-                        },
-                    ))
-                    .map_err(|e| ws::Error::from(Box::new(e)))
+                    self.kafka_commands_in
+                        .send(KafkaCommands::ChooseColorPref(
+                            ChooseColorPrefKafkaCommand {
+                                client_id,
+                                color_pref,
+                            },
+                        ))
+                        .map_err(|e| ws::Error::from(Box::new(e)))
+                }
             }
             Ok(ClientCommands::ProvideIdleStatus) => {
                 println!("🏕  {} PROVIDLE", session_code(self));
