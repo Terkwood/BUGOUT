@@ -27,7 +27,7 @@ const CHANNEL_RECV_TIMEOUT_MS: u64 = 10;
 
 // WebSocket handler
 pub struct WsSession {
-    pub client_id: ClientId,
+    pub session_id: SessionId,
     pub ws_out: Sender,
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
@@ -38,18 +38,18 @@ pub struct WsSession {
     pub req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
     pub current_game: Option<GameId>,
     pub expire_after: std::time::Instant,
+    pub client_id: Option<ClientId>,
 }
 
 impl WsSession {
     pub fn new(
-        client_id: ClientId,
         ws_out: ws::Sender,
         kafka_commands_in: crossbeam_channel::Sender<KafkaCommands>,
         router_commands_in: crossbeam_channel::Sender<RouterCommand>,
         req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
     ) -> WsSession {
         WsSession {
-            client_id,
+            session_id: uuid::Uuid::new_v4(),
             ws_out,
             ping_timeout: None,
             expire_timeout: None,
@@ -60,6 +60,7 @@ impl WsSession {
             req_idle_status_in,
             current_game: None,
             expire_after: next_expiry(),
+            client_id: None,
         }
     }
 

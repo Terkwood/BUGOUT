@@ -56,7 +56,6 @@ fn main() {
 
     ws::listen("0.0.0.0:3012", |ws_out| {
         WsSession::new(
-            uuid::Uuid::new_v4(),
             ws_out,
             kafka_commands_in.clone(),
             router_commands_in.clone(),
