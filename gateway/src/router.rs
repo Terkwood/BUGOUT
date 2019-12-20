@@ -21,7 +21,7 @@ const GAME_CLIENT_CLEANUP_PERIOD_MS: u64 = 10_000;
 struct Router {
     pub game_clients: HashMap<GameId, GameClients>,
     pub last_cleanup: Instant,
-    pub clients: HashMap<ClientId, Sender<ClientEvents>>, // TODO
+    pub sessions: HashMap<SessionId, Sender<ClientEvents>>,
 }
 
 impl Router {
@@ -29,12 +29,12 @@ impl Router {
         Router {
             game_clients: HashMap::new(),
             last_cleanup: Instant::now(),
-            clients: HashMap::new(),
+            sessions: HashMap::new(),
         }
     }
 
     pub fn forward_by_client_id(&self, client_id: ClientId, ev: ClientEvents) {
-        if let Some(events_in) = self.clients.get(&client_id) {
+        if let Some(events_in) = self.sessions.get(&client_id) {
             if let Err(e) = events_in.send(ev.clone()) {
                 println!(
                     "😗 {} {:<8} {:<8} forwarding event by client ID {}",
@@ -61,7 +61,7 @@ impl Router {
                     if let Err(err) = c.events_in.send(ev.clone()) {
                         println!(
                             "😑 {} {} {:<8} forwarding event {}",
-                            short_uuid(c.client_id),
+                            &crate::EMPTY_SHORT_UUID,
                             short_uuid(*gid),
                             "ERROR",
                             err
@@ -107,11 +107,11 @@ impl Router {
         }
     }
 
-    pub fn route_new_game(&mut self, client_id: ClientId, game_id: GameId) {
-        let x = self.clients.get(&client_id);
+    pub fn route_new_game(&mut self, session_id: SessionId, game_id: GameId) {
+        let x = self.sessions.get(&session_id);
         if let Some(events_in) = x {
-            let newbie = ClientSender {
-                client_id,
+            let newbie = SessionSender {
+                session_id,
                 events_in: events_in.clone(),
             };
 
@@ -125,11 +125,16 @@ impl Router {
         }
     }
 
-    fn reconnect(&mut self, client_id: ClientId, game_id: GameId, events_in: Sender<ClientEvents>) {
-        self.clients.insert(client_id, events_in.clone());
+    fn reconnect(
+        &mut self,
+        session_id: SessionId,
+        game_id: GameId,
+        events_in: Sender<ClientEvents>,
+    ) {
+        self.sessions.insert(session_id, events_in.clone());
 
-        let cs = ClientSender {
-            client_id,
+        let cs = SessionSender {
+            session_id,
             events_in,
         };
 
@@ -172,7 +177,7 @@ impl Router {
                 for game_id in to_delete {
                     if let Some(g) = self.game_clients.get(&game_id) {
                         for c in &g.clients {
-                            self.clients.remove_entry(&c.client_id);
+                            self.sessions.remove_entry(&c.session_id);
                         }
                     }
                     self.game_clients.remove_entry(&game_id);
@@ -191,13 +196,12 @@ impl Router {
         }
     }
 
-    // TODO
-    pub fn delete_client(&mut self, client_id: ClientId, game_id: GameId) {
+    pub fn delete_session(&mut self, session_id: SessionId, game_id: GameId) {
         if let Some(game_client) = self.game_clients.get_mut(&game_id) {
-            game_client.clients.retain(|c| c.client_id != client_id);
+            game_client.clients.retain(|c| c.session_id != session_id);
         }
 
-        self.clients.remove(&client_id);
+        self.sessions.remove(&session_id);
 
         self.cleanup_game_clients();
     }
@@ -224,10 +228,10 @@ pub fn start(
                     // We'll use this to send messages back to the browser,
                     // later
                     Ok(RouterCommand::AddSession { session_id, events_in }) => {
-                        router.clients.insert(session_id, events_in);
+                        router.sessions.insert(session_id, events_in);
                     },
                     Ok(RouterCommand::DeleteSession{session_id, game_id}) =>
-                        router.delete_client(session_id, game_id),
+                        router.delete_session(session_id, game_id),
                     Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
                         router.reconnect(client_id, game_id, events_in.clone());
                         if let Err(err) = events_in.send(ClientEvents::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
@@ -290,13 +294,13 @@ pub fn start(
 }
 
 struct GameClients {
-    pub clients: Vec<ClientSender>,
+    pub clients: Vec<SessionSender>,
     pub playerup: Player,
     pub modified_at: Instant,
 }
 
 impl GameClients {
-    pub fn new(client: ClientSender) -> GameClients {
+    pub fn new(client: SessionSender) -> GameClients {
         GameClients {
             clients: vec![client],
             playerup: Player::BLACK,
@@ -304,7 +308,7 @@ impl GameClients {
         }
     }
 
-    pub fn add_client(&mut self, client: ClientSender) {
+    pub fn add_client(&mut self, client: SessionSender) {
         self.clients.push(client);
         self.modified_at = Instant::now()
     }
@@ -316,8 +320,8 @@ impl GameClients {
 }
 
 #[derive(Debug, Clone)]
-struct ClientSender {
-    pub client_id: ClientId,
+struct SessionSender {
+    pub session_id: SessionId,
     pub events_in: Sender<ClientEvents>,
 }
 
