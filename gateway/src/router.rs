@@ -334,4 +334,8 @@ pub enum RouterCommand {
         client_id: ClientId,
         events_in: Sender<ClientEvents>,
     },
+    UpdateClientId {
+        prev_id: ClientId,
+        new_id: ClientId,
+    }
 }
