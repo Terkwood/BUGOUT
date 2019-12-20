@@ -21,7 +21,7 @@ const GAME_CLIENT_CLEANUP_PERIOD_MS: u64 = 10_000;
 struct Router {
     pub game_clients: HashMap<GameId, GameClients>,
     pub last_cleanup: Instant,
-    pub clients: HashMap<ClientId, Sender<ClientEvents>>,
+    pub clients: HashMap<ClientId, Sender<ClientEvents>>, // TODO
 }
 
 impl Router {
@@ -191,6 +191,7 @@ impl Router {
         }
     }
 
+    // TODO
     pub fn delete_client(&mut self, client_id: ClientId, game_id: GameId) {
         if let Some(game_client) = self.game_clients.get_mut(&game_id) {
             game_client.clients.retain(|c| c.client_id != client_id);
@@ -222,11 +223,11 @@ pub fn start(
                     // client_id -> event channel mapping
                     // We'll use this to send messages back to the browser,
                     // later
-                    Ok(RouterCommand::AddClient { client_id, events_in }) => {
-                        router.clients.insert(client_id, events_in);
+                    Ok(RouterCommand::AddSession { session_id, events_in }) => {
+                        router.clients.insert(session_id, events_in);
                     },
-                    Ok(RouterCommand::DeleteClient{client_id, game_id}) =>
-                        router.delete_client(client_id, game_id),
+                    Ok(RouterCommand::DeleteSession{session_id, game_id}) =>
+                        router.delete_client(session_id, game_id),
                     Ok(RouterCommand::Reconnect{client_id, game_id, events_in, req_id }) => {
                         router.reconnect(client_id, game_id, events_in.clone());
                         if let Err(err) = events_in.send(ClientEvents::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
@@ -323,8 +324,8 @@ struct ClientSender {
 #[derive(Debug, Clone)]
 pub enum RouterCommand {
     ObserveGame(GameId),
-    DeleteClient {
-        client_id: ClientId,
+    DeleteSession {
+        session_id: SessionId,
         game_id: GameId,
     },
     Reconnect {
@@ -333,8 +334,8 @@ pub enum RouterCommand {
         events_in: Sender<ClientEvents>,
         req_id: ReqId,
     },
-    AddClient {
-        client_id: ClientId,
+    AddSession {
+        session_id: SessionId,
         events_in: Sender<ClientEvents>,
     },
     SetClientId {
