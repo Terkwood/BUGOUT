@@ -331,6 +331,11 @@ impl Handler for WsSession {
                     .send(RequestIdleStatus(self.client_id))
                     .map_err(|e| ws::Error::from(Box::new(e)))
             }
+            Ok(ClientCommands::Identify(_id)) => {
+                println!("🆔  {} IDENTIFY", session_code(self));
+
+                unimplemented!()
+            }
 
             Err(_err) => {
                 println!(

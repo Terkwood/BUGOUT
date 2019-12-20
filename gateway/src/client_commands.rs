@@ -23,6 +23,12 @@ pub struct ChooseColorPrefClientCommand {
     pub color_pref: ColorPref,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct IdentifyCommand {
+    #[serde(rename = "clientId")]
+    pub client_id: ClientId,
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(tag = "type")]
 pub enum ClientCommands {
@@ -35,6 +41,7 @@ pub enum ClientCommands {
     CreatePrivateGame,
     ChooseColorPref(ChooseColorPrefClientCommand),
     ProvideIdleStatus,
+    Identify(IdentifyCommand),
 }
 
 #[cfg(test)]

@@ -5,6 +5,7 @@ pub type GameId = Uuid;
 pub type ReqId = Uuid;
 pub type EventId = Uuid;
 pub type ClientId = Uuid;
+pub type SessionId = Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub struct Coord {

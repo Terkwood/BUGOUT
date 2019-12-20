@@ -237,8 +237,8 @@ pub fn start(
                                 "ERROR", err)
                         }
                     },
-                    Ok(RouterCommand::OverrideClientId {
-                        prev_id: _, new_id: _
+                    Ok(RouterCommand::SetClientId {
+                        session_id: _, client_id: _
                     }) => unimplemented!(),
                     Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                 },
@@ -337,8 +337,8 @@ pub enum RouterCommand {
         client_id: ClientId,
         events_in: Sender<ClientEvents>,
     },
-    OverrideClientId {
-        prev_id: ClientId,
-        new_id: ClientId,
+    SetClientId {
+        session_id: SessionId,
+        client_id: ClientId,
     },
 }
