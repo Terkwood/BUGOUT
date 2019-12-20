@@ -345,8 +345,17 @@ impl Handler for WsSession {
                 self.client_id = Some(id.client_id);
                 println!("🆔 {} IDENTIFY", session_code(self));
 
-                self.ws_out
-                    .send(serde_json::to_string(&ClientEvents::IdentityAcknowledged(id)).unwrap())
+                self.router_commands_in
+                    .send(RouterCommand::IdentifyClient {
+                        session_id: self.session_id,
+                        client_id: id.client_id,
+                    })
+                    .map_err(|e| ws::Error::from(Box::new(e)))
+                    .and_then(|_a| {
+                        self.ws_out.send(
+                            serde_json::to_string(&ClientEvents::IdentityAcknowledged(id)).unwrap(),
+                        )
+                    })
             }
             Err(_err) => {
                 println!(

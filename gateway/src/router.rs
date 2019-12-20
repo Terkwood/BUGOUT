@@ -22,6 +22,7 @@ struct Router {
     pub game_sessions: HashMap<GameId, GameSessions>,
     pub last_cleanup: Instant,
     pub sessions: HashMap<SessionId, Sender<ClientEvents>>,
+    pub client_sessions: HashMap<ClientId, SessionSender>,
 }
 
 impl Router {
@@ -30,12 +31,13 @@ impl Router {
             game_sessions: HashMap::new(),
             last_cleanup: Instant::now(),
             sessions: HashMap::new(),
+            client_sessions: HashMap::new(),
         }
     }
 
     pub fn forward_by_client_id(&self, client_id: ClientId, ev: ClientEvents) {
-        if let Some(events_in) = self.sessions.get(&client_id) {
-            if let Err(e) = events_in.send(ev.clone()) {
+        if let Some(session_sender) = self.client_sessions.get(&client_id) {
+            if let Err(e) = session_sender.events_in.send(ev.clone()) {
                 println!(
                     "😗 {} {:<8} {:<8} forwarding event by client ID {}",
                     short_uuid(client_id),
@@ -242,9 +244,11 @@ pub fn start(
                                 "ERROR", err)
                         }
                     },
-                    Ok(RouterCommand::SetClientId {
-                        session_id: _, client_id: _
-                    }) => unimplemented!(),
+                    Ok(RouterCommand::IdentifyClient {
+                        session_id, client_id,
+                    }) => if let Some(events_in) = router.sessions.get(&client_id) {
+                        router.client_sessions.insert(client_id, SessionSender{session_id, events_in:events_in.clone()});
+                    }
                     Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                 },
             recv(kafka_events_out) -> event =>
@@ -342,7 +346,7 @@ pub enum RouterCommand {
         session_id: SessionId,
         events_in: Sender<ClientEvents>,
     },
-    SetClientId {
+    IdentifyClient {
         session_id: SessionId,
         client_id: ClientId,
     },
