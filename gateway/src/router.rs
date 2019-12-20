@@ -246,7 +246,7 @@ pub fn start(
                     },
                     Ok(RouterCommand::IdentifyClient {
                         session_id, client_id,
-                    }) => if let Some(events_in) = router.sessions.get(&client_id) {
+                    }) => if let Some(events_in) = router.sessions.get(&session_id) {
                         router.client_sessions.insert(client_id, SessionSender{session_id, events_in:events_in.clone()});
                     }
                     Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
