@@ -341,11 +341,12 @@ impl Handler for WsSession {
                     complain_no_client_id()
                 }
             }
-            Ok(ClientCommands::Identify(IdentifyCommand{client_id})) => {
-                self.client_id = Some(client_id);
+            Ok(ClientCommands::Identify(id)) => {
+                self.client_id = Some(id.client_id);
                 println!("🆔 {} IDENTIFY", session_code(self));
 
-                Ok(())
+                self.ws_out
+                    .send(serde_json::to_string(&ClientEvents::IdentityAcknowledged(id)).unwrap())
             }
             Err(_err) => {
                 println!(

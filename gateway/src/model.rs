@@ -8,6 +8,12 @@ pub type ClientId = Uuid;
 pub type SessionId = Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
+pub struct Identity {
+    #[serde(rename = "clientId")]
+    pub client_id: ClientId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub struct Coord {
     pub x: u16,
     pub y: u16,
