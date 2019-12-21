@@ -224,6 +224,7 @@ pub fn start(
     thread::spawn(move || {
         let mut router = Router::new();
         loop {
+            // TODO make sure this client data is cleaned up
             println!(
                 "Router data\nses\t{:?}\ncli\t{:?}\ngame\t{:?}",
                 router.sessions, router.client_sessions, router.game_sessions
