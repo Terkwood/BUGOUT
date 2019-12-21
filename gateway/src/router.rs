@@ -62,7 +62,7 @@ impl Router {
                 for s in sessions {
                     if let Err(err) = s.events_in.send(ev.clone()) {
                         println!(
-                            "😑 {} {} {:<8} forwarding event {}",
+                            "😑 {} {} {:<8} forwarding event by game ID {}",
                             &crate::EMPTY_SHORT_UUID,
                             short_uuid(*gid),
                             "ERROR",
@@ -155,10 +155,10 @@ impl Router {
     fn find_dead_game_sessions(&mut self) -> Vec<GameId> {
         let mut to_delete = vec![];
 
-        for (game_id, game_client) in self.game_sessions.iter() {
-            if game_client.sessions.len() == 0 {
+        for (game_id, game_sessions) in self.game_sessions.iter() {
+            if game_sessions.sessions.len() == 0 {
                 let since = Instant::now().checked_duration_since(
-                    game_client
+                    game_sessions
                         .modified_at
                         .add(Duration::from_millis(GAME_CLIENT_CLEANUP_PERIOD_MS)),
                 );
@@ -209,8 +209,12 @@ impl Router {
         client_id: Option<ClientId>,
     ) {
         if let Some(gid) = game_id {
-            if let Some(game_client) = self.game_sessions.get_mut(&gid) {
-                game_client.sessions.retain(|c| c.session_id != session_id);
+            let mut sess_keys = self.sessions.keys();
+            if let Some(game_session) = self.game_sessions.get_mut(&gid) {
+                game_session.sessions.retain(|c| {
+                    c.session_id != session_id && sess_keys.any(|k| *k == c.session_id)
+                    // only keep those tied to active sessions
+                });
             }
         }
 
