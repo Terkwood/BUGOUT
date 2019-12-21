@@ -109,11 +109,15 @@ impl Router {
         }
     }
 
-    pub fn route_new_game(&mut self, session_id: SessionId, game_id: GameId) {
-        let x = self.sessions.get(&session_id);
-        if let Some(events_in) = x {
+    pub fn route_new_game(&mut self, client_id: ClientId, game_id: GameId) {
+        let x = self.client_sessions.get(&client_id);
+        if let Some(SessionSender {
+            session_id,
+            events_in,
+        }) = x
+        {
             let newbie = SessionSender {
-                session_id,
+                session_id: *session_id,
                 events_in: events_in.clone(),
             };
 
