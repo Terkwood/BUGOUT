@@ -227,7 +227,9 @@ pub fn start(
             // TODO make sure this client data is cleaned up
             println!(
                 "Router data\nses\t{:?}\ncli\t{:?}\ngame\t{:?}",
-                router.sessions, router.client_sessions, router.game_sessions
+                router.sessions.len(),
+                router.client_sessions.len(),
+                router.game_sessions.len()
             );
             select! {
             recv(router_commands_out) -> command =>
