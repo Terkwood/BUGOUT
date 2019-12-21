@@ -137,8 +137,6 @@ impl Router {
         game_id: GameId,
         events_in: Sender<ClientEvents>,
     ) {
-        self.sessions.insert(session_id, events_in.clone());
-
         let cs = SessionSender {
             session_id,
             events_in,
