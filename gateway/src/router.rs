@@ -220,6 +220,10 @@ pub fn start(
     thread::spawn(move || {
         let mut router = Router::new();
         loop {
+            println!(
+                "Router data\nses\t{:?}\ncli\t{:?}\ngame\t{:?}",
+                router.sessions, router.client_sessions, router.game_sessions
+            );
             select! {
             recv(router_commands_out) -> command =>
                 match command {
@@ -300,6 +304,7 @@ pub fn start(
     });
 }
 
+#[derive(Debug)]
 struct GameSessions {
     pub sessions: Vec<SessionSender>,
     pub playerup: Player,
