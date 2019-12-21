@@ -202,9 +202,20 @@ impl Router {
         }
     }
 
-    pub fn delete_session(&mut self, session_id: SessionId, game_id: GameId) {
-        if let Some(game_client) = self.game_sessions.get_mut(&game_id) {
-            game_client.sessions.retain(|c| c.session_id != session_id);
+    pub fn delete_session(
+        &mut self,
+        session_id: SessionId,
+        game_id: Option<GameId>,
+        client_id: Option<ClientId>,
+    ) {
+        if let Some(gid) = game_id {
+            if let Some(game_client) = self.game_sessions.get_mut(&gid) {
+                game_client.sessions.retain(|c| c.session_id != session_id);
+            }
+        }
+
+        if let Some(cid) = client_id {
+            self.client_sessions.remove(&cid);
         }
 
         self.sessions.remove(&session_id);
@@ -224,7 +235,6 @@ pub fn start(
     thread::spawn(move || {
         let mut router = Router::new();
         loop {
-            // TODO make sure this client data is cleaned up
             println!(
                 "Router data\tses {:?}\tcli {:?}\tgame {:?}",
                 router.sessions.len(),
@@ -243,8 +253,8 @@ pub fn start(
                     Ok(RouterCommand::AddSession { session_id, events_in }) => {
                         router.sessions.insert(session_id, events_in);
                     },
-                    Ok(RouterCommand::DeleteSession{session_id, game_id}) =>
-                        router.delete_session(session_id, game_id),
+                    Ok(RouterCommand::DeleteSession{session_id, game_id, client_id}) =>
+                        router.delete_session(session_id, game_id, client_id),
                     Ok(RouterCommand::Reconnect{client_id, game_id, req_id }) => {
                         if let Some(session_sender) = router.client_sessions.get(&client_id) {
                             let event_clone = session_sender.events_in.clone();
@@ -350,7 +360,8 @@ pub enum RouterCommand {
     ObserveGame(GameId),
     DeleteSession {
         session_id: SessionId,
-        game_id: GameId,
+        game_id: Option<GameId>,
+        client_id: Option<ClientId>,
     },
     Reconnect {
         client_id: ClientId,

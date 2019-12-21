@@ -65,17 +65,16 @@ impl WsSession {
     }
 
     fn notify_router_close(&mut self) {
-        if let Some(game_id) = self.current_game {
-            if let Err(e) = self.router_commands_in.send(RouterCommand::DeleteSession {
-                session_id: self.session_id,
-                game_id,
-            }) {
-                println!(
-                    "😤 {} ERROR  send router command delete client {}",
-                    session_code(self),
-                    e
-                )
-            }
+        if let Err(e) = self.router_commands_in.send(RouterCommand::DeleteSession {
+            session_id: self.session_id,
+            game_id: self.current_game,
+            client_id: self.client_id,
+        }) {
+            println!(
+                "😤 {} ERROR  send router command delete client {}",
+                session_code(self),
+                e
+            )
         }
     }
 
