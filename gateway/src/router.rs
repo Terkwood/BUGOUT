@@ -216,7 +216,6 @@ impl Router {
             }
         }
 
-        // TODO is this going to work for reestablished connections ??
         if let Some(cid) = client_id {
             self.client_sessions.remove(&cid);
         }
