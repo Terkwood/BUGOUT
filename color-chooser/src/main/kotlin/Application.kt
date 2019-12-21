@@ -166,6 +166,7 @@ class Application(private val brokers: String) {
     }
 
 
+    @Suppress("DEPRECATION")
     private fun aggregateColorPrefs(
         streamsBuilder: StreamsBuilder
     ): KTable<GameId, AggregatedPrefs> =
@@ -197,8 +198,8 @@ class Application(private val brokers: String) {
             )
 
 
-    private fun waitForTopics(topics: Array<String>, props: java.util
-    .Properties) {
+    private fun waitForTopics(topics: Array<String>, props:
+    Properties) {
         print("Waiting for topics ")
         val client = AdminClient.create(props)
 
