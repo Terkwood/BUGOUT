@@ -238,12 +238,6 @@ pub fn start(
     thread::spawn(move || {
         let mut router = Router::new();
         loop {
-            println!(
-                "Router data\tses {:?}\tcli {:?}\tgame {:?}",
-                router.sessions.len(),
-                router.client_sessions.len(),
-                router.game_sessions.len()
-            );
             select! {
             recv(router_commands_out) -> command =>
                 match command {
