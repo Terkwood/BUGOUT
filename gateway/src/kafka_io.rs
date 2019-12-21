@@ -172,6 +172,7 @@ fn start_consumer(
                         }
                     }
                     GAME_READY_TOPIC => {
+                        println!("msg on game ready topic {}", payload);
                         let deserialized: Result<GameReadyKafkaEvent, _> =
                             serde_json::from_str(payload);
 
@@ -181,6 +182,7 @@ fn start_consumer(
                         }
                     }
                     WAIT_FOR_OPPONENT_TOPIC => {
+                        println!("msg on wait for oppo topic {}", payload);
                         let deserialized: Result<WaitForOpponentKafkaEvent, _> =
                             serde_json::from_str(payload);
 
@@ -190,6 +192,7 @@ fn start_consumer(
                         }
                     }
                     COLORS_CHOSEN_TOPIC => {
+                        println!("msg on color chosen topic {}", payload);
                         let deserialized: Result<ColorsChosenEvent, _> =
                             serde_json::from_str(payload);
 
