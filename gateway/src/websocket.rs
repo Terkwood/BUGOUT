@@ -531,6 +531,6 @@ fn client_event_channels() -> (
 }
 
 fn complain_no_client_id() -> Result<()> {
-    println!("NO CLIENT ID DEFINED");
+    println!("❌ UNEXPECTED: NO CLIENT ID DEFINED ❌");
     Ok(())
 }
