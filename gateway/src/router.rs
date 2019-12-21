@@ -294,7 +294,6 @@ pub fn start(
                         router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
                     }
                     Ok(KafkaEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
-                        println!("color chosen event");
                         // We want to forward by client ID
                         // so that we don't send TWO yourcolor events
                         // to each client
@@ -318,6 +317,7 @@ pub fn start(
     });
 }
 
+/// Maps games to sessions (up to two players for each game) and their event inputs
 #[derive(Debug)]
 struct GameSessions {
     pub sessions: Vec<SessionSender>,
