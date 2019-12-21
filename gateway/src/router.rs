@@ -174,7 +174,7 @@ impl Router {
         to_delete
     }
 
-    fn cleanup_game_clients(&mut self) {
+    fn cleanup_game_sessions(&mut self) {
         let since = Instant::now().checked_duration_since(self.last_cleanup);
         if let Some(dur) = since {
             if dur.as_millis() > GAME_CLIENT_CLEANUP_PERIOD_MS.into() {
@@ -214,13 +214,14 @@ impl Router {
             }
         }
 
+        // TODO is this going to work for reestablished connections ??
         if let Some(cid) = client_id {
             self.client_sessions.remove(&cid);
         }
 
         self.sessions.remove(&session_id);
 
-        self.cleanup_game_clients();
+        self.cleanup_game_sessions();
     }
 }
 
