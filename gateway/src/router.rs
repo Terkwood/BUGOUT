@@ -226,7 +226,7 @@ pub fn start(
         loop {
             // TODO make sure this client data is cleaned up
             println!(
-                "Router data\nses\t{:?}\ncli\t{:?}\ngame\t{:?}",
+                "Router data\tses {:?}\tcli {:?}\tgame {:?}",
                 router.sessions.len(),
                 router.client_sessions.len(),
                 router.game_sessions.len()
