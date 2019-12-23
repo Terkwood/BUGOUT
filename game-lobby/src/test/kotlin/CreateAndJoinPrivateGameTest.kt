@@ -132,7 +132,7 @@ class CreateAndJoinPrivateGameTest {
         testDriver.pipeInput(
             factory.create(
                 Topics.JOIN_PRIVATE_GAME,
-                joinerClientId,
+                joinerSessionId,
                 jsonMapper.writeValueAsString(joinRequest)
             )
         )
@@ -156,7 +156,8 @@ class CreateAndJoinPrivateGameTest {
                 PrivateGameRejected(
                     gameId = bogusGameId,
                     eventId = actual.eventId,
-                    clientId = joinerClientId
+                    clientId = joinerClientId,
+                    sessionId = joinerSessionId
                 )
             )
 

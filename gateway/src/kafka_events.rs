@@ -44,7 +44,7 @@ impl KafkaEvents {
 
             KafkaEvents::WaitForOpponent(WaitForOpponentKafkaEvent {
                 game_id,
-                client_id: _,
+                session_id: _,
                 event_id,
                 visibility,
             }) => {
@@ -79,7 +79,7 @@ impl KafkaEvents {
 pub struct GameReadyKafkaEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
-    pub clients: GameClients,
+    pub sessions: GameSessions,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
 }
@@ -88,8 +88,8 @@ pub struct GameReadyKafkaEvent {
 pub struct WaitForOpponentKafkaEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
-    #[serde(rename = "clientId")]
-    pub client_id: ClientId,
+    #[serde(rename = "sessionId")]
+    pub session_id: SessionId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
     pub visibility: Visibility,
@@ -101,6 +101,8 @@ pub struct PrivateGameRejectedKafkaEvent {
     pub game_id: GameId,
     #[serde(rename = "clientId")]
     pub client_id: ClientId,
+    #[serde(rename = "sessionId")]
+    pub session_id: SessionId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
 }

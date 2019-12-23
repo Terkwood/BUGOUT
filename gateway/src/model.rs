@@ -132,9 +132,9 @@ pub struct HistoryProvidedEvent {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GameClients {
-    pub first: ClientId,
-    pub second: ClientId,
+pub struct GameSessions {
+    pub first: SessionId,
+    pub second: SessionId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]

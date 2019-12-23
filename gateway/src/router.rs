@@ -109,15 +109,11 @@ impl Router {
         }
     }
 
-    pub fn route_new_game(&mut self, client_id: ClientId, game_id: GameId) {
-        let x = self.client_sessions.get(&client_id);
-        if let Some(SessionSender {
-            session_id,
-            events_in,
-        }) = x
-        {
+    pub fn route_new_game(&mut self, session_id: SessionId, game_id: GameId) {
+        let x = self.sessions.get(&session_id);
+        if let Some(events_in) = x {
             let newbie = SessionSender {
-                session_id: *session_id,
+                session_id,
                 events_in: events_in.clone(),
             };
 
@@ -279,8 +275,8 @@ pub fn start(
                         router.forward_by_game_id(KafkaEvents::MoveMade(m).to_client_event())
                     }
                     Ok(KafkaEvents::GameReady(g)) => {
-                        router.route_new_game(g.clients.first, g.game_id);
-                        router.route_new_game(g.clients.second, g.game_id);
+                        router.route_new_game(g.sessions.first, g.game_id);
+                        router.route_new_game(g.sessions.second, g.game_id);
                         router.forward_by_game_id(KafkaEvents::GameReady(g).to_client_event());
                     }
                     Ok(KafkaEvents::PrivateGameRejected(p)) => {
@@ -290,7 +286,7 @@ pub fn start(
                         router.forward_by_client_id(p.client_id, KafkaEvents::PrivateGameRejected(p).to_client_event())
                     }
                     Ok(KafkaEvents::WaitForOpponent(w)) => {
-                        router.route_new_game(w.client_id, w.game_id);
+                        router.route_new_game(w.session_id, w.game_id);
                         router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
                     }
                     Ok(KafkaEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {

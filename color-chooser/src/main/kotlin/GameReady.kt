@@ -1,4 +1,4 @@
 /** emitted by game-lobby */
 data class GameReady(val gameId: GameId,
-                     val clients: Pair<ClientId, ClientId>,
+                     val sessions: Pair<SessionId, SessionId>,
                      val eventId: EventId)

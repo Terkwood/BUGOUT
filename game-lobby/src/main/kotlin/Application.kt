@@ -56,9 +56,9 @@ class Application(private val brokers: String) {
                     )
                 }
 
-        val joinPrivateKVM: KeyValueMapper<ClientId, JoinPrivateGame,
+        val joinPrivateKVM: KeyValueMapper<SessionId, JoinPrivateGame,
                 String> =
-            KeyValueMapper { _: ClientId,           // left key
+            KeyValueMapper { _: SessionId,           // left key
                              _: JoinPrivateGame ->  // left value
 
                 // use a trivial join, so that all queries are routed to the same store
@@ -99,17 +99,17 @@ class Application(private val brokers: String) {
                 )
 
 
-        val joinPrivateSuccess: KStream<ClientId, JoinPrivateGameLobby> =
+        val joinPrivateSuccess: KStream<SessionId, JoinPrivateGameLobby> =
             joinPrivateLobbyBranches[0]
 
-        val joinPrivateFailure: KStream<ClientId, JoinPrivateGameLobby> =
+        val joinPrivateFailure: KStream<SessionId, JoinPrivateGameLobby> =
             joinPrivateLobbyBranches[1]
 
         /**
-         * The ClientId key is the person finding a game
+         * The SessionId key is the person finding a game
          * The creator of the game is buried in the game lobby (someGame)
          */
-        val popPrivateGame: KStream<ClientId, GameLobbyCommand> =
+        val popPrivateGame: KStream<SessionId, GameLobbyCommand> =
             joinPrivateSuccess.map { _, jpgLobby ->
                 val jpg = jpgLobby.command
                 val lobby = jpgLobby.lobby
@@ -121,7 +121,7 @@ class Application(private val brokers: String) {
                     }
 
                 KeyValue(
-                    jpg.clientId,
+                    jpg.sessionId,
                     GameLobbyCommand(
                         game = someGame,
                         lobbyCommand = LobbyCommand.Ready
@@ -131,12 +131,12 @@ class Application(private val brokers: String) {
             }
 
 
-        popPrivateGame.map { finderClientId, gameCommand ->
+        popPrivateGame.map { finderSessionId, gameCommand ->
             KeyValue(
                 gameCommand.game.gameId,
                 GameReady(
                     gameCommand.game.gameId,
-                    Pair(gameCommand.game.creator, finderClientId)
+                    Pair(gameCommand.game.creator, finderSessionId)
                 )
             )
         }.mapValues { it -> jsonMapper.writeValueAsString(it) }

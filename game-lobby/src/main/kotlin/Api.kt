@@ -19,8 +19,6 @@ data class CreateGame(
  * wants to join a private game
  *
  * @param gameId    the game ID to join
- * @param clientId  the client ID of individual
- *                  who issued this request
  * @param sessionId the session ID which issued this req
  */
 data class JoinPrivateGame(
@@ -34,25 +32,23 @@ data class JoinPrivateGame(
  * This event is issued when someone has created
  * a game and is waiting for their opponent to join.
  *
- * @param clientId The client ID of the individual
+ * @param sessionId The session ID of the individual
  *                  waiting.  This will be used
  *                  downstream to create the GameReady
  *                  event, which requires that both
- *                  players' clientIds are present
+ *                  players' session IDs are present
  */
 data class WaitForOpponent(
     val gameId: GameId,
-    val clientId: ClientId,
+    val sessionId: SessionId,
     val eventId: EventId = UUID.randomUUID(),
-    val visibility: Visibility,
-    val sessionId: SessionId
+    val visibility: Visibility
 )
 
 data class GameReady(
     val gameId: GameId,
-    val clients: Pair<ClientId, ClientId>,
-    val eventId: EventId = UUID.randomUUID(),
-    val sessions: Pair<SessionId, SessionId>
+    val sessions: Pair<SessionId, SessionId>,
+    val eventId: EventId = UUID.randomUUID()
 )
 
 data class PrivateGameRejected(
