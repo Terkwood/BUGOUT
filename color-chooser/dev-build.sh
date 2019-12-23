@@ -2,4 +2,4 @@
 
 NAME=color-chooser
 
-sh build.sh && docker cp bugout.$NAME.jar bugout_$NAME_1:/home/gradle/.
+sh build.sh && docker cp bugout.$NAME.jar bugout_${NAME}_1:/home/gradle/.
