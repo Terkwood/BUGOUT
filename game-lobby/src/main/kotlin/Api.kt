@@ -1,7 +1,7 @@
 import java.util.*
 
 // requests & commands
-data class FindPublicGame(val clientId: ClientId)
+data class FindPublicGame(val clientId: ClientId, val sessionId: SessionId)
 
 /**
  * Random UUID is used in the case of gateway being lazy
@@ -10,7 +10,8 @@ data class FindPublicGame(val clientId: ClientId)
 data class CreateGame(
     val clientId: ClientId,
     val visibility: Visibility,
-    val gameId: GameId = UUID.randomUUID()
+    val gameId: GameId = UUID.randomUUID(),
+    val sessionId: SessionId
 )
 
 /**
@@ -20,10 +21,12 @@ data class CreateGame(
  * @param gameId    the game ID to join
  * @param clientId  the client ID of individual
  *                  who issued this request
+ * @param sessionId the session ID which issued this req
  */
 data class JoinPrivateGame(
     val gameId: GameId,
-    val clientId: ClientId
+    val clientId: ClientId,
+    val sessionId: SessionId
 )
 
 // replies & events
@@ -41,19 +44,22 @@ data class WaitForOpponent(
     val gameId: GameId,
     val clientId: ClientId,
     val eventId: EventId = UUID.randomUUID(),
-    val visibility: Visibility
+    val visibility: Visibility,
+    val sessionId: SessionId
 )
 
 data class GameReady(
     val gameId: GameId,
     val clients: Pair<ClientId, ClientId>,
-    val eventId: EventId = UUID.randomUUID()
+    val eventId: EventId = UUID.randomUUID(),
+    val sessions: Pair<SessionId, SessionId>
 )
 
 data class PrivateGameRejected(
     val gameId: GameId,
     val clientId: ClientId,
-    val eventId: EventId = UUID.randomUUID()
+    val eventId: EventId = UUID.randomUUID(),
+    val sessionId: SessionId
 )
 
 /** This event is emitted from gateway whenever a client disconnects.

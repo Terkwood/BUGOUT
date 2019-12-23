@@ -234,7 +234,10 @@ impl Handler for WsSession {
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
                     if let Err(e) = self.kafka_commands_in.send(KafkaCommands::FindPublicGame(
-                        FindPublicGameKafkaCommand { client_id },
+                        FindPublicGameKafkaCommand {
+                            client_id,
+                            session_id: self.session_id,
+                        },
                     )) {
                         println!(
                             "😠 {} {:<8} kafka sending find public game command {}",
@@ -259,6 +262,7 @@ impl Handler for WsSession {
                         .send(KafkaCommands::CreateGame(CreateGameKafkaCommand {
                             client_id,
                             visibility: Visibility::Private,
+                            session_id: self.session_id,
                         }))
                         .map_err(|e| ws::Error::from(Box::new(e)))
                     {
@@ -277,7 +281,11 @@ impl Handler for WsSession {
                         if let Err(e) = self
                             .kafka_commands_in
                             .send(KafkaCommands::JoinPrivateGame(
-                                JoinPrivateGameKafkaCommand { game_id, client_id },
+                                JoinPrivateGameKafkaCommand {
+                                    game_id,
+                                    client_id,
+                                    session_id: self.session_id,
+                                },
                             ))
                             .map_err(|e| ws::Error::from(Box::new(e)))
                         {
@@ -298,6 +306,7 @@ impl Handler for WsSession {
                             ChooseColorPrefKafkaCommand {
                                 client_id,
                                 color_pref,
+                                session_id: self.session_id,
                             },
                         ))
                         .map_err(|e| ws::Error::from(Box::new(e)))

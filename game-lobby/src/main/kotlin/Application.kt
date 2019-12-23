@@ -184,8 +184,8 @@ class Application(private val brokers: String) {
             )
 
 
-        val createGameStream: KStream<ClientId, CreateGame> =
-            streamsBuilder.stream<ClientId, String>(
+        val createGameStream: KStream<SessionId, CreateGame> =
+            streamsBuilder.stream<SessionId, String>(
                 Topics.CREATE_GAME,
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
