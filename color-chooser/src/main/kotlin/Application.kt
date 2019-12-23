@@ -153,8 +153,8 @@ class Application(private val brokers: String) {
             )
 
         val gameColorPref = clientGameColorPref
-            .map { gameId, gcp ->
-                println("join completed $gameId $gcp")
+            .map { clientId, gcp ->
+                println("join completed $clientId $gcp")
                 KeyValue(
                     gcp.gameId,
                     gcp
