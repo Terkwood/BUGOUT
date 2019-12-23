@@ -42,9 +42,9 @@ class Application(private val brokers: String) {
 
         val readyToChoose: KStream<GameId, AggregatedPrefs> =
             aggregated.toStream()
-                .mapValues { agg ->
-                    println("agg size ${agg.prefs.size}")
-                    agg
+                .map { key,agg ->
+                    println("${key.short()} agg size ${agg.prefs.size}")
+                    KeyValue(key,agg)
                 }
                 .filter { _, agg -> agg.prefs.size == REQUIRED_PREFS }
 
