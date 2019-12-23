@@ -65,6 +65,7 @@ class Application(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
+                    print("received choose color pref")
                     jsonMapper.readValue(
                         v,
                         ChooseColorPref::class.java
@@ -77,6 +78,7 @@ class Application(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
+                    print("game ready")
                     jsonMapper.readValue(
                         v,
                         GameReady::class.java
@@ -118,6 +120,7 @@ class Application(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
+                    print("client game ready")
                     jsonMapper.readValue(
                         v,
                         ClientGameReady::class.java
@@ -151,6 +154,7 @@ class Application(private val brokers: String) {
 
         val gameColorPref = clientGameColorPref
             .map { _, gcp ->
+                print("join completed")
                 KeyValue(
                     gcp.gameId,
                     gcp
