@@ -43,6 +43,7 @@ class Application(private val brokers: String) {
         val readyToChoose: KStream<GameId, AggregatedPrefs> =
             aggregated.toStream()
                 .map { key,agg ->
+                    println("${key.short()} agg      ${agg.prefs}")
                     println("${key.short()} agg size ${agg.prefs.size}")
                     KeyValue(key,agg)
                 }
