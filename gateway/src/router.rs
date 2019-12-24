@@ -40,12 +40,9 @@ impl Router {
             if let Err(e) = events_in.send(ev.clone()) {
                 println!(
                     "😗 {} {:<8} {:<8} forwarding event by session ID {}",
-                    "",
-                    "",
-                    "ERROR",
-                    e
+                    "", "", "ERROR", e
                 )
-            }   
+            }
         }
     }
 
