@@ -160,7 +160,7 @@ class CreateAndJoinPrivateGameTest {
                 )
             )
 
-        OutputVerifier.compareKeyValue(outputRecord, joinerClientId, expected)
+        OutputVerifier.compareKeyValue(outputRecord, joinerSessionId, expected)
 
     }
 

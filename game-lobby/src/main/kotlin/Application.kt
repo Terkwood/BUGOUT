@@ -110,7 +110,7 @@ class Application(private val brokers: String) {
          * The creator of the game is buried in the game lobby (someGame)
          */
         val popPrivateGame: KStream<SessionId, GameLobbyCommand> =
-            joinPrivateSuccess.map { _, jpgLobby ->
+            joinPrivateSuccess.map { sid, jpgLobby ->
                 val jpg = jpgLobby.command
                 val lobby = jpgLobby.lobby
 
@@ -121,7 +121,7 @@ class Application(private val brokers: String) {
                     }
 
                 KeyValue(
-                    jpg.sessionId,
+                    sid,
                     GameLobbyCommand(
                         game = someGame,
                         lobbyCommand = LobbyCommand.Ready
@@ -167,9 +167,9 @@ class Application(private val brokers: String) {
 
         // reject invalid game IDs
         joinPrivateFailure
-            .map { _, jl ->
+            .map { sid, jl ->
                 KeyValue(
-                    jl.command.sessionId,
+                    sid,
                     // game ID randomly generated here
                     PrivateGameRejected(
                         clientId = jl.command.clientId,
@@ -405,7 +405,7 @@ class Application(private val brokers: String) {
          * The creator of the game is buried in the game lobby (someGame)
          */
         val popPublicGame: KStream<SessionId, GameLobbyCommand> =
-            publicGameExists.map { _, fl ->
+            publicGameExists.map { sid, fl ->
                 val fpg = fl.command
 
                 val someGame =
@@ -415,7 +415,7 @@ class Application(private val brokers: String) {
                     }
 
                 KeyValue(
-                    fpg.sessionId,
+                    sid,
                     GameLobbyCommand(
                         game = someGame,
                         lobbyCommand = LobbyCommand.Ready
