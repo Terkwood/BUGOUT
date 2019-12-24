@@ -35,6 +35,20 @@ impl Router {
         }
     }
 
+    pub fn forward_by_session_id(&self, session_id: SessionId, ev: ClientEvents) {
+        if let Some(events_in) = self.sessions.get(&session_id) {
+            if let Err(e) = events_in.send(ev.clone()) {
+                println!(
+                    "😗 {} {:<8} {:<8} forwarding event by session ID {}",
+                    "",
+                    "",
+                    "ERROR",
+                    e
+                )
+            }   
+        }
+    }
+
     pub fn forward_by_client_id(&self, client_id: ClientId, ev: ClientEvents) {
         if let Some(session_sender) = self.client_sessions.get(&client_id) {
             if let Err(e) = session_sender.events_in.send(ev.clone()) {
@@ -293,8 +307,8 @@ pub fn start(
                         // We want to forward by client ID
                         // so that we don't send TWO yourcolor events
                         // to each client
-                        router.forward_by_client_id(black,ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
-                        router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
+                        router.forward_by_session_id(black,ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
+                        router.forward_by_session_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
                     },
                     Ok(e) => {
                         router.observe_game(e.game_id());

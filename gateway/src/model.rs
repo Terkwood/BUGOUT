@@ -51,8 +51,8 @@ pub enum ColorPref {
 pub struct ColorsChosenEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
-    pub black: ClientId,
-    pub white: ClientId,
+    pub black: SessionId,
+    pub white: SessionId,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]

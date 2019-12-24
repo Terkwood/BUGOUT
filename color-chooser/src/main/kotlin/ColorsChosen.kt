@@ -3,7 +3,7 @@ import kotlin.random.Random
 data class ColorsChosen(val gameId: GameId, val black: ClientId, val white: ClientId) {
 
     companion object {
-        fun resolve(first: ClientGameColorPref, second: ClientGameColorPref): ColorsChosen {
+        fun resolve(first: SessionGameColorPref, second: SessionGameColorPref): ColorsChosen {
             val noConflict: Boolean by lazy { first.colorPref != second.colorPref }
             val bf: ColorsChosen by lazy { blackFirst(first, second) }
             val wf: ColorsChosen by lazy { whiteFirst(first, second) }
@@ -31,18 +31,18 @@ data class ColorsChosen(val gameId: GameId, val black: ClientId, val white: Clie
             }
         }
 
-        private fun blackFirst(first: ClientGameColorPref, second: ClientGameColorPref) =
+        private fun blackFirst(first: SessionGameColorPref, second: SessionGameColorPref) =
             ColorsChosen(
                 gameId = first.gameId,
-                black = first.clientId,
-                white = second.clientId
+                black = first.sessionId,
+                white = second.sessionId
             )
 
-        private fun whiteFirst(first: ClientGameColorPref, second: ClientGameColorPref) =
+        private fun whiteFirst(first: SessionGameColorPref, second: SessionGameColorPref) =
             ColorsChosen(
                 gameId = first.gameId,
-                black = second.clientId,
-                white = first.clientId
+                black = second.sessionId,
+                white = first.sessionId
             )
 
         private fun random(): Color = when (Random.nextBoolean()) {
