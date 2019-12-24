@@ -60,6 +60,6 @@ data class PrivateGameRejected(
 
 /** This event is emitted from gateway whenever a client disconnects.
  * It drives the cleanup of abandoned games in the lobby */
-data class ClientDisconnected(
-    val clientId: ClientId
+data class SessionDisconnected(
+    val sessionId: SessionId
 )

@@ -58,9 +58,9 @@ pub struct ClientHeartbeat {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ClientDisconnected {
-    #[serde(rename = "clientId")]
-    pub client_id: ClientId,
+pub struct SessionDisconnected {
+    #[serde(rename = "sessionId")]
+    pub session_id: SessionId,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -72,5 +72,5 @@ pub enum KafkaCommands {
     CreateGame(CreateGameKafkaCommand),
     ChooseColorPref(ChooseColorPrefKafkaCommand),
     ClientHeartbeat(ClientHeartbeat),
-    ClientDisconnected(ClientDisconnected),
+    SessionDisconnected(SessionDisconnected),
 }

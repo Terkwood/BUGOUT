@@ -67,8 +67,8 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
                     Ok(KafkaCommands::ClientHeartbeat(h)) =>
                         write(&producer, CLIENT_HEARTBEAT_TOPIC, &serde_json::to_string(&h),&h.client_id.to_string())
                     ,
-                    Ok(KafkaCommands::ClientDisconnected(c)) =>
-                        write(&producer, CLIENT_DISCONNECTED_TOPIC, &serde_json::to_string(&c), &c.client_id.to_string())
+                    Ok(KafkaCommands::SessionDisconnected(c)) =>
+                        write(&producer, SESSION_DISCONNECTED_TOPIC, &serde_json::to_string(&c), &c.session_id.to_string())
                     ,
                     Err(e) => println!("💩 Unable to receive command via kafka channel: {:?}", e),
                 }

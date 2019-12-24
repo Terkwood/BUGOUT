@@ -44,8 +44,8 @@ class Application(private val brokers: String) {
 
         buildAbandonGameStreams(streamsBuilder, gameLobby)
 
-        val joinPrivateGameStream: KStream<ClientId, JoinPrivateGame> =
-            streamsBuilder.stream<ClientId, String>(
+        val joinPrivateGameStream: KStream<SessionId, JoinPrivateGame> =
+            streamsBuilder.stream<SessionId, String>(
                 Topics.JOIN_PRIVATE_GAME,
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
@@ -169,11 +169,12 @@ class Application(private val brokers: String) {
         joinPrivateFailure
             .map { _, jl ->
                 KeyValue(
-                    jl.command.clientId,
+                    jl.command.sessionId,
                     // game ID randomly generated here
                     PrivateGameRejected(
                         clientId = jl.command.clientId,
-                        gameId = jl.command.gameId
+                        gameId = jl.command.gameId,
+                        sessionId = jl.command.sessionId
                     )
                 )
             }
@@ -203,7 +204,7 @@ class Application(private val brokers: String) {
                 WaitForOpponent(
                     gameId = v.gameId,
                     eventId = UUID.randomUUID(),
-                    clientId = creator,
+                    sessionId = creator,
                     visibility = v.visibility
                 )
             )
@@ -223,7 +224,7 @@ class Application(private val brokers: String) {
                 Game(
                     gameId = v.gameId,
                     visibility = v.visibility,
-                    creator = v.clientId
+                    creator = v.sessionId
                 )
             KeyValue(
                 GameLobby.TRIVIAL_KEY,
@@ -323,8 +324,8 @@ class Application(private val brokers: String) {
         streamsBuilder: StreamsBuilder,
         gameLobby: GlobalKTable<String, GameLobby>
     ) {
-        val findPublicGameStream: KStream<ClientId, FindPublicGame> =
-            streamsBuilder.stream<ClientId, String>(
+        val findPublicGameStream: KStream<SessionId, FindPublicGame> =
+            streamsBuilder.stream<SessionId, String>(
                 Topics.FIND_PUBLIC_GAME,
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
@@ -335,8 +336,8 @@ class Application(private val brokers: String) {
                     )
                 }
 
-        val fpgKeyJoiner: KeyValueMapper<ClientId, FindPublicGame, String> =
-            KeyValueMapper { _: ClientId,          // left key
+        val fpgKeyJoiner: KeyValueMapper<SessionId, FindPublicGame, String> =
+            KeyValueMapper { _: SessionId,          // left key
                              _: FindPublicGame ->  // left value
 
                 // use a trivial join, so that all queries are routed to the same store
@@ -370,10 +371,10 @@ class Application(private val brokers: String) {
                     }
                 )
 
-        val publicGameExists: KStream<ClientId, FindPublicGameLobby> =
+        val publicGameExists: KStream<SessionId, FindPublicGameLobby> =
             fpgLobbyBranches[0]
 
-        val noPublicGameExists: KStream<ClientId, FindPublicGameLobby> =
+        val noPublicGameExists: KStream<SessionId, FindPublicGameLobby> =
             fpgLobbyBranches[1]
 
 
@@ -382,12 +383,13 @@ class Application(private val brokers: String) {
         noPublicGameExists
             .map { _, fo ->
                 KeyValue(
-                    fo.command.clientId,
+                    fo.command.sessionId,
                     // game ID randomly generated here
                     CreateGame(
                         clientId = fo.command.clientId,
                         visibility = Visibility.Public,
-                        gameId = UUID.randomUUID()
+                        gameId = UUID.randomUUID(),
+                        sessionId = fo.command.sessionId
                     )
                 )
             }
@@ -399,10 +401,10 @@ class Application(private val brokers: String) {
 
 
         /**
-         * The ClientId key is the person finding a game
+         * The SessionId key is the person finding a game
          * The creator of the game is buried in the game lobby (someGame)
          */
-        val popPublicGame: KStream<ClientId, GameLobbyCommand> =
+        val popPublicGame: KStream<SessionId, GameLobbyCommand> =
             publicGameExists.map { _, fl ->
                 val fpg = fl.command
 
@@ -413,7 +415,7 @@ class Application(private val brokers: String) {
                     }
 
                 KeyValue(
-                    fpg.clientId,
+                    fpg.sessionId,
                     GameLobbyCommand(
                         game = someGame,
                         lobbyCommand = LobbyCommand.Ready
@@ -422,12 +424,12 @@ class Application(private val brokers: String) {
 
             }
 
-        popPublicGame.map { finderClientId, gameCommand ->
+        popPublicGame.map { finderSessionId, gameCommand ->
             KeyValue(
                 gameCommand.game.gameId,
                 GameReady(
                     gameCommand.game.gameId,
-                    Pair(gameCommand.game.creator, finderClientId)
+                    Pair(gameCommand.game.creator, finderSessionId)
                 )
             )
         }.mapValues { it -> jsonMapper.writeValueAsString(it) }
@@ -461,49 +463,50 @@ class Application(private val brokers: String) {
     private fun buildAbandonGameStreams(streamsBuilder: StreamsBuilder,
                                         gameLobby: GlobalKTable<String,
                                                 GameLobby>) {
-        val clientDisconnected: KStream<ClientId, ClientDisconnected> =
-            streamsBuilder.stream<ClientId, String>(
-                Topics.CLIENT_DISCONNECTED,
+        val sessionDisconnected: KStream<SessionId, SessionDisconnected> =
+            streamsBuilder.stream<SessionId, String>(
+                Topics.SESSION_DISCONNECTED,
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
                     jsonMapper.readValue(
                         v,
-                        ClientDisconnected::class.java
+                        SessionDisconnected::class.java
                     )
                 }
 
-        val kvm: KeyValueMapper<ClientId, ClientDisconnected,
+        val kvm: KeyValueMapper<SessionId, SessionDisconnected,
                 String> =
-            KeyValueMapper { _: ClientId,           // left key
-                             _: ClientDisconnected ->  // left value
+            KeyValueMapper { _: SessionId,           // left key
+                             _: SessionDisconnected ->  // left value
 
                 // use a trivial join, so that all queries are routed to the same store
                 GameLobby.TRIVIAL_KEY
             }
 
-        val valJoiner: ValueJoiner<ClientDisconnected, GameLobby,
-                Pair<ClientDisconnected, GameLobby>> =
+        val valJoiner: ValueJoiner<SessionDisconnected, GameLobby,
+                Pair<SessionDisconnected, GameLobby>> =
             ValueJoiner { leftValue:
-                          ClientDisconnected,
+                          SessionDisconnected,
                           rightValue:
                           GameLobby ->
                 Pair(leftValue, rightValue)
             }
 
-        val joined: KStream<ClientId, Pair<ClientDisconnected,GameLobby>> =
-            clientDisconnected.join(gameLobby,kvm,valJoiner)
+        val joined: KStream<SessionId, Pair<SessionDisconnected,GameLobby>> =
+            sessionDisconnected.join(gameLobby,kvm,valJoiner)
 
-        val lobbyContainsClientId: KStream<ClientId, Pair<ClientDisconnected, GameLobby>> =
-            joined.filter { clientId, clientIdLobby  ->
-                clientIdLobby.second.games
+        val lobbyContainsSessionId: KStream<SessionId,
+                Pair<SessionDisconnected, GameLobby>> =
+            joined.filter { sessionId, sessionIdLobby  ->
+                sessionIdLobby.second.games
                     .map{it.creator}
-                    .contains(clientId)
+                    .contains(sessionId)
         }
 
         val abandonGameCommand: KStream<String, GameLobbyCommand> =
-            lobbyContainsClientId.map{ clientId, cdgl ->
-            val theirGame = cdgl.second.games.first{it.creator == clientId}
+            lobbyContainsSessionId.map{ sessionId, cdgl ->
+            val theirGame = cdgl.second.games.first{it.creator == sessionId}
             KeyValue(GameLobby.TRIVIAL_KEY, GameLobbyCommand(
                 game = theirGame,
                 lobbyCommand = LobbyCommand.Abandon

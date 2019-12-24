@@ -1,14 +1,12 @@
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
-import org.apache.kafka.common.serialization.UUIDDeserializer
 import org.apache.kafka.common.serialization.UUIDSerializer
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
 import org.apache.kafka.streams.test.OutputVerifier
 import serdes.jsonMapper
 import java.util.*
-import org.apache.kafka.common.serialization.*
 import org.junit.jupiter.api.*
 
 
@@ -48,8 +46,8 @@ class ClientDisconnectedTest {
         val uuidKeyFactory =
             ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
-        val disconnectEv = ClientDisconnected(
-            clientId = clientId
+        val disconnectEv = SessionDisconnected(
+            sessionId = clientId
         )
 
         val dcr : ConsumerRecord<ByteArray, ByteArray> =
