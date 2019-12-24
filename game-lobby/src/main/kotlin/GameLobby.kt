@@ -3,7 +3,7 @@ import serdes.jsonMapper
 data class Game(
     val gameId: GameId,
     val visibility: Visibility,
-    val creator: ClientId
+    val creator: SessionId
 )
 
 data class GameLobbyCommand(val game: Game, val lobbyCommand: LobbyCommand)

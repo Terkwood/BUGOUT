@@ -8,12 +8,16 @@ pub struct JoinPrivateGameKafkaCommand {
     pub game_id: GameId,
     #[serde(rename = "clientId")]
     pub client_id: ClientId,
+    #[serde(rename = "sessionId")]
+    pub session_id: SessionId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FindPublicGameKafkaCommand {
     #[serde(rename = "clientId")]
     pub client_id: ClientId,
+    #[serde(rename = "sessionId")]
+    pub session_id: SessionId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -22,6 +26,8 @@ pub struct ChooseColorPrefKafkaCommand {
     pub client_id: ClientId,
     #[serde(rename = "colorPref")]
     pub color_pref: ColorPref,
+    #[serde(rename = "sessionId")]
+    pub session_id: SessionId,
 }
 
 /// Gateway may manually create private games,
@@ -33,6 +39,8 @@ pub struct CreateGameKafkaCommand {
     #[serde(rename = "clientId")]
     pub client_id: ClientId,
     pub visibility: Visibility,
+    #[serde(rename = "sessionId")]
+    pub session_id: SessionId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
@@ -50,9 +58,9 @@ pub struct ClientHeartbeat {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ClientDisconnected {
-    #[serde(rename = "clientId")]
-    pub client_id: ClientId,
+pub struct SessionDisconnected {
+    #[serde(rename = "sessionId")]
+    pub session_id: SessionId,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -64,5 +72,5 @@ pub enum KafkaCommands {
     CreateGame(CreateGameKafkaCommand),
     ChooseColorPref(ChooseColorPrefKafkaCommand),
     ClientHeartbeat(ClientHeartbeat),
-    ClientDisconnected(ClientDisconnected),
+    SessionDisconnected(SessionDisconnected),
 }

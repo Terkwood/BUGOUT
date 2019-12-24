@@ -53,22 +53,22 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
                     ,
                     Ok(KafkaCommands::JoinPrivateGame(j)) =>
                         write(&producer,JOIN_PRIVATE_GAME_TOPIC,&serde_json::to_string(&j),
-                            &j.client_id.to_string())
+                            &j.session_id.to_string())
                     ,
                     Ok(KafkaCommands::FindPublicGame(f)) =>
-                        write(&producer,FIND_PUBLIC_GAME_TOPIC,&serde_json::to_string(&f),&f.client_id.to_string())
+                        write(&producer,FIND_PUBLIC_GAME_TOPIC,&serde_json::to_string(&f),&f.session_id.to_string())
                     ,
                     Ok(KafkaCommands::CreateGame(c)) =>
-                        write(&producer,CREATE_GAME_TOPIC,&serde_json::to_string(&c), &c.client_id.to_string())
+                        write(&producer,CREATE_GAME_TOPIC,&serde_json::to_string(&c), &c.session_id.to_string())
                     ,
                     Ok(KafkaCommands::ChooseColorPref(c)) =>
-                        write(&producer, CHOOSE_COLOR_PREF_TOPIC, &serde_json::to_string(&c),&c.client_id.to_string())
+                        write(&producer, CHOOSE_COLOR_PREF_TOPIC, &serde_json::to_string(&c),&c.session_id.to_string())
                     ,
                     Ok(KafkaCommands::ClientHeartbeat(h)) =>
                         write(&producer, CLIENT_HEARTBEAT_TOPIC, &serde_json::to_string(&h),&h.client_id.to_string())
                     ,
-                    Ok(KafkaCommands::ClientDisconnected(c)) =>
-                        write(&producer, CLIENT_DISCONNECTED_TOPIC, &serde_json::to_string(&c), &c.client_id.to_string())
+                    Ok(KafkaCommands::SessionDisconnected(c)) =>
+                        write(&producer, SESSION_DISCONNECTED_TOPIC, &serde_json::to_string(&c), &c.session_id.to_string())
                     ,
                     Err(e) => println!("💩 Unable to receive command via kafka channel: {:?}", e),
                 }

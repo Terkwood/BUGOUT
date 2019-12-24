@@ -17,6 +17,7 @@ pub enum ClientEvents {
     WaitForOpponent(WaitForOpponentClientEvent),
     YourColor(YourColorEvent),
     IdleStatusProvided(IdleStatus),
+    IdentityAcknowledged(Identity),
 }
 
 impl ClientEvents {

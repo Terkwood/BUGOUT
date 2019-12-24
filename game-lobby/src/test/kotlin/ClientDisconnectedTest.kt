@@ -1,19 +1,17 @@
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
-import org.apache.kafka.common.serialization.UUIDDeserializer
 import org.apache.kafka.common.serialization.UUIDSerializer
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
 import org.apache.kafka.streams.test.OutputVerifier
 import serdes.jsonMapper
 import java.util.*
-import org.apache.kafka.common.serialization.*
 import org.junit.jupiter.api.*
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ClientDisconnectedTest {
+class SessionDisconnectedTest {
     private val testDriver: TopologyTestDriver = setup()
 
     @BeforeAll
@@ -23,9 +21,9 @@ class ClientDisconnectedTest {
 
 
     @Test
-    fun clientDisconnected() {
+    fun sessionDisconnected() {
 
-        val clientId = UUID.randomUUID()
+        val sessionId = UUID.randomUUID()
         val gameId = UUID.randomUUID()
 
         val stringKeyFactory =
@@ -34,7 +32,7 @@ class ClientDisconnectedTest {
         val lobbyWithOneGame = GameLobby()
         lobbyWithOneGame.games =  listOf(Game(gameId, Visibility
             .Public,
-            clientId))
+            sessionId))
         val cr: ConsumerRecord<ByteArray, ByteArray> =
             stringKeyFactory.create(
                 Topics.GAME_LOBBY_CHANGELOG,
@@ -48,14 +46,14 @@ class ClientDisconnectedTest {
         val uuidKeyFactory =
             ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
-        val disconnectEv = ClientDisconnected(
-            clientId = clientId
+        val disconnectEv = SessionDisconnected(
+            sessionId = sessionId
         )
 
         val dcr : ConsumerRecord<ByteArray, ByteArray> =
             uuidKeyFactory.create(
-                Topics.CLIENT_DISCONNECTED,
-                clientId,
+                Topics.SESSION_DISCONNECTED,
+                sessionId,
                 jsonMapper.writeValueAsString(disconnectEv)
             )
         testDriver.pipeInput(dcr)

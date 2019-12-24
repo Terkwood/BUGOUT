@@ -1,10 +1,10 @@
 import serdes.jsonMapper
 
-/** Emitted downstream of GameReady.  Client ID is
+/** Emitted downstream of GameReady.  Session ID is
  * topic key.
  */
-data class ClientGameReady (
-        val clientId: ClientId,
+data class SessionGameReady (
+        val sessionId: SessionId,
         val gameId: GameId
 ){
         fun asByteArray(): ByteArray = jsonMapper.writeValueAsBytes(this)

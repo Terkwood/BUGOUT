@@ -5,6 +5,13 @@ pub type GameId = Uuid;
 pub type ReqId = Uuid;
 pub type EventId = Uuid;
 pub type ClientId = Uuid;
+pub type SessionId = Uuid;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
+pub struct Identity {
+    #[serde(rename = "clientId")]
+    pub client_id: ClientId,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub struct Coord {
@@ -44,8 +51,8 @@ pub enum ColorPref {
 pub struct ColorsChosenEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
-    pub black: ClientId,
-    pub white: ClientId,
+    pub black: SessionId,
+    pub white: SessionId,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -125,9 +132,9 @@ pub struct HistoryProvidedEvent {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GameClients {
-    pub first: ClientId,
-    pub second: ClientId,
+pub struct GameSessions {
+    pub first: SessionId,
+    pub second: SessionId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]

@@ -1,23 +1,23 @@
 package serdes
 
 
-import ClientGameReady
+import SessionGameReady
 import org.apache.kafka.common.errors.SerializationException
 import org.apache.kafka.common.serialization.Deserializer
 
-class ClientGameReadyDes : Deserializer<ClientGameReady> {
+class SessionGameReadyDes : Deserializer<SessionGameReady> {
 
     override fun configure(configs: Map<String, *>, isKey: Boolean) {}
 
     override fun close() {}
 
-    override fun deserialize(topic: String, bytes: ByteArray?): ClientGameReady? {
+    override fun deserialize(topic: String, bytes: ByteArray?): SessionGameReady? {
         if (bytes == null) {
             return null
         }
 
         try {
-            return jsonMapper.readValue(bytes, ClientGameReady::class.java)
+            return jsonMapper.readValue(bytes, SessionGameReady::class.java)
         } catch (e: RuntimeException) {
             throw SerializationException("Error deserializing value", e)
         }

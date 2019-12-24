@@ -26,18 +26,20 @@ class CreateGameTest {
                 ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
             val creatorClientId = UUID.randomUUID()
+            val creatorSessionId = UUID.randomUUID()
 
             val newGameId = UUID.randomUUID()
             val cgReq = CreateGame(
                 clientId = creatorClientId,
                 visibility = v,
-                gameId = newGameId
+                gameId = newGameId,
+                sessionId = creatorSessionId
             )
 
             testDriver.pipeInput(
                 factory.create(
                     Topics.CREATE_GAME,
-                    creatorClientId,
+                    creatorSessionId,
                     jsonMapper.writeValueAsString(cgReq)
                 )
             )
@@ -57,12 +59,12 @@ class CreateGameTest {
 
             OutputVerifier.compareKeyValue(
                 waitOutput,
-                creatorClientId,
+                creatorSessionId,
                 jsonMapper.writeValueAsString(
                     WaitForOpponent
                         (
                         gameId = newGameId,
-                        clientId = creatorClientId,
+                        sessionId = creatorSessionId,
                         eventId =
                         actualWait.eventId,
                         visibility = v
@@ -83,7 +85,7 @@ class CreateGameTest {
                 GameLobby.TRIVIAL_KEY,
                 jsonMapper.writeValueAsString(
                     GameLobbyCommand(
-                        Game(newGameId, v, creator = creatorClientId),
+                        Game(newGameId, v, creator = creatorSessionId),
                         LobbyCommand.Open
                     )
                 )
@@ -97,7 +99,7 @@ class CreateGameTest {
 
             val expectedLobby = GameLobby()
 
-            expectedGames += Game(newGameId, v, creatorClientId)
+            expectedGames += Game(newGameId, v, creatorSessionId)
             expectedLobby.games = expectedGames
 
             OutputVerifier.compareKeyValue(

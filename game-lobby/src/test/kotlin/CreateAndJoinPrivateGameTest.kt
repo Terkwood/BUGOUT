@@ -25,12 +25,14 @@ class CreateAndJoinPrivateGameTest {
     fun joinValidGame() {
 
         val creatorClientId = UUID.randomUUID()
+        val creatorSessionId = UUID.randomUUID()
         val validGameId = UUID.randomUUID()
         // create a game with a known ID
         val cgReq = CreateGame(
             clientId = creatorClientId,
             visibility = Visibility.Private,
-            gameId = validGameId
+            gameId = validGameId,
+            sessionId = creatorSessionId
         )
 
         val factory =
@@ -40,24 +42,26 @@ class CreateAndJoinPrivateGameTest {
         testDriver.pipeInput(
             factory.create(
                 Topics.CREATE_GAME,
-                creatorClientId,
+                creatorSessionId,
                 jsonMapper.writeValueAsString(cgReq)
             )
         )
 
         // someone else tries to join that game
         val joinerClientId = UUID.randomUUID()
+        val joinerSessionId = UUID.randomUUID()
         val joinRequest =
             JoinPrivateGame(
                 clientId = joinerClientId,
-                gameId = validGameId
+                gameId = validGameId,
+                sessionId = creatorSessionId
             )
 
 
         testDriver.pipeInput(
             factory.create(
                 Topics.JOIN_PRIVATE_GAME,
-                joinerClientId,
+                joinerSessionId,
                 jsonMapper.writeValueAsString(joinRequest)
             )
         )
@@ -78,7 +82,7 @@ class CreateAndJoinPrivateGameTest {
                 GameReady(
                     gameId = validGameId,
                     eventId = actual.eventId,
-                    clients = Pair(creatorClientId, joinerClientId)
+                    sessions = Pair(creatorSessionId, joinerSessionId)
                 )
             )
 
@@ -90,12 +94,14 @@ class CreateAndJoinPrivateGameTest {
     fun joinInvalidGame() {
 
         val creatorClientId = UUID.randomUUID()
+        val creatorSessionId = UUID.randomUUID()
         val validGameId = UUID.randomUUID()
         // create a game with a known ID
         val cgReq = CreateGame(
             clientId = creatorClientId,
             visibility = Visibility.Private,
-            gameId = validGameId
+            gameId = validGameId,
+            sessionId = creatorSessionId
         )
 
         val factory =
@@ -104,7 +110,7 @@ class CreateAndJoinPrivateGameTest {
         testDriver.pipeInput(
             factory.create(
                 Topics.CREATE_GAME,
-                creatorClientId,
+                creatorSessionId,
                 jsonMapper.writeValueAsString(cgReq)
             )
         )
@@ -112,18 +118,20 @@ class CreateAndJoinPrivateGameTest {
 
         // someone else tries to join that game
         val joinerClientId = UUID.randomUUID()
+        val joinerSessionId = UUID.randomUUID()
         val bogusGameId = UUID.randomUUID()
         val joinRequest =
             JoinPrivateGame(
                 clientId = joinerClientId,
-                gameId = bogusGameId
+                gameId = bogusGameId,
+                sessionId = joinerSessionId
             )
 
 
         testDriver.pipeInput(
             factory.create(
                 Topics.JOIN_PRIVATE_GAME,
-                joinerClientId,
+                joinerSessionId,
                 jsonMapper.writeValueAsString(joinRequest)
             )
         )
@@ -147,11 +155,12 @@ class CreateAndJoinPrivateGameTest {
                 PrivateGameRejected(
                     gameId = bogusGameId,
                     eventId = actual.eventId,
-                    clientId = joinerClientId
+                    clientId = joinerClientId,
+                    sessionId = joinerSessionId
                 )
             )
 
-        OutputVerifier.compareKeyValue(outputRecord, joinerClientId, expected)
+        OutputVerifier.compareKeyValue(outputRecord, joinerSessionId, expected)
 
     }
 

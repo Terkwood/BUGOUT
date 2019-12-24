@@ -30,25 +30,27 @@ class FindPublicGameTest {
                 StringSerializer()
             )
         val clients = Pair(UUID.randomUUID(), UUID.randomUUID())
-        val fpg = { client: ClientId -> FindPublicGame(client) }
+        val sessions = Pair(UUID.randomUUID(), UUID.randomUUID())
+        val fpg = {
+                client: ClientId, session: SessionId ->
+            FindPublicGame(client, session) }
 
         val f1: ConsumerRecord<ByteArray, ByteArray> =
             fpgFactory.create(
                 Topics.FIND_PUBLIC_GAME,
-                clients.first, jsonMapper.writeValueAsString(
+                sessions.first, jsonMapper.writeValueAsString(
                     fpg(
-                        clients
-                            .first
+                        clients.first,
+                        sessions.first
                     )
                 )
             )
         val f2: ConsumerRecord<ByteArray, ByteArray> =
             fpgFactory.create(
                 Topics.FIND_PUBLIC_GAME,
-                clients.second, jsonMapper.writeValueAsString(
+                sessions.second, jsonMapper.writeValueAsString(
                     fpg(
-                        clients
-                            .second
+                        clients.second, sessions.second
                     )
                 )
             )
@@ -71,7 +73,7 @@ class FindPublicGameTest {
                 GameReady(
                     gameId = actual.gameId,
                     eventId = actual.eventId,
-                    clients = clients
+                    sessions = sessions
                 )
             )
 

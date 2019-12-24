@@ -22,15 +22,16 @@ class FirstFindPublicGameCausesWaitTest {
             ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
 
         val creatorClientId = UUID.randomUUID()
+        val creatorSessionId = UUID.randomUUID()
 
         val fpg = FindPublicGame(
-            clientId = creatorClientId
+            clientId = creatorClientId, sessionId = creatorSessionId
         )
 
         testDriver.pipeInput(
             factory.create(
                 Topics.FIND_PUBLIC_GAME,
-                creatorClientId,
+                creatorSessionId,
                 jsonMapper.writeValueAsString(fpg)
             )
         )
@@ -49,12 +50,12 @@ class FirstFindPublicGameCausesWaitTest {
 
         OutputVerifier.compareKeyValue(
             output,
-            creatorClientId,
+            creatorSessionId,
             jsonMapper.writeValueAsString(
                 WaitForOpponent
                     (
                     gameId = actual.gameId,
-                    clientId = creatorClientId,
+                    sessionId = creatorSessionId,
                     eventId = actual.eventId,
                     visibility = Visibility.Public
                 )

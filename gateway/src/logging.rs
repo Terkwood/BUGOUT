@@ -19,7 +19,10 @@ pub fn emoji(player: &Player) -> String {
 pub fn session_code(ws_session: &WsSession) -> String {
     format!(
         "{} {}",
-        crate::short_uuid(ws_session.client_id),
+        ws_session
+            .client_id
+            .map(|cid| crate::short_uuid(cid))
+            .unwrap_or(crate::EMPTY_SHORT_UUID.to_string()),
         ws_session
             .current_game
             .map(|gid| crate::short_uuid(gid))

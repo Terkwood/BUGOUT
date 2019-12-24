@@ -59,7 +59,7 @@ class Application(private val brokers: String) {
 
 
     private fun buildGameColorPref(streamsBuilder: StreamsBuilder) {
-        val chooseColorPref: KStream<ClientId, ChooseColorPref> =
+        val chooseColorPref: KStream<SessionId, ChooseColorPref> =
             streamsBuilder.stream<UUID, String>(
                 Topics.CHOOSE_COLOR_PREF,
                 Consumed.with(Serdes.UUID(), Serdes.String())
@@ -83,73 +83,73 @@ class Application(private val brokers: String) {
                     )
                 }
 
-        // generate  a ClientGameReady event for the first client
+        // generate  a SessionGameReady event for the first client
         gameReady
             .map { _, gr ->
                 KeyValue(
-                    gr.clients.first,
-                    ClientGameReady(gr.clients.first, gr.gameId)
+                    gr.sessions.first,
+                    SessionGameReady(gr.sessions.first, gr.gameId)
                 )
             }
             .mapValues { cgr -> jsonMapper.writeValueAsString(cgr) }
             .to(
-                Topics.CLIENT_GAME_READY,
+                Topics.SESSION_GAME_READY,
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
 
-        // generate a ClientGameReady event for the second client
+        // generate a SessionGameReady event for the second client
         gameReady
             .map { _, gr ->
                 KeyValue(
-                    gr.clients.second,
-                    ClientGameReady(gr.clients.second, gr.gameId)
+                    gr.sessions.second,
+                    SessionGameReady(gr.sessions.second, gr.gameId)
                 )
             }
             .mapValues { cgr -> jsonMapper.writeValueAsString(cgr) }
             .to(
-                Topics.CLIENT_GAME_READY,
+                Topics.SESSION_GAME_READY,
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
 
 
-        val clientGameReady: KStream<ClientId, ClientGameReady> =
+        val sessionGameReady: KStream<SessionId, SessionGameReady> =
             streamsBuilder.stream<UUID, String>(
-                Topics.CLIENT_GAME_READY,
+                Topics.SESSION_GAME_READY,
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
                     jsonMapper.readValue(
                         v,
-                        ClientGameReady::class.java
+                        SessionGameReady::class.java
                     )
                 }
 
-        val prefJoiner: ValueJoiner<ClientGameReady,
-                ChooseColorPref, ClientGameColorPref> =
-            ValueJoiner { leftValue: ClientGameReady,
+        val prefJoiner: ValueJoiner<SessionGameReady,
+                ChooseColorPref, SessionGameColorPref> =
+            ValueJoiner { leftValue: SessionGameReady,
                           rightValue: ChooseColorPref ->
-                ClientGameColorPref(
-                    leftValue.clientId, leftValue.gameId,
+                SessionGameColorPref(
+                    leftValue.sessionId, leftValue.gameId,
                     rightValue.colorPref
                 )
             }
 
 
-        val clientGameColorPref: KStream<ClientId, ClientGameColorPref> =
-            clientGameReady.join(
+        val sessionGameColorPref: KStream<SessionId, SessionGameColorPref> =
+            sessionGameReady.join(
                 chooseColorPref, prefJoiner,
                 JoinWindows.of(ChronoUnit.YEARS.duration),
                 Joined.with(
                     Serdes.UUID(),
                     Serdes.serdeFrom(
-                        ClientGameReadySer(),
-                        ClientGameReadyDes()
+                        SessionGameReadySer(),
+                        SessionGameReadyDes()
                     ),
                     Serdes.serdeFrom(ChooseColorPrefSer(), ChooseColorPrefDes())
                 )
             )
 
-        val gameColorPref = clientGameColorPref
+        val gameColorPref = sessionGameColorPref
             .map { _, gcp ->
                 KeyValue(
                     gcp.gameId,
@@ -166,6 +166,7 @@ class Application(private val brokers: String) {
     }
 
 
+    @Suppress("DEPRECATION")
     private fun aggregateColorPrefs(
         streamsBuilder: StreamsBuilder
     ): KTable<GameId, AggregatedPrefs> =
@@ -179,7 +180,7 @@ class Application(private val brokers: String) {
                     allPrefs.add(
                         jsonMapper.readValue(
                             p,
-                            ClientGameColorPref::class.java
+                            SessionGameColorPref::class.java
                         )
                     )
                     allPrefs
@@ -197,8 +198,8 @@ class Application(private val brokers: String) {
             )
 
 
-    private fun waitForTopics(topics: Array<String>, props: java.util
-    .Properties) {
+    private fun waitForTopics(topics: Array<String>, props:
+    Properties) {
         print("Waiting for topics ")
         val client = AdminClient.create(props)
 
