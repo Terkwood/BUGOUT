@@ -82,11 +82,12 @@ class CreateAndJoinPrivateGameTest {
                 GameReady(
                     gameId = validGameId,
                     eventId = actual.eventId,
-                    clients = Pair(creatorClientId, joinerClientId),
                     sessions = Pair(creatorSessionId, joinerSessionId)
                 )
             )
 
+        println("output ${outputRecord}")
+        println("actual ${actual}")
         OutputVerifier.compareKeyValue(outputRecord, actual.gameId, expected)
 
     }

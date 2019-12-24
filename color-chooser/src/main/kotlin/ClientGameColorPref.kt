@@ -1,4 +1,4 @@
 /** result of a join */
-data class ClientGameColorPref(val clientId: ClientId,
+data class SessionGameColorPref(val sessionId: SessionId,
                                val gameId: GameId,
                                val colorPref: ColorPref)
