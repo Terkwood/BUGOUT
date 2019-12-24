@@ -14,12 +14,15 @@ class TestJoin {
 
         val clientOne = UUID.randomUUID()
         val clientTwo = UUID.randomUUID()
+        val sessionOne = UUID.randomUUID()
+        val sessionTwo = UUID.randomUUID()
         val gameId = UUID.randomUUID()
 
-        val clientOnePref = ChooseColorPref(clientOne, ColorPref.Black)
-        val clientTwoPref = ChooseColorPref(clientTwo, ColorPref.White)
+        val sessionOnePref = ChooseColorPref(clientOne, ColorPref.Black,sessionOne)
+        val sessionTwoPref = ChooseColorPref(clientTwo, ColorPref.White,sessionTwo)
 
-        val gameReadyEvent = GameReady(gameId, Pair(clientOne, clientTwo), eventId = UUID.randomUUID())
+        val gameReadyEvent = GameReady(gameId, Pair(sessionOne, sessionTwo), eventId =
+        UUID.randomUUID())
 
         val factory =
             ConsumerRecordFactory(
@@ -30,16 +33,16 @@ class TestJoin {
         testDriver.pipeInput(
             factory.create(
                 Topics.CHOOSE_COLOR_PREF,
-                clientOne,
-                jsonMapper.writeValueAsString(clientOnePref)
+                sessionOne,
+                jsonMapper.writeValueAsString(sessionOnePref)
             )
         )
 
         testDriver.pipeInput(
             factory.create(
                 Topics.CHOOSE_COLOR_PREF,
-                clientTwo,
-                jsonMapper.writeValueAsString(clientTwoPref)
+                sessionTwo,
+                jsonMapper.writeValueAsString(sessionTwoPref)
             )
         )
 
@@ -79,8 +82,8 @@ class TestJoin {
 
         Assertions.assertArrayEquals(
             listOf(
-                GameColorPref(clientOne,gameId,clientOnePref.colorPref),
-                GameColorPref(clientTwo,gameId,clientTwoPref.colorPref)
+                GameColorPref(sessionOne,gameId,sessionOnePref.colorPref),
+                GameColorPref(sessionTwo,gameId,sessionTwoPref.colorPref)
             ).toTypedArray(),
             gameColorPrefs.toTypedArray())
     }

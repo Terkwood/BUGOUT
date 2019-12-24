@@ -125,7 +125,7 @@ class Application(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
-                    println("client game ready")
+                    println("session game ready")
                     jsonMapper.readValue(
                         v,
                         SessionGameReady::class.java

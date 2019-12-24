@@ -68,10 +68,12 @@ class TestChoice {
 
         val clientOne = UUID.randomUUID()
         val clientTwo = UUID.randomUUID()
+        val sessionOne = UUID.randomUUID()
+        val sessionTwo = UUID.randomUUID()
         val gameId = UUID.randomUUID()
 
-        val c1Pref = ChooseColorPref(clientOne, ColorPref.White)
-        val c2Pref = ChooseColorPref(clientTwo, ColorPref.Black)
+        val c1Pref = ChooseColorPref(clientOne, ColorPref.White,sessionOne)
+        val c2Pref = ChooseColorPref(clientTwo, ColorPref.Black,sessionTwo)
 
         val chosen = push(
             c1Pref,
@@ -95,11 +97,13 @@ class TestChoice {
     fun testAnotherNoConflict() {
         val clientOne = UUID.randomUUID()
         val clientTwo = UUID.randomUUID()
+        val sessionOne = UUID.randomUUID()
+        val sessionTwo = UUID.randomUUID()
         val gameId = UUID.randomUUID()
 
         val chosen = push(
-            ChooseColorPref(clientOne, ColorPref.Black),
-            ChooseColorPref(clientTwo, ColorPref.White), gameId
+            ChooseColorPref(clientOne, ColorPref.Black,sessionOne),
+            ChooseColorPref(clientTwo, ColorPref.White,sessionTwo), gameId
         )
 
         OutputVerifier.compareKeyValue(
@@ -118,11 +122,13 @@ class TestChoice {
     fun testConflict() {
         val clientOne = UUID.randomUUID()
         val clientTwo = UUID.randomUUID()
+        val sessionOne = UUID.randomUUID()
+        val sessionTwo = UUID.randomUUID()
         val gameId = UUID.randomUUID()
 
         val chosen: ColorsChosen = jsonMapper.readValue(push(
-            ChooseColorPref(clientOne, ColorPref.Black),
-            ChooseColorPref(clientTwo, ColorPref.Black), gameId
+            ChooseColorPref(clientOne, ColorPref.Black,sessionOne),
+            ChooseColorPref(clientTwo, ColorPref.Black,sessionTwo), gameId
         )?.value(), ColorsChosen::class.java)
 
         Assertions.assertTrue(when (chosen.black) {
@@ -135,11 +141,13 @@ class TestChoice {
     fun testMoreConflict() {
         val clientOne = UUID.randomUUID()
         val clientTwo = UUID.randomUUID()
+        val sessionOne = UUID.randomUUID()
+        val sessionTwo = UUID.randomUUID()
         val gameId = UUID.randomUUID()
 
         val chosen: ColorsChosen = jsonMapper.readValue(push(
-            ChooseColorPref(clientOne, ColorPref.White),
-            ChooseColorPref(clientTwo, ColorPref.White), gameId
+            ChooseColorPref(clientOne, ColorPref.White,sessionOne),
+            ChooseColorPref(clientTwo, ColorPref.White,sessionTwo), gameId
         )?.value(), ColorsChosen::class.java)
 
         Assertions.assertTrue(when (chosen.black) {
@@ -152,11 +160,13 @@ class TestChoice {
     fun testSimpleDemands() {
         val clientOne = UUID.randomUUID()
         val clientTwo = UUID.randomUUID()
+        val sessionOne = UUID.randomUUID()
+        val sessionTwo = UUID.randomUUID()
         val gameId = UUID.randomUUID()
 
         val chosen = push(
-            ChooseColorPref(clientOne, ColorPref.Any),
-            ChooseColorPref(clientTwo, ColorPref.White), gameId
+            ChooseColorPref(clientOne, ColorPref.Any,sessionOne),
+            ChooseColorPref(clientTwo, ColorPref.White,sessionTwo), gameId
         )
 
         OutputVerifier.compareKeyValue(
@@ -175,11 +185,13 @@ class TestChoice {
     fun testMoreDemands() {
         val clientOne = UUID.randomUUID()
         val clientTwo = UUID.randomUUID()
+        val sessionOne = UUID.randomUUID()
+        val sessionTwo = UUID.randomUUID()
         val gameId = UUID.randomUUID()
 
         val chosen = push(
-            ChooseColorPref(clientOne, ColorPref.White),
-            ChooseColorPref(clientTwo, ColorPref.Any), gameId
+            ChooseColorPref(clientOne, ColorPref.White,sessionOne),
+            ChooseColorPref(clientTwo, ColorPref.Any,sessionTwo), gameId
         )
 
         OutputVerifier.compareKeyValue(
@@ -198,11 +210,13 @@ class TestChoice {
     fun testLooseConcerns() {
         val clientOne = UUID.randomUUID()
         val clientTwo = UUID.randomUUID()
+        val sessionOne = UUID.randomUUID()
+        val sessionTwo = UUID.randomUUID()
         val gameId = UUID.randomUUID()
 
         val chosenJson = push(
-            ChooseColorPref(clientOne, ColorPref.Any),
-            ChooseColorPref(clientTwo, ColorPref.Any), gameId
+            ChooseColorPref(clientOne, ColorPref.Any,sessionOne),
+            ChooseColorPref(clientTwo, ColorPref.Any,sessionTwo), gameId
         )
 
         val chosen: ColorsChosen =
