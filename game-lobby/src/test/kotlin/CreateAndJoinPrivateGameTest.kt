@@ -86,8 +86,6 @@ class CreateAndJoinPrivateGameTest {
                 )
             )
 
-        println("output ${outputRecord}")
-        println("actual ${actual}")
         OutputVerifier.compareKeyValue(outputRecord, actual.gameId, expected)
 
     }

@@ -99,7 +99,7 @@ class CreateGameTest {
 
             val expectedLobby = GameLobby()
 
-            expectedGames += Game(newGameId, v, creatorClientId)
+            expectedGames += Game(newGameId, v, creatorSessionId)
             expectedLobby.games = expectedGames
 
             OutputVerifier.compareKeyValue(
