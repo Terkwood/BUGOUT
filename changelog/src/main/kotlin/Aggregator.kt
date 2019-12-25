@@ -86,7 +86,7 @@ class Aggregator(private val brokers: String) {
                 GAME_STATES_CHANGELOG,
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
-        
+
         gameStates
             .toStream()
             .filter { _, v ->
