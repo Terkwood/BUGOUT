@@ -108,6 +108,20 @@ mod tests {
     }
 
     #[test]
+    fn deserialize_create_private_game_board_size_9() {
+        let json = "{\"type\":\"CreatePrivateGame\", \"boardSize\":9}";
+
+        let d: ClientCommands = serde_json::from_str(json).unwrap();
+
+        assert_eq!(
+            d,
+            ClientCommands::CreatePrivateGame(CreatePrivateGameClientCommand {
+                board_size: Some(9)
+            })
+        )
+    }
+
+    #[test]
     fn deserialize_beep_client_command() {
         let json = "{\"type\":\"Beep\"}";
 
