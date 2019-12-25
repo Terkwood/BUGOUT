@@ -47,7 +47,7 @@ data class GameReady(
     }
 }
 
-data class MoveMadeGameReady (
+data class MoveMadeBoardSize (
     val moveMade: MoveMade,
-    val gameReady: GameReady
+    val boardSize: Int
 )

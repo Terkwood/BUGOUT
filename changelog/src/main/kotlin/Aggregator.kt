@@ -31,27 +31,28 @@ class Aggregator(private val brokers: String) {
                 println("MOVE ACCEPTED $v")
                 jsonMapper.readValue(v, MoveMade::class.java)}
 
-        val gameReady: KStream<UUID, GameReady> =
+        val boardSize: KStream<UUID, Int> =
             streamsBuilder.stream<UUID, String>(
                     GAME_READY,
                     Consumed.with(Serdes.UUID(), Serdes.String())
             ).map { k,v ->
                 println("GAME READY $k -> $v")
-                KeyValue(k,jsonMapper.readValue(v, GameReady::class.java))}
+                KeyValue(k,
+                    jsonMapper.readValue(v, GameReady::class.java).boardSize)}
 
-        val funTimes = gameReady.mapValues{ v ->
-            println("more fun times ")
+        val funTimes = boardSize.mapValues{ v ->
+            println("more fun times with board size $v")
             v
         }
 
 
-        val pair: KStream<UUID, MoveMadeGameReady> = moveAccepted
-            .join(gameReady,
-            { left: MoveMade, right: GameReady -> MoveMadeGameReady(left,right)},
+        val pair: KStream<UUID, MoveMadeBoardSize> = moveAccepted
+            .join(boardSize,
+            { left: MoveMade, right: Int -> MoveMadeBoardSize(left,right)},
             JoinWindows.of(ChronoUnit.YEARS.duration),
                 Joined.with(Serdes.UUID(),
                     Serdes.serdeFrom(MoveMadeSer(), MoveMadeDes()),
-                    Serdes.serdeFrom(GameReadySer(), GameReadyDes())))
+                    Serdes.Integer()))
 
 
         val gameStates: KTable<UUID, GameState> =
@@ -66,7 +67,7 @@ class Aggregator(private val brokers: String) {
                     )
                     // Make sure board size isn't lost from
                     // turn to turn
-                    gameState.board.size = v.gameReady.boardSize
+                    gameState.board.size = v.boardSize
                     gameState
                 },
                 Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
