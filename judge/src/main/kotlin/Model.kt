@@ -6,9 +6,10 @@ import kotlin.collections.HashMap
 enum class Player { BLACK, WHITE }
 data class Coord(val x: Int, val y: Int)
 
+const val DEFAULT_BOARD_SIZE = 19
 data class Board(
     val pieces: Map<Coord, Player> = HashMap(),
-    val size: Int = FULL_BOARD_SIZE
+    val size: Int = DEFAULT_BOARD_SIZE
 )
 
 data class Captures(
