@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -32,6 +33,12 @@ data class MoveMade(
 )
 
 /** Board size and handicaps */
+@JsonIgnoreProperties
 data class GameReady(
     val boardSize: Int = FULL_BOARD_SIZE
+)
+
+data class MoveMadeGameReady (
+    val moveMade: MoveMade,
+    val gameReady: GameReady
 )

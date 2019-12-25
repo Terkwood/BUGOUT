@@ -25,20 +25,20 @@ class Aggregator(private val brokers: String) {
     fun process() {
 
         val streamsBuilder = StreamsBuilder()
-        val moveAcceptedJson = streamsBuilder.stream<UUID, String>(
+        val moveAccepted = streamsBuilder.stream<UUID, String>(
             MOVE_ACCEPTED_EV,
             Consumed.with(Serdes.UUID(), Serdes.String())
-        )
+        ).mapValues { v -> jsonMapper.readValue(v, MoveMade::class.java)}
 
-        val gameReadyJson = streamsBuilder
+        val gameReady = streamsBuilder
             .stream(GAME_READY, Consumed.with(Serdes.UUID(), Serdes.String()))
+            .mapValues { v -> jsonMapper.readValue(v, GameReady::class.java)}
 
-        // TODO
-        val moveAcceptedGameReady = moveAcceptedJson.join(gameReadyJson,
-            { left: String, right: String -> Pair(left,right)},JoinWindows.of(
-            ChronoUnit.YEARS.duration))
+        val pairJson = moveAccepted.join(gameReady,
+            { left: MoveMade, right: GameReady -> MoveMadeGameReady(left,right)},JoinWindows.of(
+            ChronoUnit.YEARS.duration)).mapValues { v: MoveMadeGameReady -> jsonMapper.writeValueAsString(v)}
 
-        @Suppress("DEPRECATION") val gameStates = moveAcceptedJson.groupByKey(
+        @Suppress("DEPRECATION") val gameStates = pairJson.groupByKey(
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
             Serialized.with(
                 Serdes.UUID(),
@@ -51,8 +51,8 @@ class Aggregator(private val brokers: String) {
                     gameState.add(
                         jsonMapper.readValue(
                             v,
-                            MoveMade::class.java
-                        )
+                            MoveMadeGameReady::class.java
+                        ).moveMade
                     )
                     gameState
                 },
