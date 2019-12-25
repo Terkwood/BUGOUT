@@ -45,15 +45,14 @@ class Aggregator(private val brokers: String) {
         }
 
 
-        val pair = moveAccepted.join(gameReady,
-            { left: MoveMade, right: GameReady -> MoveMadeGameReady(left,right)},JoinWindows.of(
-            ChronoUnit.YEARS.duration,
+        val pair: KStream<UUID, MoveMadeGameReady> = moveAccepted
+            .join(gameReady,
+            { left: MoveMade, right: GameReady -> MoveMadeGameReady(left,right)},
+            JoinWindows.of(ChronoUnit.YEARS.duration),
                 Joined.with(Serdes.UUID(),
                     Serdes.serdeFrom(MoveMadeSer(), MoveMadeDes()),
-                    Serdes.serdeFrom(GameReadySer(), GameReadyDes()))))
-
-
-
+                    Serdes.serdeFrom(GameReadySer(), GameReadyDes())))
+        
 
         val gameStates: KTable<UUID, GameState> =
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
