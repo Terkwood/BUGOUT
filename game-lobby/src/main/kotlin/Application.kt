@@ -194,7 +194,6 @@ class Application(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
-                    println("Create a game ! $v")
                     jsonMapper.readValue(
                         v,
                         CreateGame::class.java
