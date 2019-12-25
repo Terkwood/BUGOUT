@@ -243,7 +243,7 @@ class Application(private val brokers: String) {
 
         // write an empty game state to the game states changelog
         createGameStream.map { _, cg ->
-            KeyValue(cg.gameId, GameState())
+            KeyValue(cg.gameId, GameState(board = Board(size = cg.boardSize)))
         }.mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(
                 Topics.GAME_STATES_CHANGELOG, Produced.with(
