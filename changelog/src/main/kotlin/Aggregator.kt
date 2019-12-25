@@ -11,9 +11,7 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
-import serdes.GameStateDeserializer
-import serdes.GameStateSerializer
-import serdes.jsonMapper
+import serdes.*
 import java.time.temporal.ChronoUnit
 import java.util.*
 
@@ -46,13 +44,16 @@ class Aggregator(private val brokers: String) {
             v
         }
 
-        /*
+
         val pair = moveAccepted.join(gameReady,
             { left: MoveMade, right: GameReady -> MoveMadeGameReady(left,right)},JoinWindows.of(
-            ChronoUnit.YEARS.duration)
-        )
-       
-         */
+            ChronoUnit.YEARS.duration,
+                Joined.with(Serdes.UUID(),
+                    Serdes.serdeFrom(MoveMadeSer(), MoveMadeDes()),
+                    Serdes.serdeFrom(GameReadySer(), GameReadyDes()))))
+
+
+
 
         val gameStates: KTable<UUID, GameState> =
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
@@ -73,8 +74,8 @@ class Aggregator(private val brokers: String) {
                     .withKeySerde(Serdes.UUID())
                     .withValueSerde(
                         Serdes.serdeFrom(
-                            GameStateSerializer(),
-                            GameStateDeserializer()
+                            GameStateSer(),
+                            GameStateDes()
                         )
                     )
             )

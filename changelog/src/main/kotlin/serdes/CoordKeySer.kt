@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.SerializerProvider
 /**
  * Provides a JSON-prettified string for Coords
  */
-internal class CoordKeySerializer : JsonSerializer<Coord>() {
+internal class CoordKeySer : JsonSerializer<Coord>() {
     override fun serialize(
         value: Coord?,
         gen: JsonGenerator?,

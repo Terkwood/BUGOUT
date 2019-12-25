@@ -17,11 +17,11 @@ val jsonMapper = ObjectMapper().apply {
     val simpleModule = SimpleModule()
     simpleModule.addKeyDeserializer(
         Coord::class.java,
-        CoordKeyDeserializer()
+        CoordKeyDes()
     )
     simpleModule.addKeySerializer(
         Coord::class.java,
-        CoordKeySerializer()
+        CoordKeySer()
     )
     registerModule(simpleModule)
 }

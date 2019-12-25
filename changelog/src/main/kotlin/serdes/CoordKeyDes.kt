@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.KeyDeserializer
 import java.io.IOException
 
-internal class CoordKeyDeserializer :
+internal class CoordKeyDes :
     KeyDeserializer() {
     private val regex = Regex("(\\d+),(\\d+)")
     private fun coordFrom(str: String): Coord? {

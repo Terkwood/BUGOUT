@@ -4,7 +4,7 @@ import GameState
 import org.apache.kafka.common.errors.SerializationException
 import org.apache.kafka.common.serialization.Serializer
 
-class GameStateSerializer : Serializer<GameState> {
+class GameStateSer : Serializer<GameState> {
 
     override fun configure(configs: Map<String, *>, isKey: Boolean) {}
 

@@ -1,4 +1,5 @@
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import serdes.jsonMapper
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -30,13 +31,21 @@ data class MoveMade(
     val player: Player,
     val coord: Coord?,
     val captured: List<Coord> = ArrayList()
-)
+){
+    fun asByteArray(): ByteArray {
+        return jsonMapper.writeValueAsBytes(this)
+    }
+}
 
 /** Board size and handicaps */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class GameReady(
     val boardSize: Int = FULL_BOARD_SIZE
-)
+){
+    fun asByteArray(): ByteArray {
+        return jsonMapper.writeValueAsBytes(this)
+    }
+}
 
 data class MoveMadeGameReady (
     val moveMade: MoveMade,
