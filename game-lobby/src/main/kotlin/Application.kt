@@ -157,7 +157,9 @@ class Application(private val brokers: String) {
         )
 
         popPrivateGame
-            .map { _, v -> KeyValue(v.game.gameId, GameState()) }
+            .map { _, v ->
+                KeyValue(v.game.gameId,
+                    GameState(board = Board(size = v.game.boardSize))) }
             .mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(
                 Topics.GAME_STATES_CHANGELOG,
@@ -406,8 +408,6 @@ class Application(private val brokers: String) {
          */
         val popPublicGame: KStream<SessionId, GameLobbyCommand> =
             publicGameExists.map { sid, fl ->
-                val fpg = fl.command
-
                 val someGame =
                     fl.lobby.games.first { g ->
                         g.visibility == Visibility

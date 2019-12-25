@@ -3,7 +3,8 @@ import serdes.jsonMapper
 data class Game(
     val gameId: GameId,
     val visibility: Visibility,
-    val creator: SessionId
+    val creator: SessionId,
+    val boardSize: Int = FULL_SIZE_BOARD
 )
 
 data class GameLobbyCommand(val game: Game, val lobbyCommand: LobbyCommand)
