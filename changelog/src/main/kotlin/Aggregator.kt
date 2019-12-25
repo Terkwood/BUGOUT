@@ -28,28 +28,22 @@ class Aggregator(private val brokers: String) {
                 MOVE_ACCEPTED_EV,
                 Consumed.with(Serdes.UUID(), Serdes.String())
             ).mapValues { v ->
-                println("MOVE ACCEPTED $v")
-                jsonMapper.readValue(v, MoveMade::class.java)}
+                jsonMapper.readValue(v, MoveMade::class.java)
+            }
 
         val boardSize: KStream<UUID, Int> =
             streamsBuilder.stream<UUID, String>(
                     GAME_READY,
                     Consumed.with(Serdes.UUID(), Serdes.String())
-            ).map { k,v ->
-                println("GAME READY $k -> $v")
-                KeyValue(k,
-                    jsonMapper.readValue(v, GameReady::class.java).boardSize)}
-
-        val funTimes = boardSize.mapValues{ v ->
-            println("more fun times with board size $v")
-            v
-        }
+            ).mapValues { v ->
+                jsonMapper.readValue(v, GameReady::class.java).boardSize
+            }
 
 
         val pair: KStream<UUID, MoveMadeBoardSize> = moveAccepted
             .join(boardSize,
             { left: MoveMade, right: Int -> MoveMadeBoardSize(left,right)},
-            JoinWindows.of(ChronoUnit.YEARS.duration),
+            JoinWindows.of(ChronoUnit.DAYS.duration),
                 Joined.with(Serdes.UUID(),
                     Serdes.serdeFrom(MoveMadeSer(), MoveMadeDes()),
                     Serdes.Integer()))
@@ -92,8 +86,7 @@ class Aggregator(private val brokers: String) {
                 GAME_STATES_CHANGELOG,
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
-
-
+        
         gameStates
             .toStream()
             .filter { _, v ->
