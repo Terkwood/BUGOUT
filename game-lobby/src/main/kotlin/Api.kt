@@ -11,7 +11,8 @@ data class CreateGame(
     val clientId: ClientId,
     val visibility: Visibility,
     val gameId: GameId = UUID.randomUUID(),
-    val sessionId: SessionId
+    val sessionId: SessionId,
+    val boardSize: Int = FULL_SIZE_BOARD
 )
 
 /**

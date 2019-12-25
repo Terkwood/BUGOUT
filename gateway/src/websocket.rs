@@ -249,7 +249,7 @@ impl Handler for WsSession {
                 }
                 Ok(self.observe_game())
             }
-            Ok(ClientCommands::CreatePrivateGame) => {
+            Ok(ClientCommands::CreatePrivateGame(cp)) => {
                 // Ignore this request if we already have a game
                 // in progress.
                 if let (None, Some(client_id)) = (self.current_game, self.client_id) {
@@ -263,6 +263,7 @@ impl Handler for WsSession {
                             client_id,
                             visibility: Visibility::Private,
                             session_id: self.session_id,
+                            board_size: cp.board_size.unwrap_or(crate::FULL_BOARD_SIZE),
                         }))
                         .map_err(|e| ws::Error::from(Box::new(e)))
                     {
