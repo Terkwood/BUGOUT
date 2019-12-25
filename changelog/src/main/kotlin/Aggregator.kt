@@ -46,13 +46,14 @@ class Aggregator(private val brokers: String) {
             v
         }
 
-        /*val pair = moveAccepted.join(gameReady,
+        /*
+        val pair = moveAccepted.join(gameReady,
             { left: MoveMade, right: GameReady -> MoveMadeGameReady(left,right)},JoinWindows.of(
             ChronoUnit.YEARS.duration)
-        )*/
+        )
+       
+         */
 
-
-        // TODO temp sanity
         val gameStates: KTable<UUID, GameState> =
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
             moveAccepted
