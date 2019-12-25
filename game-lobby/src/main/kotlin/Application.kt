@@ -136,7 +136,8 @@ class Application(private val brokers: String) {
                 gameCommand.game.gameId,
                 GameReady(
                     gameCommand.game.gameId,
-                    Pair(gameCommand.game.creator, finderSessionId)
+                    Pair(gameCommand.game.creator, finderSessionId),
+                    boardSize = gameCommand.game.boardSize
                 )
             )
         }.mapValues { it -> jsonMapper.writeValueAsString(it) }
@@ -429,7 +430,8 @@ class Application(private val brokers: String) {
                 gameCommand.game.gameId,
                 GameReady(
                     gameCommand.game.gameId,
-                    Pair(gameCommand.game.creator, finderSessionId)
+                    Pair(gameCommand.game.creator, finderSessionId),
+                    boardSize = gameCommand.game.boardSize
                 )
             )
         }.mapValues { it -> jsonMapper.writeValueAsString(it) }

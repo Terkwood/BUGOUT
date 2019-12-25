@@ -26,3 +26,4 @@ COPY . /var/BUGOUT/gateway/.
 #RUN cargo install --path .
 
 #CMD ["gateway"]
+CMD ["sh","no_run.sh"]

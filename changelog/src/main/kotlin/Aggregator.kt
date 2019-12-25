@@ -1,7 +1,8 @@
-import Topics.GAME_STATES_CHANGELOG_TOPIC
+import Topics.GAME_READY
+import Topics.GAME_STATES_CHANGELOG
 import Topics.GAME_STATES_STORE_NAME
-import Topics.MOVE_ACCEPTED_EV_TOPIC
-import Topics.MOVE_MADE_EV_TOPIC
+import Topics.MOVE_ACCEPTED_EV
+import Topics.MOVE_MADE_EV
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -13,6 +14,7 @@ import org.apache.kafka.streams.state.KeyValueStore
 import serdes.GameStateDeserializer
 import serdes.GameStateSerializer
 import serdes.jsonMapper
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 fun main() {
@@ -24,9 +26,17 @@ class Aggregator(private val brokers: String) {
 
         val streamsBuilder = StreamsBuilder()
         val moveAcceptedJson = streamsBuilder.stream<UUID, String>(
-            MOVE_ACCEPTED_EV_TOPIC,
+            MOVE_ACCEPTED_EV,
             Consumed.with(Serdes.UUID(), Serdes.String())
         )
+
+        val gameReadyJson = streamsBuilder
+            .stream(GAME_READY, Consumed.with(Serdes.UUID(), Serdes.String()))
+
+        // TODO
+        val moveAcceptedGameReady = moveAcceptedJson.join(gameReadyJson,
+            { left: String, right: String -> Pair(left,right)},JoinWindows.of(
+            ChronoUnit.YEARS.duration))
 
         @Suppress("DEPRECATION") val gameStates = moveAcceptedJson.groupByKey(
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
@@ -65,7 +75,7 @@ class Aggregator(private val brokers: String) {
                 println("\uD83D\uDCBE          ${k?.toString()?.take(8)} AGGRGATE Turn ${v.turn} PlayerUp ${v.playerUp}")
                 KeyValue(k,jsonMapper.writeValueAsString(v))
             }.to(
-                GAME_STATES_CHANGELOG_TOPIC,
+                GAME_STATES_CHANGELOG,
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
 
@@ -76,7 +86,7 @@ class Aggregator(private val brokers: String) {
             }
             .mapValues { v -> v.moves.last() }
             .mapValues { v -> jsonMapper.writeValueAsString(v) }
-            .to(MOVE_MADE_EV_TOPIC,
+            .to(MOVE_MADE_EV,
                 Produced.with(Serdes.UUID(), Serdes.String()))
 
         val topology = streamsBuilder.build()

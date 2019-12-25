@@ -30,3 +30,8 @@ data class MoveMade(
     val coord: Coord?,
     val captured: List<Coord> = ArrayList()
 )
+
+/** Board size and handicaps */
+data class GameReady(
+    val boardSize: Int = FULL_BOARD_SIZE
+)
