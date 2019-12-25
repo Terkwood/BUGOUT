@@ -22,7 +22,6 @@ RUN rustup default stable
 # not just what's on the git branch
 COPY . /var/BUGOUT/gateway/.
 
-#RUN cargo install --path .
+RUN cargo install --path .
 
-#CMD ["gateway"]
-CMD [ "sh", "no_run.sh"]
+CMD ["gateway"]
