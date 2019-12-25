@@ -9,7 +9,7 @@ data class Coord(val x: Int, val y: Int)
 const val FULL_BOARD_SIZE = 19
 data class Board(
     val pieces: MutableMap<Coord, Player> = HashMap(),
-    val size: Int = FULL_BOARD_SIZE
+    var size: Int = FULL_BOARD_SIZE
 )
 
 data class Captures(

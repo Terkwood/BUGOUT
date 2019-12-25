@@ -52,18 +52,21 @@ class Aggregator(private val brokers: String) {
                 Joined.with(Serdes.UUID(),
                     Serdes.serdeFrom(MoveMadeSer(), MoveMadeDes()),
                     Serdes.serdeFrom(GameReadySer(), GameReadyDes())))
-        
+
 
         val gameStates: KTable<UUID, GameState> =
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
-            moveAccepted
+            pair
                 .groupByKey()
                 .aggregate(
                 { GameState() },
                 { _, v, gameState ->
                     gameState.add(
-                       v
+                       v.moveMade
                     )
+                    // Make sure board size isn't lost from
+                    // turn to turn
+                    gameState.board.size = v.gameReady.boardSize
                     gameState
                 },
                 Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
