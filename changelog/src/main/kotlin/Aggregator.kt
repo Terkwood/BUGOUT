@@ -35,19 +35,29 @@ class Aggregator(private val brokers: String) {
             streamsBuilder.stream<UUID, String>(
                     GAME_READY,
                     Consumed.with(Serdes.UUID(), Serdes.String())
-            ).mapValues { v -> jsonMapper.readValue(v, GameReady::class.java)}
+            ).mapValues { v ->
+                jsonMapper.readValue(v, GameReady::class.java)}
 
         val pair: KStream<UUID, String> = moveAccepted.join(gameReady,
             { left: MoveMade, right: GameReady -> MoveMadeGameReady(left,right)},JoinWindows.of(
             ChronoUnit.YEARS.duration)
-        ).mapValues { v -> jsonMapper.writeValueAsString(v) }
+        ).mapValues {
+                v ->
+            jsonMapper.writeValueAsString(v) }
 
-        val gameStates: KTable<UUID, GameState> = pair.groupByKey()
+        @Suppress("DEPRECATION")
+        val gameStates: KTable<UUID, GameState> = pair.groupByKey(
+            // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
+              Serialized.with(
+                                Serdes.UUID(),
+                                Serdes.String()
+                                    ))
             .aggregate(
                 { GameState() },
                 { _, v, gameState ->
                     gameState.add(
-                        v.moveMade
+                        jsonMapper.readValue(v, MoveMadeGameReady::class.java)
+                            .moveMade
                     )
                     gameState
                 },
