@@ -33,7 +33,7 @@ data class MoveMade(
 )
 
 /** Board size and handicaps */
-@JsonIgnoreProperties
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class GameReady(
     val boardSize: Int = FULL_BOARD_SIZE
 )

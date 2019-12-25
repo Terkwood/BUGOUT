@@ -25,34 +25,29 @@ class Aggregator(private val brokers: String) {
     fun process() {
 
         val streamsBuilder = StreamsBuilder()
-        val moveAccepted = streamsBuilder.stream<UUID, String>(
-            MOVE_ACCEPTED_EV,
-            Consumed.with(Serdes.UUID(), Serdes.String())
-        ).mapValues { v -> jsonMapper.readValue(v, MoveMade::class.java)}
+        val moveAccepted: KStream<UUID, MoveMade> =
+            streamsBuilder.stream<UUID, String>(
+                MOVE_ACCEPTED_EV,
+                Consumed.with(Serdes.UUID(), Serdes.String())
+            ).mapValues { v -> jsonMapper.readValue(v, MoveMade::class.java)}
 
-        val gameReady = streamsBuilder
-            .stream(GAME_READY, Consumed.with(Serdes.UUID(), Serdes.String()))
-            .mapValues { v -> jsonMapper.readValue(v, GameReady::class.java)}
+        val gameReady: KStream<UUID, GameReady> =
+            streamsBuilder.stream<UUID, String>(
+                    GAME_READY,
+                    Consumed.with(Serdes.UUID(), Serdes.String())
+            ).mapValues { v -> jsonMapper.readValue(v, GameReady::class.java)}
 
-        val pairJson = moveAccepted.join(gameReady,
+        val pair: KStream<UUID, String> = moveAccepted.join(gameReady,
             { left: MoveMade, right: GameReady -> MoveMadeGameReady(left,right)},JoinWindows.of(
-            ChronoUnit.YEARS.duration)).mapValues { v: MoveMadeGameReady -> jsonMapper.writeValueAsString(v)}
+            ChronoUnit.YEARS.duration)
+        ).mapValues { v -> jsonMapper.writeValueAsString(v) }
 
-        @Suppress("DEPRECATION") val gameStates = pairJson.groupByKey(
-            // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
-            Serialized.with(
-                Serdes.UUID(),
-                Serdes.String()
-            )
-        )
+        val gameStates: KTable<UUID, GameState> = pair.groupByKey()
             .aggregate(
                 { GameState() },
                 { _, v, gameState ->
                     gameState.add(
-                        jsonMapper.readValue(
-                            v,
-                            MoveMadeGameReady::class.java
-                        ).moveMade
+                        v.moveMade
                     )
                     gameState
                 },
@@ -78,6 +73,7 @@ class Aggregator(private val brokers: String) {
                 GAME_STATES_CHANGELOG,
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
+
 
         gameStates
             .toStream()
