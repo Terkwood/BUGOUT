@@ -451,7 +451,10 @@ class Application(private val brokers: String) {
 
 
         popPublicGame
-            .map { _, v -> KeyValue(v.game.gameId, GameState()) }
+            .map { _, v ->
+                KeyValue(v.game.gameId,
+                    GameState(board = Board(size = v.game.boardSize)
+                )) }
             .mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(
                 Topics.GAME_STATES_CHANGELOG,
