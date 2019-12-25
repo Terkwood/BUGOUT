@@ -28,7 +28,7 @@ class Aggregator(private val brokers: String) {
             Consumed.with(Serdes.UUID(), Serdes.String())
         )
 
-        val gameStates = moveAcceptedJson.groupByKey(
+        @Suppress("DEPRECATION") val gameStates = moveAcceptedJson.groupByKey(
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
             Serialized.with(
                 Serdes.UUID(),
@@ -92,8 +92,8 @@ class Aggregator(private val brokers: String) {
         streams.start()
     }
     
-    private fun waitForTopics(topics: Array<String>, props: java.util
-    .Properties) {
+    private fun waitForTopics(topics: Array<String>, props:
+    Properties) {
         print("Waiting for topics ")
         val client = AdminClient.create(props)
 
