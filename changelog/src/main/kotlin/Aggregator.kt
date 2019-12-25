@@ -37,14 +37,14 @@ class Aggregator(private val brokers: String) {
         )
             .aggregate(
                 { GameState() },
-                { _, v, list ->
-                    list.add(
+                { _, v, gameState ->
+                    gameState.add(
                         jsonMapper.readValue(
                             v,
                             MoveMade::class.java
                         )
                     )
-                    list
+                    gameState
                 },
                 Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
                         ByteArray>>(
