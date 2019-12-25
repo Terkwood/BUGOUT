@@ -255,6 +255,8 @@ impl Handler for WsSession {
                 if let (None, Some(client_id)) = (self.current_game, self.client_id) {
                     println!("🔒 {} CRETPRIV", session_code(self));
 
+                    let board_size = cp.board_size.unwrap_or(crate::FULL_BOARD_SIZE);
+                    
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
                     if let Err(e) = self
@@ -263,7 +265,7 @@ impl Handler for WsSession {
                             client_id,
                             visibility: Visibility::Private,
                             session_id: self.session_id,
-                            board_size: cp.board_size.unwrap_or(crate::FULL_BOARD_SIZE),
+                            board_size,
                         }))
                         .map_err(|e| ws::Error::from(Box::new(e)))
                     {

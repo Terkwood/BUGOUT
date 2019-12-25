@@ -194,6 +194,7 @@ class Application(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String())
             )
                 .mapValues { v ->
+                    println("Create a game ! $v")
                     jsonMapper.readValue(
                         v,
                         CreateGame::class.java
@@ -227,7 +228,8 @@ class Application(private val brokers: String) {
                 Game(
                     gameId = v.gameId,
                     visibility = v.visibility,
-                    creator = v.sessionId
+                    creator = v.sessionId,
+                    boardSize = v.boardSize
                 )
             KeyValue(
                 GameLobby.TRIVIAL_KEY,
