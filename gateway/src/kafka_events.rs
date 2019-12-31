@@ -82,6 +82,8 @@ pub struct GameReadyKafkaEvent {
     pub sessions: GameSessions,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
+    #[serde(rename = "boardSize")]
+    pub board_size: u8,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
