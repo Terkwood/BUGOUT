@@ -31,9 +31,15 @@ impl KafkaEvents {
                 game_id: c.game_id,
                 your_color: Player::BLACK,
             }),
-            KafkaEvents::GameReady(g) => ClientEvents::GameReady(GameReadyClientEvent {
-                game_id: g.game_id,
-                event_id: g.event_id,
+            KafkaEvents::GameReady(GameReadyKafkaEvent {
+                game_id,
+                event_id,
+                board_size,
+                sessions: _,
+            }) => ClientEvents::GameReady(GameReadyClientEvent {
+                game_id,
+                event_id,
+                board_size,
             }),
             KafkaEvents::PrivateGameRejected(p) => {
                 ClientEvents::PrivateGameRejected(PrivateGameRejectedClientEvent {

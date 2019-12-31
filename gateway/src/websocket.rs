@@ -256,7 +256,7 @@ impl Handler for WsSession {
                     println!("🔒 {} CRETPRIV", session_code(self));
 
                     let board_size = cp.board_size.unwrap_or(crate::FULL_BOARD_SIZE);
-                    
+
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
                     if let Err(e) = self
@@ -429,6 +429,7 @@ impl Handler for WsSession {
                             ClientEvents::GameReady(GameReadyClientEvent {
                                 game_id,
                                 event_id: _,
+                                board_size: _,
                             }) => {
                                 self.current_game = Some(game_id);
                                 println!("🎳 {} {:<8}", session_code(self), "GAMEREDY");
