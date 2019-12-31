@@ -4,7 +4,7 @@ import GameState
 import org.apache.kafka.common.errors.SerializationException
 import org.apache.kafka.common.serialization.Deserializer
 
-class GameStateDeserializer : Deserializer<GameState> {
+class GameStateDes : Deserializer<GameState> {
 
     override fun configure(configs: Map<String, *>, isKey: Boolean) {}
 

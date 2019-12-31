@@ -1,7 +1,8 @@
-import Topics.GAME_STATES_CHANGELOG_TOPIC
+import Topics.GAME_READY
+import Topics.GAME_STATES_CHANGELOG
 import Topics.GAME_STATES_STORE_NAME
-import Topics.MOVE_ACCEPTED_EV_TOPIC
-import Topics.MOVE_MADE_EV_TOPIC
+import Topics.MOVE_ACCEPTED_EV
+import Topics.MOVE_MADE_EV
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -10,9 +11,8 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
-import serdes.GameStateDeserializer
-import serdes.GameStateSerializer
-import serdes.jsonMapper
+import serdes.*
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 fun main() {
@@ -23,28 +23,46 @@ class Aggregator(private val brokers: String) {
     fun process() {
 
         val streamsBuilder = StreamsBuilder()
-        val moveAcceptedJson = streamsBuilder.stream<UUID, String>(
-            MOVE_ACCEPTED_EV_TOPIC,
-            Consumed.with(Serdes.UUID(), Serdes.String())
-        )
+        val moveAccepted: KStream<UUID, MoveMade> =
+            streamsBuilder.stream<UUID, String>(
+                MOVE_ACCEPTED_EV,
+                Consumed.with(Serdes.UUID(), Serdes.String())
+            ).mapValues { v ->
+                jsonMapper.readValue(v, MoveMade::class.java)
+            }
 
-        val gameStates = moveAcceptedJson.groupByKey(
+        val boardSize: KStream<UUID, Int> =
+            streamsBuilder.stream<UUID, String>(
+                    GAME_READY,
+                    Consumed.with(Serdes.UUID(), Serdes.String())
+            ).mapValues { v ->
+                jsonMapper.readValue(v, GameReady::class.java).boardSize
+            }
+
+
+        val pair: KStream<UUID, MoveMadeBoardSize> = moveAccepted
+            .join(boardSize,
+            { left: MoveMade, right: Int -> MoveMadeBoardSize(left,right)},
+            JoinWindows.of(ChronoUnit.DAYS.duration),
+                Joined.with(Serdes.UUID(),
+                    Serdes.serdeFrom(MoveMadeSer(), MoveMadeDes()),
+                    Serdes.Integer()))
+
+
+        val gameStates: KTable<UUID, GameState> =
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
-            Serialized.with(
-                Serdes.UUID(),
-                Serdes.String()
-            )
-        )
-            .aggregate(
+            pair
+                .groupByKey()
+                .aggregate(
                 { GameState() },
-                { _, v, list ->
-                    list.add(
-                        jsonMapper.readValue(
-                            v,
-                            MoveMade::class.java
-                        )
+                { _, v, gameState ->
+                    gameState.add(
+                       v.moveMade
                     )
-                    list
+                    // Make sure board size isn't lost from
+                    // turn to turn
+                    gameState.board.size = v.boardSize
+                    gameState
                 },
                 Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
                         ByteArray>>(
@@ -53,8 +71,8 @@ class Aggregator(private val brokers: String) {
                     .withKeySerde(Serdes.UUID())
                     .withValueSerde(
                         Serdes.serdeFrom(
-                            GameStateSerializer(),
-                            GameStateDeserializer()
+                            GameStateSer(),
+                            GameStateDes()
                         )
                     )
             )
@@ -65,7 +83,7 @@ class Aggregator(private val brokers: String) {
                 println("\uD83D\uDCBE          ${k?.toString()?.take(8)} AGGRGATE Turn ${v.turn} PlayerUp ${v.playerUp}")
                 KeyValue(k,jsonMapper.writeValueAsString(v))
             }.to(
-                GAME_STATES_CHANGELOG_TOPIC,
+                GAME_STATES_CHANGELOG,
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
 
@@ -76,7 +94,7 @@ class Aggregator(private val brokers: String) {
             }
             .mapValues { v -> v.moves.last() }
             .mapValues { v -> jsonMapper.writeValueAsString(v) }
-            .to(MOVE_MADE_EV_TOPIC,
+            .to(MOVE_MADE_EV,
                 Produced.with(Serdes.UUID(), Serdes.String()))
 
         val topology = streamsBuilder.build()
@@ -92,8 +110,8 @@ class Aggregator(private val brokers: String) {
         streams.start()
     }
     
-    private fun waitForTopics(topics: Array<String>, props: java.util
-    .Properties) {
+    private fun waitForTopics(topics: Array<String>, props:
+    Properties) {
         print("Waiting for topics ")
         val client = AdminClient.create(props)
 

@@ -41,6 +41,8 @@ pub struct CreateGameKafkaCommand {
     pub visibility: Visibility,
     #[serde(rename = "sessionId")]
     pub session_id: SessionId,
+    #[serde(rename = "boardSize")]
+    pub board_size: u8,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]

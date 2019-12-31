@@ -18,6 +18,12 @@ pub struct JoinPrivateGameClientCommand {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct CreatePrivateGameClientCommand {
+    #[serde(rename = "boardSize")]
+    pub board_size: Option<u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ChooseColorPrefClientCommand {
     #[serde(rename = "colorPref")]
     pub color_pref: ColorPref,
@@ -32,7 +38,7 @@ pub enum ClientCommands {
     ProvideHistory(ProvideHistoryCommand),
     JoinPrivateGame(JoinPrivateGameClientCommand),
     FindPublicGame,
-    CreatePrivateGame,
+    CreatePrivateGame(CreatePrivateGameClientCommand),
     ChooseColorPref(ChooseColorPrefClientCommand),
     ProvideIdleStatus,
     Identify(Identity),
@@ -95,7 +101,24 @@ mod tests {
 
         let d: ClientCommands = serde_json::from_str(json).unwrap();
 
-        assert_eq!(d, ClientCommands::CreatePrivateGame)
+        assert_eq!(
+            d,
+            ClientCommands::CreatePrivateGame(CreatePrivateGameClientCommand { board_size: None })
+        )
+    }
+
+    #[test]
+    fn deserialize_create_private_game_board_size_9() {
+        let json = "{\"type\":\"CreatePrivateGame\", \"boardSize\":9}";
+
+        let d: ClientCommands = serde_json::from_str(json).unwrap();
+
+        assert_eq!(
+            d,
+            ClientCommands::CreatePrivateGame(CreatePrivateGameClientCommand {
+                board_size: Some(9)
+            })
+        )
     }
 
     #[test]

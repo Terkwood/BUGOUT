@@ -1,10 +1,10 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.3.41'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.61'
 }
 
 group 'farm.terkwood'
-version '0.3.0'
+version '0.4.0'
 
 apply plugin: 'kotlin'
 apply plugin: 'application'
@@ -49,12 +49,11 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-// fat jar
 jar {
     manifest { attributes 'Main-Class': 'ApplicationKt' }
     from {
         configurations.compileClasspath.collect { it.isDirectory() ? it :
                 zipTree(it) }
     }
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE // TODO
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

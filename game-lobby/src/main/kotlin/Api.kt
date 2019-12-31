@@ -11,7 +11,8 @@ data class CreateGame(
     val clientId: ClientId,
     val visibility: Visibility,
     val gameId: GameId = UUID.randomUUID(),
-    val sessionId: SessionId
+    val sessionId: SessionId,
+    val boardSize: Int = FULL_SIZE_BOARD
 )
 
 /**
@@ -48,7 +49,8 @@ data class WaitForOpponent(
 data class GameReady(
     val gameId: GameId,
     val sessions: Pair<SessionId, SessionId>,
-    val eventId: EventId = UUID.randomUUID()
+    val eventId: EventId = UUID.randomUUID(),
+    val boardSize: Int = FULL_SIZE_BOARD
 )
 
 data class PrivateGameRejected(

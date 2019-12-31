@@ -37,3 +37,5 @@ pub const EMPTY_SHORT_UUID: &str = "        ";
 pub fn short_uuid(uuid: Uuid) -> String {
     uuid.to_string()[..8].to_string()
 }
+
+pub const FULL_BOARD_SIZE: u8 = 19;

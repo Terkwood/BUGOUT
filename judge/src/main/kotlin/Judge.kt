@@ -1,7 +1,3 @@
-import Topics.GAME_STATES_CHANGELOG_TOPIC
-import Topics.GAME_STATES_STORE
-import Topics.MAKE_MOVE_CMD_TOPIC
-import Topics.MOVE_ACCEPTED_EV_TOPIC
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -128,7 +124,7 @@ class Judge(private val brokers: String) {
         props["application.id"] = "bugout-judge"
         props["processing.guarantee"] = "exactly_once"
 
-        waitForTopics(Topics.all, props)
+        waitForTopics(ALL_TOPICS, props)
 
         val streams = KafkaStreams(topology, props)
         streams.start()
