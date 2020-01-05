@@ -345,6 +345,7 @@ impl Handler for WsSession {
                         )
                     })
             }
+            Ok(ClientCommands::Quit(_q)) => todo!(),
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",
