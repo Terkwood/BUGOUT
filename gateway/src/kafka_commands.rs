@@ -65,6 +65,14 @@ pub struct SessionDisconnected {
     pub session_id: SessionId,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct QuitCommand {
+    #[serde(rename = "clientId")]
+    pub client_id: ClientId,
+    #[serde(rename = "gameId")]
+    pub game_id: GameId,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub enum KafkaCommands {
     MakeMove(MakeMoveCommand),
@@ -75,4 +83,5 @@ pub enum KafkaCommands {
     ChooseColorPref(ChooseColorPrefKafkaCommand),
     ClientHeartbeat(ClientHeartbeat),
     SessionDisconnected(SessionDisconnected),
+    Quit(QuitCommand),
 }
