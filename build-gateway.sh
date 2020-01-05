@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sh clean-build.sh gateway
+sh cargo-clean-build.sh gateway
