@@ -38,8 +38,20 @@ class Application(private val brokers: String) {
         val gameReady: KStream<GameId, GameReady> =
             streamsBuilder.stream<GameId, String>(
                 Topics.GAME_READY, Consumed.with(Serdes.UUID(), Serdes.String())
-            ).mapValues { v -> jsonMapper.readValue(v, GameReady::class.java)}
-        TODO()
+            ).mapValues {
+                    v -> jsonMapper.readValue(v, GameReady::class.java)
+            }
+
+        gameReady.mapValues {
+            v ->
+            {
+                println("game ready $v")
+                v
+            }
+        }
+
+
+        return streamsBuilder.build()
     }
 
     private fun waitForTopics(topics: Array<String>, props:
