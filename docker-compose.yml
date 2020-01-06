@@ -90,6 +90,12 @@ services:
       - "kafka"
     depends_on:
       - "kafka"
+  participation:
+    build: participation/.
+    links:
+      - "kafka"
+    depends_on:
+      - "kafka"
   startup:
     build: startup/.
     links:

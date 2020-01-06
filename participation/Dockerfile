@@ -8,4 +8,6 @@ COPY . .
 
 RUN sh build.sh
 
+RUN ls
+
 CMD ["sh", "run.sh"]
