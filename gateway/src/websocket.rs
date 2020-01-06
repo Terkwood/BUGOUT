@@ -347,6 +347,8 @@ impl Handler for WsSession {
             }
             Ok(ClientCommands::QuitGame) => {
                 if let (Some(client_id), Some(game_id)) = (self.client_id, self.current_game) {
+                    println!("🏳️ {} {:<8}", session_code(self), "QUITGAME");
+
                     let s = KafkaCommands::QuitGame(QuitGameCommand { client_id, game_id });
                     self.kafka_commands_in
                         .send(s)
@@ -458,13 +460,13 @@ impl Handler for WsSession {
                                 game_id: _,
                                 your_color,
                             }) if your_color == Player::BLACK => {
-                                println!("🏴 {} {:<8} Black", session_code(self), "YOURCOLR")
+                                println!("⚫️ {} {:<8} Black", session_code(self), "YOURCOLR")
                             }
                             ClientEvents::YourColor(YourColorEvent {
                                 game_id: _,
                                 your_color,
                             }) if your_color == Player::WHITE => {
-                                println!("🏳  {} {:<8} White", session_code(self), "YOURCOLR")
+                                println!("⚪️ {} {:<8} White", session_code(self), "YOURCOLR")
                             }
                             _ => (),
                         }
