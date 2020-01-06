@@ -275,7 +275,20 @@ pub fn start(
                         session_id, client_id,
                     }) => if let Some(events_in) = router.sessions.get(&session_id) {
                         router.client_sessions.insert(client_id, SessionSender{session_id, events_in:events_in.clone()});
-                    }
+                    },
+                    Ok(RouterCommand::QuitGame { session_id, game_id }) => {
+                        if let Some(GameSessions { sessions, playerup: _, modified_at: _}) = router.game_sessions.get(&game_id) {
+                            for game_session in sessions {
+                                if game_session.session_id != session_id {
+                                    if let Err(e) = game_session.events_in.send(ClientEvents::OpponentQuit) {
+                                        println!("failed to pass along Opponent Quit : {}", e)
+                                    }
+                                }
+                            }
+                        }
+
+                        router.game_sessions.remove(&game_id);
+                    },
                     Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                 },
             recv(kafka_events_out) -> event =>
@@ -378,5 +391,9 @@ pub enum RouterCommand {
     IdentifyClient {
         session_id: SessionId,
         client_id: ClientId,
+    },
+    QuitGame {
+        session_id: SessionId,
+        game_id: GameId,
     },
 }

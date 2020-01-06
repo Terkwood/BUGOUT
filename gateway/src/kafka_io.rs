@@ -70,7 +70,11 @@ fn start_producer(kafka_out: crossbeam::Receiver<KafkaCommands>) {
                     Ok(KafkaCommands::SessionDisconnected(c)) =>
                         write(&producer, SESSION_DISCONNECTED_TOPIC, &serde_json::to_string(&c), &c.session_id.to_string())
                     ,
-                    Err(e) => println!("💩 Unable to receive command via kafka channel: {:?}", e),
+                    Ok(KafkaCommands::QuitGame(q)) =>
+                        write(&producer, QUIT_GAME_TOPIC, &serde_json::to_string(&q), &q.game_id.to_string())
+                    ,
+                    Err(e) => println!("💩 Unable to receive command via kafka channel: {:?}", e)
+                    ,
                 }
         }
     }

@@ -345,6 +345,28 @@ impl Handler for WsSession {
                         )
                     })
             }
+            Ok(ClientCommands::QuitGame) => {
+                if let (Some(client_id), Some(game_id)) = (self.client_id, self.current_game) {
+                    println!("🏳️  {} {:<8}", session_code(self), "QUITGAME");
+
+                    self.current_game = None;
+
+                    if let Err(e) = self.router_commands_in.send(RouterCommand::QuitGame {
+                        session_id: self.session_id,
+                        game_id,
+                    }) {
+                        println!("ERROR SENDING ROUTER QUIT COMMAND: {}", e);
+                    }
+
+                    let s = KafkaCommands::QuitGame(QuitGameCommand { client_id, game_id });
+                    self.kafka_commands_in
+                        .send(s)
+                        .map_err(|e| ws::Error::from(Box::new(e)))
+                } else {
+                    println!("Can't quit without client ID + game ID");
+                    Ok(())
+                }
+            }
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",
@@ -447,13 +469,16 @@ impl Handler for WsSession {
                                 game_id: _,
                                 your_color,
                             }) if your_color == Player::BLACK => {
-                                println!("🏴 {} {:<8} Black", session_code(self), "YOURCOLR")
+                                println!("⚫️ {} {:<8} Black", session_code(self), "YOURCOLR")
                             }
                             ClientEvents::YourColor(YourColorEvent {
                                 game_id: _,
                                 your_color,
                             }) if your_color == Player::WHITE => {
-                                println!("🏳  {} {:<8} White", session_code(self), "YOURCOLR")
+                                println!("⚪️ {} {:<8} White", session_code(self), "YOURCOLR")
+                            }
+                            ClientEvents::OpponentQuit => {
+                                self.current_game = None;
                             }
                             _ => (),
                         }

@@ -18,6 +18,7 @@ pub enum ClientEvents {
     YourColor(YourColorEvent),
     IdleStatusProvided(IdleStatus),
     IdentityAcknowledged(Identity),
+    OpponentQuit,
 }
 
 impl ClientEvents {

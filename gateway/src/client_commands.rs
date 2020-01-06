@@ -42,6 +42,7 @@ pub enum ClientCommands {
     ChooseColorPref(ChooseColorPrefClientCommand),
     ProvideIdleStatus,
     Identify(Identity),
+    QuitGame,
 }
 
 #[cfg(test)]
