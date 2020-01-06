@@ -345,7 +345,17 @@ impl Handler for WsSession {
                         )
                     })
             }
-            Ok(ClientCommands::Quit(_q)) => todo!(),
+            Ok(ClientCommands::QuitGame) => {
+                if let (Some(client_id), Some(game_id)) = (self.client_id, self.current_game) {
+                    let s = KafkaCommands::QuitGame(QuitGameCommand { client_id, game_id });
+                    self.kafka_commands_in
+                        .send(s)
+                        .map_err(|e| ws::Error::from(Box::new(e)))
+                } else {
+                    println!("Can't quit without client ID + game ID");
+                    Ok(())
+                }
+            }
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",

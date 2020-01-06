@@ -29,12 +29,6 @@ pub struct ChooseColorPrefClientCommand {
     pub color_pref: ColorPref,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct QuitClientCommand {
-    #[serde(rename = "gameId")]
-    pub game_id: GameId,
-}
-
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(tag = "type")]
 pub enum ClientCommands {
@@ -48,7 +42,7 @@ pub enum ClientCommands {
     ChooseColorPref(ChooseColorPrefClientCommand),
     ProvideIdleStatus,
     Identify(Identity),
-    Quit(QuitClientCommand),
+    QuitGame,
 }
 
 #[cfg(test)]
