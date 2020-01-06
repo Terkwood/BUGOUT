@@ -32,7 +32,7 @@ class Application(private val brokers: String) {
         streams.start()
     }
 
-    fun build(): Topology {
+    private fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
 
         val gameReady: KStream<GameId, GameReady> =
@@ -42,9 +42,9 @@ class Application(private val brokers: String) {
                     v -> jsonMapper.readValue(v, GameReady::class.java)
             }
 
-        gameReady.mapValues {
-            v ->
-            {
+        gameReady.foreach {
+            _,v ->
+            run {
                 println("game ready $v")
                 v
             }
