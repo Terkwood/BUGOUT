@@ -4,6 +4,7 @@ import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.*
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
+import serdes.jsonMapper
 import java.util.*
 
 const val BROKERS = "kafka:9092"
@@ -31,7 +32,15 @@ class Application(private val brokers: String) {
         streams.start()
     }
 
-    fun build(): Topology { TODO() }
+    fun build(): Topology {
+        val streamsBuilder = StreamsBuilder()
+
+        val gameReady: KStream<GameId, GameReady> =
+            streamsBuilder.stream<GameId, String>(
+                Topics.GAME_READY, Consumed.with(Serdes.UUID(), Serdes.String())
+            ).mapValues { v -> jsonMapper.readValue(v, GameReady::class.java)}
+        TODO()
+    }
 
     private fun waitForTopics(topics: Array<String>, props:
     Properties) {
