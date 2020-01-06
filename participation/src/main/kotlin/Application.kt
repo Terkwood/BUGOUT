@@ -26,7 +26,7 @@ class Application(private val brokers: String) {
 
         val streams = KafkaStreams(topology, props)
 
-        waitForTopics(TODO(), props)
+        waitForTopics(Topics.all, props)
 
         streams.start()
     }
