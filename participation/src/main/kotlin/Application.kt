@@ -241,7 +241,7 @@ class Application(private val brokers: String) {
             .mapValues { _ -> true }
             .join(gameParticipation,
                 { _, right -> right },
-                joinDur, Joined.with(Serdes.UUID(),
+                JoinWindows.of(ChronoUnit.DAYS.duration), Joined.with(Serdes.UUID(),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
             .mapValues { gp -> GameParticipation(gp.gameId, gp.clients, Participation.Finished)}
