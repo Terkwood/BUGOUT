@@ -1,4 +1,3 @@
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
@@ -84,15 +83,36 @@ class Application(private val brokers: String) {
                 println("GR sessionId $sessionId -> ${gr.gameId}")
             }
 
-        val cpgGr = createPrivateGame.join(gameReadyBySessionId,
-            { left: CreateGame, right: GameReady -> Pair(left, right) },
+        val cpgGr: KStream<GameId, Pair<CreateGame, GameReady>> =
+            createPrivateGame.join(
+                gameReadyBySessionId,
+                { left: CreateGame, right: GameReady -> Pair(left, right) },
+                JoinWindows.of(ChronoUnit.HOURS.duration),
+                Joined.with(Serdes.UUID(),
+                    Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
+                    Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
+                .map { _, v -> KeyValue(v.second.gameId, v) }
+
+        val jpgGr =
+            joinPrivateGame.join(
+                gameReadyBySessionId,
+                {left: JoinPrivateGame, right:GameReady -> Pair(left, right) },
+                JoinWindows.of(ChronoUnit.HOURS.duration),
+                Joined.with(Serdes.UUID(),
+                    Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
+                    Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))
+                    ))
+                .map {_, v -> KeyValue(v.second.gameId, v) }
+
+        val privateReady = cpgGr.join(jpgGr,
+            { left, right -> Triple(left.first, right.first, left.second)},
             JoinWindows.of(ChronoUnit.HOURS.duration),
             Joined.with(Serdes.UUID(),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
-                Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
+                Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))
+            ))
+        privateReady.foreach { _ , it -> println("join private + create private + game ready $it") }
 
-        cpgGr.foreach { _ , it -> println("create private + game ready $it") }
-        
         return streamsBuilder.build()
     }
 

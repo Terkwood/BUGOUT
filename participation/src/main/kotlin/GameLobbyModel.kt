@@ -12,7 +12,6 @@ data class FindPublicGame(val clientId: ClientId, val sessionId: SessionId)
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class CreateGame(
     val clientId: ClientId,
-    val gameId: GameId,
     val sessionId: SessionId,
     val visibility: Visibility
 )
