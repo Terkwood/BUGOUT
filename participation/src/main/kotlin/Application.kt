@@ -158,7 +158,7 @@ class Application(private val brokers: String) {
                         gameId,
                         Pair(clients[0], clients[1]),
                         Participation.InProgress))
-            }.foreach { k, v -> println("$k participating! $v") }
+            }.foreach { k, v -> println("$v") }
 
         return streamsBuilder.build()
     }

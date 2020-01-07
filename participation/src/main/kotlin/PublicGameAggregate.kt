@@ -10,7 +10,7 @@ class PublicGameAggregate {
     fun add(gameId: GameId, findPublicGame: FindPublicGame) : PublicGameAggregate {
         requests[gameId] =
             listOf(findPublicGame.clientId) + requests[gameId].orEmpty()
-        
+
         return this
     }
 
