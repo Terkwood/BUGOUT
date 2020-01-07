@@ -222,8 +222,18 @@ class Application(private val brokers: String) {
             .groupByKey()
             .aggregate(
                 { ConsecutivePass() },
-                TODO(),
-                TODO())
+                { gameId, v, consecutivePass: ConsecutivePass -> consecutivePass.track(gameId, v.coord) },
+                Materialized.`as`<GameId, ConsecutivePass, KeyValueStore<Bytes,
+                    ByteArray>>(
+                    Topics.PUBLIC_GAME_AGGREGATE_STORE
+                )
+                    .withKeySerde(Serdes.UUID())
+                    .withValueSerde(
+                        Serdes.serdeFrom(
+                            KafkaSerializer(),
+                            KafkaDeserializer(jacksonTypeRef())
+                        )
+                    ))
 
         return streamsBuilder.build()
     }

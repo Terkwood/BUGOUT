@@ -11,6 +11,7 @@ object Topics {
     const val MOVE_ACCEPTED = "bugout-move-accepted-ev"
 
     const val PUBLIC_GAME_AGGREGATE_STORE = "bugout-public-game-aggregate-store"
+    const val CONSECUTIVE_PASS_STORE = "bugout-consecutive-pass-store"
 
     val all = arrayOf(GAME_READY,
         FIND_PUBLIC_GAME,
@@ -20,5 +21,6 @@ object Topics {
         CLIENT_PARTICIPATION,
         QUIT_GAME,
         MOVE_ACCEPTED,
-        PUBLIC_GAME_AGGREGATE_STORE)
+        PUBLIC_GAME_AGGREGATE_STORE,
+        CONSECUTIVE_PASS_STORE)
 }

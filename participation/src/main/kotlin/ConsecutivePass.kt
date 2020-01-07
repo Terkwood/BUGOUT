@@ -2,13 +2,14 @@ enum class Move { PlaceStone, Pass }
 
 class ConsecutivePass {
     // Must be public so it can be serialized
-    var turns = listOf<Move>()
+    @Suppress("MemberVisibilityCanBePrivate")
+    val turns = hashMapOf<GameId, List<Move>>()
 
-    fun track(move: Move) : ConsecutivePass {
-        turns = listOf(move) + turns.take(1)
+    fun track(gameId: GameId, move: Move) : ConsecutivePass {
+        turns[gameId] = listOf(move) + turns[gameId].orEmpty()
         return this
     }
 
-    fun happened(): Boolean =
-        turns.size == 2 && turns[0] == Move.Pass && turns[1] == Move.Pass
+    fun happenedIn(gameId: GameId): Boolean =
+        turns[gameId]?.size == 2 && turns[gameId]?.get(0) == Move.Pass && turns[gameId]?.get(1) == Move.Pass
 }
