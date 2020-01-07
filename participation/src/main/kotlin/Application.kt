@@ -1,9 +1,7 @@
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
-import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.*
 import org.apache.kafka.streams.kstream.*
-import org.apache.kafka.streams.state.KeyValueStore
 import serdes.jsonMapper
 import java.util.*
 
@@ -41,20 +39,20 @@ class Application(private val brokers: String) {
             ).mapValues {
                     v -> jsonMapper.readValue(v, GameReady::class.java)
             }
-
-        val createGame: KStream<SessionId, CreateGame> =
-            streamsBuilder.stream<GameId, String>(
-                Topics.CREATE_GAME, Consumed.with(Serdes.UUID(), Serdes.String())
-            ).mapValues {
-                    v -> jsonMapper.readValue(v, CreateGame::class.java)
-            }
-
+        
         val findPublicGame: KStream<SessionId, FindPublicGame> =
             streamsBuilder.stream<GameId, String>(
                 Topics.FIND_PUBLIC_GAME, Consumed.with(Serdes.UUID(), Serdes.String())
             ).mapValues {
                     v -> jsonMapper.readValue(v, FindPublicGame::class.java)
             }
+
+        val createPrivateGame: KStream<SessionId, CreateGame> =
+            streamsBuilder.stream<GameId, String>(
+                Topics.CREATE_GAME, Consumed.with(Serdes.UUID(), Serdes.String())
+            ).mapValues {
+                    v -> jsonMapper.readValue(v, CreateGame::class.java)
+            }.filter { _, v -> v.visibility == Visibility.Private }
 
         val joinPrivateGame: KStream<SessionId, JoinPrivateGame> =
             streamsBuilder.stream<GameId, String>(
@@ -63,7 +61,7 @@ class Application(private val brokers: String) {
                     v -> jsonMapper.readValue(v, JoinPrivateGame::class.java)
             }
 
-        listOf(gameReady, findPublicGame, joinPrivateGame, createGame)
+        listOf(gameReady, findPublicGame, joinPrivateGame, createPrivateGame)
             .forEach { stream ->  stream.foreach {
                     _,v ->
                 run {
