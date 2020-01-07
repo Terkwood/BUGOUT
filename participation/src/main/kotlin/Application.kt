@@ -157,7 +157,7 @@ class Application(private val brokers: String) {
 
         publicGameAggregates
             .filter {  _, agg -> agg.ready() }
-            .mapValues { gameId, _ -> println("game agg ready $gameId") }
+            .toStream().foreach { gameId, _ -> println("game agg ready $gameId") }
 
         return streamsBuilder.build()
     }
