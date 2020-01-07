@@ -73,6 +73,13 @@ class Application(private val brokers: String) {
                 }
             }}
 
+        val gameReadyBySessionId = gameReady.map { _, v -> KeyValue(v.sessions.first, v)}.merge(gameReady.map { _, v -> KeyValue(v.sessions.second, v)})
+
+        gameReadyBySessionId
+            .foreach { sessionId, gr ->
+                println("GR sessionId $sessionId -> ${gr.gameId}")
+            }
+
 
         return streamsBuilder.build()
     }
