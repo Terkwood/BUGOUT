@@ -218,14 +218,14 @@ class Application(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String()))
                 .mapValues{ v -> jsonMapper.readValue(v, MoveAccepted::class.java)}
 
-        moveAccepted
+        val consecutivePass = moveAccepted
             .groupByKey()
             .aggregate(
                 { ConsecutivePass() },
-                { gameId, v, consecutivePass: ConsecutivePass -> consecutivePass.track(gameId, v.coord) },
+                { gameId, v, consecutivePass: ConsecutivePass -> consecutivePass.track(gameId, if (v.coord  == null) Move.Pass else Move.PlaceStone) },
                 Materialized.`as`<GameId, ConsecutivePass, KeyValueStore<Bytes,
                     ByteArray>>(
-                    Topics.PUBLIC_GAME_AGGREGATE_STORE
+                    Topics.CONSECUTIVE_PASS_STORE
                 )
                     .withKeySerde(Serdes.UUID())
                     .withValueSerde(
@@ -234,6 +234,23 @@ class Application(private val brokers: String) {
                             KafkaDeserializer(jacksonTypeRef())
                         )
                     ))
+
+        // They quit, so change the game participation
+        consecutivePass.toStream()
+            .filter { gameId, it -> it.happenedIn(gameId) }
+            .mapValues { _ -> true }
+            .join(gameParticipation,
+                { _, right -> right },
+                joinDur, Joined.with(Serdes.UUID(),
+                Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
+                Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
+            .mapValues { gp -> GameParticipation(gp.gameId, gp.clients, Participation.Finished)}
+            .to(Topics.GAME_PARTICIPATION, Produced.with(Serdes.UUID(), Serdes.serdeFrom(
+                KafkaSerializer(),
+                KafkaDeserializer(jacksonTypeRef())
+            )))
+
+
 
         return streamsBuilder.build()
     }
