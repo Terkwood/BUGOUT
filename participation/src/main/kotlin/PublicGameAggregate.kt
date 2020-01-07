@@ -1,9 +1,11 @@
 class PublicGameAggregate {
-    private val requests = hashMapOf<GameId, List<FindPublicGame>>()
+    private val requests = hashMapOf<GameId, Set<FindPublicGame>>()
 
     fun add(gameId: GameId, findPublicGame: FindPublicGame) : PublicGameAggregate {
-        requests.merge(gameId, listOf(findPublicGame)) {t,u -> t.plus(u) }
+        requests.merge(gameId, setOf(findPublicGame)) {t,u -> t.plus(u) }
 
         return this
     }
+
+    fun ready(): Boolean = requests.size == 2
 }

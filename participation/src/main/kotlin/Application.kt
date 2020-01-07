@@ -136,8 +136,10 @@ class Application(private val brokers: String) {
 
         fpgGameReady.foreach { k, v -> println("public magic $k $v") }
 
+        // see https://stackoverflow.com/a/52372015/9935916
         val publicGameAggregates: KTable<GameId, PublicGameAggregate> =
-            fpgGameReady.groupByKey()
+            fpgGameReady.groupByKey(Serialized.with(Serdes.UUID(), Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(
+                jacksonTypeRef()))))
                 .aggregate(
                     { PublicGameAggregate() },
                     { gameId, v, agg -> agg.add(gameId, v.first) },
@@ -152,6 +154,10 @@ class Application(private val brokers: String) {
                                 KafkaDeserializer(jacksonTypeRef())
                             )
                         ))
+
+        publicGameAggregates
+            .filter {  _, agg -> agg.ready() }
+            .mapValues { gameId, _ -> println("game agg ready $gameId") }
 
         return streamsBuilder.build()
     }
