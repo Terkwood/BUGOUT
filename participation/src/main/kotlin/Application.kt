@@ -93,9 +93,10 @@ class Application(private val brokers: String) {
                     Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
                 .map { _, v -> KeyValue(v.second.gameId, v) }
 
-        val jpgGr =
-            joinPrivateGame.join(
-                gameReadyBySessionId,
+        // Carefully avoiding overlap by joining against gameReady, not gameReadyBySessionId
+        val jpgGr: KStream<GameId, Pair<JoinPrivateGame, GameReady>> =
+            joinPrivateGame.map{_, v -> KeyValue(v.gameId,v)}.join(
+                gameReady,
                 {left: JoinPrivateGame, right:GameReady -> Pair(left, right) },
                 JoinWindows.of(ChronoUnit.HOURS.duration),
                 Joined.with(Serdes.UUID(),
@@ -104,13 +105,14 @@ class Application(private val brokers: String) {
                     ))
                 .map {_, v -> KeyValue(v.second.gameId, v) }
 
-        val privateReady = cpgGr.join(jpgGr,
+        val privateReady: KStream<GameId, Triple<CreateGame, JoinPrivateGame, GameReady>> = cpgGr.join(jpgGr,
             { left, right -> Triple(left.first, right.first, left.second)},
             JoinWindows.of(ChronoUnit.HOURS.duration),
             Joined.with(Serdes.UUID(),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))
             ))
+
         privateReady.foreach { _ , it -> println("join private + create private + game ready $it") }
 
         return streamsBuilder.build()
