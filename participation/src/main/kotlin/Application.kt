@@ -69,7 +69,7 @@ class Application(private val brokers: String) {
             .forEach { stream ->  stream.foreach {
                     _,v ->
                 run {
-                    println("$v")
+                    println("Input: $v")
                     v
                 }
             }}
@@ -114,6 +114,26 @@ class Application(private val brokers: String) {
             ))
 
         privateReady.foreach { _ , it -> println("join private + create private + game ready $it") }
+
+
+        // Avoid merge repartition error
+        val another: KStream<SessionId, GameReady> = gameReady
+            .map { _, v -> KeyValue(v.sessions.first, v)}
+            .merge(gameReady.map { _, v -> KeyValue(v.sessions.second, v)})
+
+
+        val fpgGrLeft: KStream<GameId, Pair<FindPublicGame, GameReady>> = findPublicGame.join(
+            another,
+            { left: FindPublicGame, right: GameReady -> Pair(left, right) },
+            JoinWindows.of(ChronoUnit.HOURS.duration),
+            Joined.with(Serdes.UUID(),
+                Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
+                Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
+            .map { _, v -> KeyValue(v.second.gameId, v) }
+
+        // TODO: you can't just join yrself bro
+
+        fpgGrLeft.foreach { k, v -> println("public magic $k $v") }
 
         return streamsBuilder.build()
     }
