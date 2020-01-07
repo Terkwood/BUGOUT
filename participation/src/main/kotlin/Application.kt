@@ -56,7 +56,6 @@ class Application(private val brokers: String) {
                     v -> jsonMapper.readValue(v, FindPublicGame::class.java)
             }
 
-
         val joinPrivateGame: KStream<SessionId, JoinPrivateGame> =
             streamsBuilder.stream<GameId, String>(
                 Topics.JOIN_PRIVATE_GAME, Consumed.with(Serdes.UUID(), Serdes.String())
@@ -73,7 +72,9 @@ class Application(private val brokers: String) {
                 }
             }}
 
-        val gameReadyBySessionId = gameReady.map { _, v -> KeyValue(v.sessions.first, v)}.merge(gameReady.map { _, v -> KeyValue(v.sessions.second, v)})
+        val gameReadyBySessionId: KStream<SessionId, GameReady> = gameReady
+            .map { _, v -> KeyValue(v.sessions.first, v)}
+            .merge(gameReady.map { _, v -> KeyValue(v.sessions.second, v)})
 
         gameReadyBySessionId
             .foreach { sessionId, gr ->
