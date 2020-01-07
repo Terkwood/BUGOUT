@@ -19,6 +19,8 @@ fun main() {
 }
 
 class Application(private val brokers: String) {
+    private val joinDur = JoinWindows.of(ChronoUnit.HOURS.duration)
+
     fun process() {
         val topology = build()
 
@@ -84,7 +86,7 @@ class Application(private val brokers: String) {
             createPrivateGame.join(
                 gameReadyBySessionId,
                 { left: CreateGame, right: GameReady -> Pair(left, right) },
-                JoinWindows.of(ChronoUnit.HOURS.duration),
+                joinDur,
                 Joined.with(Serdes.UUID(),
                     Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
                     Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
@@ -95,7 +97,7 @@ class Application(private val brokers: String) {
             joinPrivateGame.map{_, v -> KeyValue(v.gameId,v)}.join(
                 gameReady,
                 {left: JoinPrivateGame, right:GameReady -> Pair(left, right) },
-                JoinWindows.of(ChronoUnit.HOURS.duration),
+                joinDur,
                 Joined.with(Serdes.UUID(),
                     Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
                     Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))
@@ -114,7 +116,7 @@ class Application(private val brokers: String) {
             KafkaSerializer(),
             KafkaDeserializer(jacksonTypeRef())
         )))
-        
+
         // Don't overlap
         val gameReadyAgain: KStream<SessionId, GameReady> = gameReady
             .map { _, v -> KeyValue(v.sessions.first, v)}
@@ -191,6 +193,24 @@ class Application(private val brokers: String) {
                 KafkaSerializer(),
                 KafkaDeserializer(jacksonTypeRef())
             )))
+
+        val quitGame: KStream<GameId, QuitGameCommand> =
+            streamsBuilder.stream<GameId, String>(Topics.QUIT_GAME, Consumed.with(Serdes.UUID(), Serdes.String()))
+            .mapValues { v -> jsonMapper.readValue(v, QuitGameCommand::class.java)}
+
+        val quitGameParticipation = quitGame.join(gameParticipation, { left, right -> Pair(left, right) }, joinDur, Joined.with(Serdes.UUID(), Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
+            Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
+
+        val clientQuits: KStream<ClientId, GameParticipation?> = quitGameParticipation
+            .map { _, gp ->
+                val blank: GameParticipation? = null
+                KeyValue(gp.second.clients.first, blank )}
+            .merge(quitGameParticipation.map { _, gp ->  KeyValue(gp.second.clients.second, null )})
+        
+        clientQuits.to(Topics.CLIENT_PARTICIPATION, Produced.with(Serdes.UUID(), Serdes.serdeFrom(
+            KafkaSerializer(),
+            KafkaDeserializer(jacksonTypeRef())
+        )))
 
         return streamsBuilder.build()
     }
