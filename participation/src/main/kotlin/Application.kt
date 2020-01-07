@@ -122,7 +122,7 @@ class Application(private val brokers: String) {
             .merge(gameReady.map { _, v -> KeyValue(v.sessions.second, v)})
 
 
-        val fpgGrLeft: KStream<GameId, Pair<FindPublicGame, GameReady>> = findPublicGame.join(
+        val fpgGameReady: KStream<GameId, Pair<FindPublicGame, GameReady>> = findPublicGame.join(
             another,
             { left: FindPublicGame, right: GameReady -> Pair(left, right) },
             JoinWindows.of(ChronoUnit.HOURS.duration),
@@ -131,9 +131,15 @@ class Application(private val brokers: String) {
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
             .map { _, v -> KeyValue(v.second.gameId, v) }
 
-        // TODO: you can't just join yrself bro
 
-        fpgGrLeft.foreach { k, v -> println("public magic $k $v") }
+        fpgGameReady.foreach { k, v -> println("public magic $k $v") }
+
+        val publicGameAggregates: KTable<GameId, PublicGameAggregate> =
+            fpgGameReady.groupByKey()
+                .aggregate(
+                    { PublicGameAggregate() },
+                    {_, v, agg -> TODO()},
+                    TODO())
 
         return streamsBuilder.build()
     }
