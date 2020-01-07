@@ -8,14 +8,9 @@ class PublicGameAggregate {
     val requests = hashMapOf<GameId, List<ClientId>>()
 
     fun add(gameId: GameId, findPublicGame: FindPublicGame) : PublicGameAggregate {
-        println("add $gameId $findPublicGame")
-        println("existing ${requests[gameId]}")
-
         requests[gameId] =
             listOf(findPublicGame.clientId) + requests[gameId].orEmpty()
-
-        println("updated ${requests[gameId]}")
-
+        
         return this
     }
 
