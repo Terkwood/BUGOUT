@@ -84,14 +84,15 @@ class Application(private val brokers: String) {
                 println("GR sessionId $sessionId -> ${gr.gameId}")
             }
 
-        createPrivateGame.join(gameReadyBySessionId,
+        val cpgGr = createPrivateGame.join(gameReadyBySessionId,
             { left: CreateGame, right: GameReady -> Pair(left, right) },
             JoinWindows.of(ChronoUnit.HOURS.duration),
             Joined.with(Serdes.UUID(),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
 
-
+        cpgGr.foreach { _ , it -> println("create private + game ready $it") }
+        
         return streamsBuilder.build()
     }
 
