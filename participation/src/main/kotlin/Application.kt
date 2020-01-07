@@ -102,25 +102,26 @@ class Application(private val brokers: String) {
                     ))
                 .map {_, v -> KeyValue(v.second.gameId, v) }
 
-        val privateReady: KStream<GameId, Triple<CreateGame, JoinPrivateGame, GameReady>> = cpgGr.join(jpgGr,
-            { left, right -> Triple(left.first, right.first, left.second)},
+        val privateGameParticipation: KStream<GameId, GameParticipation> = cpgGr.join(jpgGr,
+            { left, right -> GameParticipation(right.second.gameId, Pair(right.first.clientId, left.first.clientId), Participation.InProgress)},
             JoinWindows.of(ChronoUnit.HOURS.duration),
             Joined.with(Serdes.UUID(),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))
             ))
 
-        privateReady.foreach { _ , it -> println("join private + create private + game ready $it") }
-
-
-        // Avoid merge repartition error
-        val another: KStream<SessionId, GameReady> = gameReady
+        privateGameParticipation.to(Topics.GAME_PARTICIPATION, Produced.with(Serdes.UUID(), Serdes.serdeFrom(
+            KafkaSerializer(),
+            KafkaDeserializer(jacksonTypeRef())
+        )))
+        
+        // Don't overlap
+        val gameReadyAgain: KStream<SessionId, GameReady> = gameReady
             .map { _, v -> KeyValue(v.sessions.first, v)}
             .merge(gameReady.map { _, v -> KeyValue(v.sessions.second, v)})
 
-
         val fpgGameReady: KStream<GameId, Pair<FindPublicGame, GameReady>> = findPublicGame.join(
-            another,
+            gameReadyAgain,
             { left: FindPublicGame, right: GameReady -> Pair(left, right) },
             JoinWindows.of(ChronoUnit.HOURS.duration),
             Joined.with(Serdes.UUID(),
