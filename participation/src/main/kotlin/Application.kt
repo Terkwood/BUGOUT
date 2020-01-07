@@ -80,11 +80,6 @@ class Application(private val brokers: String) {
             .map { _, v -> KeyValue(v.sessions.first, v)}
             .merge(gameReady.map { _, v -> KeyValue(v.sessions.second, v)})
 
-        gameReadyBySessionId
-            .foreach { sessionId, gr ->
-                println("GR sessionId $sessionId -> ${gr.gameId}")
-            }
-
         val cpgGr: KStream<GameId, Pair<CreateGame, GameReady>> =
             createPrivateGame.join(
                 gameReadyBySessionId,
@@ -134,8 +129,6 @@ class Application(private val brokers: String) {
             .map { _, v -> KeyValue(v.second.gameId, v) }
 
 
-        fpgGameReady.foreach { k, v -> println("public magic $k $v") }
-
         // see https://stackoverflow.com/a/52372015/9935916
         val publicGameAggregates: KTable<GameId, PublicGameAggregate> =
             fpgGameReady.groupByKey(Serialized.with(Serdes.UUID(), Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(
@@ -156,8 +149,16 @@ class Application(private val brokers: String) {
                         ))
 
         publicGameAggregates
-            .filter {  _, agg -> agg.ready() }
-            .toStream().foreach { gameId, _ -> println("game agg ready $gameId") }
+            .toStream()
+            .filter {  gameId, agg -> agg.ready(gameId) }
+            .map { gameId, agg ->
+                val clients = agg.clients(gameId)
+                KeyValue(gameId,
+                    GameParticipation(
+                        gameId,
+                        Pair(clients[0], clients[1]),
+                        Participation.InProgress))
+            }.foreach { k, v -> println("$k participating! $v") }
 
         return streamsBuilder.build()
     }
