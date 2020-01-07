@@ -167,9 +167,19 @@ class Application(private val brokers: String) {
             streamsBuilder.stream<GameId, String>(Topics.GAME_PARTICIPATION, Consumed.with(Serdes.UUID(), Serdes.String()))
                 .mapValues { it -> jsonMapper.readValue(it, GameParticipation::class.java)}
 
-        gameParticipation.kbranch(
+        val gpBranches = gameParticipation.kbranch(
             {_: GameId, gp: GameParticipation -> gp.participation == Participation.InProgress},
             {_: GameId, gp: GameParticipation -> gp.participation == Participation.Finished})
+
+
+        val inProgress: KStream<GameId, GameParticipation> =
+            gpBranches[0]
+
+        val finished: KStream<GameId, GameParticipation> =
+            gpBranches[1]
+
+        inProgress.foreach {_,v -> println("in progress: $v")}
+        finished.foreach {_,v ->   println("finished:    $v")}
 
         return streamsBuilder.build()
     }
