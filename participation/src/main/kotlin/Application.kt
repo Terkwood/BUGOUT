@@ -163,6 +163,13 @@ class Application(private val brokers: String) {
                 KafkaDeserializer(jacksonTypeRef())
             )))
 
+        val gameParticipation: KStream<GameId, GameParticipation> =
+            streamsBuilder.stream<GameId, String>(Topics.GAME_PARTICIPATION, Consumed.with(Serdes.UUID(), Serdes.String()))
+                .mapValues { it -> jsonMapper.readValue(it, GameParticipation::class.java)}
+
+        gameParticipation.kbranch(
+            {_: GameId, gp: GameParticipation -> gp.participation == Participation.InProgress},
+            {_: GameId, gp: GameParticipation -> gp.participation == Participation.Finished})
 
         return streamsBuilder.build()
     }
