@@ -1,8 +1,13 @@
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.*
 import org.apache.kafka.streams.kstream.*
+import serdes.KafkaDeserializer
+import serdes.KafkaSerializer
 import serdes.jsonMapper
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 const val BROKERS = "kafka:9092"
@@ -39,7 +44,7 @@ class Application(private val brokers: String) {
             ).mapValues {
                     v -> jsonMapper.readValue(v, GameReady::class.java)
             }
-        
+
         val findPublicGame: KStream<SessionId, FindPublicGame> =
             streamsBuilder.stream<GameId, String>(
                 Topics.FIND_PUBLIC_GAME, Consumed.with(Serdes.UUID(), Serdes.String())
@@ -78,6 +83,13 @@ class Application(private val brokers: String) {
             .foreach { sessionId, gr ->
                 println("GR sessionId $sessionId -> ${gr.gameId}")
             }
+
+        createPrivateGame.join(gameReadyBySessionId,
+            { left: CreateGame, right: GameReady -> Pair(left, right) },
+            JoinWindows.of(ChronoUnit.HOURS.duration),
+            Joined.with(Serdes.UUID(),
+                Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
+                Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
 
 
         return streamsBuilder.build()
