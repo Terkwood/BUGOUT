@@ -158,7 +158,11 @@ class Application(private val brokers: String) {
                         gameId,
                         Pair(clients[0], clients[1]),
                         Participation.InProgress))
-            }.foreach { k, v -> println("$v") }
+            }.to(Topics.GAME_PARTICIPATION, Produced.with(Serdes.UUID(), Serdes.serdeFrom(
+                KafkaSerializer(),
+                KafkaDeserializer(jacksonTypeRef())
+            )))
+
 
         return streamsBuilder.build()
     }
