@@ -6,5 +6,7 @@ object Topics {
 
     const val QUIT_GAME = "bugout-quit-game-cmd"
 
-    val all = arrayOf(GAME_READY, QUIT_GAME)
+    const val PUBLIC_GAME_AGGREGATE_STORE = "bugout-public-game-aggregate-store"
+
+    val all = arrayOf(GAME_READY, FIND_PUBLIC_GAME, CREATE_GAME, JOIN_PRIVATE_GAME, QUIT_GAME, PUBLIC_GAME_AGGREGATE_STORE)
 }

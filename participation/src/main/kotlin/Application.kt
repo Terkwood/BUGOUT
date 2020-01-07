@@ -1,8 +1,10 @@
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
+import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.*
 import org.apache.kafka.streams.kstream.*
+import org.apache.kafka.streams.state.KeyValueStore
 import serdes.KafkaDeserializer
 import serdes.KafkaSerializer
 import serdes.jsonMapper
@@ -138,8 +140,18 @@ class Application(private val brokers: String) {
             fpgGameReady.groupByKey()
                 .aggregate(
                     { PublicGameAggregate() },
-                    {_, v, agg -> TODO()},
-                    TODO())
+                    { gameId, v, agg -> agg.add(gameId, v.first) },
+                    Materialized.`as`<GameId, PublicGameAggregate, KeyValueStore<Bytes,
+                        ByteArray>>(
+                        Topics.PUBLIC_GAME_AGGREGATE_STORE
+                    )
+                        .withKeySerde(Serdes.UUID())
+                        .withValueSerde(
+                            Serdes.serdeFrom(
+                                KafkaSerializer(),
+                                KafkaDeserializer(jacksonTypeRef())
+                            )
+                        ))
 
         return streamsBuilder.build()
     }
