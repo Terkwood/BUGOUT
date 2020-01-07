@@ -206,11 +206,24 @@ class Application(private val brokers: String) {
                 val blank: GameParticipation? = null
                 KeyValue(gp.second.clients.first, blank )}
             .merge(quitGameParticipation.map { _, gp ->  KeyValue(gp.second.clients.second, null )})
-        
+
         clientQuits.to(Topics.CLIENT_PARTICIPATION, Produced.with(Serdes.UUID(), Serdes.serdeFrom(
             KafkaSerializer(),
             KafkaDeserializer(jacksonTypeRef())
         )))
+
+        val moveAccepted: KStream<GameId, MoveAccepted> =
+            streamsBuilder.stream<GameId, String>(
+                Topics.MOVE_ACCEPTED,
+                Consumed.with(Serdes.UUID(), Serdes.String()))
+                .mapValues{ v -> jsonMapper.readValue(v, MoveAccepted::class.java)}
+
+        moveAccepted
+            .groupByKey()
+            .aggregate(
+                { ConsecutivePass() },
+                TODO(),
+                TODO())
 
         return streamsBuilder.build()
     }

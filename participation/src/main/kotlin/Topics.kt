@@ -8,6 +8,7 @@ object Topics {
     const val CLIENT_PARTICIPATION = "bugout-client-participation-ev"
 
     const val QUIT_GAME = "bugout-quit-game-cmd"
+    const val MOVE_ACCEPTED = "bugout-move-accepted-ev"
 
     const val PUBLIC_GAME_AGGREGATE_STORE = "bugout-public-game-aggregate-store"
 
@@ -18,5 +19,6 @@ object Topics {
         GAME_PARTICIPATION,
         CLIENT_PARTICIPATION,
         QUIT_GAME,
+        MOVE_ACCEPTED,
         PUBLIC_GAME_AGGREGATE_STORE)
 }
