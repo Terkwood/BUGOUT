@@ -42,13 +42,36 @@ class Application(private val brokers: String) {
                     v -> jsonMapper.readValue(v, GameReady::class.java)
             }
 
-        gameReady.foreach {
-            _,v ->
-            run {
-                println("game ready $v")
-                v
+        val createGame: KStream<SessionId, CreateGame> =
+            streamsBuilder.stream<GameId, String>(
+                Topics.CREATE_GAME, Consumed.with(Serdes.UUID(), Serdes.String())
+            ).mapValues {
+                    v -> jsonMapper.readValue(v, CreateGame::class.java)
             }
-        }
+
+        val findPublicGame: KStream<SessionId, FindPublicGame> =
+            streamsBuilder.stream<GameId, String>(
+                Topics.FIND_PUBLIC_GAME, Consumed.with(Serdes.UUID(), Serdes.String())
+            ).mapValues {
+                    v -> jsonMapper.readValue(v, FindPublicGame::class.java)
+            }
+
+
+        val joinPrivateGame: KStream<SessionId, JoinPrivateGame> =
+            streamsBuilder.stream<GameId, String>(
+                Topics.JOIN_PRIVATE_GAME, Consumed.with(Serdes.UUID(), Serdes.String())
+            ).mapValues {
+                    v -> jsonMapper.readValue(v, JoinPrivateGame::class.java)
+            }
+
+        listOf(gameReady, findPublicGame, joinPrivateGame, createGame)
+            .forEach { stream ->  stream.foreach {
+                    _,v ->
+                run {
+                    println("$v")
+                    v
+                }
+            }}
 
 
         return streamsBuilder.build()
