@@ -181,6 +181,16 @@ class Application(private val brokers: String) {
         inProgress.foreach {_,v -> println("in progress: $v")}
         finished.foreach {_,v ->   println("finished:    $v")}
 
+        inProgress
+            .map { _, gp -> KeyValue(gp.clients.first, Game(gp.gameId)) }
+            .merge(inProgress.map { _, gp -> KeyValue(gp.clients.second, Game(gp.gameId)) })
+            .merge(finished.map { _, gp -> KeyValue(gp.clients.first, null) })
+            .merge(finished.map { _, gp -> KeyValue(gp.clients.second, null) })
+            .to(Topics.CLIENT_PARTICIPATION, Produced.with(Serdes.UUID(), Serdes.serdeFrom(
+                KafkaSerializer(),
+                KafkaDeserializer(jacksonTypeRef())
+            )))
+
         return streamsBuilder.build()
     }
 
