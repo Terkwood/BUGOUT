@@ -238,7 +238,10 @@ class Application(private val brokers: String) {
         // They quit, so change the game participation
         consecutivePass.toStream()
             .filter { gameId, it -> it.happenedIn(gameId) }
-            .mapValues { _ -> true }
+            .mapValues { _ ->
+                println("pre join")
+                true
+            }
             .join(inProgress,
                 { _, right -> right },
                 JoinWindows.of(ChronoUnit.DAYS.duration), Joined.with(Serdes.UUID(),
