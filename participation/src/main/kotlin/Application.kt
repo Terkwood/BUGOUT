@@ -222,7 +222,10 @@ class Application(private val brokers: String) {
             .groupByKey()
             .aggregate(
                 { ConsecutivePass() },
-                { gameId, v, consecutivePass: ConsecutivePass -> consecutivePass.track(gameId, if (v.coord  == null) Move.Pass else Move.PlaceStone) },
+                { gameId, v, consecutivePass: ConsecutivePass ->
+                    consecutivePass.track(gameId,
+                            if (v.coord  == null) Move.Pass else Move.PlaceStone)
+                },
                 Materialized.`as`<GameId, ConsecutivePass, KeyValueStore<Bytes,
                     ByteArray>>(
                     Topics.CONSECUTIVE_PASS_STORE

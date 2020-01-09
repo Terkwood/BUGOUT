@@ -6,7 +6,7 @@ class ConsecutivePass {
     val turns = hashMapOf<GameId, List<Move>>()
 
     fun track(gameId: GameId, move: Move) : ConsecutivePass {
-        turns[gameId] = listOf(move) + turns[gameId].orEmpty()
+        turns[gameId] = listOf(move) + turns[gameId].orEmpty().take(1)
         return this
     }
 
