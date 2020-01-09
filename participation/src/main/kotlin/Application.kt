@@ -244,7 +244,9 @@ class Application(private val brokers: String) {
                 JoinWindows.of(ChronoUnit.DAYS.duration), Joined.with(Serdes.UUID(),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
-            .mapValues { gp -> GameParticipation(gp.gameId, gp.clients, Participation.Finished)}
+            .mapValues { gp ->
+                println("oh hey we found two passes with a game in progress ${gp.gameId}")
+                GameParticipation(gp.gameId, gp.clients, Participation.Finished)}
             .to(Topics.GAME_PARTICIPATION, Produced.with(Serdes.UUID(), Serdes.serdeFrom(
                 KafkaSerializer(),
                 KafkaDeserializer(jacksonTypeRef())
