@@ -181,8 +181,8 @@ class Application(private val brokers: String) {
         val finished: KStream<GameId, GameParticipation> =
             gpBranches[1]
 
-        inProgress.foreach {_,v -> println("in progress: $v")}
-        finished.foreach {_,v ->   println("finished:    $v")}
+        inProgress.foreach {_,v -> println("In progress: $v")}
+        finished.foreach {_,v ->   println("Finished:    $v")}
 
         inProgress
             .map { _, gp -> KeyValue(gp.clients.first, Game(gp.gameId)) }
@@ -241,18 +241,15 @@ class Application(private val brokers: String) {
         // They quit, so change the game participation
         consecutivePass.toStream()
             .filter { gameId, it -> it.happenedIn(gameId) }
-            .mapValues { _ ->
-                println("pre join")
-                true
-            }
+            .mapValues { _ -> true }
             .join(inProgress,
                 { _, right -> right },
                 JoinWindows.of(ChronoUnit.DAYS.duration), Joined.with(Serdes.UUID(),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
             .mapValues { gp ->
-                println("oh hey we found two passes with a game in progress ${gp.gameId}")
-                GameParticipation(gp.gameId, gp.clients, Participation.Finished)}
+                GameParticipation(gp.gameId, gp.clients, Participation.Finished)
+            }
             .to(Topics.GAME_PARTICIPATION, Produced.with(Serdes.UUID(), Serdes.serdeFrom(
                 KafkaSerializer(),
                 KafkaDeserializer(jacksonTypeRef())
