@@ -239,7 +239,7 @@ class Application(private val brokers: String) {
         consecutivePass.toStream()
             .filter { gameId, it -> it.happenedIn(gameId) }
             .mapValues { _ -> true }
-            .join(gameParticipation,
+            .join(inProgress,
                 { _, right -> right },
                 JoinWindows.of(ChronoUnit.DAYS.duration), Joined.with(Serdes.UUID(),
                 Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),

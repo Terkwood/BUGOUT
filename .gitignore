@@ -1,6 +1,7 @@
 .env
 bugout*.jar
 .DS_Store
+.idea/
 .idea/shelf
 /android.tests.dependencies
 /confluence/target
