@@ -36,6 +36,8 @@ pub fn start_monitor(
         let redis_wakeup = RedisWakeup::new();
 
         loop {
+            // Use try_recv instead of select! to avoid throwing
+            // spurious errors before first message comes from kafka
             if let Ok(_) = kafka_out.try_recv() {
                 match status {
                     IdleStatus::Online => (),
