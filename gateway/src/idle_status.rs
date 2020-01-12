@@ -45,8 +45,6 @@ pub fn start_monitor(
                                 status = IdleStatus::Online
                             },
                         }
-                    } else {
-                        println!("err in idle recv for kafka")
                     },
                 recv(req_status_out) -> req =>
                     if let Ok(RequestIdleStatus(client_id)) = req {
