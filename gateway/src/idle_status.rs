@@ -45,7 +45,7 @@ pub fn start_monitor(
                 }
             }
 
-            if let Ok(msg) =  shutdown_out.try_recv()  {
+            if let Ok(_) =  shutdown_out.try_recv()  {
                 println!("☠️ SHUTDOWN");
                 status = IdleStatus::Idle { since: Utc::now() };
             }
