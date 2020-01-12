@@ -79,7 +79,7 @@ impl KafkaEvents {
             KafkaEvents::PrivateGameRejected(e) => e.game_id,
             KafkaEvents::WaitForOpponent(e) => e.game_id,
             KafkaEvents::ColorsChosen(e) => e.game_id,
-            KafkaEvents::NoOp => Uuid::nil(),
+            KafkaEvents::NoOp => uuid::Uuid::nil(),
         }
     }
 }
