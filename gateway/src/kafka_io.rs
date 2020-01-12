@@ -2,6 +2,7 @@ use std::thread;
 
 use crossbeam_channel::select;
 use futures::Stream;
+use futures::StreamExt;
 use futures_util::stream::stream::StreamExt;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
