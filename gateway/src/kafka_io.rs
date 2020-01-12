@@ -128,107 +128,118 @@ async fn start_consumer(
         .expect("Can't subscribe to topics");
 
     let mut message_stream = consumer.start();
-    for message in message_stream.next().await {
-        match message {
-            Err(e) => println!("💩 Error waiting on kafka stream: {:?}", e),
-            Ok(msg) => {
-                let payload = match msg.payload_view::<str>() {
-                    None => "",
-                    Some(Ok(s)) => s,
-                    Some(Err(e)) => {
-                        println!("💩 Error viewing kafka payload {:?}\nReturning an empty string as consumer payload", e);
-                        ""
-                    }
-                };
-
-                consumer.commit_message(&msg, CommitMode::Async).unwrap();
-
-                let topic = msg.topic();
-
-                // we match on the topic, explicitly, so that we can know
-                // exactly what type of object to decode.  this lets us
-                // avoid some horrid JSON annotations for our kafka-streams/jvm
-                // level models
-                match topic {
-                    MOVE_MADE_TOPIC => {
-                        let deserialized: Result<MoveMadeEvent, _> = serde_json::from_str(payload);
-                        match deserialized {
-                            Err(e) => println!("failed to deserialize move made {}", e),
-                            Ok(m) => flail_on_fail(events_in.send(KafkaEvents::MoveMade(m))),
+    loop {
+        for message in message_stream.next().await {
+            match message {
+                Err(e) => println!("💩 Error waiting on kafka stream: {:?}", e),
+                Ok(msg) => {
+                    let payload = match msg.payload_view::<str>() {
+                        None => "",
+                        Some(Ok(s)) => s,
+                        Some(Err(e)) => {
+                            println!("💩 Error viewing kafka payload {:?}\nReturning an empty string as consumer payload", e);
+                            ""
                         }
-                    }
-                    HISTORY_PROVIDED_TOPIC => {
-                        let deserialized: Result<HistoryProvidedEvent, _> =
-                            serde_json::from_str(payload);
-                        match deserialized {
-                            Err(e) => println!("failed to deserialize history prov {}", e),
-                            Ok(h) => flail_on_fail(events_in.send(KafkaEvents::HistoryProvided(h))),
-                        }
-                    }
-                    PRIVATE_GAME_REJECTED_TOPIC => {
-                        let deserialized: Result<PrivateGameRejectedKafkaEvent, _> =
-                            serde_json::from_str(payload);
-                        match deserialized {
-                            Err(e) => println!("failed to deserialize priv game reject {}", e),
-                            Ok(r) => {
-                                flail_on_fail(events_in.send(KafkaEvents::PrivateGameRejected(r)))
+                    };
+
+                    consumer.commit_message(&msg, CommitMode::Async).unwrap();
+
+                    let topic = msg.topic();
+
+                    // we match on the topic, explicitly, so that we can know
+                    // exactly what type of object to decode.  this lets us
+                    // avoid some horrid JSON annotations for our kafka-streams/jvm
+                    // level models
+                    match topic {
+                        MOVE_MADE_TOPIC => {
+                            let deserialized: Result<MoveMadeEvent, _> =
+                                serde_json::from_str(payload);
+                            match deserialized {
+                                Err(e) => println!("failed to deserialize move made {}", e),
+                                Ok(m) => flail_on_fail(events_in.send(KafkaEvents::MoveMade(m))),
                             }
                         }
-                    }
-                    GAME_READY_TOPIC => {
-                        let deserialized: Result<GameReadyKafkaEvent, _> =
-                            serde_json::from_str(payload);
-
-                        match deserialized {
-                            Err(e) => println!("failed to deserialize game ready {}", e),
-                            Ok(g) => flail_on_fail(events_in.send(KafkaEvents::GameReady(g))),
-                        }
-                    }
-                    WAIT_FOR_OPPONENT_TOPIC => {
-                        let deserialized: Result<WaitForOpponentKafkaEvent, _> =
-                            serde_json::from_str(payload);
-
-                        match deserialized {
-                            Err(e) => println!("failed to deserialize wait for opponent {}", e),
-                            Ok(w) => flail_on_fail(events_in.send(KafkaEvents::WaitForOpponent(w))),
-                        }
-                    }
-                    COLORS_CHOSEN_TOPIC => {
-                        let deserialized: Result<ColorsChosenEvent, _> =
-                            serde_json::from_str(payload);
-
-                        match deserialized {
-                            Err(e) => println!("failed to deserialize wait for opponent {}", e),
-                            Ok(c) => flail_on_fail(events_in.send(KafkaEvents::ColorsChosen(c))),
-                        }
-                    }
-                    SHUTDOWN_TOPIC => {
-                        let deserialized: Result<ShutdownEvent, _> = serde_json::from_str(payload);
-
-                        match deserialized {
-                            Err(e) => println!("failed to deserialize shutdown event {}", e),
-                            Ok(_s) => {
-                                let send_result =
-                                    shutdown_in.send(ShutdownEvent(std::time::SystemTime::now()));
-
-                                if let Err(e) = send_result {
-                                    println!("HALP! Failed to send kafka event in crossbeam: {}", e)
+                        HISTORY_PROVIDED_TOPIC => {
+                            let deserialized: Result<HistoryProvidedEvent, _> =
+                                serde_json::from_str(payload);
+                            match deserialized {
+                                Err(e) => println!("failed to deserialize history prov {}", e),
+                                Ok(h) => {
+                                    flail_on_fail(events_in.send(KafkaEvents::HistoryProvided(h)))
                                 }
                             }
                         }
-                    }
-                    CLIENT_HEARTBEAT_TOPIC => (), // Listen for idle tracking
-                    other => println!("ERROR Couldn't match kafka events topic: {}", other),
-                }
+                        PRIVATE_GAME_REJECTED_TOPIC => {
+                            let deserialized: Result<PrivateGameRejectedKafkaEvent, _> =
+                                serde_json::from_str(payload);
+                            match deserialized {
+                                Err(e) => println!("failed to deserialize priv game reject {}", e),
+                                Ok(r) => flail_on_fail(
+                                    events_in.send(KafkaEvents::PrivateGameRejected(r)),
+                                ),
+                            }
+                        }
+                        GAME_READY_TOPIC => {
+                            let deserialized: Result<GameReadyKafkaEvent, _> =
+                                serde_json::from_str(payload);
 
-                if topic != SHUTDOWN_TOPIC {
-                    observe(activity_in.clone())
+                            match deserialized {
+                                Err(e) => println!("failed to deserialize game ready {}", e),
+                                Ok(g) => flail_on_fail(events_in.send(KafkaEvents::GameReady(g))),
+                            }
+                        }
+                        WAIT_FOR_OPPONENT_TOPIC => {
+                            let deserialized: Result<WaitForOpponentKafkaEvent, _> =
+                                serde_json::from_str(payload);
+
+                            match deserialized {
+                                Err(e) => println!("failed to deserialize wait for opponent {}", e),
+                                Ok(w) => {
+                                    flail_on_fail(events_in.send(KafkaEvents::WaitForOpponent(w)))
+                                }
+                            }
+                        }
+                        COLORS_CHOSEN_TOPIC => {
+                            let deserialized: Result<ColorsChosenEvent, _> =
+                                serde_json::from_str(payload);
+
+                            match deserialized {
+                                Err(e) => println!("failed to deserialize wait for opponent {}", e),
+                                Ok(c) => {
+                                    flail_on_fail(events_in.send(KafkaEvents::ColorsChosen(c)))
+                                }
+                            }
+                        }
+                        SHUTDOWN_TOPIC => {
+                            let deserialized: Result<ShutdownEvent, _> =
+                                serde_json::from_str(payload);
+
+                            match deserialized {
+                                Err(e) => println!("failed to deserialize shutdown event {}", e),
+                                Ok(_s) => {
+                                    let send_result = shutdown_in
+                                        .send(ShutdownEvent(std::time::SystemTime::now()));
+
+                                    if let Err(e) = send_result {
+                                        println!(
+                                            "HALP! Failed to send kafka event in crossbeam: {}",
+                                            e
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        CLIENT_HEARTBEAT_TOPIC => (), // Listen for idle tracking
+                        other => println!("ERROR Couldn't match kafka events topic: {}", other),
+                    }
+
+                    if topic != SHUTDOWN_TOPIC {
+                        observe(activity_in.clone())
+                    }
                 }
             }
         }
     }
-
-    println!("Exiting consumer")
 }
 
 /// Because no one should .unwrap() a crossbeam send result
