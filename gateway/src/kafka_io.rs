@@ -30,7 +30,7 @@ pub fn start(
             &BROKERS,
             APP_NAME,
             CONSUME_TOPICS,
-            events_in.clone(),
+            events_in,
             shutdown_in,
             activity_in,
         )
