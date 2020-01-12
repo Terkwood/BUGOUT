@@ -46,8 +46,8 @@ impl Router {
         }
     }
 
-    pub fn forward_by_client_id(&self, client_id: ClientId, ev: ClientEvents) {
-        if let Some(session_sender) = self.client_sessions.get(&client_id) {
+    pub fn forward_by_client_id(&self, client_id: ClientId, oev: Option<ClientEvents>) {
+        if let (Some(ev), Some(session_sender)) = (oev, self.client_sessions.get(&client_id)) {
             if let Err(e) = session_sender.events_in.send(ev.clone()) {
                 println!(
                     "😗 {} {:<8} {:<8} forwarding event by client ID {}",
@@ -62,23 +62,25 @@ impl Router {
         }
     }
 
-    pub fn forward_by_game_id(&self, ev: ClientEvents) {
-        if let Some(gid) = &ev.game_id() {
-            if let Some(GameSessions {
-                sessions,
-                playerup: _,
-                modified_at: _,
-            }) = self.game_sessions.get(gid)
-            {
-                for s in sessions {
-                    if let Err(err) = s.events_in.send(ev.clone()) {
-                        println!(
-                            "😑 {} {} {:<8} forwarding event by game ID {}",
-                            &crate::EMPTY_SHORT_UUID,
-                            short_uuid(*gid),
-                            "ERROR",
-                            err
-                        )
+    pub fn forward_by_game_id(&self, oev: Option<ClientEvents>) {
+        if let Some(ev) = oev {
+            if let Some(gid) = &ev.game_id() {
+                if let Some(GameSessions {
+                    sessions,
+                    playerup: _,
+                    modified_at: _,
+                }) = self.game_sessions.get(gid)
+                {
+                    for s in sessions {
+                        if let Err(err) = s.events_in.send(ev.clone()) {
+                            println!(
+                                "😑 {} {} {:<8} forwarding event by game ID {}",
+                                &crate::EMPTY_SHORT_UUID,
+                                short_uuid(*gid),
+                                "ERROR",
+                                err
+                            )
+                        }
                     }
                 }
             }
