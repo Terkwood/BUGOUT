@@ -126,7 +126,7 @@ async fn start_consumer(
         .subscribe(topics)
         .expect("Can't subscribe to topics");
 
-    let message_stream = consumer.start();
+    let mut message_stream = consumer.start();
     for message in message_stream.next().await {
         match message {
             Err(e) => println!("💩 Error waiting on kafka stream: {:?}", e),
