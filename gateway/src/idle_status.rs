@@ -70,8 +70,6 @@ pub fn start_monitor(
                     if let Ok(_) = msg {
                         println!("☠️ SHUTDOWN");
                         status = IdleStatus::Idle { since: Utc::now() };
-                    } else {
-                        println!("...HALP err on recv shutdown...")
                     }
             }
         }
