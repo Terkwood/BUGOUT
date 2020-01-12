@@ -25,7 +25,7 @@ pub fn start(
 ) {
     thread::spawn(move || start_producer(commands_out));
 
-    thread::spawn(move || async {
+    thread::spawn(move || {
         start_consumer(
             &BROKERS,
             APP_NAME,
@@ -33,7 +33,7 @@ pub fn start(
             events_in,
             shutdown_in,
             activity_in,
-        ).await
+        )
     });
 }
 
@@ -104,7 +104,7 @@ fn configure_producer(brokers: &str) -> FutureProducer {
         .expect("Producer creation error")
 }
 
-async fn start_consumer(
+fn start_consumer(
     brokers: &str,
     group_id: &str,
     topics: &[&str],
@@ -127,7 +127,7 @@ async fn start_consumer(
         .expect("Can't subscribe to topics");
 
     let mut message_stream = consumer.start();
-    for message in message_stream.next().await {
+    async { for message in message_stream.next().await {
         match message {
             Err(e) => println!("💩 Error waiting on kafka stream: {:?}", e),
             Ok(msg) => {
@@ -224,7 +224,7 @@ async fn start_consumer(
                     observe(activity_in.clone())
                 }
             }
-        }
+        }}
     }
 }
 
