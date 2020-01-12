@@ -15,7 +15,7 @@ use gateway::{kafka_io, router};
 const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
-async fn main() {
+fn main() {
     println!("🔢 {:<8} {}", NAME, VERSION);
 
     env::init();
