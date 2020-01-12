@@ -20,6 +20,7 @@ harsh = "0.1.6"
 lazy_static = "1.4.0"
 envy = "0.4.0"
 dotenv = "0.15.0"
+futures = "0.3.0"
 chrono = { version = "0.4.10", features = ["serde"] }
 r2d2_redis = "0.12.0"
 
