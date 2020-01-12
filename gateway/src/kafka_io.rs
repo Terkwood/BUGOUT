@@ -25,19 +25,21 @@ pub fn start(
 ) {
     thread::spawn(move || start_producer(commands_out));
 
+    let ei = events_in.clone();
+    
     thread::spawn(move || {
         start_consumer(
             &BROKERS,
             APP_NAME,
             CONSUME_TOPICS,
-            events_in.clone(),
+            events_in,
             shutdown_in,
             activity_in,
         )
     });
 
     // Don't leave select!s listening for a non-existent kafka hanging
-    flail_on_fail(events_in.send(KafkaEvents::NoOp));
+    flail_on_fail(ei.send(KafkaEvents::NoOp));
 }
 
 /// Pay attention to the topic keys in the loop 🔄 👀
