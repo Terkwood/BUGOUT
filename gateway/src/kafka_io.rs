@@ -1,9 +1,7 @@
 use std::thread;
 
 use crossbeam_channel::select;
-use futures::Stream;
 use futures::StreamExt;
-use futures_util::stream::stream::StreamExt;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::{CommitMode, Consumer};
@@ -132,8 +130,7 @@ async fn start_consumer(
     for message in message_stream.next().await {
         match message {
             Err(e) => println!("💩 Error waiting on kafka stream: {:?}", e),
-            Ok(Err(e)) => println!("💩 Nested error (!) waiting on kafka stream: {:?}", e),
-            Ok(Ok(msg)) => {
+            Ok(msg) => {
                 let payload = match msg.payload_view::<str>() {
                     None => "",
                     Some(Ok(s)) => s,
