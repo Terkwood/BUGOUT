@@ -63,4 +63,7 @@ async fn main() {
             req_idle_in.clone(),
         )
     })
+    .unwrap();
+
+    ()
 }
