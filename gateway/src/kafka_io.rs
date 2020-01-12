@@ -26,7 +26,7 @@ pub fn start(
     thread::spawn(move || start_producer(commands_out));
 
     let ei = events_in.clone();
-
+    
     thread::spawn(move || {
         start_consumer(
             &BROKERS,
