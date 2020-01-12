@@ -25,7 +25,7 @@ pub fn start(
 ) {
     thread::spawn(move || start_producer(commands_out));
 
-    thread::spawn(move || {
+    thread::spawn(move || async {
         start_consumer(
             &BROKERS,
             APP_NAME,
@@ -33,7 +33,7 @@ pub fn start(
             events_in,
             shutdown_in,
             activity_in,
-        )
+        ).await
     });
 }
 
