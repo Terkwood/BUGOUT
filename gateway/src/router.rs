@@ -289,7 +289,7 @@ pub fn start(
 
                         router.game_sessions.remove(&game_id);
                     },
-                    Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
+                    Err(_) => (),
                 },
             recv(kafka_events_out) -> event =>
                 match event {
@@ -325,7 +325,8 @@ pub fn start(
 
                         router.forward_by_game_id(e.to_client_event())
                     },
-                    Err(_) => (),
+                    Err(e) =>
+                        panic!("Unable to receive kafka event via router channel: {:?}", e),
                 },
             recv(idle_resp_out) -> idle_status_response => if let Ok(IdleStatusResponse(client_id, status)) = idle_status_response {
                 router.forward_by_client_id(client_id, ClientEvents::IdleStatusProvided(status))
