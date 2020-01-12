@@ -36,7 +36,7 @@ pub fn start_monitor(
         let redis_wakeup = RedisWakeup::new();
 
         loop {
-            if let Ok(_) = kafka_event.try_recv() {
+            if let Ok(_) = kafka_out.try_recv() {
                 match status {
                     IdleStatus::Online => (),
                     _ => {
@@ -44,7 +44,7 @@ pub fn start_monitor(
                     },
                 }
             }
-            
+
             select! {
                 recv(req_status_out) -> req =>
                     if let Ok(RequestIdleStatus(client_id)) = req {
