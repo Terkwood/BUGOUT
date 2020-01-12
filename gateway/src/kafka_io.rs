@@ -25,17 +25,15 @@ pub async fn start(
 ) {
     thread::spawn(move || start_producer(commands_out));
 
-    thread::spawn(move || {
-        start_consumer(
-            &BROKERS,
-            APP_NAME,
-            CONSUME_TOPICS,
-            events_in,
-            shutdown_in,
-            activity_in,
-        )
-        .await
-    });
+    start_consumer(
+        &BROKERS,
+        APP_NAME,
+        CONSUME_TOPICS,
+        events_in,
+        shutdown_in,
+        activity_in,
+    )
+    .await
 }
 
 /// Pay attention to the topic keys in the loop 🔄 👀
