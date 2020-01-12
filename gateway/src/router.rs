@@ -289,7 +289,7 @@ pub fn start(
 
                         router.game_sessions.remove(&game_id);
                     },
-                    Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
+                    Err(_) => (),
                 },
             recv(kafka_events_out) -> event =>
                 match event {
