@@ -1,6 +1,7 @@
 extern crate gateway;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
+use futures::executor::block_on;
 
 use gateway::env;
 use gateway::idle_status;
@@ -43,24 +44,26 @@ fn main() {
         Receiver<KafkaActivityObserved>,
     ) = unbounded();
 
-    kafka_io::start(
-        kafka_events_in,
-        shutdown_in,
-        kafka_activity_in,
-        kafka_commands_out,
-    );
-
     idle_status::start_monitor(idle_resp_in, shutdown_out, req_idle_out, kafka_activity_out);
 
     router::start(router_commands_out, kafka_events_out, idle_resp_out);
 
-    ws::listen("0.0.0.0:3012", |ws_out| {
-        WsSession::new(
-            ws_out,
-            kafka_commands_in.clone(),
-            router_commands_in.clone(),
-            req_idle_in.clone(),
-        )
-    })
-    .unwrap();
+    std::thread::spawn(move || {
+        ws::listen("0.0.0.0:3012", |ws_out| {
+            WsSession::new(
+                ws_out,
+                kafka_commands_in.clone(),
+                router_commands_in.clone(),
+                req_idle_in.clone(),
+            )
+        })
+        .unwrap()
+    });
+
+    block_on(kafka_io::start(
+        kafka_events_in,
+        shutdown_in,
+        kafka_activity_in,
+        kafka_commands_out,
+    ))
 }
