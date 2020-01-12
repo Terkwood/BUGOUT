@@ -14,7 +14,7 @@ use gateway::{kafka_io, router};
 const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
-fn main() {
+async fn main() {
     println!("🔢 {:<8} {}", NAME, VERSION);
 
     env::init();
@@ -48,7 +48,8 @@ fn main() {
         shutdown_in,
         kafka_activity_in,
         kafka_commands_out,
-    );
+    )
+    .await;
 
     idle_status::start_monitor(idle_resp_in, shutdown_out, req_idle_out, kafka_activity_out);
 

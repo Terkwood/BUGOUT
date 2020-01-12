@@ -41,13 +41,11 @@ pub fn start_monitor(
             if let Ok(_) = kafka_out.try_recv() {
                 match status {
                     IdleStatus::Online => (),
-                    _ => {
-                        status = IdleStatus::Online
-                    },
+                    _ => status = IdleStatus::Online,
                 }
             }
 
-            if let Ok(_) =  shutdown_out.try_recv()  {
+            if let Ok(_) = shutdown_out.try_recv() {
                 println!("☠️ SHUTDOWN");
                 status = IdleStatus::Idle { since: Utc::now() };
             }

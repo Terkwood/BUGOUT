@@ -17,7 +17,7 @@ use crate::topics::*;
 
 pub const APP_NAME: &str = "gateway";
 
-async pub fn start(
+pub async fn start(
     events_in: crossbeam::Sender<KafkaEvents>,
     shutdown_in: crossbeam::Sender<ShutdownEvent>,
     activity_in: crossbeam::Sender<KafkaActivityObserved>,
@@ -25,7 +25,7 @@ async pub fn start(
 ) {
     thread::spawn(move || start_producer(commands_out));
 
-    thread::spawn(move ||
+    thread::spawn(move || {
         start_consumer(
             &BROKERS,
             APP_NAME,
@@ -33,8 +33,9 @@ async pub fn start(
             events_in,
             shutdown_in,
             activity_in,
-        ).await
-    );
+        )
+        .await
+    });
 }
 
 /// Pay attention to the topic keys in the loop 🔄 👀
