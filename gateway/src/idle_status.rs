@@ -45,6 +45,11 @@ pub fn start_monitor(
                 }
             }
 
+            if let Ok(msg) =  shutdown_out.try_recv()  {
+                println!("☠️ SHUTDOWN");
+                status = IdleStatus::Idle { since: Utc::now() };
+            }
+
             select! {
                 recv(req_status_out) -> req =>
                     if let Ok(RequestIdleStatus(client_id)) = req {
@@ -63,16 +68,7 @@ pub fn start_monitor(
                                 }
                             },
                         }
-                } else {
-                        println!("err on idle recv req status")
-                    },
-                recv(shutdown_out) -> msg =>
-                    if let Ok(_) = msg {
-                        println!("☠️ SHUTDOWN");
-                        status = IdleStatus::Idle { since: Utc::now() };
-                    } else {
-                        println!("...HALP err on recv shutdown...")
-                    }
+                } else { println!("err on idle recv req status") }
             }
         }
     });
