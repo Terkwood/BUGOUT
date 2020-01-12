@@ -74,7 +74,8 @@ pub fn start_monitor(
                         status = IdleStatus::Idle { since: Utc::now() };
                     } else {
                         println!("...HALP err on recv shutdown...")
-                    }
+                    },
+                default => (),
             }
         }
     });
