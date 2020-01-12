@@ -111,7 +111,7 @@ async fn start_consumer(
     shutdown_in: crossbeam::Sender<ShutdownEvent>,
     activity_in: crossbeam::Sender<KafkaActivityObserved>,
 ) {
-    println!("Starting kafka consumer!");
+    println!("Starting kafka consumer!"); // TODO
 
     let consumer: StreamConsumer = ClientConfig::new()
         .set("group.id", group_id)
