@@ -48,7 +48,7 @@ async fn main() {
 
     router::start(router_commands_out, kafka_events_out, idle_resp_out);
 
-    thread::spawn(move || {
+    std::thread::spawn(move || {
         ws::listen("0.0.0.0:3012", |ws_out| {
             WsSession::new(
                 ws_out,
