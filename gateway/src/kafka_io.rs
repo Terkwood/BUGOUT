@@ -228,7 +228,7 @@ async fn start_consumer(
         }
     }
 
-    println("Exiting consumer")
+    println!("Exiting consumer")
 }
 
 /// Because no one should .unwrap() a crossbeam send result
