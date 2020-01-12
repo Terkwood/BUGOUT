@@ -244,66 +244,9 @@ pub fn start(
     thread::spawn(move || {
         let mut router = Router::new();
         loop {
-            // Use try_recv instead of select! to avoid throwing
-            // spurious errors before first message comes from kafka
-            if let Ok(event) = kafka_events_out.try_recv() {
-                match event {
-                    KafkaEvents::MoveMade(m) => {
-                        let u = m.clone();
-                        router.set_playerup(u.game_id, u.player.other());
-                        router.forward_by_game_id(KafkaEvents::MoveMade(m).to_client_event())
-                    }
-                    KafkaEvents::GameReady(g) => {
-                        router.route_new_game(g.sessions.first, g.game_id);
-                        router.route_new_game(g.sessions.second, g.game_id);
-                        router.forward_by_game_id(KafkaEvents::GameReady(g).to_client_event());
-                    }
-                    KafkaEvents::PrivateGameRejected(p) => {
-                        // there's no game ID associated with
-                        // this game, yet, so we need to
-                        // forward via client ID
-                        router.forward_by_client_id(
-                            p.client_id,
-                            KafkaEvents::PrivateGameRejected(p).to_client_event(),
-                        )
-                    }
-                    KafkaEvents::WaitForOpponent(w) => {
-                        router.route_new_game(w.session_id, w.game_id);
-                        router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
-                    }
-                    KafkaEvents::ColorsChosen(ColorsChosenEvent {
-                        game_id,
-                        black,
-                        white,
-                    }) => {
-                        // We want to forward by session ID
-                        // so that we don't send TWO yourcolor events
-                        // to each client
-                        router.forward_by_session_id(
-                            black,
-                            ClientEvents::YourColor(YourColorEvent {
-                                game_id,
-                                your_color: Player::BLACK,
-                            }),
-                        );
-                        router.forward_by_session_id(
-                            white,
-                            ClientEvents::YourColor(YourColorEvent {
-                                game_id,
-                                your_color: Player::WHITE,
-                            }),
-                        );
-                    }
-                    e => {
-                        router.observe_game(e.game_id());
-
-                        router.forward_by_game_id(e.to_client_event())
-                    }
-                }
-            }
-
             select! {
-                recv(router_commands_out) -> command => match command {
+            recv(router_commands_out) -> command =>
+                match command {
                     Ok(RouterCommand::ObserveGame(game_id)) => router.observe_game(game_id),
                     // A create private game request, or a find public
                     // game request, will result in us tracking a
@@ -347,6 +290,43 @@ pub fn start(
                         router.game_sessions.remove(&game_id);
                     },
                     Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
+                },
+            recv(kafka_events_out) -> event =>
+                match event {
+                    Ok(KafkaEvents::MoveMade(m)) => {
+                        let u = m.clone();
+                        router.set_playerup(u.game_id, u.player.other());
+                        router.forward_by_game_id(KafkaEvents::MoveMade(m).to_client_event())
+                    }
+                    Ok(KafkaEvents::GameReady(g)) => {
+                        router.route_new_game(g.sessions.first, g.game_id);
+                        router.route_new_game(g.sessions.second, g.game_id);
+                        router.forward_by_game_id(KafkaEvents::GameReady(g).to_client_event());
+                    }
+                    Ok(KafkaEvents::PrivateGameRejected(p)) => {
+                        // there's no game ID associated with
+                        // this game, yet, so we need to
+                        // forward via client ID
+                        router.forward_by_client_id(p.client_id, KafkaEvents::PrivateGameRejected(p).to_client_event())
+                    }
+                    Ok(KafkaEvents::WaitForOpponent(w)) => {
+                        router.route_new_game(w.session_id, w.game_id);
+                        router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
+                    }
+                    Ok(KafkaEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
+                        // We want to forward by session ID
+                        // so that we don't send TWO yourcolor events
+                        // to each client
+                        router.forward_by_session_id(black,ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
+                        router.forward_by_session_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
+                    },
+                    Ok(e) => {
+                        router.observe_game(e.game_id());
+
+                        router.forward_by_game_id(e.to_client_event())
+                    },
+                    Err(e) =>
+                        panic!("Unable to receive kafka event via router channel: {:?}", e),
                 },
             recv(idle_resp_out) -> idle_status_response => if let Ok(IdleStatusResponse(client_id, status)) = idle_status_response {
                 router.forward_by_client_id(client_id, ClientEvents::IdleStatusProvided(status))
