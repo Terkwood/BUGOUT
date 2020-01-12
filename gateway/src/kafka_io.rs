@@ -104,7 +104,7 @@ fn configure_producer(brokers: &str) -> FutureProducer {
         .expect("Producer creation error")
 }
 
-fn start_consumer(
+async fn start_consumer(
     brokers: &str,
     group_id: &str,
     topics: &[&str],
