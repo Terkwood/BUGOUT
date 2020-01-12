@@ -127,7 +127,7 @@ fn start_consumer(
         .expect("Can't subscribe to topics");
 
     let message_stream = consumer.start();
-    for message in message_stream.wait() {
+    for message in message_stream.next().await {
         match message {
             Err(e) => println!("💩 Error waiting on kafka stream: {:?}", e),
             Ok(Err(e)) => println!("💩 Nested error (!) waiting on kafka stream: {:?}", e),
