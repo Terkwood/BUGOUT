@@ -36,21 +36,18 @@ pub fn start_monitor(
         let redis_wakeup = RedisWakeup::new();
 
         loop {
-            // Use try_recv instead of select! to avoid throwing
-            // spurious errors before first message comes from kafka
-            if let Ok(_) = kafka_out.try_recv() {
-                match status {
-                    IdleStatus::Online => (),
-                    _ => status = IdleStatus::Online,
-                }
-            }
-
-            if let Ok(_) = shutdown_out.try_recv() {
-                println!("☠️ SHUTDOWN");
-                status = IdleStatus::Idle { since: Utc::now() };
-            }
-
             select! {
+                recv(kafka_out) -> kafka_event =>
+                    if let Ok(_) = kafka_event {
+                        match status {
+                            IdleStatus::Online => (),
+                            _ => {
+                                status = IdleStatus::Online
+                            },
+                        }
+                    } else {
+                        println!("err in idle recv for kafka")
+                    },
                 recv(req_status_out) -> req =>
                     if let Ok(RequestIdleStatus(client_id)) = req {
                         if let Err(e) = status_resp_in.send(IdleStatusResponse(client_id, status)) {
@@ -68,7 +65,16 @@ pub fn start_monitor(
                                 }
                             },
                         }
-                } else { println!("err on idle recv req status") }
+                } else {
+                        println!("err on idle recv req status")
+                    },
+                recv(shutdown_out) -> msg =>
+                    if let Ok(_) = msg {
+                        println!("☠️ SHUTDOWN");
+                        status = IdleStatus::Idle { since: Utc::now() };
+                    } else {
+                        println!("...HALP err on recv shutdown...")
+                    }
             }
         }
     });
