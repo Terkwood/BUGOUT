@@ -35,6 +35,9 @@ pub fn start(
             activity_in,
         )
     });
+
+    // Don't leave select!s listening for a non-existent kafka hanging
+    flail_on_fail(events_in.send(KafkaEvents::NoOp));
 }
 
 /// Pay attention to the topic keys in the loop 🔄 👀

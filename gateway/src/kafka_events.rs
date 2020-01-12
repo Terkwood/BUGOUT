@@ -15,6 +15,7 @@ pub enum KafkaEvents {
     PrivateGameRejected(PrivateGameRejectedKafkaEvent),
     WaitForOpponent(WaitForOpponentKafkaEvent),
     ColorsChosen(ColorsChosenEvent),
+    NoOp, // sent at service start to appease the crossbeam channel gods
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
