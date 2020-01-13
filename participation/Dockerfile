@@ -9,5 +9,3 @@ COPY . .
 RUN sh build.sh --no-daemon
 
 CMD ["sh", "run.sh"]
-# TODO
-#CMD [ "tail", "-f", "/dev/null"]
