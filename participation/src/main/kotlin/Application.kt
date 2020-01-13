@@ -201,6 +201,13 @@ class Application(private val brokers: String) {
         val quitGameParticipation = quitGame.join(gameParticipation, { left, right -> Pair(left, right) }, joinDur, Joined.with(Serdes.UUID(), Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
             Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
 
+        quitGameParticipation.mapValues {
+            qgp -> qgp.second
+        }.to(Topics.GAME_PARTICIPATION, Produced.with(Serdes.UUID(), Serdes.serdeFrom(
+                KafkaSerializer(),
+                KafkaDeserializer(jacksonTypeRef())
+        )))
+
         val clientQuits: KStream<ClientId, GameParticipation?> = quitGameParticipation
             .map { _, gp ->
                 val blank: GameParticipation? = null
