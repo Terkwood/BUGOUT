@@ -201,7 +201,9 @@ class Application(private val brokers: String) {
         val quitGameParticipation = quitGame.join(gameParticipation, { left, right -> Pair(left, right) }, joinDur, Joined.with(Serdes.UUID(), Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef())),
             Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
 
-        quitGameParticipation.mapValues {
+        quitGameParticipation.filter {
+            _, qgp -> qgp.second.participation == Participation.InProgress
+        }.mapValues {
             qgp -> qgp.second.copy(participation = Participation.Finished)
         }.to(Topics.GAME_PARTICIPATION, Produced.with(Serdes.UUID(), Serdes.serdeFrom(
                 KafkaSerializer(),
