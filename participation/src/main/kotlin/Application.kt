@@ -202,7 +202,7 @@ class Application(private val brokers: String) {
             Serdes.serdeFrom(KafkaSerializer(), KafkaDeserializer(jacksonTypeRef()))))
 
         quitGameParticipation.mapValues {
-            qgp -> qgp.second
+            qgp -> qgp.second.copy(participation = Participation.Finished)
         }.to(Topics.GAME_PARTICIPATION, Produced.with(Serdes.UUID(), Serdes.serdeFrom(
                 KafkaSerializer(),
                 KafkaDeserializer(jacksonTypeRef())
