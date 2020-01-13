@@ -210,7 +210,7 @@ class Application(private val brokers: String) {
                 KafkaDeserializer(jacksonTypeRef())
         )))
 
-        val clientQuits: KStream<ClientId, GameParticipation?> = quitGameParticipation
+        /*val clientQuits: KStream<ClientId, GameParticipation?> = quitGameParticipation
             .map { _, gp ->
                 val blank: GameParticipation? = null
                 KeyValue(gp.second.clients.first, blank )}
@@ -219,7 +219,7 @@ class Application(private val brokers: String) {
         clientQuits.to(Topics.CLIENT_PARTICIPATION, Produced.with(Serdes.UUID(), Serdes.serdeFrom(
             KafkaSerializer(),
             KafkaDeserializer(jacksonTypeRef())
-        )))
+        )))*/
 
         val moveAccepted: KStream<GameId, MoveAccepted> =
             streamsBuilder.stream<GameId, String>(
