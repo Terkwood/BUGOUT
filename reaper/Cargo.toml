@@ -1,6 +1,6 @@
 [package]
 name = "reaper"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Terkwood <metaterkhorn@gmail.com>"]
 edition = "2018"
 
@@ -13,8 +13,8 @@ rusoto_core = "0.42.0"
 rusoto_ec2 = "0.42.0"
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.0"
-rdkafka = "0.21.0"
-futures = "0.1"
+rdkafka = "0.23.0"
+futures = "0.3.1"
 serde = "1.0.102"
 serde_derive = "1.0.102"
 serde_json = "1.0.41"

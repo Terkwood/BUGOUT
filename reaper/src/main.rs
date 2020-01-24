@@ -1,6 +1,7 @@
 extern crate reaper;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
+use futures::executor::block_on;
 
 use reaper::model::*;
 use reaper::*;
@@ -18,7 +19,8 @@ fn main() {
     env::init();
     println!("☠️ REAP after {} seconds", *env::ALLOWED_IDLE_SECS);
 
-    kafka::start(activity_in, shutdown_out.clone());
+    block_on(kafka::start(activity_in, shutdown_out.clone()));
+    println!("Kafka started"); // TODO trim
     monitor::start(shutdown_in, activity_out);
     shutdown::listen(shutdown_out);
 }
