@@ -19,8 +19,8 @@ fn main() {
     env::init();
     println!("☠️ REAP after {} seconds", *env::ALLOWED_IDLE_SECS);
 
-    block_on(kafka::start(activity_in, shutdown_out.clone()));
-    println!("Kafka started"); // TODO trim
     monitor::start(shutdown_in, activity_out);
-    shutdown::listen(shutdown_out);
+    let kafka_shutdown_out = shutdown_out.clone();
+    std::thread::spawn(move || shutdown::listen(shutdown_out));
+    block_on(kafka::start(activity_in, kafka_shutdown_out));
 }
