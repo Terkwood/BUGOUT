@@ -1,7 +1,7 @@
 use std::thread;
 
 use crossbeam_channel::select;
-use futures::stream::Stream;
+use futures::StreamExt;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::Consumer;
@@ -16,13 +16,13 @@ use crate::topics::{CONSUME_TOPICS, SHUTDOWN_TOPIC};
 pub const BROKERS: &str = "kafka:9092";
 pub const APP_NAME: &str = "reaper";
 
-pub fn start(
+pub async fn start(
     activity_in: crossbeam::Sender<KafkaActivity>,
     shutdown_out: crossbeam::Receiver<ShutdownCommand>,
 ) {
     thread::spawn(move || start_producer(shutdown_out));
 
-    thread::spawn(move || start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS, activity_in));
+    start_consumer(BROKERS, APP_NAME, CONSUME_TOPICS, activity_in).await;
 }
 
 fn start_producer(shutdown_out: crossbeam::Receiver<ShutdownCommand>) {
@@ -52,7 +52,7 @@ fn configure_producer(brokers: &str) -> FutureProducer {
         .expect("Producer creation error")
 }
 
-fn start_consumer(
+async fn start_consumer(
     brokers: &str,
     group_id: &str,
     topics: &[&str],
@@ -72,17 +72,18 @@ fn start_consumer(
         .subscribe(topics)
         .expect("Can't subscribe to topics");
 
-    let message_stream = consumer.start();
-    for message in message_stream.wait() {
-        match message {
-            Err(e) => panic!("Error waiting on kafka stream: {:?}", e),
-            Ok(Err(e)) => panic!("Nested error (!) waiting on kafka stream: {:?}", e),
-            Ok(Ok(msg)) => {
-                if let Err(e) = activity_in.send(KafkaActivity {
-                    topic: msg.topic().to_string(),
-                    timestamp: msg.timestamp().to_millis().unwrap_or(Default::default()),
-                }) {
-                    println!("ERROR SENDING CROSSBEAM KAFKA ACTIVITY {}", e)
+    let mut message_stream = consumer.start();
+    loop {
+        for message in message_stream.next().await {
+            match message {
+                Err(e) => panic!("Error waiting on kafka stream: {:?}", e),
+                Ok(msg) => {
+                    if let Err(e) = activity_in.send(KafkaActivity {
+                        topic: msg.topic().to_string(),
+                        timestamp: msg.timestamp().to_millis().unwrap_or(Default::default()),
+                    }) {
+                        println!("ERROR SENDING CROSSBEAM KAFKA ACTIVITY {}", e)
+                    }
                 }
             }
         }
