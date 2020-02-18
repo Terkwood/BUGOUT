@@ -1,0 +1,12 @@
+[package]
+name = "micro-judge"
+version = "0.1.0"
+authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+redis = "0.15.1"
+uuid = "0.8.1"
+r2d2_redis = "0.13.0"

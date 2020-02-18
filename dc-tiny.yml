@@ -40,3 +40,9 @@ services:
     volumes:
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy
+  micro-judge:
+    build: micro-judge/.
+    links:
+      - "redis"
+    depends_on:
+      - "redis"

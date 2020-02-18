@@ -120,3 +120,9 @@ services:
     build: kafkacat/.
     links:
       - "kafka"
+  micro-judge:
+    build: micro-judge/.
+    links:
+      - "redis"
+    depends_on:
+      - "redis"
