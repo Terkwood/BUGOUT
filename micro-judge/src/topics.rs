@@ -1,1 +1,0 @@
-pub const MAKE_MOVE_CMD: &str = "bugout-make-move-cmd";

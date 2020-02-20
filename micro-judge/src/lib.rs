@@ -1,10 +1,10 @@
+extern crate bincode;
 extern crate r2d2_redis;
 extern crate redis;
+extern crate serde;
+extern crate serde_derive;
 extern crate uuid;
 
-pub mod conn_pool;
-mod model;
-pub mod stream;
-mod topics;
-
-use uuid::Uuid;
+mod game;
+pub mod io;
+pub mod model;
