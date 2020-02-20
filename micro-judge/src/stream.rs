@@ -1,4 +1,6 @@
-use crate::{topics, GameId, Pool};
+use crate::conn_pool::Pool;
+use crate::model::*;
+use crate::topics;
 use redis;
 use redis::{Commands, Value};
 use std::collections::HashMap;
@@ -94,19 +96,5 @@ fn xread(pool: &Pool) -> Result<HashMap<String, String>, redis::RedisError> {
         todo!()
     } else {
         todo!("no bulky")
-    }
-}
-
-#[derive(Debug)]
-struct DeserError;
-#[derive(Debug)]
-struct MakeMoveCommand {
-    game_id: GameId,
-}
-
-impl MakeMoveCommand {
-    pub fn from(xread_result: HashMap<String, String>) -> Result<MakeMoveCommand, DeserError> {
-        println!("deser from {:#?}", xread_result);
-        todo!()
     }
 }
