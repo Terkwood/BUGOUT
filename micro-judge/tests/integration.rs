@@ -73,11 +73,15 @@ fn panic_cleanup(stream_names: Vec<String>, keys: Vec<String>, pool: Pool) {
 #[test]
 fn test_redis_connect() {
     let pool = redis_pool();
-    let mut conn = pool.get().unwrap();
-    assert_eq!(
-        redis::cmd("PING").query::<String>(&mut *conn).unwrap(),
-        "PONG"
-    );
+    if let Ok(mut conn) = pool.get() {
+        if let Ok(p) = redis::cmd("PING").query::<String>(&mut *conn) {
+            assert_eq!(p, "PONG")
+        } else {
+            todo!("Err in redis query")
+        }
+    } else {
+        todo!("halp")
+    }
 }
 
 #[test]
