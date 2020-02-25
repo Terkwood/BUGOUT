@@ -82,7 +82,6 @@ fn test_track_emitted_game_states() {
     assert_eq!(eid_repo.fetch_all().unwrap().game_states_eid.millis_time, 0);
 
     let game_state = GameState::default();
-    println!("game id {}", &game_id.0);
     redis::cmd("XADD")
         .arg(TEST_GAME_STATES_TOPIC)
         .arg("MAXLEN")
