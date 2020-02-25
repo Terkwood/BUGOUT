@@ -11,7 +11,7 @@ pub struct ReqId(pub Uuid);
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Eq)]
 pub struct EventId(pub Uuid);
 
-#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize, Eq)]
+#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize, Eq, Hash)]
 pub enum Player {
     BLACK,
     WHITE,
@@ -47,7 +47,11 @@ pub struct Coord {
     pub x: u16,
     pub y: u16,
 }
-
+impl Coord {
+    pub fn of(x: u16, y: u16) -> Self {
+        Coord { x, y }
+    }
+}
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Debug)]
 pub struct GameState {
     pub board: Board,

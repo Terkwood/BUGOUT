@@ -1,5 +1,5 @@
 use crate::io::conn_pool::Pool;
-use crate::io::redis_keys::{game_states_key, Namespace};
+use crate::io::redis_keys::{game_states_key, RedisKeyNamespace};
 use crate::io::FetchErr;
 
 use crate::model::{GameId, GameState};
@@ -7,23 +7,36 @@ use bincode;
 use r2d2_redis::redis;
 use redis::Commands;
 
-pub fn fetch(game_id: &GameId, ns: &Namespace, pool: &Pool) -> Result<GameState, FetchErr> {
-    let mut conn = pool.get().unwrap();
-    let key = game_states_key(ns, &game_id);
-    let bin_data: Vec<u8> = conn.get(key)?;
-    Ok(GameState::from(&bin_data)?)
+const EXPIRY_SECS: usize = 86400;
+
+#[derive(Clone, Debug)]
+pub struct GameStatesRepo {
+    pub namespace: RedisKeyNamespace,
+    pub pool: Pool,
 }
 
-pub fn write(
-    game_id: GameId,
-    game_state: GameState,
-    ns: &Namespace,
-    pool: &Pool,
-) -> Result<String, WriteErr> {
-    let mut conn = pool.get().unwrap();
+impl GameStatesRepo {
+    pub fn fetch(&self, game_id: &GameId) -> Result<GameState, FetchErr> {
+        let mut conn = self.pool.get().unwrap();
+        let key = game_states_key(&self.namespace, &game_id);
+        let bin_data: Vec<u8> = conn.get(&key)?;
+        let r = GameState::from(&bin_data)?;
+        // Touch TTL whenever you get the record
+        conn.expire(key, EXPIRY_SECS)?;
+        Ok(r)
+    }
 
-    Ok(conn.set(game_states_key(ns, &game_id), game_state.serialize()?)?)
+    pub fn write(&self, game_id: GameId, game_state: GameState) -> Result<String, WriteErr> {
+        let mut conn = self.pool.get().unwrap();
+
+        let key = game_states_key(&self.namespace, &game_id);
+        let done = conn.set(&key, game_state.serialize()?)?;
+        // Touch TTL whenever you set the record
+        conn.expire(key, EXPIRY_SECS)?;
+        Ok(done)
+    }
 }
+
 #[derive(Debug)]
 pub enum WriteErr {
     Redis(redis::RedisError),
