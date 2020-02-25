@@ -6,8 +6,6 @@ RUN rustup default stable
 
 COPY . /var/BUGOUT/micro-judge/.
 
-#RUN cargo install --path .
+RUN cargo install --path .
 
-#TODO
-#CMD ["micro-judge"]
-CMD ["tail", "-f", "/dev/null"]
+CMD ["micro-judge"]
