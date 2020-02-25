@@ -3,9 +3,9 @@ extern crate r2d2_redis;
 
 use conn_pool::Pool;
 use conn_pool::RedisHostUrl;
-use micro_judge::io::entry_id::EntryIdRepo;
 use micro_judge::io::{conn_pool, redis_keys, stream, topics};
 use micro_judge::model::{GameId, GameState};
+use micro_judge::repo::entry_id::EntryIdRepo;
 use r2d2_redis::{r2d2, redis};
 use redis::Commands;
 use redis_keys::Namespace;

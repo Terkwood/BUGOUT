@@ -1,6 +1,6 @@
-use super::conn_pool::Pool;
-use super::redis_keys::{game_states_key, Namespace};
-use super::FetchErr;
+use crate::io::conn_pool::Pool;
+use crate::io::redis_keys::{game_states_key, Namespace};
+use crate::io::FetchErr;
 
 use crate::model::{GameId, GameState};
 use bincode;

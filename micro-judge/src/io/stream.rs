@@ -1,12 +1,12 @@
 use super::conn_pool::Pool;
-use super::entry_id::{EntryIdRepo, EntryIdType};
-use super::game_states_repo;
 use super::redis_keys::Namespace;
 use super::topics::*;
 use super::xread::*;
 use super::FetchErr;
 use crate::game::validate_move;
 use crate::model::*;
+use crate::repo::entry_id::{EntryIdRepo, EntryIdType};
+use crate::repo::game_states;
 
 pub fn process(opts: ProcessOpts, pool: &Pool) {
     let eid_repo = opts.entry_id_repo;
@@ -20,12 +20,9 @@ pub fn process(opts: ProcessOpts, pool: &Pool) {
                                 make_move(mm, &opts.namespace, &pool)
                             }
                             (entry_id, StreamData::GS(game_id, game_state)) => {
-                                if let Err(e) = game_states_repo::write(
-                                    game_id,
-                                    game_state,
-                                    &opts.namespace,
-                                    &pool,
-                                ) {
+                                if let Err(e) =
+                                    game_states::write(game_id, game_state, &opts.namespace, &pool)
+                                {
                                     println!("error writing game state {:?}", e)
                                 } else {
                                     if let Err(e) =
@@ -67,7 +64,7 @@ impl Default for ProcessOpts {
 }
 
 fn make_move(mm: MakeMoveCommand, ns: &Namespace, pool: &Pool) {
-    if let Ok(game_state) = game_states_repo::fetch(&mm.game_id, ns, &pool) {
+    if let Ok(game_state) = game_states::fetch(&mm.game_id, ns, &pool) {
         if validate_move(mm, game_state) {
             todo!()
         } else {

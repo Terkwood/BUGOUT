@@ -6,5 +6,6 @@ extern crate serde_derive;
 extern crate uuid;
 
 mod game;
-pub mod io;
 pub mod model;
+pub mod io;
+pub mod repo;

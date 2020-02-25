@@ -1,11 +1,9 @@
 pub mod conn_pool;
-pub mod entry_id;
-mod game_states_repo;
 pub mod redis_keys;
 
 pub mod stream;
 pub mod topics;
-mod xread;
+pub mod xread;
 
 #[derive(Debug)]
 pub struct DeserError;
