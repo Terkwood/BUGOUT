@@ -1,4 +1,7 @@
 use crate::model::*;
+
+mod capturing;
+
 pub fn validate_move(make_move: MakeMoveCommand, game_state: GameState) -> bool {
     let correct_player = make_move.player == game_state.player_up;
     let coord = make_move.coord;
