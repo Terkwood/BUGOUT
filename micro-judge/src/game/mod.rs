@@ -1,8 +1,39 @@
 use crate::model::*;
+pub use capturing::captures_for;
 
 mod capturing;
 
-pub fn validate_move(make_move: MakeMoveCommand, game_state: GameState) -> bool {
+pub enum Judgement {
+    Accepted(MoveMade),
+    Rejected,
+}
+pub fn judge(mm: &MakeMoveCommand, game_state: &GameState) -> Judgement {
+    if validate_move(mm, game_state) {
+        let captured: Vec<Coord> = mm
+            .coord
+            .map(|c| {
+                captures_for(mm.player, c, &game_state.board)
+                    .iter()
+                    .cloned()
+                    .collect()
+            })
+            .unwrap_or(vec![]);
+
+        let move_made = MoveMade {
+            player: mm.player,
+            coord: mm.coord,
+            captured,
+            event_id: EventId::new(),
+            game_id: mm.game_id.clone(),
+            reply_to: mm.req_id.clone(),
+        };
+        Judgement::Accepted(move_made)
+    } else {
+        Judgement::Rejected
+    }
+}
+
+fn validate_move(make_move: &MakeMoveCommand, game_state: &GameState) -> bool {
     let correct_player = make_move.player == game_state.player_up;
     let coord = make_move.coord;
     let passing = coord.is_none();

@@ -29,7 +29,7 @@ impl From<DeserError> for FetchErr {
     }
 }
 impl From<std::boxed::Box<bincode::ErrorKind>> for FetchErr {
-    fn from(b: std::boxed::Box<bincode::ErrorKind>) -> Self {
+    fn from(_: std::boxed::Box<bincode::ErrorKind>) -> Self {
         FetchErr::Deser
     }
 }

@@ -10,6 +10,11 @@ pub struct ReqId(pub Uuid);
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Eq)]
 pub struct EventId(pub Uuid);
+impl EventId {
+    pub fn new() -> Self {
+        EventId(Uuid::new_v4())
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize, Eq, Hash)]
 pub enum Player {
@@ -98,7 +103,6 @@ impl Default for Captures {
     }
 }
 
-// TODO defaults
 /// An event signalling the acceptance of a move.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct MoveMade {
