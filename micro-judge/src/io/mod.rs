@@ -6,6 +6,21 @@ pub mod topics;
 pub mod xread;
 
 #[derive(Debug)]
+pub enum WriteErr {
+    Redis(redis::RedisError),
+    Serialization(std::boxed::Box<bincode::ErrorKind>),
+}
+impl From<std::boxed::Box<bincode::ErrorKind>> for WriteErr {
+    fn from(ek: std::boxed::Box<bincode::ErrorKind>) -> Self {
+        WriteErr::Serialization(ek)
+    }
+}
+impl From<redis::RedisError> for WriteErr {
+    fn from(r: redis::RedisError) -> Self {
+        WriteErr::Redis(r)
+    }
+}
+#[derive(Debug)]
 pub struct DeserError;
 impl From<uuid::Error> for DeserError {
     fn from(_: uuid::Error) -> DeserError {

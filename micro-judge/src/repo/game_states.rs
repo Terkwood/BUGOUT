@@ -1,6 +1,6 @@
 use crate::io::conn_pool::Pool;
 use crate::io::redis_keys::{game_states_key, RedisKeyNamespace};
-use crate::io::FetchErr;
+use crate::io::{FetchErr, WriteErr};
 
 use crate::model::{GameId, GameState};
 use bincode;
@@ -34,22 +34,6 @@ impl GameStatesRepo {
         // Touch TTL whenever you set the record
         conn.expire(key, EXPIRY_SECS)?;
         Ok(done)
-    }
-}
-
-#[derive(Debug)]
-pub enum WriteErr {
-    Redis(redis::RedisError),
-    Serialization(std::boxed::Box<bincode::ErrorKind>),
-}
-impl From<std::boxed::Box<bincode::ErrorKind>> for WriteErr {
-    fn from(ek: std::boxed::Box<bincode::ErrorKind>) -> Self {
-        WriteErr::Serialization(ek)
-    }
-}
-impl From<redis::RedisError> for WriteErr {
-    fn from(r: redis::RedisError) -> Self {
-        WriteErr::Redis(r)
     }
 }
 

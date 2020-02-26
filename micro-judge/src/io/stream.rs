@@ -2,7 +2,7 @@ use super::conn_pool::Pool;
 use super::redis_keys::RedisKeyNamespace;
 use super::topics::*;
 use super::xread::*;
-use super::FetchErr;
+use super::{FetchErr, WriteErr};
 use crate::game::*;
 use crate::model::*;
 use crate::repo::entry_id::{EntryIdRepo, EntryIdType};
@@ -20,7 +20,11 @@ pub fn process(opts: ProcessOpts, pool: &Pool) {
                                 match make_move(&mm, &opts.game_states_repo) {
                                     Err(e) => println!("Fetch err on game state {:#?}", e),
                                     Ok(Judgement::Accepted(move_made)) => {
-                                        if let Err(e) = xadd_move_accepted(&move_made, &pool) {
+                                        if let Err(e) = xadd_move_accepted(
+                                            &move_made,
+                                            &pool,
+                                            &opts.topics.move_accepted_ev,
+                                        ) {
                                             println!("Error XADD to move_accepted {:?}", e)
                                         } else {
                                             if let Err(e) = eid_repo
@@ -84,6 +88,26 @@ fn make_move(mm: &MakeMoveCommand, gs_repo: &GameStatesRepo) -> Result<Judgement
     Ok(judge(mm, &game_state))
 }
 
-fn xadd_move_accepted(move_made: &MoveMade, pool: &Pool) -> Result<(), redis::RedisError> {
-    todo!()
+fn xadd_move_accepted(
+    move_made: &MoveMade,
+    pool: &Pool,
+    stream_name: &str,
+) -> Result<String, WriteErr> {
+    let mut conn = pool.get().unwrap();
+    Ok(redis::cmd("XADD")
+        .arg(stream_name)
+        .arg("MAXLEN")
+        .arg("~")
+        .arg("1000")
+        .arg("*")
+        .arg("game_id")
+        .arg(move_made.game_id.0.to_string())
+        .arg("data")
+        .arg(move_made.serialize()?)
+        .query::<String>(&mut *conn)?)
+}
+impl MoveMade {
+    pub fn serialize(&self) -> Result<Vec<u8>, std::boxed::Box<bincode::ErrorKind>> {
+        Ok(bincode::serialize(&self)?)
+    }
 }

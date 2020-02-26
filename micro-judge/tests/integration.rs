@@ -25,7 +25,6 @@ use std::panic;
 use std::thread;
 use std::time::Duration;
 use topics::StreamTopics;
-use uuid::Uuid;
 
 const USAGE: &str = "CAUTION!  YOU MUST RUN tests/integration.rs ON A SINGLE THREAD!
 Use one of the following:
@@ -34,8 +33,10 @@ Use one of the following:
 
     cargo watch -x \"test -- --test-threads=1\"
 ";
+
 const TEST_GAME_STATES_TOPIC: &str = "bugtest-game-states";
 const TEST_MAKE_MOVE_CMD_TOPIC: &str = "bugtest-make-move-cmd";
+const TEST_MOVE_ACCEPTED_EV_TOPIC: &str = "bugtest-move-accepted-ev";
 
 fn redis_pool() -> r2d2::Pool<r2d2_redis::RedisConnectionManager> {
     conn_pool::create(RedisHostUrl("redis://localhost".to_string()))
@@ -44,11 +45,13 @@ fn redis_pool() -> r2d2::Pool<r2d2_redis::RedisConnectionManager> {
 fn test_namespace() -> RedisKeyNamespace {
     RedisKeyNamespace("BUGTEST".to_string())
 }
+
 fn test_opts() -> stream::ProcessOpts {
     stream::ProcessOpts {
         topics: StreamTopics {
             make_move_cmd: TEST_MAKE_MOVE_CMD_TOPIC.to_string(),
             game_states_changelog: TEST_GAME_STATES_TOPIC.to_string(),
+            move_accepted_ev: TEST_MOVE_ACCEPTED_EV_TOPIC.to_string(),
         },
         entry_id_repo: EntryIdRepo {
             namespace: test_namespace(),
