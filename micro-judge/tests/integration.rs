@@ -74,20 +74,6 @@ fn panic_cleanup(stream_names: Vec<String>, keys: Vec<String>, pool: Pool) {
 }
 
 #[test]
-fn test_redis_connect() {
-    let pool = redis_pool();
-    if let Ok(mut conn) = pool.get() {
-        if let Ok(p) = redis::cmd("PING").query::<String>(&mut *conn) {
-            assert_eq!(p, "PONG")
-        } else {
-            todo!("Err in redis query")
-        }
-    } else {
-        todo!("halp")
-    }
-}
-
-#[test]
 fn test_track_emitted_game_states() {
     let pool = redis_pool();
     let streams_to_clean = vec![TEST_GAME_STATES_TOPIC.to_string()];
@@ -226,7 +212,8 @@ fn test_moves_processed() {
     ];
 
     let mut current_game_state = initial_game_state;
-    for move_to_make in moves {
+    for (move_coord, move_player) in moves {
+        // client makes a move
         redis::cmd("XADD")
             .arg(TEST_MAKE_MOVE_CMD_TOPIC)
             .arg("MAXLEN")
@@ -235,10 +222,28 @@ fn test_moves_processed() {
             .arg("*")
             .arg("game_id")
             .arg(game_id.0.to_string())
-            .arg("data")
-            .arg(current_game_state.serialize().unwrap())
+            .arg("player") //  req_id,
+            .arg(move_player.to_string())
+            .arg("coord_x")
+            .arg(move_coord.x.to_string())
+            .arg("coord_y")
+            .arg(move_coord.y.to_string())
+            .arg("req_id")
+            .arg(uuid::Uuid::new_v4().to_string())
             .query::<String>(&mut *conn)
             .unwrap();
+        // Above move should be ACCEPTED by judge.  Check
+        // that there is data on `bugtest-move-accepted-ev`
+        // to confirm this.
+
+        todo!("check accepted stream");
+        todo!("check entity id for make_move_cmd");
+
+        // Now, we need to update the game state manually
+        // Normally this would be done by micro-changelog
+        todo!("emit game state to bugtest-game-states");
+        todo!("update `current_game_state` test var (see above)");
+        todo!("consider sleeping occasionally");
     }
 
     clean_streams(streams_to_clean, &pool);
