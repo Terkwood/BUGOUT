@@ -37,28 +37,7 @@ impl GameStatesRepo {
     }
 }
 
-impl GameState {
-    pub fn serialize(&self) -> Result<Vec<u8>, std::boxed::Box<bincode::ErrorKind>> {
-        Ok(bincode::serialize(&self)?)
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::*;
-    #[test]
-    fn test_game_state_ser_basic() {
-        let gs = GameState::default();
-        let result = gs.serialize();
-        assert!(result.is_ok());
-        assert!(result.unwrap().len() > 0)
-    }
-
-    #[test]
-    fn there_and_back() {
-        let gs = GameState::default();
-        let bytes = gs.serialize().unwrap();
-        let back = GameState::from(&bytes).unwrap();
-        assert_eq!(back, gs);
-    }
+    
 }

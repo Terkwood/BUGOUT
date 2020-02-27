@@ -238,11 +238,22 @@ checksum = "53445de381a1f436797497c61d851644d0e8e88e6140f22872ad33a704933978"
 
 [[package]]
 name = "micro-judge"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bincode",
+ "micro_model_moves",
  "r2d2_redis",
  "redis",
+ "serde",
+ "serde_derive",
+ "uuid",
+]
+
+[[package]]
+name = "micro_model_moves"
+version = "0.1.0"
+dependencies = [
+ "bincode",
  "serde",
  "serde_derive",
  "uuid",

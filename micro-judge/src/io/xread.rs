@@ -122,32 +122,6 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
     stream_data
 }
 
-impl MakeMoveCommand {
-    pub fn from(xread_result: HashMap<String, String>) -> Result<MakeMoveCommand, DeserError> {
-        let mx: Option<u16> = xread_result
-            .get("coord_x")
-            .and_then(|s| s.parse::<u16>().ok());
-        let my: Option<u16> = xread_result
-            .get("coord_y")
-            .and_then(|s| s.parse::<u16>().ok());
-        let coord = match (mx, my) {
-            (Some(x), Some(y)) => Some(Coord { x, y }),
-            _ => None,
-        };
-        Ok(MakeMoveCommand {
-            game_id: GameId(Uuid::from_str(&xread_result["game_id"])?),
-            req_id: ReqId(Uuid::from_str(&xread_result["req_id"])?),
-            player: Player::from_str(&xread_result["player"]),
-            coord,
-        })
-    }
-}
-
-impl GameState {
-    pub fn from(bytes: &[u8]) -> Result<GameState, std::boxed::Box<bincode::ErrorKind>> {
-        bincode::deserialize(bytes)
-    }
-}
 
 #[cfg(test)]
 mod tests {
