@@ -53,8 +53,6 @@ pub fn process(opts: ProcessOpts, pool: &Pool) {
                             }
                         }
                     }
-                } else {
-                    println!("timeout")
                 }
             }
             Err(FetchErr::Deser) => println!("Deserialization err in stream processing"),
