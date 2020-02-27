@@ -222,6 +222,7 @@ fn test_moves_processed() {
         (Coord::of(10, 11), Player::WHITE), // captures 10,10
     ];
 
+    let mut current_game_state = initial_game_state;
     for (move_coord, move_player) in moves.iter() {
         let move_req_id = uuid::Uuid::new_v4();
         // client makes a move
@@ -232,7 +233,7 @@ fn test_moves_processed() {
             .arg("1000")
             .arg("*")
             .arg("game_id")
-            .arg(game_id.0.to_string())
+            .arg(game_id.clone().0.to_string())
             .arg("player") //  req_id,
             .arg(move_player.to_string())
             .arg("coord_x")
@@ -241,6 +242,45 @@ fn test_moves_processed() {
             .arg(move_coord.y.to_string())
             .arg("req_id")
             .arg(move_req_id.to_string())
+            .query::<String>(&mut *conn)
+            .unwrap();
+
+        thread::sleep(Duration::from_millis(10));
+        let old_game_state = current_game_state.clone();
+        current_game_state
+            .board
+            .pieces
+            .insert(*move_coord, *move_player);
+        current_game_state.player_up = match *move_player {
+            Player::BLACK => Player::WHITE,
+            _ => Player::BLACK,
+        };
+        current_game_state.moves.push(MoveMade {
+            captured: micro_judge::game::captures_for(
+                *move_player,
+                *move_coord,
+                &old_game_state.board,
+            )
+            .iter()
+            .cloned()
+            .collect(),
+            coord: Some(*move_coord),
+            player: *move_player,
+            event_id: EventId(uuid::Uuid::nil()),
+            game_id: game_id.clone(),
+            reply_to: ReqId(move_req_id),
+        });
+
+        redis::cmd("XADD")
+            .arg(TEST_GAME_STATES_TOPIC)
+            .arg("MAXLEN")
+            .arg("~")
+            .arg("1000")
+            .arg("*")
+            .arg("game_id")
+            .arg(game_id.clone().0.to_string())
+            .arg("data")
+            .arg(current_game_state.serialize().unwrap())
             .query::<String>(&mut *conn)
             .unwrap();
     }
@@ -257,28 +297,33 @@ fn test_moves_processed() {
         .arg("0-0")
         .query::<redis::Value>(&mut *conn)
         .unwrap();
-    println!("Mr Data {:#?}", move_accepted_data.clone());
-    let move_accepted_bytes = match move_accepted_data {
+
+    // It's in there somewhere...
+    let mut out = vec![];
+    match move_accepted_data {
         redis::Value::Bulk(bs) => match &bs[0] {
-            redis::Value::Bulk(cs) => match &cs[1] {
-                redis::Value::Bulk(ds) => match &ds[0] {
-                    redis::Value::Bulk(es) => match &es[1] {
-                        redis::Value::Bulk(fs) => match &fs[3] {
-                            redis::Value::Data(bin) => Some(bin.clone()),
-                            _ => None,
+            redis::Value::Bulk(cs) => {
+                for c in cs {
+                    match c {
+                        redis::Value::Bulk(ds) => match &ds[0] {
+                            redis::Value::Bulk(es) => match &es[1] {
+                                redis::Value::Bulk(fs) => match &fs[3] {
+                                    redis::Value::Data(bin) => out.push(bin.clone()),
+                                    _ => (),
+                                },
+                                _ => (),
+                            },
+                            _ => (),
                         },
-                        _ => None,
-                    },
-                    _ => None,
-                },
-                _ => None,
-            },
-            _ => None,
+                        _ => (),
+                    }
+                }
+            }
+            _ => (),
         },
-        _ => None,
+        _ => (),
     };
-    assert!(move_accepted_bytes.is_some());
-    let accepted: MoveMade = bincode::deserialize(&move_accepted_bytes.unwrap()).unwrap();
+    let accepted: MoveMade = bincode::deserialize(&out[0]).unwrap();
     let (first_coord, first_player) = moves[0];
     assert_eq!(accepted.coord, Some(first_coord));
     assert_eq!(accepted.player, first_player);
