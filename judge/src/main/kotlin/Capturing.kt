@@ -27,7 +27,7 @@ fun neighborSpaces(target: Coord, board: Board): Set<Coord> =
         if (it.second != null) null else it.first
     }.toSet()
 
-/* Return neighborPieces on (up to) four sides of the target */
+/* Return neighborPieces on all sides of the target */
 fun neighborPieces(target: Coord, board: Board): Set<Pair<Coord, Player>> =
     neighbors(target, board).mapNotNull {
         val p = it.second
