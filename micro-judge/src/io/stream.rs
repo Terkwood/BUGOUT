@@ -57,8 +57,8 @@ pub fn process(opts: ProcessOpts, pool: &Pool) {
                     println!("timeout")
                 }
             }
-            Err(FetchErr::Deser) => todo!("deser"),
-            Err(FetchErr::Redis(r)) => todo!("redis {}", r),
+            Err(FetchErr::Deser) => println!("Deserialization err in stream processing"),
+            Err(FetchErr::Redis(r)) => println!("Redis error in stream processing {:?}", r),
         }
     }
 }
