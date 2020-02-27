@@ -1,13 +1,14 @@
 [package]
 name = "micro-judge"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
 redis = "0.15.1"
-uuid = {version ="0.8.1", features = ["serde", "v4"]}
+uuid = { version = "0.8.1", features = ["serde", "v4"] }
 r2d2_redis = "0.13.0"
 serde = "1.0.104"
 serde_derive = "1.0.104"
 bincode = "1.2.1"
+micro_model_moves = { path = "../micro-model/moves" }

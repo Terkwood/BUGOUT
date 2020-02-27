@@ -104,8 +104,3 @@ fn xadd_move_accepted(
         .arg(move_made.serialize()?)
         .query::<String>(&mut *conn)?)
 }
-impl MoveMade {
-    pub fn serialize(&self) -> Result<Vec<u8>, std::boxed::Box<bincode::ErrorKind>> {
-        Ok(bincode::serialize(&self)?)
-    }
-}
