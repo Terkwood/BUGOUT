@@ -100,7 +100,7 @@ fn test_track_emitted_game_states() {
     // Check precondition
     assert_eq!(eid_repo.fetch_all().unwrap().game_states_eid.millis_time, 0);
 
-    let game_state = GameState::default();
+    let expected_game_state = GameState::default();
     redis::cmd("XADD")
         .arg(TEST_GAME_STATES_TOPIC)
         .arg("MAXLEN")
@@ -110,29 +110,29 @@ fn test_track_emitted_game_states() {
         .arg("game_id")
         .arg(game_id.0.to_string())
         .arg("data")
-        .arg(game_state.serialize().unwrap())
+        .arg(expected_game_state.serialize().unwrap())
         .query::<String>(&mut *conn)
         .unwrap();
 
     const WAIT_MS: u64 = 100;
-    let mut found: Option<Vec<u8>> = None;
+    let mut local_game_state: Option<Vec<u8>> = None;
     const INIT_RETRIES: u8 = 100;
     let mut retries = INIT_RETRIES;
     while retries > 0 {
-        let data: Result<Option<Vec<u8>>, _> = conn.get(&data_key);
-        if let Ok(Some(h)) = data {
-            found = Some(h.clone());
+        let game_states_data: Result<Option<Vec<u8>>, _> = conn.get(&data_key);
+        if let Ok(Some(h)) = game_states_data {
+            local_game_state = Some(h.clone());
             break;
         } else {
             thread::sleep(Duration::from_millis(WAIT_MS));
             retries -= 1;
         }
     }
-    assert!(found.is_some());
-    let f = found.unwrap();
+    assert!(local_game_state.is_some());
+    let f = local_game_state.unwrap();
     assert!(f.len() > 0);
-    let d = GameState::from(&f);
-    assert_eq!(game_state, d.unwrap());
+    let actual_game_state = GameState::from(&f);
+    assert_eq!(expected_game_state, actual_game_state.unwrap());
     retries = INIT_RETRIES;
     let mut time_updated = false;
     while retries > 0 {
@@ -150,7 +150,7 @@ fn test_track_emitted_game_states() {
     clean_streams(streams_to_clean, &pool);
     clean_keys(keys_to_clean, &pool);
 }
-
+/*
 #[test]
 fn test_moves_processed() {
     let pool = redis_pool();
@@ -249,7 +249,7 @@ fn test_moves_processed() {
     clean_streams(streams_to_clean, &pool);
     clean_keys(keys_to_clean, &pool);
 }
-
+*/
 fn clean_keys(keys: Vec<String>, pool: &Pool) {
     let mut conn = pool.get().unwrap();
     for k in keys {
