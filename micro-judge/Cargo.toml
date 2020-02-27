@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 redis = "0.15.1"
-uuid = {version ="0.8.1", features = ["serde", "v4"]}
+uuid = { version = "0.8.1", features = ["serde", "v4"] }
 r2d2_redis = "0.13.0"
 serde = "1.0.104"
 serde_derive = "1.0.104"

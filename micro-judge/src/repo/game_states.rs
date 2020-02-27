@@ -3,7 +3,6 @@ use crate::io::redis_keys::{game_states_key, RedisKeyNamespace};
 use crate::io::{FetchErr, WriteErr};
 
 use crate::model::{GameId, GameState};
-use bincode;
 use r2d2_redis::redis;
 use redis::Commands;
 
@@ -35,9 +34,4 @@ impl GameStatesRepo {
         conn.expire(key, EXPIRY_SECS)?;
         Ok(done)
     }
-}
-
-#[cfg(test)]
-mod tests {
-    
 }
