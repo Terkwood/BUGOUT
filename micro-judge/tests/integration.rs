@@ -23,6 +23,7 @@ use redis::Commands;
 use redis_keys::RedisKeyNamespace;
 use std::collections::HashMap;
 use std::panic;
+use std::sync::atomic::AtomicBool;
 use std::thread;
 use std::time::Duration;
 use topics::StreamTopics;
@@ -38,6 +39,8 @@ Use one of the following:
 const TEST_GAME_STATES_TOPIC: &str = "bugtest-game-states";
 const TEST_MAKE_MOVE_CMD_TOPIC: &str = "bugtest-make-move-cmd";
 const TEST_MOVE_ACCEPTED_EV_TOPIC: &str = "bugtest-move-accepted-ev";
+
+static FIRST_TEST_COMPLETE: AtomicBool = AtomicBool::new(false);
 
 fn redis_pool() -> r2d2::Pool<r2d2_redis::RedisConnectionManager> {
     conn_pool::create(RedisHostUrl("redis://localhost".to_string()))
@@ -71,11 +74,12 @@ fn panic_cleanup(stream_names: Vec<String>, keys: Vec<String>, pool: Pool) {
         println!("{:#?}", e);
         clean_streams(stream_names.clone(), &pool);
         clean_keys(keys.clone(), &pool);
+        FIRST_TEST_COMPLETE.swap(true, std::sync::atomic::Ordering::Relaxed);
     }));
 }
 
 #[test]
-fn test_track_emitted_game_states() {
+fn test_emitted_game_states() {
     let pool = redis_pool();
     let streams_to_clean = vec![TEST_GAME_STATES_TOPIC.to_string()];
 
@@ -150,10 +154,15 @@ fn test_track_emitted_game_states() {
 
     clean_streams(streams_to_clean, &pool);
     clean_keys(keys_to_clean, &pool);
+
+    FIRST_TEST_COMPLETE.swap(true, std::sync::atomic::Ordering::Relaxed);
 }
 
 #[test]
 fn test_moves_processed() {
+    while !FIRST_TEST_COMPLETE.load(std::sync::atomic::Ordering::Relaxed) {
+        thread::sleep(Duration::from_secs(1))
+    }
     let pool = redis_pool();
     let streams_to_clean = vec![
         TEST_GAME_STATES_TOPIC.to_string(),
@@ -213,8 +222,8 @@ fn test_moves_processed() {
         (Coord::of(10, 11), Player::WHITE), // captures 10,10
     ];
 
-    let mut current_game_state = initial_game_state;
-    for (move_coord, move_player) in moves {
+    for (move_coord, move_player) in moves.iter() {
+        let move_req_id = uuid::Uuid::new_v4();
         // client makes a move
         redis::cmd("XADD")
             .arg(TEST_MAKE_MOVE_CMD_TOPIC)
@@ -231,53 +240,48 @@ fn test_moves_processed() {
             .arg("coord_y")
             .arg(move_coord.y.to_string())
             .arg("req_id")
-            .arg(uuid::Uuid::new_v4().to_string())
+            .arg(move_req_id.to_string())
             .query::<String>(&mut *conn)
             .unwrap();
-        // Above move should be ACCEPTED by judge.  Check
-        // that there is data on `bugtest-move-accepted-ev`
-        // to confirm this.
-
-        let mut found_accepted_data = None;
-        let mut av_retries = 30;
-        while av_retries > 0 {
-            let mut conn = pool.get().unwrap();
-            let move_accepted_data = redis::cmd("XREAD")
-                .arg("BLOCK")
-                .arg(5000)
-                .arg("STREAMS")
-                .arg(TEST_MOVE_ACCEPTED_EV_TOPIC)
-                .arg("0-0")
-                .query::<micro_judge::io::xread::XReadResult>(&mut *conn)
-                .unwrap(); // TODO this type is ... wrong ? !! ^^
-            assert!(move_accepted_data.len() > 0);
-            println!("ALL THE DATA {:#?}", move_accepted_data.clone());
-            let m0 = move_accepted_data[0].get(TEST_MOVE_ACCEPTED_EV_TOPIC);
-
-            if let Some(aa) = m0 {
-                if aa.len() > 0 {
-                    println!("OK DOK");
-                    found_accepted_data = Some(aa.clone());
-                    break;
-                } else {
-                    println!(".. ...");
-                    thread::sleep(Duration::from_millis(100));
-                    av_retries -= 1;
-                }
-            }
-        }
-
-        println!("AV data {:#?}", found_accepted_data);
-
-        assert!(found_accepted_data.is_some());
-
-        todo!("check entity id for make_move_cmd");
-        // Now, we need to update the game state manually
-        // Normally this would be done by micro-changelog
-        todo!("emit game state to bugtest-game-states");
-        todo!("update `current_game_state` test var (see above)");
-        todo!("consider sleeping occasionally");
     }
+
+    // Above moves should all be ACCEPTED by judge.  Check
+    // that there is data on `bugtest-move-accepted-ev`
+    // to confirm this.
+    let mut conn = pool.get().unwrap();
+    let move_accepted_data = redis::cmd("XREAD")
+        .arg("BLOCK")
+        .arg(5000)
+        .arg("STREAMS")
+        .arg(TEST_MOVE_ACCEPTED_EV_TOPIC)
+        .arg("0-0")
+        .query::<redis::Value>(&mut *conn)
+        .unwrap();
+    println!("Mr Data {:#?}", move_accepted_data.clone());
+    let move_accepted_bytes = match move_accepted_data {
+        redis::Value::Bulk(bs) => match &bs[0] {
+            redis::Value::Bulk(cs) => match &cs[1] {
+                redis::Value::Bulk(ds) => match &ds[0] {
+                    redis::Value::Bulk(es) => match &es[1] {
+                        redis::Value::Bulk(fs) => match &fs[3] {
+                            redis::Value::Data(bin) => Some(bin.clone()),
+                            _ => None,
+                        },
+                        _ => None,
+                    },
+                    _ => None,
+                },
+                _ => None,
+            },
+            _ => None,
+        },
+        _ => None,
+    };
+    assert!(move_accepted_bytes.is_some());
+    let accepted: MoveMade = bincode::deserialize(&move_accepted_bytes.unwrap()).unwrap();
+    let (first_coord, first_player) = moves[0];
+    assert_eq!(accepted.coord, Some(first_coord));
+    assert_eq!(accepted.player, first_player);
 
     clean_streams(streams_to_clean, &pool);
     clean_keys(keys_to_clean, &pool);
