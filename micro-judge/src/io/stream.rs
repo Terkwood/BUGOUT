@@ -94,7 +94,7 @@ fn xadd_move_accepted(
     stream_name: &str,
 ) -> Result<String, WriteErr> {
     let mut conn = pool.get().unwrap();
-    Ok(redis::cmd("XADD")
+    let done = Ok(redis::cmd("XADD")
         .arg(stream_name)
         .arg("MAXLEN")
         .arg("~")
@@ -104,7 +104,10 @@ fn xadd_move_accepted(
         .arg(move_made.game_id.0.to_string())
         .arg("data")
         .arg(move_made.serialize()?)
-        .query::<String>(&mut *conn)?)
+        .query::<String>(&mut *conn)?);
+
+    println!("!! HIT {:#?} !!", &done);
+    done
 }
 impl MoveMade {
     pub fn serialize(&self) -> Result<Vec<u8>, std::boxed::Box<bincode::ErrorKind>> {
