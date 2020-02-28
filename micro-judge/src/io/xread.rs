@@ -89,9 +89,10 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
             if &xread_topic[..] == make_move_topic {
                 for with_timestamps in xread_move_data {
                     for (k, v) in with_timestamps {
-                        if let (Ok(seq_no), Ok(m)) =
-                            (XReadEntryId::from_str(k), MakeMoveCommand::from(v.clone()))
-                        {
+                        if let (Ok(seq_no), Ok(m)) = (
+                            XReadEntryId::from_str(k),
+                            deser_make_move_command(v.clone()),
+                        ) {
                             stream_data.insert(seq_no, StreamData::MM(m));
                         } else {
                             println!("Deser error around make move cmd")
@@ -122,6 +123,26 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
     stream_data
 }
 
+pub fn deser_make_move_command(
+    xread_result: HashMap<String, String>,
+) -> Result<MakeMoveCommand, uuid::Error> {
+    let mx: Option<u16> = xread_result
+        .get("coord_x")
+        .and_then(|s| s.parse::<u16>().ok());
+    let my: Option<u16> = xread_result
+        .get("coord_y")
+        .and_then(|s| s.parse::<u16>().ok());
+    let coord = match (mx, my) {
+        (Some(x), Some(y)) => Some(Coord { x, y }),
+        _ => None,
+    };
+    Ok(MakeMoveCommand {
+        game_id: GameId(Uuid::from_str(&xread_result["game_id"])?),
+        req_id: ReqId(Uuid::from_str(&xread_result["req_id"])?),
+        player: Player::from_str(&xread_result["player"]),
+        coord,
+    })
+}
 
 #[cfg(test)]
 mod tests {
