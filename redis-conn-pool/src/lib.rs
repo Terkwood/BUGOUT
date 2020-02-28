@@ -1,3 +1,5 @@
+extern crate r2d2_redis;
+extern crate redis;
 use r2d2_redis::{r2d2, RedisConnectionManager};
 const DEFAULT_HOST_URL: &str = "redis://redis";
 
