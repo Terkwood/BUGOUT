@@ -13,7 +13,6 @@ const EMPTY_EID: &str = "0-0";
 
 #[derive(Clone)]
 pub struct EntryIdRepo {
-    pub namespace: RedisKeyNamespace,
     pub pool: Pool,
     pub hash_key_provider: HashKeyProvider,
 }

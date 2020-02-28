@@ -3,6 +3,7 @@ extern crate micro_changelog;
 use micro_changelog::micro_model_moves::*;
 use micro_changelog::redis_conn_pool;
 use micro_changelog::redis_conn_pool::*;
+use micro_changelog::repo::entry_id::*;
 use micro_changelog::repo::game_states::*;
 use micro_changelog::repo::redis_key::*;
 use micro_changelog::stream::*;
@@ -107,7 +108,12 @@ fn game_states_repo(pool: &Pool) -> GameStatesRepo {
         hash_key_provider: HashKeyProvider(test_namespace()),
     }
 }
-fn entry_ids_repo() {}
+fn entry_ids_repo(pool: &Pool) -> EntryIdRepo {
+    EntryIdRepo {
+        pool: pool.clone(),
+        hash_key_provider: HashKeyProvider(test_namespace()),
+    }
+}
 
 fn clean_keys(keys: Vec<String>, pool: &Pool) {
     let mut conn = pool.get().unwrap();
