@@ -104,9 +104,10 @@ fn test_namespace() -> RedisKeyNamespace {
 fn game_states_repo(pool: &Pool) -> GameStatesRepo {
     GameStatesRepo {
         pool: pool.clone(),
-        hash_key_provider: GameStatesHashKeyProvider(test_namespace()),
+        hash_key_provider: HashKeyProvider(test_namespace()),
     }
 }
+fn entry_ids_repo() {}
 
 fn clean_keys(keys: Vec<String>, pool: &Pool) {
     let mut conn = pool.get().unwrap();

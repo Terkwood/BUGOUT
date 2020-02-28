@@ -8,5 +8,6 @@ edition = "2018"
 [dependencies]
 micro_model_moves = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
+redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 bincode = "1.2.1"
 uuid = { version = "0.8.1", features = ["serde"] }
