@@ -66,6 +66,16 @@ fn test_process_move() {
         .arg(move_made.serialize().unwrap())
         .query::<String>(&mut *conn)
         .unwrap();
+    // We should see something published to MOVE_MADE
+    let xread_move_made = redis::cmd("XREAD")
+        .arg("BLOCK")
+        .arg(5000)
+        .arg("STREAMS")
+        .arg(MOVE_MADE_EV_TOPIC)
+        .arg("0-0")
+        .query::<redis::Value>(&mut *conn);
+
+    assert_ne!(xread_move_made.unwrap(), redis::Value::Nil);
     clean_streams(streams_to_clean, &pool);
     clean_keys(keys_to_clean, &pool);
 }
