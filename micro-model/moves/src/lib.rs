@@ -1,6 +1,5 @@
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::str::FromStr;
 use uuid::Uuid;
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Eq)]
@@ -48,28 +47,6 @@ pub struct MakeMoveCommand {
     pub coord: Option<Coord>,
 }
 
-pub struct ModelDeserErr;
-
-impl MakeMoveCommand {
-    pub fn from(xread_result: HashMap<String, String>) -> Result<MakeMoveCommand, uuid::Error> {
-        let mx: Option<u16> = xread_result
-            .get("coord_x")
-            .and_then(|s| s.parse::<u16>().ok());
-        let my: Option<u16> = xread_result
-            .get("coord_y")
-            .and_then(|s| s.parse::<u16>().ok());
-        let coord = match (mx, my) {
-            (Some(x), Some(y)) => Some(Coord { x, y }),
-            _ => None,
-        };
-        Ok(MakeMoveCommand {
-            game_id: GameId(Uuid::from_str(&xread_result["game_id"])?),
-            req_id: ReqId(Uuid::from_str(&xread_result["req_id"])?),
-            player: Player::from_str(&xread_result["player"]),
-            coord,
-        })
-    }
-}
 #[derive(Debug, Clone, PartialEq, Copy, Eq, Hash, Serialize, Deserialize)]
 pub struct Coord {
     pub x: u16,
@@ -172,7 +149,7 @@ mod tests {
             captured: vec![],
             event_id: EventId::new(),
             game_id: GameId(Uuid::new_v4()),
-            reply_to: ReqId(Uuid::new_v4())
+            reply_to: ReqId(Uuid::new_v4()),
         });
         let bytes = gs.serialize().unwrap();
         let back = GameState::from(&bytes).unwrap();
