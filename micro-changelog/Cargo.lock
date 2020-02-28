@@ -247,6 +247,7 @@ dependencies = [
 [[package]]
 name = "micro_model_moves"
 version = "0.1.1"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#5897e433844944c1775bca394a8885c5f7771d18"
 dependencies = [
  "bincode",
  "serde",
@@ -458,6 +459,7 @@ dependencies = [
 [[package]]
 name = "redis_conn_pool"
 version = "0.1.0"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#5897e433844944c1775bca394a8885c5f7771d18"
 dependencies = [
  "r2d2_redis",
  "redis",
