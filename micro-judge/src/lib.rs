@@ -1,7 +1,8 @@
 extern crate micro_model_moves;
-extern crate r2d2_redis;
-extern crate redis;
+
+pub extern crate redis_conn_pool;
 extern crate uuid;
+
 
 pub mod game;
 pub mod io;

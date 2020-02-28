@@ -2,9 +2,8 @@ use crate::io::conn_pool::Pool;
 use crate::io::redis_keys::{game_states_key, RedisKeyNamespace};
 use crate::io::{FetchErr, WriteErr};
 
+use crate::io::redis::Commands;
 use crate::model::{GameId, GameState};
-use r2d2_redis::redis;
-use redis::Commands;
 
 const EXPIRY_SECS: usize = 86400;
 

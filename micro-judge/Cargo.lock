@@ -242,8 +242,6 @@ version = "0.1.4"
 dependencies = [
  "bincode",
  "micro_model_moves",
- "r2d2_redis",
- "redis",
  "redis_conn_pool",
  "uuid",
 ]

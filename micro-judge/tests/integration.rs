@@ -9,7 +9,7 @@
 /// cargo watch -x "test -- --test-threads=1"
 /// ```
 extern crate micro_judge;
-extern crate r2d2_redis;
+use micro_judge::io::r2d2_redis;
 
 use conn_pool::Pool;
 use conn_pool::RedisHostUrl;

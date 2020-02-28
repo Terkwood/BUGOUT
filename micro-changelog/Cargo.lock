@@ -237,12 +237,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
-name = "micro-changelog"
+name = "micro_changelog"
 version = "0.1.0"
 dependencies = [
  "micro_model_moves",
  "r2d2_redis",
  "redis",
+ "redis_conn_pool",
 ]
 
 [[package]]
@@ -454,6 +455,14 @@ dependencies = [
  "tokio",
  "tokio-util",
  "url",
+]
+
+[[package]]
+name = "redis_conn_pool"
+version = "0.1.0"
+dependencies = [
+ "r2d2_redis",
+ "redis",
 ]
 
 [[package]]
