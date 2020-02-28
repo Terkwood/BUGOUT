@@ -1,5 +1,9 @@
-use r2d2_redis::{r2d2, RedisConnectionManager};
-const DEFAULT_HOST_URL: &str = "redis://redis";
+pub extern crate r2d2_redis;
+pub extern crate redis;
+
+pub use r2d2_redis::{r2d2, RedisConnectionManager};
+
+pub const DEFAULT_HOST_URL: &str = "redis://redis";
 
 pub type Pool = r2d2_redis::r2d2::Pool<r2d2_redis::RedisConnectionManager>;
 

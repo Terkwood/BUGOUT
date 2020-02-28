@@ -8,4 +8,4 @@ COPY . /var/BUGOUT/micro-judge/.
 
 RUN cargo install --path .
 
-CMD ["micro-judge"]
+CMD ["micro_judge"]

@@ -1,9 +1,9 @@
 use super::conn_pool::Pool;
+use super::redis;
 use super::topics::*;
 use super::DeserError;
 use crate::model::*;
 use crate::repo::entry_id::AllEntryIds;
-use redis;
 use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;

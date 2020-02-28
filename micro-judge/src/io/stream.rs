@@ -92,7 +92,7 @@ fn xadd_move_accepted(
     stream_name: &str,
 ) -> Result<String, WriteErr> {
     let mut conn = pool.get().unwrap();
-    Ok(redis::cmd("XADD")
+    Ok(super::redis::cmd("XADD")
         .arg(stream_name)
         .arg("MAXLEN")
         .arg("~")
