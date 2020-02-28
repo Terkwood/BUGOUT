@@ -10,57 +10,51 @@ const GAME_READY_EID: &str = "game_ready_eid";
 const GAME_STATES_EID: &str = "game_states_eid";
 const MOVE_ACCEPTED_EID: &str = "move_accepted_eid";
 const EMPTY_EID: &str = "0-0";
+use crate::Components;
 
-#[derive(Clone)]
-pub struct EntryIdRepo {
-    pub pool: Pool,
-    pub hash_key_provider: HashKeyProvider,
-}
-impl EntryIdRepo {
-    pub fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
-        let mut conn = self.pool.get().unwrap();
-        let found: Result<HashMap<String, String>, _> =
-            conn.hgetall(self.hash_key_provider.entry_ids());
-        if let Ok(f) = found {
-            let game_ready_eid = XReadEntryId::from_str(
-                &f.get(GAME_READY_EID)
-                    .unwrap_or(&EMPTY_EID.to_string())
-                    .to_string(),
-            )
-            .unwrap_or(XReadEntryId::default());
-            let game_states_eid = XReadEntryId::from_str(
-                &f.get(GAME_STATES_EID)
-                    .unwrap_or(&EMPTY_EID.to_string())
-                    .to_string(),
-            )
-            .unwrap_or(XReadEntryId::default());
-            let move_accepted_eid = XReadEntryId::from_str(
-                &f.get(MOVE_ACCEPTED_EID)
-                    .unwrap_or(&EMPTY_EID.to_string())
-                    .to_string(),
-            )
-            .unwrap_or(XReadEntryId::default());
-            Ok(AllEntryIds {
-                game_ready_eid,
-                game_states_eid,
-                move_accepted_eid,
-            })
-        } else {
-            Ok(AllEntryIds::default())
-        }
-    }
-    pub fn update(
-        &self,
-        entry_id_type: EntryIdType,
-        entry_id: XReadEntryId,
-    ) -> Result<(), redis::RedisError> {
-        let mut conn = self.pool.get().unwrap();
-        conn.hset(
-            self.hash_key_provider.entry_ids(),
-            entry_id_type.hash_field(),
-            entry_id.to_string(),
+pub fn fetch_all(components: &Components) -> Result<AllEntryIds, FetchErr> {
+    let mut conn = components.pool.get().unwrap();
+    let found: Result<HashMap<String, String>, _> =
+        conn.hgetall(components.hash_key_provider.entry_ids());
+    if let Ok(f) = found {
+        let game_ready_eid = XReadEntryId::from_str(
+            &f.get(GAME_READY_EID)
+                .unwrap_or(&EMPTY_EID.to_string())
+                .to_string(),
         )
+        .unwrap_or(XReadEntryId::default());
+        let game_states_eid = XReadEntryId::from_str(
+            &f.get(GAME_STATES_EID)
+                .unwrap_or(&EMPTY_EID.to_string())
+                .to_string(),
+        )
+        .unwrap_or(XReadEntryId::default());
+        let move_accepted_eid = XReadEntryId::from_str(
+            &f.get(MOVE_ACCEPTED_EID)
+                .unwrap_or(&EMPTY_EID.to_string())
+                .to_string(),
+        )
+        .unwrap_or(XReadEntryId::default());
+        Ok(AllEntryIds {
+            game_ready_eid,
+            game_states_eid,
+            move_accepted_eid,
+        })
+    } else {
+        Ok(AllEntryIds::default())
     }
+}
+pub fn update(
+    entry_id_type: EntryIdType,
+    entry_id: XReadEntryId,
+    components: &Components,
+) -> Result<(), redis::RedisError> {
+    let mut conn = components.pool.get().unwrap();
+    conn.hset(
+        components.hash_key_provider.entry_ids(),
+        entry_id_type.hash_field(),
+        entry_id.to_string(),
+    )
 }
 
 pub enum EntryIdType {

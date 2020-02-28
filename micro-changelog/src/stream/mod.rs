@@ -1,9 +1,8 @@
 pub mod topics;
-use crate::repo::game_states::GameStatesRepo;
+use crate::repo::*;
+use redis_conn_pool::Pool;
+use redis_key::HashKeyProvider;
 pub use topics::StreamTopics;
-pub fn process(topics: StreamTopics, game_states_repo: GameStatesRepo) {
-    println!(
-        "Processing {:#?} with {:#?}",
-        topics, game_states_repo.hash_key_provider.0
-    );
+pub fn process(topics: StreamTopics, components: &crate::Components) {
+    println!("Processing {:#?}", topics);
 }
