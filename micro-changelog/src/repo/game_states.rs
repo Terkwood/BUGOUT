@@ -14,6 +14,7 @@ pub struct GameStatesRepo {
 impl Default for GameStatesRepo {
     fn default() -> Self {
         let pool = redis_conn_pool::create(RedisHostUrl::default());
+        println!("Connected to redis");
         GameStatesRepo {
             pool,
             hash_key_provider: GameStatesHashKeyProvider::default(),
