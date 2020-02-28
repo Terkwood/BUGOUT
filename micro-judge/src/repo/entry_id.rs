@@ -3,8 +3,8 @@ use io::conn_pool::Pool;
 use io::r2d2_redis::redis;
 use io::redis::Commands;
 use io::redis_keys::*;
-use io::xread::XReadEntryId;
 use io::FetchErr;
+use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 
 const MAKE_MOVES_EID: &str = "make_moves_eid";
