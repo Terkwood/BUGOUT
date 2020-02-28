@@ -9,4 +9,4 @@ uuid = { version = "0.8.1", features = ["serde", "v4"] }
 bincode = "1.2.1"
 micro_model_moves = { path = "../micro-model/moves" }
 redis_conn_pool = { path = "../redis-conn-pool" }
-redis_streams = {path = "../redis_streams"}
+redis_streams = { path = "../redis_streams" }
