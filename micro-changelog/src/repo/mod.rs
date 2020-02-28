@@ -1,4 +1,4 @@
-mod game_states;
+pub mod game_states;
 mod redis_key;
 
 use redis_conn_pool::redis;
