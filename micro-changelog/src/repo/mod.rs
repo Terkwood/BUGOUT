@@ -1,7 +1,7 @@
 pub mod game_states;
-mod redis_key;
+pub mod redis_key;
 
-use redis_conn_pool::redis;
+use crate::redis;
 
 #[derive(Debug)]
 pub enum WriteErr {
