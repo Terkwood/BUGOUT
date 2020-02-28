@@ -1,50 +1,15 @@
 use super::conn_pool::Pool;
 use super::redis;
 use super::topics::*;
-use super::DeserError;
 use crate::model::*;
 use crate::repo::entry_id::AllEntryIds;
+use redis_streams::*;
 use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
 const BLOCK_MSEC: u32 = 5000;
-
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, HashMap<String, String>>>>>;
-
-#[derive(Debug, Copy, Clone, Eq, Ord, PartialEq, PartialOrd, Hash)]
-pub struct XReadEntryId {
-    pub millis_time: u64,
-    pub seq_no: u64,
-}
-impl Default for XReadEntryId {
-    fn default() -> Self {
-        XReadEntryId {
-            millis_time: 0,
-            seq_no: 0,
-        }
-    }
-}
-
-impl XReadEntryId {
-    pub fn from_str(s: &str) -> Result<XReadEntryId, DeserError> {
-        let parts: Vec<&str> = s.split('-').collect();
-        if parts.len() != 2 {
-            Err(DeserError)
-        } else {
-            let millis_time = parts[0].parse::<u64>()?;
-            let seq_no = parts[1].parse::<u64>()?;
-            Ok(XReadEntryId {
-                millis_time,
-                seq_no,
-            })
-        }
-    }
-
-    pub fn to_string(&self) -> String {
-        format!("{}-{}", self.millis_time, self.seq_no)
-    }
-}
 
 pub fn xread_sort(
     entry_ids: AllEntryIds,

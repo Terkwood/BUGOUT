@@ -13,7 +13,6 @@ use micro_judge::io::r2d2_redis;
 
 use conn_pool::Pool;
 use conn_pool::RedisHostUrl;
-use micro_judge::io::xread::XReadEntryId;
 use micro_judge::io::{conn_pool, redis_keys, stream, topics};
 use micro_judge::model::*;
 use micro_judge::repo::entry_id::{EntryIdRepo, EntryIdType};
@@ -21,6 +20,7 @@ use micro_judge::repo::game_states::GameStatesRepo;
 use r2d2_redis::{r2d2, redis};
 use redis::Commands;
 use redis_keys::RedisKeyNamespace;
+use redis_streams::XReadEntryId;
 use std::panic;
 use std::sync::atomic::AtomicBool;
 use std::thread;
