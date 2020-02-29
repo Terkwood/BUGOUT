@@ -4,7 +4,7 @@
 
 [You can run OpenCL on a Raspberry Pi GPU](https://hackaday.com/2019/01/24/running-opencl-on-a-raspberry-pi-gpu/), which could potentially open a path for us to inexpensively compute moves using KataGo.
 
-Here are notes on installing VC4CL, which we'll need to compile KataGo.
+We need VC4CL to compile KataGo.
 
 The following script is adapted from [this found gist](https://gist.github.com/senshu/671ecb1e68729c5e1a897c62251e00cf):
 
