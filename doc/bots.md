@@ -1,5 +1,7 @@
 # Notes on KataGo
 
+You can follow the instructions for installing VC4CL on RPI, below... but we still need to figure out how/if we can build KataGo on a Raspberry Pi.
+
 ## Grabbing DEB packages
 
 [Follow this guide... for the most part](https://github.com/doe300/VC4CL/wiki/How-to-get).
@@ -12,7 +14,27 @@ We found that we needed this artifact, specifically:
 curl "https://circleci.com/api/v1.1/project/github/doe300/VC4C/1730/artifacts" --output /tmp/dump
 ```
 
-## Building VC4C and VC4CL on Raspberry Pi 3 B+ 
+## Installing KataGo
+
+You need a more recent version of CMake than what's in raspbian stretch.  Add `stretch-backports` in your sources.list: https://backports.debian.org/Instructions/
+
+```text
+deb http://deb.debian.org/debian buster-backports main
+```
+
+[You need GPG keys for stretch-backports](https://rolfje.wordpress.com/2017/06/09/installing-gpg-keys-for-debian-backports/)
+
+```sh
+sudo su -
+gpg --keyserver pgp.mit.edu --recv-keys 7638D0442B90D010 
+gpg --keyserver pgp.mit.edu --recv-keys 04EE7237B7D453EC
+apt-get update
+```
+
+Then try installing [this version of cmake](https://packages.debian.org/stretch-backports/cmake).
+
+
+### Failed attempt: Building VC4C and VC4CL on Raspberry Pi 3 B+ 
 
 [You can run OpenCL on a Raspberry Pi GPU](https://hackaday.com/2019/01/24/running-opencl-on-a-raspberry-pi-gpu/), which could potentially open a path for us to inexpensively compute moves using KataGo.
 
