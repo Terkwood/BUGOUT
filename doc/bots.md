@@ -10,6 +10,7 @@ The following script is adapted from [this found gist](https://gist.github.com/s
 
 ```sh
 sudo apt install git cmake clang-3.9 opencl-headers ocl-icd-dev ocl-icd-opencl-dev
+sudo apt install libhwloc-dev  libglew-dev libedit-dev zlib1g-dev
 sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.9 100
 
 
@@ -45,4 +46,8 @@ VC4C --llvm --hex -o fibonacci.hex fibonacci.cl
 
 ## Native compilation environment in docker
 
-We may be able to bake a Raspbian docker image based on [this x86 debian image](https://hub.docker.com/r/nomaddo/native)
+We may be able to cross-compile using [this Docker image](https://hub.docker.com/r/nomaddo/cross-rpi/):
+
+```sh
+docker pull nomaddo/cross-rpi
+```
