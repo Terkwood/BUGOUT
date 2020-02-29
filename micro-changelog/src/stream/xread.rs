@@ -2,7 +2,7 @@ use super::StreamTopics;
 use crate::model::*;
 use crate::redis;
 use crate::repo::entry_id_repo::AllEntryIds;
-use micro_model_moves::{GameId, GameState};
+use micro_model_moves::{GameId, GameState, MoveMade};
 use redis_conn_pool::Pool;
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
@@ -46,7 +46,7 @@ pub fn xread_sorted(
 
 #[derive(Clone)]
 pub enum StreamData {
-    MA(MoveAcceptedEvent),
+    MA(MoveMade),
     GS(GameId, GameState),
     GR(GameReadyEvent),
 }
@@ -62,7 +62,21 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                 todo!()
             } else if &xread_topic[..] == move_accepted_topic {
                 for with_timestamps in xread_move_data {
-                    todo!()
+                    for (k, v) in with_timestamps {
+                        if let (Ok(seq_no), Some(game_id), Some(move_made)) = (
+                            XReadEntryId::from_str(k),
+                            v.get("game_id").and_then(|g| Uuid::from_str(g).ok()),
+                            v.get("data").and_then(|mm| {
+                                let move_made_deser: Option<MoveMade> =
+                                    bincode::deserialize(mm.as_bytes()).ok();
+                                move_made_deser
+                            }),
+                        ) {
+                            todo!()
+                        } else {
+                            println!("Xread: Deser err in move accepted ")
+                        }
+                    }
                 }
             } else if &xread_topic[..] == game_states_topic {
                 for with_timestamps in xread_move_data {
@@ -75,7 +89,7 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                         ) {
                             stream_data.insert(seq_no, StreamData::GS(GameId(game_id), game_state));
                         } else {
-                            println!("Deser error around make move cmd")
+                            println!("Xread: Deser error around game states data")
                         }
                     }
                 }

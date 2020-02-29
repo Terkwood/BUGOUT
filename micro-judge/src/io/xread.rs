@@ -88,7 +88,7 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
     stream_data
 }
 
-pub fn deser_make_move_command(
+fn deser_make_move_command(
     xread_result: HashMap<String, String>,
 ) -> Result<MakeMoveCommand, uuid::Error> {
     let mx: Option<u16> = xread_result

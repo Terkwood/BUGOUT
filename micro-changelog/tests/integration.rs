@@ -69,7 +69,7 @@ fn test_process_move() {
     // We should see something published to MOVE_MADE
     let xread_move_made = redis::cmd("XREAD")
         .arg("BLOCK")
-        .arg(5000)
+        .arg(333)
         .arg("STREAMS")
         .arg(MOVE_MADE_EV_TOPIC)
         .arg("0-0")
