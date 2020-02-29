@@ -238,11 +238,12 @@ checksum = "53445de381a1f436797497c61d851644d0e8e88e6140f22872ad33a704933978"
 
 [[package]]
 name = "micro_judge"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "bincode",
  "micro_model_moves",
  "redis_conn_pool",
+ "redis_streams",
  "uuid",
 ]
 
@@ -463,6 +464,13 @@ version = "0.1.0"
 dependencies = [
  "r2d2_redis",
  "redis",
+]
+
+[[package]]
+name = "redis_streams"
+version = "0.1.0"
+dependencies = [
+ "uuid",
 ]
 
 [[package]]
