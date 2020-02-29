@@ -14,6 +14,12 @@ We found that we needed this artifact, specifically:
 curl "https://circleci.com/api/v1.1/project/github/doe300/VC4C/1730/artifacts" --output /tmp/dump
 ```
 
+After you install all the DEB files, make sure to run ldconfig.
+
+```sh
+sudo ldconfig
+```
+
 ## Building KataGo
 
 ### Installing cmake on raspbian stretch
@@ -41,12 +47,38 @@ Then try installing [this version of cmake](https://packages.debian.org/stretch-
 
 Check out some options in `KataGo/cpp/CMakeFiles/3.13.2/CMakeCCompiler.cmake `
 
+WE HACKED UP `CMakeLists.txt` PRETTY DARNED GOOD!  CHECK IT OUT.
+
+```text
+
+if(CMAKE_COMPILER_IS_GNUCC)
+  if(NOT (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm"))
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}   -mfpmath=sse")
+  endif()
+
+  if(USE_TCMALLOC)
+    ### Hack flags rejected by gcc 6.3
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -O2 -pedantic -Wall -Wextra -Wno-sign-compare -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wstrict-null-sentinel -Wstrict-overflow=1 -Wswitch-default -Wfloat-conversion -Wnull-dereference -Wunused -Wdiv-by-zero -Wduplicated-cond -Wduplicated-cond -mrestrict-it -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
+  else()
+    ### Hack flags rejected by gcc 6.3
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}  -g -O2 -pedantic -Wall -Wextra -Wno-sign-compare -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wstrict-null-sentinel -Wstrict-overflow=1 -Wswitch-default -Wfloat-conversion -Wnull-dereference -Wunused -Wdiv-by-zero -Wduplicated-cond -Wduplicated-cond -mrestrict-it")
+  endif()
+endif()
+```
+
 ```sh
-sudo apt install libzip-dev
+sudo apt install libzip-dev libboost-filesystem-dev
 git clone git@github.com:lightvector/KataGo.git
 cd KataGo/cpp
-cmake . -DUSE_BACKEND=OPENCL -DCMAKE_C_COMPILER_ID=clang -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER_ID=clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++-3.9
+
+# use g++
+export CMAKE_CXX_FLAGS=-std=gnu++11 
+rm -rf CMakeFiles
+cmake . -DUSE_BACKEND=OPENCL  -DOpenCL_LIBRARY=/usr/lib/arm-linux-gnueabihf/libOpenCL.so -DZLIB_LIBRARY=/usr/lib/arm-linux-gnueabihf/libz.so -DBOOST_LIBRARYDIR=/usr/lib/arm-linux-gnueabihf/ -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_C_COMPILER_ID=gnu -DCMAKE_CXX_COMPILER_ID=gnu -DUSE_TCMALLOC=0
+make
 ```
+
 
 ## Failed attempt: Building VC4C and VC4CL on Raspberry Pi 3 B+ 
 
