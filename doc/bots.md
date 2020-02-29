@@ -48,6 +48,20 @@ Then try installing [this version of cmake](https://packages.debian.org/stretch-
 Check out some options in `KataGo/cpp/CMakeFiles/3.13.2/CMakeCCompiler.cmake `
 
 WE HACKED UP `CMakeLists.txt` PRETTY DARNED GOOD!  CHECK IT OUT.
+```text
+  # On g++ it seems like we need to explicitly link threads as well.
+  # It seems sometimes this is implied by other options automatically like when 
+we enable CUDA, but we get link errors
+  # if we don't explicitly require threads it when attempting to build without C
+UDA
+  # HACK
+  #if(CMAKE_COMPILER_IS_GNUCC AND (NOT USE_BACKEND STREQUAL "CUDA"))
+    find_package (Threads REQUIRED)
+    target_link_libraries(katago Threads::Threads)
+    #HACK endif()
+```
+
+...and later...
 
 ```text
 
