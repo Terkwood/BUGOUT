@@ -9,8 +9,8 @@ pub use redis_conn_pool::{r2d2, r2d2_redis, redis, RedisHostUrl};
 use repo::redis_key::HashKeyProvider;
 
 pub struct Components {
-    pool: redis_conn_pool::Pool,
-    hash_key_provider: HashKeyProvider,
+    pub pool: redis_conn_pool::Pool,
+    pub hash_key_provider: HashKeyProvider,
 }
 
 impl Default for Components {

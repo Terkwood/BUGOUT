@@ -28,7 +28,7 @@ fn test_process_move() {
         pool.clone(),
     );
 
-    thread::spawn(move || stream::process(test_topics(), game_states_repo(&test_pool())));
+    thread::spawn(move || stream::process(test_topics(), &test_components(&test_pool())));
     thread::sleep(Duration::from_millis(11));
 
     let game_id = GameId(uuid::Uuid::new_v4());
@@ -102,14 +102,8 @@ fn test_pool() -> r2d2::Pool<r2d2_redis::RedisConnectionManager> {
 fn test_namespace() -> RedisKeyNamespace {
     RedisKeyNamespace("BUGTEST".to_string())
 }
-fn game_states_repo(pool: &Pool) -> GameStatesRepo {
-    GameStatesRepo {
-        pool: pool.clone(),
-        hash_key_provider: HashKeyProvider(test_namespace()),
-    }
-}
-fn entry_ids_repo(pool: &Pool) -> EntryIdRepo {
-    EntryIdRepo {
+fn test_components(pool: &Pool) -> Components {
+    Components {
         pool: pool.clone(),
         hash_key_provider: HashKeyProvider(test_namespace()),
     }
