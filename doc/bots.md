@@ -19,7 +19,7 @@ curl "https://circleci.com/api/v1.1/project/github/doe300/VC4C/1730/artifacts" -
 You need a more recent version of CMake than what's in raspbian stretch.  Add `stretch-backports` in your sources.list: https://backports.debian.org/Instructions/
 
 ```text
-deb http://deb.debian.org/debian buster-backports main
+deb https://deb.debian.org/debian buster-backports main
 ```
 
 [You need GPG keys for stretch-backports](https://rolfje.wordpress.com/2017/06/09/installing-gpg-keys-for-debian-backports/)
@@ -27,8 +27,10 @@ deb http://deb.debian.org/debian buster-backports main
 ```sh
 sudo su -
 gpg --keyserver pgp.mit.edu --recv-keys 7638D0442B90D010 
-gpg --keyserver pgp.mit.edu --recv-keys 04EE7237B7D453EC
-apt-get update
+gpg --armor --export 7638D0442B90D010 | apt-key add -
+exit
+sudo apt-get update
+sudo apt-get -t stretch-backports install cmake
 ```
 
 Then try installing [this version of cmake](https://packages.debian.org/stretch-backports/cmake).
