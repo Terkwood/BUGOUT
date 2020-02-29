@@ -59,20 +59,27 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
     for hash in xread_result.iter() {
         for (xread_topic, xread_move_data) in hash.iter() {
             if &xread_topic[..] == game_ready_topic {
-                todo!()
+                for with_timestamps in xread_move_data {
+                    for (k, v) in with_timestamps {
+                        if let (Ok(seq_no), Ok(gr)) =
+                            (XReadEntryId::from_str(k), deser_game_ready_ev(v.clone()))
+                        {
+                            stream_data.insert(seq_no, StreamData::GR(gr));
+                        }
+                    }
+                }
             } else if &xread_topic[..] == move_accepted_topic {
                 for with_timestamps in xread_move_data {
                     for (k, v) in with_timestamps {
-                        if let (Ok(seq_no), Some(game_id), Some(move_made)) = (
+                        if let (Ok(seq_no), Some(move_accepted)) = (
                             XReadEntryId::from_str(k),
-                            v.get("game_id").and_then(|g| Uuid::from_str(g).ok()),
                             v.get("data").and_then(|mm| {
                                 let move_made_deser: Option<MoveMade> =
                                     bincode::deserialize(mm.as_bytes()).ok();
                                 move_made_deser
                             }),
                         ) {
-                            todo!()
+                            stream_data.insert(seq_no, StreamData::MA(move_accepted));
                         } else {
                             println!("Xread: Deser err in move accepted ")
                         }
@@ -100,4 +107,12 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
     }
 
     stream_data
+}
+
+fn deser_game_ready_ev(
+    xread_result: HashMap<String, String>,
+) -> Result<GameReadyEvent, uuid::Error> {
+    Ok(GameReadyEvent {
+        game_id: GameId(Uuid::from_str(&xread_result["game_id"])?),
+    })
 }
