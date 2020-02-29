@@ -15,7 +15,13 @@ sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.9 100
 
 git clone https://github.com/doe300/VC4C.git
 git clone https://github.com/doe300/VC4CL.git
-git clone https://github.com/doe300/VC4CLStdLib.git  # ??
+git clone https://github.com/doe300/VC4CLStdLib.git  
+
+cd VC4CLStdLib
+cmake 
+make
+sudo make install
+cd -
 
 cd VC4C
 cmake -DBUILD_TESTING=OFF -DSPIRV_FRONTEND=OFF 
@@ -36,3 +42,7 @@ wget https://raw.githubusercontent.com/doe300/VC4C/master/example/fibonacci.cl
 export LD_LIBRARY_PATH=/usr/local/lib
 VC4C --llvm --hex -o fibonacci.hex fibonacci.cl
 ```
+
+## Native compilation environment in docker
+
+Try using [this docker image](https://hub.docker.com/r/nomaddo/native)
