@@ -79,6 +79,21 @@ cmake . -DUSE_BACKEND=OPENCL  -DOpenCL_LIBRARY=/usr/lib/arm-linux-gnueabihf/libO
 make
 ```
 
+This gets us very close.  But the linking step fails:
+```text
+[ 98%] Building CXX object CMakeFiles/katago.dir/main.cpp.o
+[100%] Linking CXX executable katago
+/usr/bin/ld: CMakeFiles/katago.dir/neuralnet/nneval.cpp.o: undefined reference to symbol 'pthread_create@@GLIBC_2.4'
+//lib/arm-linux-gnueabihf/libpthread.so.0: error adding symbols: DSO missing from command line
+collect2: error: ld returned 1 exit status
+CMakeFiles/katago.dir/build.make:1160: recipe for target 'katago' failed
+make[2]: *** [katago] Error 1
+CMakeFiles/Makefile2:72: recipe for target 'CMakeFiles/katago.dir/all' failed
+make[1]: *** [CMakeFiles/katago.dir/all] Error 2
+Makefile:83: recipe for target 'all' failed
+make: *** [all] Error 2
+```
+
 
 ## Failed attempt: Building VC4C and VC4CL on Raspberry Pi 3 B+ 
 
