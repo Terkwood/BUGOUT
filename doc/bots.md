@@ -45,4 +45,4 @@ VC4C --llvm --hex -o fibonacci.hex fibonacci.cl
 
 ## Native compilation environment in docker
 
-Try using [this docker image](https://hub.docker.com/r/nomaddo/native)
+We may be able to bake a Raspbian docker image based on [this x86 debian image](https://hub.docker.com/r/nomaddo/native)
