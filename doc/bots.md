@@ -1,6 +1,18 @@
 # Notes on KataGo
 
-## Installing VC4C and VC4CL on Raspberry Pi 3 B+ 
+## Grabbing DEB packages
+
+[Follow this guide... for the most part](https://github.com/doe300/VC4CL/wiki/How-to-get).
+
+We found that we needed this artifact, specifically:
+
+- https://circleci.com/api/v1.1/project/github/doe300/VC4C/1730/artifacts
+
+```sh
+curl "https://circleci.com/api/v1.1/project/github/doe300/VC4C/1730/artifacts" --output /tmp/dump
+```
+
+## Building VC4C and VC4CL on Raspberry Pi 3 B+ 
 
 [You can run OpenCL on a Raspberry Pi GPU](https://hackaday.com/2019/01/24/running-opencl-on-a-raspberry-pi-gpu/), which could potentially open a path for us to inexpensively compute moves using KataGo.
 
