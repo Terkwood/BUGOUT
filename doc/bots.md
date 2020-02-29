@@ -99,6 +99,12 @@ cmake . -DUSE_BACKEND=OPENCL  -DOpenCL_LIBRARY=/usr/lib/arm-linux-gnueabihf/libO
 make
 ```
 
+### Benchmark results
+
+Lots of warnings... `WARNING: Reference implementation failed: CL_BUILD_PROGRAM_FAILURE`
+
+https://github.com/lightvector/KataGo/blob/3bcf6efaf3047c553d1d89584c5f29a312ddf20b/cpp/neuralnet/opencltuner.cpp
+
 ## Open question: LLVM config
 
 There is some text in the KataGo README about LLVM config settings, are those helpful for us?
