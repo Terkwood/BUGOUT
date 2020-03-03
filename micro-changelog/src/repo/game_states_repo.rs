@@ -20,11 +20,13 @@ pub fn write(
     game_state: &GameState,
     components: &Components,
 ) -> Result<String, WriteErr> {
+    println!("Write Game State repo");
     let mut conn = components.pool.get().unwrap();
 
     let key = components.hash_key_provider.game_states(&game_id);
     let done = conn.set(&key, game_state.serialize()?)?;
     // Touch TTL whenever you set the record
     conn.expire(key, EXPIRY_SECS)?;
+    println!("...done");
     Ok(done)
 }

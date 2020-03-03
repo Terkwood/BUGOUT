@@ -37,7 +37,7 @@ fn test_process_move() {
     );
 
     thread::spawn(move || stream::process(test_topics(), &test_components(&test_pool())));
-    thread::sleep(Duration::from_millis(11));
+    thread::sleep(Duration::from_millis(100));
 
     let game_id = GameId(uuid::Uuid::new_v4());
     let mut conn = pool.get().unwrap();
@@ -86,7 +86,18 @@ fn test_process_move() {
 
     assert_ne!(xread_move_made.unwrap(), redis::Value::Nil);
 
-    todo!("We should see something published to game states changelog");
+    let xread_game_states_changelog = redis::cmd("XREAD")
+        .arg("BLOCK")
+        .arg(333)
+        .arg("STREAMS")
+        .arg(GAME_STATES_TOPIC)
+        .arg("0-0")
+        .query::<redis::Value>(&mut *conn);
+
+    assert_ne!(xread_game_states_changelog.unwrap(), redis::Value::Nil);
+
+    todo!("Check the second record. The first record is the one we wrote, the second is the one produced by the service");
+
     clean_streams(
         streams_to_clean.iter().map(|s| s.to_string()).collect(),
         &pool,
