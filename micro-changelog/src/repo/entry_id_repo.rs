@@ -58,14 +58,16 @@ pub fn update(
 }
 
 pub enum EntryIdType {
-    MakeMoveCommand,
+    GameReadyEvent,
+    MoveAcceptedEvent,
     GameStateChangelog,
 }
 impl EntryIdType {
     pub fn hash_field(&self) -> String {
         match self {
             EntryIdType::GameStateChangelog => GAME_STATES_EID.to_string(),
-            EntryIdType::MakeMoveCommand => GAME_READY_EID.to_string(),
+            EntryIdType::GameReadyEvent => GAME_READY_EID.to_string(),
+            EntryIdType::MoveAcceptedEvent => MOVE_ACCEPTED_EID.to_string(),
         }
     }
 }

@@ -1,9 +1,8 @@
-use super::redis_key::*;
 use super::{FetchErr, WriteErr};
 use crate::Components;
 use micro_model_moves::{GameId, GameState};
 use redis_conn_pool::redis::Commands;
-use redis_conn_pool::{Pool, RedisHostUrl};
+
 const EXPIRY_SECS: usize = 86400;
 
 pub fn fetch(game_id: &GameId, components: &Components) -> Result<GameState, FetchErr> {
