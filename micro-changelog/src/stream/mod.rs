@@ -17,7 +17,22 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                     for time_ordered_event in xrr {
                         match time_ordered_event {
                             (entry_id, StreamData::MA(move_acc)) => {
-                                process_move_accepted(entry_id, move_acc, &components)
+                                if let Err(e) = update_game_state(entry_id, &move_acc, &components)
+                                {
+                                    todo!()
+                                } else {
+                                    if let Err(e) = announce_move_made(move_acc, &components) {
+                                        todo!()
+                                    } else {
+                                        if let Err(e) = entry_id_repo::update(
+                                            EntryIdType::MoveAcceptedEvent,
+                                            entry_id,
+                                            &components,
+                                        ) {
+                                            todo!()
+                                        }
+                                    }
+                                }
                             }
                             (entry_id, StreamData::GR(gr_ev)) => {
                                 if let Err(e) = game_states_repo::write(
@@ -60,7 +75,11 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
     }
 }
 
-fn process_move_accepted(entry_id: XReadEntryId, move_acc: MoveMade, components: &Components) {
+fn update_game_state(
+    entry_id: XReadEntryId,
+    move_acc: &MoveMade,
+    components: &Components,
+) -> Result<(), GameStateSaveErr> {
     let game_id = move_acc.game_id.clone();
     let old_game_state = game_states_repo::fetch(&move_acc.game_id, &components);
     let new_game_state = old_game_state.map(|mut og| {
@@ -81,14 +100,27 @@ fn process_move_accepted(entry_id: XReadEntryId, move_acc: MoveMade, components:
             og.board.pieces.insert(*c, move_acc.player);
         }
 
-        og.moves.push(move_acc);
+        og.moves.push(move_acc.clone());
         og
-    });
-    let state_saved = new_game_state.map(|gs| game_states_repo::write(game_id, gs, &components));
-    if let Ok(Ok(write_result)) = state_saved {
-        todo!("Announce to move made");
-        entry_id_repo::update(EntryIdType::MoveAcceptedEvent, entry_id, &components);
-    } else {
-        println!("Trouble processing game state {:#?}", state_saved)
+    })?;
+    game_states_repo::write(game_id, new_game_state, &components)?;
+    Ok(())
+}
+enum GameStateSaveErr {
+    W(WriteErr),
+    F(FetchErr),
+}
+impl From<WriteErr> for GameStateSaveErr {
+    fn from(w: WriteErr) -> Self {
+        GameStateSaveErr::W(w)
     }
+}
+impl From<FetchErr> for GameStateSaveErr {
+    fn from(f: FetchErr) -> Self {
+        GameStateSaveErr::F(f)
+    }
+}
+
+fn announce_move_made(mm: MoveMade, components: &Components) -> Result<(), ()> {
+    todo!()
 }
