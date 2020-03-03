@@ -17,7 +17,7 @@ pub fn fetch(game_id: &GameId, components: &Components) -> Result<GameState, Fet
 
 pub fn write(
     game_id: GameId,
-    game_state: GameState,
+    game_state: &GameState,
     components: &Components,
 ) -> Result<String, WriteErr> {
     let mut conn = components.pool.get().unwrap();

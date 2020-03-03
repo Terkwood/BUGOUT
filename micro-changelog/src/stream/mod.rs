@@ -5,7 +5,7 @@ use crate::repo::entry_id_repo::EntryIdType;
 use crate::repo::*;
 use crate::Components;
 use micro_model_moves::*;
-use redis_streams::XReadEntryId;
+use redis_conn_pool::redis;
 pub use topics::StreamTopics;
 use xread::*;
 pub fn process(topics: StreamTopics, components: &crate::Components) {
@@ -17,19 +17,34 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                     for time_ordered_event in xrr {
                         match time_ordered_event {
                             (entry_id, StreamData::MA(move_acc)) => {
-                                if let Err(e) = update_game_state(entry_id, &move_acc, &components)
-                                {
-                                    todo!()
-                                } else {
-                                    if let Err(e) = announce_move_made(move_acc, &components) {
-                                        todo!()
-                                    } else {
-                                        if let Err(e) = entry_id_repo::update(
-                                            EntryIdType::MoveAcceptedEvent,
-                                            entry_id,
+                                match update_game_state(&move_acc, &components) {
+                                    Err(e) => println!("err updating game state {:?}", e),
+                                    Ok(gs) => {
+                                        if let Err(e) = xadd_move_made(
+                                            &move_acc,
+                                            &topics.move_made_ev,
                                             &components,
-                                        ) {
-                                            todo!()
+                                        )
+                                        .and_then(|_| {
+                                            xadd_game_states_changelog(
+                                                &move_acc.game_id,
+                                                gs,
+                                                &topics.game_states_changelog,
+                                                components,
+                                            )
+                                        }) {
+                                            println!("err in XADDs {:?}", e)
+                                        } else {
+                                            if let Err(e) = entry_id_repo::update(
+                                                EntryIdType::MoveAcceptedEvent,
+                                                entry_id,
+                                                &components,
+                                            ) {
+                                                println!(
+                                                    "err saving entry id for move accepted {:?}",
+                                                    e
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -37,7 +52,7 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                             (entry_id, StreamData::GR(gr_ev)) => {
                                 if let Err(e) = game_states_repo::write(
                                     gr_ev.game_id,
-                                    GameState::default(), // TODO handicaps
+                                    &GameState::default(), // TODO handicaps
                                     &components,
                                 ) {
                                     println!("error saving fresh game state {:#?}", e)
@@ -52,7 +67,7 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                                 }
                             }
                             (entry_id, StreamData::GS(game_id, gs)) => {
-                                if let Err(e) = game_states_repo::write(game_id, gs, &components) {
+                                if let Err(e) = game_states_repo::write(game_id, &gs, &components) {
                                     println!("Error saving game state {:#?}", e)
                                 } else {
                                     if let Err(e) = entry_id_repo::update(
@@ -76,10 +91,9 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
 }
 
 fn update_game_state(
-    entry_id: XReadEntryId,
     move_acc: &MoveMade,
     components: &Components,
-) -> Result<(), GameStateSaveErr> {
+) -> Result<GameState, GameStateSaveErr> {
     let game_id = move_acc.game_id.clone();
     let old_game_state = game_states_repo::fetch(&move_acc.game_id, &components);
     let new_game_state = old_game_state.map(|mut og| {
@@ -103,9 +117,11 @@ fn update_game_state(
         og.moves.push(move_acc.clone());
         og
     })?;
-    game_states_repo::write(game_id, new_game_state, &components)?;
-    Ok(())
+    game_states_repo::write(game_id, &new_game_state, &components)?;
+    Ok(new_game_state)
 }
+
+#[derive(Debug)]
 enum GameStateSaveErr {
     W(WriteErr),
     F(FetchErr),
@@ -121,6 +137,41 @@ impl From<FetchErr> for GameStateSaveErr {
     }
 }
 
-fn announce_move_made(mm: MoveMade, components: &Components) -> Result<(), ()> {
-    todo!()
+fn xadd_move_made(
+    mm: &MoveMade,
+    stream_name: &str,
+    components: &Components,
+) -> Result<String, WriteErr> {
+    let mut conn = components.pool.get().unwrap();
+    Ok(redis::cmd("XADD")
+        .arg(stream_name)
+        .arg("MAXLEN")
+        .arg("~")
+        .arg("1000")
+        .arg("*")
+        .arg("game_id")
+        .arg(mm.game_id.0.to_string())
+        .arg("data")
+        .arg(mm.serialize()?)
+        .query::<String>(&mut *conn)?)
+}
+
+fn xadd_game_states_changelog(
+    game_id: &GameId,
+    gs: GameState,
+    stream_name: &str,
+    components: &Components,
+) -> Result<String, WriteErr> {
+    let mut conn = components.pool.get().unwrap();
+    Ok(redis::cmd("XADD")
+        .arg(stream_name)
+        .arg("MAXLEN")
+        .arg("~")
+        .arg("1000")
+        .arg("*")
+        .arg("game_id")
+        .arg(game_id.0.to_string())
+        .arg("data")
+        .arg(gs.serialize()?)
+        .query::<String>(&mut *conn)?)
 }

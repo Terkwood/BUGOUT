@@ -19,10 +19,19 @@ const GAME_READY_EV_TOPIC: &str = "bugtest-game-ready-ev";
 #[test]
 fn test_process_move() {
     let keys_to_clean = vec![];
-    let streams_to_clean = vec![];
+    let streams_to_clean = vec![
+        GAME_STATES_TOPIC,
+        MOVE_ACCEPTED_EV_TOPIC,
+        MOVE_MADE_EV_TOPIC,
+        GAME_READY_EV_TOPIC,
+    ];
     let pool = test_pool();
     panic_cleanup(
-        streams_to_clean.clone(),
+        streams_to_clean
+            .clone()
+            .iter()
+            .map(|s| s.to_string())
+            .collect(),
         keys_to_clean.clone(),
         pool.clone(),
     );
@@ -76,7 +85,12 @@ fn test_process_move() {
         .query::<redis::Value>(&mut *conn);
 
     assert_ne!(xread_move_made.unwrap(), redis::Value::Nil);
-    clean_streams(streams_to_clean, &pool);
+
+    todo!("We should see something published to game states changelog");
+    clean_streams(
+        streams_to_clean.iter().map(|s| s.to_string()).collect(),
+        &pool,
+    );
     clean_keys(keys_to_clean, &pool);
 }
 
