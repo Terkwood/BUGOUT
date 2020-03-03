@@ -5,12 +5,26 @@ use crate::repo::entry_id_repo::AllEntryIds;
 use micro_model_moves::{GameId, GameState, MoveMade};
 use redis_conn_pool::Pool;
 use redis_streams::XReadEntryId;
+// use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
 const BLOCK_MSEC: u32 = 5000;
 
+// #[derive(Serialize, Deserialize, Debug, Clone)]
+// pub enum StringOrBin {
+//     S(String),
+//     B(Vec<u8>),
+// // }
+// impl redis::FromRedisValue for StringOrBin {
+//     fn from_redis_value(rv: &redis::Value) -> std::result::Result<Self, redis::RedisError> {
+//         match rv {
+//         }
+//     }
+// }
+// Here's your problem.  Right here.
+// TODO TODO
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, HashMap<String, String>>>>>;
 
 pub fn xread_sorted(
@@ -32,6 +46,12 @@ pub fn xread_sorted(
         .query::<XReadResult>(&mut *conn)?;
 
     let unsorted = deser(ser, &topics);
+    if !unsorted.is_empty() {
+        println!("CHECKING ON UNSORTED STUFF!");
+    }
+    for x in unsorted.clone() {
+        println!("\t{:#?}", x);
+    }
     let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
     sorted_keys.sort();
 
@@ -44,7 +64,7 @@ pub fn xread_sorted(
     Ok(answer)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum StreamData {
     MA(MoveMade),
     GS(GameId, GameState),
@@ -65,10 +85,18 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                             (XReadEntryId::from_str(k), deser_game_ready_ev(v.clone()))
                         {
                             stream_data.insert(seq_no, StreamData::GR(gr));
+                        } else {
+                            println!("HELP");
                         }
                     }
                 }
             } else if &xread_topic[..] == move_accepted_topic {
+                if !xread_move_data.is_empty() {
+                    println!(
+                        "move accepted topic IF ... data empty? {}",
+                        xread_move_data.is_empty()
+                    );
+                }
                 for with_timestamps in xread_move_data {
                     for (k, v) in with_timestamps {
                         if let (Ok(seq_no), Some(move_accepted)) = (
@@ -80,6 +108,7 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                             }),
                         ) {
                             stream_data.insert(seq_no, StreamData::MA(move_accepted));
+                            println!("OK FINE THAT'S DONE");
                         } else {
                             println!("Xread: Deser err in move accepted ")
                         }

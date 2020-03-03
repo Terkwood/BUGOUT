@@ -75,6 +75,7 @@ fn test_process_move() {
         .arg(move_made.serialize().unwrap())
         .query::<String>(&mut *conn)
         .unwrap();
+    println!("hokey dokey test");
     // We should see something published to MOVE_MADE
     let xread_move_made = redis::cmd("XREAD")
         .arg("BLOCK")
@@ -83,6 +84,7 @@ fn test_process_move() {
         .arg(MOVE_MADE_EV_TOPIC)
         .arg("0-0")
         .query::<redis::Value>(&mut *conn);
+    println!("Yes IT IS a Test");
 
     assert_ne!(xread_move_made.unwrap(), redis::Value::Nil);
 
