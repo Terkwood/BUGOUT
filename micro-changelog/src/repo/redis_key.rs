@@ -28,7 +28,7 @@ impl KeyProvider {
 mod tests {
     use super::*;
     #[test]
-    fn tesh_hash_key_prov_default() {
+    fn tesh_key_prov_default() {
         let g = KeyProvider::default();
         assert_eq!(
             g.game_states(&GameId(uuid::Uuid::nil())),

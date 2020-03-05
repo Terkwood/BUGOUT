@@ -67,7 +67,7 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                         {
                             stream_data.insert(seq_no, StreamData::GR(gr));
                         } else {
-                            println!("HELP");
+                            println!("Unexpected result in Xread");
                         }
                     }
                 }

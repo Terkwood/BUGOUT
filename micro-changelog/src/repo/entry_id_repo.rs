@@ -47,18 +47,11 @@ pub fn update(
     components: &Components,
 ) -> Result<(), redis::RedisError> {
     let mut conn = components.pool.get().unwrap();
-    let ret = conn.hset(
+    conn.hset(
         components.redis_key_provider.entry_ids(),
         entry_id_type.hash_field(),
         entry_id.to_string(),
-    );
-
-    if let Err(e) = ret {
-        println!("ENTRY ID CANNOT BE UPDATED HELLO {:?}", e);
-        Err(e)
-    } else {
-        ret
-    }
+    )
 }
 
 pub enum EntryIdType {
