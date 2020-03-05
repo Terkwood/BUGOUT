@@ -238,15 +238,19 @@ checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
 name = "micro_changelog"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
+ "bincode",
  "micro_model_moves",
  "redis_conn_pool",
+ "redis_streams",
+ "uuid",
 ]
 
 [[package]]
 name = "micro_model_moves"
 version = "0.1.1"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#94af2e2b542059dab45240f1066409b0446d513f"
 dependencies = [
  "bincode",
  "serde",
@@ -458,9 +462,18 @@ dependencies = [
 [[package]]
 name = "redis_conn_pool"
 version = "0.1.0"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#94af2e2b542059dab45240f1066409b0446d513f"
 dependencies = [
  "r2d2_redis",
  "redis",
+]
+
+[[package]]
+name = "redis_streams"
+version = "0.1.0"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#94af2e2b542059dab45240f1066409b0446d513f"
+dependencies = [
+ "uuid",
 ]
 
 [[package]]

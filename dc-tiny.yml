@@ -46,3 +46,9 @@ services:
       - "redis"
     depends_on:
       - "redis"
+  micro-changelog:
+    build: micro-changelog/.
+    links:
+      - "redis"
+    depends_on:
+      - "redis"
