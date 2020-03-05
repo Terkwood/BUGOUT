@@ -1,3 +1,4 @@
+# Not a very useful example
 FROM debian:stable-slim
 RUN apt-get update && apt-get upgrade
 RUN apt-get install -y git  libzip-dev libboost-filesystem-dev
