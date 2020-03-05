@@ -11,7 +11,7 @@ pub struct CreateGame {
     pub visibility: Visibility,
     pub game_id: Option<GameId>,
     pub session_id: SessionId,
-    pub board_size: u8,
+    pub board_size: u16,
 }
 #[derive(Debug, Clone)]
 pub struct JoinPrivateGame {
@@ -33,7 +33,7 @@ pub struct GameReady {
     pub game_id: GameId,
     pub sessions: (SessionId, SessionId),
     pub event_id: EventId,
-    pub board_size: u8,
+    pub board_size: u16,
 }
 
 #[derive(Debug, Clone)]
