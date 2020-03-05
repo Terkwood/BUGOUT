@@ -238,7 +238,7 @@ checksum = "53445de381a1f436797497c61d851644d0e8e88e6140f22872ad33a704933978"
 
 [[package]]
 name = "micro_judge"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "bincode",
  "micro_model_moves",
@@ -250,6 +250,7 @@ dependencies = [
 [[package]]
 name = "micro_model_moves"
 version = "0.1.1"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#94af2e2b542059dab45240f1066409b0446d513f"
 dependencies = [
  "bincode",
  "serde",
@@ -461,6 +462,7 @@ dependencies = [
 [[package]]
 name = "redis_conn_pool"
 version = "0.1.0"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#94af2e2b542059dab45240f1066409b0446d513f"
 dependencies = [
  "r2d2_redis",
  "redis",
@@ -469,6 +471,7 @@ dependencies = [
 [[package]]
 name = "redis_streams"
 version = "0.1.0"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#94af2e2b542059dab45240f1066409b0446d513f"
 dependencies = [
  "uuid",
 ]
