@@ -11,7 +11,7 @@ use repo::redis_key::KeyProvider;
 
 pub struct Components {
     pub pool: redis_conn_pool::Pool,
-    pub hash_key_provider: KeyProvider,
+    pub redis_key_provider: KeyProvider,
 }
 
 impl Default for Components {
@@ -20,7 +20,7 @@ impl Default for Components {
         println!("Connected to redis");
         Components {
             pool,
-            hash_key_provider: KeyProvider::default(),
+            redis_key_provider: KeyProvider::default(),
         }
     }
 }

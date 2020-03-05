@@ -131,7 +131,7 @@ fn test_namespace() -> RedisKeyNamespace {
 fn test_components(pool: &Pool) -> Components {
     Components {
         pool: pool.clone(),
-        hash_key_provider: KeyProvider(test_namespace()),
+        redis_key_provider: KeyProvider(test_namespace()),
     }
 }
 

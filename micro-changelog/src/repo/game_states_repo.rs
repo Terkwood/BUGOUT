@@ -5,14 +5,19 @@ use redis_conn_pool::redis::Commands;
 
 const EXPIRY_SECS: usize = 86400;
 
-pub fn fetch(game_id: &GameId, components: &Components) -> Result<GameState, FetchErr> {
+pub fn fetch(game_id: &GameId, components: &Components) -> Result<Option<GameState>, FetchErr> {
     let mut conn = components.pool.get().unwrap();
-    let key = components.hash_key_provider.game_states(&game_id);
-    let bin_data: Vec<u8> = conn.get(&key)?;
-    let r = GameState::from(&bin_data)?;
-    // Touch TTL whenever you get the record
-    conn.expire(key, EXPIRY_SECS)?;
-    Ok(r)
+    let key = components.redis_key_provider.game_states(&game_id);
+    let bin_data: Option<Vec<u8>> = conn.get(&key)?;
+    Ok(match bin_data {
+        Some(b) => {
+            let r = GameState::from(&b)?;
+            // Touch TTL whenever you get the record
+            conn.expire(key, EXPIRY_SECS)?;
+            Some(r)
+        }
+        None => None,
+    })
 }
 
 pub fn write(
@@ -23,7 +28,7 @@ pub fn write(
     println!("Write Game State repo");
     let mut conn = components.pool.get().unwrap();
 
-    let key = components.hash_key_provider.game_states(&game_id);
+    let key = components.redis_key_provider.game_states(&game_id);
     let done = conn.set(&key, game_state.serialize()?)?;
     // Touch TTL whenever you set the record
     conn.expire(key, EXPIRY_SECS)?;

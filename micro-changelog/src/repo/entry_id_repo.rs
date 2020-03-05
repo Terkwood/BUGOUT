@@ -12,7 +12,7 @@ use crate::Components;
 pub fn fetch_all(components: &Components) -> Result<AllEntryIds, FetchErr> {
     let mut conn = components.pool.get().unwrap();
     let found: Result<HashMap<String, String>, _> =
-        conn.hgetall(components.hash_key_provider.entry_ids());
+        conn.hgetall(components.redis_key_provider.entry_ids());
     if let Ok(f) = found {
         let game_ready_eid = XReadEntryId::from_str(
             &f.get(GAME_READY_EID)
@@ -48,7 +48,7 @@ pub fn update(
 ) -> Result<(), redis::RedisError> {
     let mut conn = components.pool.get().unwrap();
     let ret = conn.hset(
-        components.hash_key_provider.entry_ids(),
+        components.redis_key_provider.entry_ids(),
         entry_id_type.hash_field(),
         entry_id.to_string(),
     );

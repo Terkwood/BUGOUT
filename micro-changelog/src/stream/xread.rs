@@ -95,7 +95,6 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                             }),
                         ) {
                             stream_data.insert(seq_no, StreamData::MA(move_accepted));
-                            println!("OK FINE THAT'S DONE");
                         } else {
                             println!("Xread: Deser err in move accepted ")
                         }

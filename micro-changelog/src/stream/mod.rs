@@ -17,11 +17,9 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                     for time_ordered_event in xrr {
                         match time_ordered_event {
                             (entry_id, StreamData::MA(move_acc)) => {
-                                println!("LOOP MOVE ACCEPTED ... ... ...");
                                 match update_game_state(&move_acc, &components) {
                                     Err(e) => println!("err updating game state {:?}", e),
                                     Ok(gs) => {
-                                        println!("loop move accepted");
                                         if let Err(e) = xadd_move_made(
                                             &move_acc,
                                             &topics.move_made_ev,
@@ -100,7 +98,8 @@ fn update_game_state(
 ) -> Result<GameState, GameStateSaveErr> {
     let game_id = move_acc.game_id.clone();
     let old_game_state = game_states_repo::fetch(&move_acc.game_id, &components);
-    let new_game_state = old_game_state.map(|mut og| {
+    let new_game_state = old_game_state.map(|maybe_og| {
+        let mut og = maybe_og.unwrap_or(GameState::default());
         og.turn += 1;
         og.player_up = match move_acc.player {
             Player::BLACK => Player::WHITE,
