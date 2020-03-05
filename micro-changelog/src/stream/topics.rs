@@ -34,6 +34,10 @@ mod tests {
             &StreamTopics::default().move_accepted_ev,
             DEFAULT_MOVE_ACCEPTED_EV
         );
-        assert_eq!(&StreamTopics::default().move_made_ev, DEFAULT_MOVE_MADE_EV)
+        assert_eq!(&StreamTopics::default().move_made_ev, DEFAULT_MOVE_MADE_EV);
+        assert_eq!(
+            &StreamTopics::default().game_ready_ev,
+            DEFAULT_GAME_READY_EV
+        );
     }
 }
