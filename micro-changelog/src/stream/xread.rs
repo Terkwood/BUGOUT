@@ -33,12 +33,6 @@ pub fn xread_sorted(
         .query::<XReadResult>(&mut *conn)?;
 
     let unsorted = deser(ser, &topics);
-    if !unsorted.is_empty() {
-        println!("CHECKING ON UNSORTED STUFF!");
-    }
-    for x in unsorted.clone() {
-        println!("\t{:#?}", x);
-    }
     let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
     sorted_keys.sort();
 
@@ -78,12 +72,6 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                     }
                 }
             } else if &xread_topic[..] == move_accepted_topic {
-                if !xread_move_data.is_empty() {
-                    println!(
-                        "move accepted topic IF ... data empty? {}",
-                        xread_move_data.is_empty()
-                    );
-                }
                 for with_timestamps in xread_move_data {
                     for (k, v) in with_timestamps {
                         if let (Ok(seq_no), Some(move_accepted)) = (

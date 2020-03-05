@@ -4,10 +4,10 @@ use micro_changelog::micro_model_moves::*;
 use micro_changelog::redis_conn_pool;
 use micro_changelog::redis_conn_pool::*;
 use micro_changelog::repo::redis_key::*;
-use micro_changelog::repo::*;
 use micro_changelog::stream::*;
 use micro_changelog::*;
 use redis::Commands;
+use std::collections::HashMap;
 use std::thread;
 use std::time::Duration;
 use uuid::Uuid;
@@ -54,11 +54,12 @@ fn test_process_move() {
         .query::<String>(&mut *conn)
         .unwrap();
 
+    let placement = Coord::of(0, 0);
     let move_made = MoveMade {
         game_id: game_id.clone(),
         reply_to: ReqId(Uuid::nil()),
         captured: vec![],
-        coord: Some(Coord::of(0, 0)),
+        coord: Some(placement),
         event_id: EventId::new(),
         player: Player::BLACK,
     };
@@ -75,7 +76,6 @@ fn test_process_move() {
         .arg(move_made.serialize().unwrap())
         .query::<String>(&mut *conn)
         .unwrap();
-    println!("hokey dokey test");
     // We should see something published to MOVE_MADE
     let xread_move_made = redis::cmd("XREAD")
         .arg("BLOCK")
@@ -83,10 +83,10 @@ fn test_process_move() {
         .arg("STREAMS")
         .arg(MOVE_MADE_EV_TOPIC)
         .arg("0-0")
-        .query::<redis::Value>(&mut *conn);
-    println!("Yes IT IS a Test");
+        .query::<redis::Value>(&mut *conn)
+        .unwrap();
 
-    assert_ne!(xread_move_made.unwrap(), redis::Value::Nil);
+    assert_ne!(xread_move_made, redis::Value::Nil);
 
     let xread_game_states_changelog = redis::cmd("XREAD")
         .arg("BLOCK")
@@ -94,11 +94,33 @@ fn test_process_move() {
         .arg("STREAMS")
         .arg(GAME_STATES_TOPIC)
         .arg("0-0")
-        .query::<redis::Value>(&mut *conn);
+        .query::<Vec<HashMap<String, Vec<HashMap<String, (String, String, String, Option<Vec<u8>>)>>>>>(&mut *conn)
+        .unwrap();
+    assert_eq!(xread_game_states_changelog.len(), 1);
+    let by_timestamp = xread_game_states_changelog[0].get(GAME_STATES_TOPIC);
+    assert!(by_timestamp.is_some());
+    println!("by timestamp {:#?}", by_timestamp);
+    let game_state_payload_vec: Vec<(String, String, String, Option<Vec<u8>>)> =
+        by_timestamp.unwrap()[0].values().cloned().collect();
+    let payload = &game_state_payload_vec[0];
+    assert_eq!(payload.0, "game_id");
+    assert_eq!(payload.1, game_id.0.to_string());
+    assert_eq!(payload.2, "data");
 
-    assert_ne!(xread_game_states_changelog.unwrap(), redis::Value::Nil);
-
-    todo!("Check the second record. The first record is the one we wrote, the second is the one produced by the service");
+    let expected_game_state = GameState {
+        board: Board {
+            pieces: [(placement, Player::BLACK)].iter().cloned().collect(),
+            size: 19,
+        },
+        moves: vec![move_made],
+        turn: 2,
+        player_up: Player::WHITE,
+        captures: Captures { black: 0, white: 0 },
+    };
+    assert_eq!(
+        bincode::deserialize::<GameState>(&payload.3.as_ref().unwrap()).unwrap(),
+        expected_game_state
+    );
 
     clean_streams(
         streams_to_clean.iter().map(|s| s.to_string()).collect(),
