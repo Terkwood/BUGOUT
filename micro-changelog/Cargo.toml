@@ -11,5 +11,3 @@ redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstab
 redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 bincode = "1.2.1"
 uuid = { version = "0.8.1", features = ["serde"] }
-# serde = "1.0.104"
-# serde_derive = "1.0.104"

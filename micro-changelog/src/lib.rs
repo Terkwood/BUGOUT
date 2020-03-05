@@ -1,8 +1,6 @@
 extern crate bincode;
 pub extern crate micro_model_moves;
 extern crate redis_streams;
-// extern crate serde;
-// extern crate serde_derive;
 mod model;
 pub mod repo;
 pub mod stream;

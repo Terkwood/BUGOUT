@@ -5,26 +5,12 @@ use crate::repo::entry_id_repo::AllEntryIds;
 use micro_model_moves::{GameId, GameState, MoveMade};
 use redis_conn_pool::Pool;
 use redis_streams::XReadEntryId;
-// use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
 const BLOCK_MSEC: u32 = 5000;
 
-// #[derive(Serialize, Deserialize, Debug, Clone)]
-// pub enum StringOrBin {
-//     S(String),
-//     B(Vec<u8>),
-// // }
-// impl redis::FromRedisValue for StringOrBin {
-//     fn from_redis_value(rv: &redis::Value) -> std::result::Result<Self, redis::RedisError> {
-//         match rv {
-//         }
-//     }
-// }
-// Here's your problem.  Right here.
-// TODO TODO
 pub type XReadResult =
     Vec<HashMap<String, Vec<HashMap<String, (String, String, String, Option<Vec<u8>>)>>>>;
 
