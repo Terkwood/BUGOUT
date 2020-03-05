@@ -49,6 +49,23 @@ Check out some options in `KataGo/cpp/CMakeFiles/3.13.2/CMakeCCompiler.cmake `
 
 WE HACKED UP `CMakeLists.txt` PRETTY DARNED GOOD!  CHECK IT OUT.
 
+The following chunk will enable pthreads for g++.
+
+```text
+  # On g++ it seems like we need to explicitly link threads as well.
+  # It seems sometimes this is implied by other options automatically like when 
+we enable CUDA, but we get link errors
+  # if we don't explicitly require threads it when attempting to build without C
+UDA
+  # HACK
+  #if(CMAKE_COMPILER_IS_GNUCC AND (NOT USE_BACKEND STREQUAL "CUDA"))
+    find_package (Threads REQUIRED)
+    target_link_libraries(katago Threads::Threads)
+    #HACK endif()
+```
+
+...and later, to fulfill C++14 reqs...
+
 ```text
 
 if(CMAKE_COMPILER_IS_GNUCC)
@@ -59,10 +76,13 @@ if(CMAKE_COMPILER_IS_GNUCC)
   if(USE_TCMALLOC)
     ### Hack flags rejected by gcc 6.3
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -O2 -pedantic -Wall -Wextra -Wno-sign-compare -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wstrict-null-sentinel -Wstrict-overflow=1 -Wswitch-default -Wfloat-conversion -Wnull-dereference -Wunused -Wdiv-by-zero -Wduplicated-cond -Wduplicated-cond -mrestrict-it -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
+    ### HACK to include linking to pthreads
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
   else()
     ### Hack flags rejected by gcc 6.3
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}  -g -O2 -pedantic -Wall -Wextra -Wno-sign-compare -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wstrict-null-sentinel -Wstrict-overflow=1 -Wswitch-default -Wfloat-conversion -Wnull-dereference -Wunused -Wdiv-by-zero -Wduplicated-cond -Wduplicated-cond -mrestrict-it")
+    ### HACK to include linking to pthread
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread")
   endif()
 endif()
 ```
@@ -79,20 +99,15 @@ cmake . -DUSE_BACKEND=OPENCL  -DOpenCL_LIBRARY=/usr/lib/arm-linux-gnueabihf/libO
 make
 ```
 
-This gets us very close.  But the linking step fails:
-```text
-[ 98%] Building CXX object CMakeFiles/katago.dir/main.cpp.o
-[100%] Linking CXX executable katago
-/usr/bin/ld: CMakeFiles/katago.dir/neuralnet/nneval.cpp.o: undefined reference to symbol 'pthread_create@@GLIBC_2.4'
-//lib/arm-linux-gnueabihf/libpthread.so.0: error adding symbols: DSO missing from command line
-collect2: error: ld returned 1 exit status
-CMakeFiles/katago.dir/build.make:1160: recipe for target 'katago' failed
-make[2]: *** [katago] Error 1
-CMakeFiles/Makefile2:72: recipe for target 'CMakeFiles/katago.dir/all' failed
-make[1]: *** [CMakeFiles/katago.dir/all] Error 2
-Makefile:83: recipe for target 'all' failed
-make: *** [all] Error 2
-```
+### Benchmark results
+
+Lots of warnings... `WARNING: Reference implementation failed: CL_BUILD_PROGRAM_FAILURE`
+
+https://github.com/lightvector/KataGo/blob/3bcf6efaf3047c553d1d89584c5f29a312ddf20b/cpp/neuralnet/opencltuner.cpp
+
+## Open question: LLVM config
+
+There is some text in the KataGo README about LLVM config settings, are those helpful for us?
 
 
 ## Failed attempt: Building VC4C and VC4CL on Raspberry Pi 3 B+ 
