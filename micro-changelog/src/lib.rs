@@ -9,11 +9,11 @@ pub mod stream;
 
 pub use redis_conn_pool;
 pub use redis_conn_pool::{r2d2, r2d2_redis, redis, RedisHostUrl};
-use repo::redis_key::HashKeyProvider;
+use repo::redis_key::KeyProvider;
 
 pub struct Components {
     pub pool: redis_conn_pool::Pool,
-    pub hash_key_provider: HashKeyProvider,
+    pub hash_key_provider: KeyProvider,
 }
 
 impl Default for Components {
@@ -22,7 +22,7 @@ impl Default for Components {
         println!("Connected to redis");
         Components {
             pool,
-            hash_key_provider: HashKeyProvider::default(),
+            hash_key_provider: KeyProvider::default(),
         }
     }
 }

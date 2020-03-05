@@ -10,13 +10,13 @@ impl Default for RedisKeyNamespace {
 }
 
 #[derive(Debug, Clone)]
-pub struct HashKeyProvider(pub RedisKeyNamespace);
-impl Default for HashKeyProvider {
+pub struct KeyProvider(pub RedisKeyNamespace);
+impl Default for KeyProvider {
     fn default() -> Self {
-        HashKeyProvider(RedisKeyNamespace::default())
+        KeyProvider(RedisKeyNamespace::default())
     }
 }
-impl HashKeyProvider {
+impl KeyProvider {
     pub fn game_states(&self, game_id: &GameId) -> String {
         format!("/{}/micro_changelog/game_states/{}", (self.0).0, game_id.0)
     }
@@ -29,7 +29,7 @@ mod tests {
     use super::*;
     #[test]
     fn tesh_hash_key_prov_default() {
-        let g = HashKeyProvider::default();
+        let g = KeyProvider::default();
         assert_eq!(
             g.game_states(&GameId(uuid::Uuid::nil())),
             "/BUGOUT/micro_changelog/game_states/00000000-0000-0000-0000-000000000000"

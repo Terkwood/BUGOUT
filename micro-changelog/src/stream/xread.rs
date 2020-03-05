@@ -25,7 +25,8 @@ const BLOCK_MSEC: u32 = 5000;
 // }
 // Here's your problem.  Right here.
 // TODO TODO
-pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, HashMap<String, String>>>>>;
+pub type XReadResult =
+    Vec<HashMap<String, Vec<HashMap<String, (String, String, String, Option<Vec<u8>>)>>>>;
 
 pub fn xread_sorted(
     entry_ids: AllEntryIds,
@@ -82,7 +83,7 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                 for with_timestamps in xread_move_data {
                     for (k, v) in with_timestamps {
                         if let (Ok(seq_no), Ok(gr)) =
-                            (XReadEntryId::from_str(k), deser_game_ready_ev(v.clone()))
+                            (XReadEntryId::from_str(k), deser_game_ready_ev(&v.1))
                         {
                             stream_data.insert(seq_no, StreamData::GR(gr));
                         } else {
@@ -101,9 +102,9 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                     for (k, v) in with_timestamps {
                         if let (Ok(seq_no), Some(move_accepted)) = (
                             XReadEntryId::from_str(k),
-                            v.get("data").and_then(|mm| {
+                            v.3.clone().and_then(|mm| {
                                 let move_made_deser: Option<MoveMade> =
-                                    bincode::deserialize(mm.as_bytes()).ok();
+                                    bincode::deserialize(&mm).ok();
                                 move_made_deser
                             }),
                         ) {
@@ -119,9 +120,8 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                     for (k, v) in with_timestamps {
                         if let (Ok(seq_no), Some(game_id), Some(game_state)) = (
                             XReadEntryId::from_str(k),
-                            v.get("game_id").and_then(|g| Uuid::from_str(g).ok()),
-                            v.get("data")
-                                .and_then(|gs| GameState::from(gs.as_bytes()).ok()),
+                            Uuid::from_str(&v.1).ok(),
+                            v.3.clone().and_then(|bytes| GameState::from(&bytes).ok()),
                         ) {
                             stream_data.insert(seq_no, StreamData::GS(GameId(game_id), game_state));
                         } else {
@@ -138,10 +138,8 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
     stream_data
 }
 
-fn deser_game_ready_ev(
-    xread_result: HashMap<String, String>,
-) -> Result<GameReadyEvent, uuid::Error> {
+fn deser_game_ready_ev(game_id_str: &str) -> Result<GameReadyEvent, uuid::Error> {
     Ok(GameReadyEvent {
-        game_id: GameId(Uuid::from_str(&xread_result["game_id"])?),
+        game_id: GameId(Uuid::from_str(game_id_str)?),
     })
 }
