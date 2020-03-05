@@ -1,16 +1,16 @@
+mod game_lobby;
 pub mod stream;
-
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct StreamTopics {}
 #[derive(Debug, Clone)]
 pub struct Components {}
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct GameId(pub Uuid);
 #[derive(Debug, Clone)]
 pub struct ClientId(pub Uuid);
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct SessionId(pub Uuid);
 #[derive(Debug, Clone)]
 pub struct EventId(pub Uuid);
@@ -20,7 +20,7 @@ impl EventId {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Visibility {
     Public,
     Private,
