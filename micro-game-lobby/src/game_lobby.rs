@@ -44,3 +44,27 @@ pub enum LobbyCommand {
     Ready,
     Abandon,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uuid::Uuid;
+    #[test]
+    fn lobby_execute_bytes() {
+        let mut lobby = GameLobby {
+            games: HashSet::new(),
+        };
+        assert!(lobby.as_bytes().is_ok());
+        lobby.execute(GameLobbyCommand {
+            game: Game {
+                game_id: GameId(Uuid::new_v4()),
+                board_size: 3,
+                creator: SessionId(Uuid::new_v4()),
+                visibility: Visibility::Private,
+            },
+            lobby_command: LobbyCommand::Open,
+        });
+        assert!(!lobby.games.is_empty());
+        assert!(lobby.as_bytes().is_ok());
+    }
+}
