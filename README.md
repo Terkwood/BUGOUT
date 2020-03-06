@@ -6,10 +6,11 @@
 
 ## Design
 
-- Powered by [Sabaki](https://sabaki.yichuanshen.de/) and [kafka](https://kafka.apache.org/)
+- Powered by [Sabaki](https://sabaki.yichuanshen.de/), [kafka](https://kafka.apache.org/), and [Redis](https://redis.io/) 
 - Uses a [fork of Sabaki](https://github.com/Terkwood/Sabaki) for the web UI
 - A [public-facing websocket gateway](gateway/README.md) communicates with the browser
-- [Kotlin & Kafka streams adjudicates games](judge/README.md), [announces moves](changelog/README.md), [provides game lobby functionality](game-lobby/README.md), and [implements fair color choice for the players](color-chooser/README.md).
+- At scale: [Kotlin & Kafka streams adjudicates games](judge/README.md), [announces moves](changelog/README.md), [provides game lobby functionality](game-lobby/README.md), and [implements fair color choice for the players](color-chooser/README.md).
+- In low-traffic scenarios: rust and redis streams manages data flow using a tiny memory footprint 
 
 ### Kafka streams topologies
 
