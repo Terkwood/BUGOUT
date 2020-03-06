@@ -2,6 +2,8 @@ extern crate bincode;
 extern crate serde;
 extern crate serde_derive;
 
+mod components;
+mod entry_id_repo;
 mod game_lobby;
 pub mod stream;
 mod topics;
@@ -11,8 +13,6 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct StreamTopics {}
-#[derive(Debug, Clone)]
-pub struct Components {}
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GameId(pub Uuid);
 #[derive(Debug, Clone)]
