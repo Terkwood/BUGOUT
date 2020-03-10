@@ -1,6 +1,10 @@
 # Notes on KataGo
 
-We successfully built KataGo on an NVIDIA Jetson Nano developer board.  We're currently using the analysis engine to broker moves with our new, little friend.
+We successfully built and ran KataGo on an [NVIDIA Jetson Nano developer board](https://developer.nvidia.com/embedded/jetson-nano-developer-kit). Here's how.
+
+## Prereq: Set up the Jetson Nano
+
+[You can follow the NVIDIA guide](https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit).
 
 ## Prereq: Use python3 pip to install cmake
 
