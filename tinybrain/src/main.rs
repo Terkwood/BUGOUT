@@ -1,8 +1,10 @@
 extern crate tinybrain;
+use serde_json;
 use std::error::Error;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::time::Duration;
+use tinybrain::*;
 
 const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -35,8 +37,12 @@ fn main() {
 
     std::thread::sleep(Duration::from_secs(5));
 
-    loop {
-        match child_in.write(COMMAND.as_bytes()) {
+    let commands = vec![KataGoQuery {
+        id: Id("foo".to_string()),
+        ..KataGoQuery::default()
+    }];
+    for c in commands {
+        match child_in.write(&serde_json::to_vec(&c).unwrap()) {
             Err(why) => panic!("couldn't write to   stdin: {}", why.description()),
             Ok(_) => println!("> sent command"),
         }
