@@ -24,4 +24,3 @@ COPY analysis.cfg /var/BUGOUT/.
 RUN ldd --version
 
 CMD [ "tinybrain" ]
-#CMD [ "./katago", "analysis", "-model" ,"g170e-b20c256x2-s2430231552-d525879064.bin.gz", "-config", "analysis.cfg", "-analysis-threads", "2" ]
