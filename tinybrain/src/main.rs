@@ -1,4 +1,5 @@
 extern crate tinybrain;
+use micro_model_moves::*;
 use serde_json;
 use std::error::Error;
 use std::io::{BufRead, BufReader, Write};
