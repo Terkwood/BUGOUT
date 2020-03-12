@@ -23,4 +23,4 @@ COPY analysis.cfg /var/BUGOUT/.
 
 RUN ldd --version
 
-CMD [ "tinybrain" ]
+CMD [ "./tinybrain" ]
