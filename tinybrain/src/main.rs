@@ -34,15 +34,15 @@ fn main() {
     let mut s = String::new();
 
     std::thread::sleep(Duration::from_secs(5));
-    loop {
-        match child_in.write(COMMAND.as_bytes()) {
-            Err(why) => panic!("couldn't write to   stdin: {}", why.description()),
-            Ok(_) => println!("> sent command"),
-        }
 
-        match child_out.read_line(&mut s) {
-            Err(why) => panic!("couldn't read   stdout: {}", why.description()),
-            Ok(_) => print!("< katago respond:\n{}", s),
-        }
+    match child_in.write(COMMAND.as_bytes()) {
+        Err(why) => panic!("couldn't write to   stdin: {}", why.description()),
+        Ok(_) => println!("> sent command"),
     }
+
+    match child_out.read_line(&mut s) {
+        Err(why) => panic!("couldn't read   stdout: {}", why.description()),
+        Ok(_) => print!("< katago respond:\n{}", s),
+    }
+
 }
