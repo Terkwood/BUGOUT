@@ -15,7 +15,7 @@ RUN apt-get update -y
 RUN apt-get upgrade -y
 RUN apt-get dist-upgrade -y
 
-COPY --from=builder /var/BUGOUT/tinybrain /var/BUGOUT/tinybrain
+COPY --from=builder /usr/local/cargo/bin/tinybrain /var/BUGOUT/tinybrain
 COPY katago /var/BUGOUT/.
 COPY g170e-b20c256x2-s2430231552-d525879064.bin.gz /var/BUGOUT/.
 COPY analysis.cfg /var/BUGOUT/.
