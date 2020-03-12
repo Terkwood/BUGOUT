@@ -9,6 +9,7 @@ use tinybrain::*;
 const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
+// TODO
 static COMMAND: &'static str =
 "{\"id\":\"big_08\",\"initialStones\":[],\"moves\":[   [\"B\",\"D3\"],    [\"W\",\"Q4\"],   [\"B\",\"Q10\"],    [\"W\",\"Q16\"],   [\"B\",\"K16\"],   [\"W\",\"D17\"],   [\"B\",\"C7\"], [\"W\",\"C14\"],   [\"B\",\"E13\"], [\"W\",\"D4\"],   [\"B\",\"C4\"], [\"W\",\"E3\"],   [\"B\",\"D2\"], [\"W\",\"C5\"],   [\"B\",\"B5\"], [\"W\",\"B4\"],   [\"B\",\"C3\"]], \"rules\":\"tromp-taylor\",\"komi\":7.5,\"boardXSize\":19,\"boardYSize\":19}\n";
 
@@ -42,7 +43,8 @@ fn main() {
         ..KataGoQuery::default()
     }];
     for c in commands {
-        match child_in.write(&serde_json::to_vec(&c).unwrap()) {
+        let command_out = &serde_json::to_string(&c).unwrap();
+        match child_in.write(format!("{}\n", command_out).as_bytes()) {
             Err(why) => panic!("couldn't write to   stdin: {}", why.description()),
             Ok(_) => println!("> sent command"),
         }
