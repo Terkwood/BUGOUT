@@ -2,6 +2,7 @@ extern crate tinybrain;
 use std::error::Error;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
+use std::time::Duration;
 
 const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -32,6 +33,7 @@ fn main() {
     let mut child_out = BufReader::new(process.stdout.as_mut().unwrap());
     let mut s = String::new();
 
+    std::thread::sleep(Duration::from_secs(5));
     loop {
         match child_in.write(COMMAND.as_bytes()) {
             Err(why) => panic!("couldn't write to   stdin: {}", why.description()),
