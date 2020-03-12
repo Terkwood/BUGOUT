@@ -1,11 +1,11 @@
-# Not a very useful example
-FROM debian:stable-slim
-RUN apt-get update && apt-get upgrade
-RUN apt-get install -y git  libzip-dev libboost-filesystem-dev
-RUN apt-get install -y opencl-headers ocl-icd-dev ocl-icd-opencl-dev
-WORKDIR /var/BUGOUT
-RUN git clone https://github.com/lightvector/KataGo
-WORKDIR /var/BUGOUT/KataGo/cpp
-RUN apt-get install -y cmake
-RUN cmake . -DBUILD_MCTS=1 -DUSE_BACKEND=OPENCL -DUSE_TCMALLOC=0
-CMD [ "./katago" ]
+FROM arm64v8/ubuntu:16.04
+
+ENV LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/tegra
+
+WORKDIR /var/BUGOUT/tinybrain
+
+COPY katago /var/BUGOUT/tinybrain/.
+COPY g170e-b20c256x2-s2430231552-d525879064.bin.gz /var/BUGOUT/tinybrain/.
+COPY analysis.cfg /var/BUGOUT/tinybrain/.
+
+CMD [ "./katago", "analysis", "-model" ,"g170e-b20c256x2-s2430231552-d525879064.bin.gz", "-config", "analysis.cfg", "-analysis-threads", "2" ]
