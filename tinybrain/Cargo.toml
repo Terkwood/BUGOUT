@@ -6,3 +6,6 @@ edition = "2018"
 
 [dependencies]
 micro_model_moves = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
+serde = "1.0.104"
+serde_json = "1.0.48"
+serde_derive = "1.0.104"
