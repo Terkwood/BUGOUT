@@ -44,5 +44,4 @@ fn main() {
         Err(why) => panic!("couldn't read   stdout: {}", why.description()),
         Ok(_) => print!("< katago respond:\n{}", s),
     }
-
 }
