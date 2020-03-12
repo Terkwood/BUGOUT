@@ -1,6 +1,7 @@
 FROM rust AS builder
 WORKDIR /var/BUGOUT
-COPY . .
+COPY src .
+COPY Cargo.toml .
 RUN cargo install --path .
 
 
