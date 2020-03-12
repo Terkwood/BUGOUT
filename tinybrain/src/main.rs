@@ -1,11 +1,11 @@
 extern crate tinybrain;
 use micro_model_moves::*;
-use serde_json;
 use std::error::Error;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::time::Duration;
-use tinybrain::*;
+use tinybrain::KataGoQuery;
+use uuid::Uuid;
 
 const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -35,20 +35,39 @@ fn main() {
 
     std::thread::sleep(Duration::from_secs(5));
 
-    let commands = vec![KataGoQuery {
-        id: Id("foo".to_string()),
-        ..KataGoQuery::default()
-    }];
-    for c in commands {
-        let command_out = &serde_json::to_string(&c).unwrap();
-        match child_in.write(format!("{}\n", command_out).as_bytes()) {
-            Err(why) => panic!("couldn't write to   stdin: {}", why.description()),
-            Ok(_) => println!("> sent command"),
-        }
+    let game_id = GameId(Uuid::nil());
+    let game_state = GameState {
+        moves: vec![
+            MoveMade {
+                coord: Some(Coord::of(0, 0)),
+                event_id: EventId::new(),
+                game_id: game_id.clone(),
+                reply_to: ReqId(Uuid::nil()),
+                player: Player::BLACK,
+                captured: vec![],
+            },
+            MoveMade {
+                coord: Some(Coord::of(1, 1)),
+                event_id: EventId::new(),
+                game_id: game_id.clone(),
+                reply_to: ReqId(Uuid::nil()),
+                player: Player::WHITE,
+                captured: vec![],
+            },
+        ],
+        turn: 2,
+        ..GameState::default()
+    };
 
-        match child_out.read_line(&mut s) {
-            Err(why) => panic!("couldn't read   stdout: {}", why.description()),
-            Ok(_) => print!("< katago respond:\n{}", s),
-        }
+    let query = KataGoQuery::from(&game_id, &game_state);
+
+    match child_in.write(&query.to_json().unwrap()) {
+        Err(why) => panic!("couldn't write to   stdin: {}", why.description()),
+        Ok(_) => println!("> sent command"),
+    }
+
+    match child_out.read_line(&mut s) {
+        Err(why) => panic!("couldn't read   stdout: {}", why.description()),
+        Ok(_) => print!("< katago respond:\n{}", s),
     }
 }
