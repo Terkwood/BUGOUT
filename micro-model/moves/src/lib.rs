@@ -24,8 +24,8 @@ pub enum Player {
 
 impl Player {
     pub fn from_str(s: &str) -> Player {
-        let mut trimmed = s.trim().to_ascii_lowercase();
-        if trimmed.pop() == Some('w') {
+        let trimmed = s.trim().to_ascii_lowercase();
+        if trimmed.chars().next() == Some('w') {
             Player::WHITE
         } else {
             Player::BLACK
@@ -39,7 +39,7 @@ impl Player {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Eq)]
+#[derive(Debug, PartialEq, Clone, Eq, Serialize, Deserialize)]
 pub struct MakeMoveCommand {
     pub game_id: GameId,
     pub req_id: ReqId,
@@ -154,5 +154,18 @@ mod tests {
         let bytes = gs.serialize().unwrap();
         let back = GameState::from(&bytes).unwrap();
         assert_eq!(back, gs);
+    }
+
+    #[test]
+    fn player_from_string() {
+        assert_eq!(Player::from_str("WHITE"), Player::WHITE);
+        assert_eq!(Player::from_str("BLACK"), Player::BLACK);
+        assert_eq!(Player::from_str("W"), Player::WHITE);
+        assert_eq!(Player::from_str("B"), Player::BLACK);
+        assert_eq!(Player::from_str("white"), Player::WHITE);
+        assert_eq!(Player::from_str("black"), Player::BLACK);
+        assert_eq!(Player::from_str("w"), Player::WHITE);
+        assert_eq!(Player::from_str("b"), Player::BLACK);
+        assert_eq!(Player::from_str(""), Player::BLACK);
     }
 }
