@@ -29,10 +29,12 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
                     match request {
                         Ok(r) =>{
                             if let Ok(query) = KataGoQuery::from(&r.game_id, &r.game_state) {
-                                let qj = query.to_json().expect("failed query ser");
-                                match child_in.write(&qj) {
-                                    Err(why) => panic!("couldn't write to   stdin: {}", why.description()),
-                                    Ok(_) => println!("> requested compute for {:?}",query),
+                                match query.to_json() {
+                                    Ok(qj) => match child_in.write(&qj) {
+                                        Err(why) => panic!("couldn't write to   stdin: {}", why.description()),
+                                        Ok(_) => println!("> requested compute for {:?}",query),
+                                    },
+                                    Err(e) => println!("failed query ser {:?}",e)
                                 }
                             } else {
                                 println!("ERR Bad coord in game state")
