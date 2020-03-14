@@ -22,8 +22,8 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComputeMove {
-    game_id: GameId,
-    game_state: GameState,
+    pub game_id: GameId,
+    pub game_state: GameState,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct MoveComputed(MakeMoveCommand);
@@ -68,7 +68,6 @@ fn from_alphanum(a: &str) -> Result<Coord, err::CoordOutOfRange> {
 mod tests {
     use super::*;
     use katago::json::*;
-    use micro_model_moves::*;
     use uuid::Uuid;
     #[test]
     fn move_computed_from() {
