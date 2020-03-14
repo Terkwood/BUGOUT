@@ -47,12 +47,10 @@ fn main() {
                         .expect("ser"),
                     ))
                     .unwrap();
+
                 // block
                 let msg = websocket.read_message().unwrap();
-                if msg.is_binary() || msg.is_text() {
-                    websocket.write_message(msg).unwrap();
-                }
-                println!("Next")
+                println!("Got msg {}", msg)
             }
         });
     }
