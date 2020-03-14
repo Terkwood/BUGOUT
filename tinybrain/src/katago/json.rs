@@ -200,7 +200,7 @@ mod tests {
                     captured: vec![],
                 },
             ],
-            turn: 3, // TODO be careful of differing turn index
+            turn: 3,
             player_up: Player::WHITE,
             ..GameState::default()
         };
@@ -236,5 +236,31 @@ mod tests {
         };
 
         assert!(KataGoQuery::from(&game_id, &game_state).is_err())
+    }
+
+    #[test]
+    fn board_size_honored() {
+        let game_id = GameId(Uuid::nil());
+        let game_state = GameState {
+            moves: vec![],
+            turn: 1,
+            player_up: Player::WHITE,
+            board: Board {
+                pieces: std::collections::HashMap::new(),
+                size: 9,
+            },
+            ..GameState::default()
+        };
+
+        let expected = KataGoQuery {
+            id: Id("00000000-0000-0000-0000-000000000000_1_WHITE".to_string()),
+            moves: vec![],
+            board_x_size: 9,
+            board_y_size: 9,
+            ..KataGoQuery::default()
+        };
+
+        let actual = KataGoQuery::from(&game_id, &game_state).expect("move(s) out of range");
+        assert_eq!(actual, expected);
     }
 }
