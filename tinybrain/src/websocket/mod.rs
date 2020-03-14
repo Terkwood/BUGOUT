@@ -38,15 +38,17 @@ pub fn start(compute_move_in: Sender<ComputeMove>, move_computed_out: Receiver<M
             recv(move_computed_out) -> mc =>
                 match mc {
                     Err(e) => println!("Error reading move_computed_out {:?}",e),
-                    Ok(move_computed) =>
+                    Ok(move_computed) => {
                         socket
                             .write_message(
                                 Message::Binary(
                                     bincode::serialize(&move_computed)
                                         .expect("bincode move computed")
                                     )
-                                ).expect("write websocket message")
-                }
+                                ).expect("write websocket message");
+                            println!("Wrote on socket")
+                        }
+            }
         }
     }
 }
