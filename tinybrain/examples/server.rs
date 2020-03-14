@@ -37,7 +37,10 @@ fn main() {
                         bincode::serialize(&ComputeMove {
                             game_id: GameId(Uuid::nil()),
                             game_state: GameState {
-                                board: Board::default(),
+                                board: Board {
+                                    size: 9,
+                                    ..Board::default()
+                                },
                                 captures: Captures::default(),
                                 moves: vec![],
                                 player_up: Player::BLACK,

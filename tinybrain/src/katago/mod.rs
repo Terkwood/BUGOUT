@@ -53,8 +53,8 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
             Err(why) => panic!("couldn't read   stdout: {}", why.description()),
             Ok(_) => {
                 print!("< katago respond:\n{}", s);
-
-                match serde_json::from_str(&s.trim()) {
+                s.pop(); // remove newline
+                match serde_json::from_str(&s) {
                     Err(e) => println!("Deser error in katago response: {:?}", e),
                     Ok(kgr) => {
                         if let Err(e) = move_computed_in
