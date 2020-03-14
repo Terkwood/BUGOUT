@@ -46,15 +46,16 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
     });
 
     let mut child_out = BufReader::new(process.stdout.take().expect("no handle to stdout"));
-    let mut s = String::new();
 
     loop {
+        let mut s = String::new();
+
         match child_out.read_line(&mut s) {
             Err(why) => panic!("couldn't read   stdout: {}", why.description()),
             Ok(_) => {
                 print!("< katago respond:\n{}", s);
-                s.pop(); // remove newline
-                match serde_json::from_str(&s) {
+                //s.pop(); // remove newline
+                match serde_json::from_str(&s.trim()) {
                     Err(e) => println!("Deser error in katago response: {:?}", e),
                     Ok(kgr) => {
                         if let Err(e) = move_computed_in
