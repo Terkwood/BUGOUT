@@ -5,31 +5,15 @@ extern crate tungstenite;
 extern crate uuid;
 
 use micro_model_moves::*;
+
 use tinybrain::{ComputeMove, MoveComputed};
+use tungstenite::accept_hdr;
+use tungstenite::handshake::server::{Request, Response};
 use tungstenite::{connect, Message};
 use uuid::Uuid;
 
-fn wain() {
-    let (mut socket, response) = connect("ws://localhost:3012/socket").expect("Can't connect");
-
-    println!("Connected to the server");
-    println!("Response HTTP code: {}", response.status());
-    println!("Response contains the following headers:");
-    for (ref header, _value) in response.headers() {
-        println!("* {}", header);
-    }
-
-    loop {
-        let msg = socket.read_message().expect("Error reading message");
-        println!("Received: {}", msg);
-    }
-}
-
 use std::net::TcpListener;
 use std::thread::spawn;
-
-use tungstenite::accept_hdr;
-use tungstenite::handshake::server::{Request, Response};
 
 fn main() {
     let server = TcpListener::bind("127.0.0.1:3012").unwrap();

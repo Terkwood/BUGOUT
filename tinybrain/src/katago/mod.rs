@@ -1,12 +1,10 @@
 use crate::*;
 use crossbeam_channel::{select, Receiver, Sender};
 use json::*;
-use micro_model_moves::*;
 use std::error::Error;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, Command, Stdio};
 use std::thread;
-use uuid::Uuid;
 
 pub mod json;
 
@@ -34,7 +32,7 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
                                 let qj = query.to_json().expect("failed query ser");
                                 match child_in.write(&qj) {
                                     Err(why) => panic!("couldn't write to   stdin: {}", why.description()),
-                                    Ok(_) => println!("> sent command {:?}",qj),
+                                    Ok(_) => println!("> requested compute for {:?}",query),
                                 }
                             } else {
                                 println!("ERR Bad coord in game state")
@@ -63,31 +61,6 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
             }
         }
     }
-
-    todo!("remove everything below");
-    let game_id = GameId(Uuid::nil());
-    let game_state = GameState {
-        moves: vec![
-            MoveMade {
-                coord: Some(Coord::of(0, 0)),
-                event_id: EventId::new(),
-                game_id: game_id.clone(),
-                reply_to: ReqId(Uuid::nil()),
-                player: Player::BLACK,
-                captured: vec![],
-            },
-            MoveMade {
-                coord: Some(Coord::of(1, 1)),
-                event_id: EventId::new(),
-                game_id: game_id.clone(),
-                reply_to: ReqId(Uuid::nil()),
-                player: Player::WHITE,
-                captured: vec![],
-            },
-        ],
-        turn: 2,
-        ..GameState::default()
-    };
 }
 
 fn launch_child() -> Result<Child, std::io::Error> {
