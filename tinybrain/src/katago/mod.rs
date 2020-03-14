@@ -54,11 +54,15 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
             Ok(_) => {
                 print!("< katago respond:\n{}", s);
 
-                let kgr: KataGoResponse = serde_json::from_str(&s).expect("couldnt deser response");
-                if let Err(e) = move_computed_in
-                    .send(MoveComputed::from(kgr).expect("couldnt make a movecomputed"))
-                {
-                    println!("failed to send move_computed {:?}", e)
+                match serde_json::from_str(&s.trim()) {
+                    Err(e) => println!("Deser error in katago response: {:?}", e),
+                    Ok(kgr) => {
+                        if let Err(e) = move_computed_in
+                            .send(MoveComputed::from(kgr).expect("couldnt make a movecomputed"))
+                        {
+                            println!("failed to send move_computed {:?}", e)
+                        }
+                    }
                 }
             }
         }
