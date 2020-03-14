@@ -10,7 +10,6 @@ extern crate uuid;
 extern crate lazy_static;
 extern crate http;
 
-mod authorization;
 pub mod env;
 mod err;
 pub mod katago;
@@ -33,6 +32,7 @@ impl MoveComputed {
     pub fn from(response: KataGoResponse) -> Result<Self, err::KataGoParseErr> {
         let game_id = response.game_id()?;
         let player = response.player()?;
+        // TODO pass ?!
         let coord: Option<Coord> = Some(from_alphanum(&response.move_infos[0].r#move)?);
         let req_id = ReqId(Uuid::new_v4());
         Ok(MoveComputed(MakeMoveCommand {

@@ -2,7 +2,10 @@ use crate::*;
 use crossbeam_channel::{select, Receiver, Sender};
 use http::Request;
 use tungstenite::util::NonBlockingResult;
-use tungstenite::{connect, Message, WebSocket};
+use tungstenite::{connect, Message};
+
+mod authorization;
+
 pub fn start(compute_move_in: Sender<ComputeMove>, move_computed_out: Receiver<MoveComputed>) {
     let (mut socket, response) =
         connect(create_request()).expect("cannot connect to robocall host");
@@ -18,7 +21,18 @@ pub fn start(compute_move_in: Sender<ComputeMove>, move_computed_out: Receiver<M
         match incoming_data {
             Err(e) => println!("Error reading incoming data {:?}", e),
             Ok(None) => println!("Nothing on the line"), // TODO
-            Ok(Some(_data)) => todo!("Handle data"),
+            Ok(Some(tungstenite::Message::Binary(data))) => {
+                let cm: Result<ComputeMove, _> = bincode::deserialize(&data);
+                match cm {
+                    Err(e) => println!("failed to deser compute move {:?}", e),
+                    Ok(compute_move) => {
+                        if let Err(e) = compute_move_in.send(compute_move) {
+                            println!("failed to send compute move {:?}", e)
+                        }
+                    }
+                }
+            }
+            Ok(_e) => println!("requires binary"),
         };
         select! {
             recv(move_computed_out) -> mc =>
