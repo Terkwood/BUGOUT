@@ -107,6 +107,8 @@ impl KataGoQuery {
                     game_state.player_up.to_string()
                 )),
                 moves,
+                board_x_size: game_state.board.size,
+                board_y_size: game_state.board.size,
                 ..KataGoQuery::default()
             })
         }

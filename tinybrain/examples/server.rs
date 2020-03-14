@@ -35,7 +35,7 @@ fn main() {
                 websocket
                     .write_message(Message::Binary(
                         bincode::serialize(&ComputeMove {
-                            game_id: GameId(Uuid::nil()),
+                            game_id: GameId(Uuid::new_v4()),
                             game_state: GameState {
                                 board: Board {
                                     size: 9,
@@ -52,8 +52,14 @@ fn main() {
                     .unwrap();
 
                 // block
-                let msg = websocket.read_message().unwrap();
-                println!("Got msg {}", msg)
+                match websocket.read_message().unwrap() {
+                    Message::Binary(data) => {
+                        let move_computed: MoveComputed =
+                            bincode::deserialize(&data).expect("bincode deser");
+                        println!("Got move computed {:?}", move_computed);
+                    }
+                    _ => println!("Got another response"),
+                }
             }
         });
     }
