@@ -52,6 +52,7 @@ fn main() {
                 if msg.is_binary() || msg.is_text() {
                     websocket.write_message(msg).unwrap();
                 }
+                println!("Next")
             }
         });
     }
