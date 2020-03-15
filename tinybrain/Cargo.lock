@@ -321,7 +321,8 @@ dependencies = [
 
 [[package]]
 name = "micro_model_moves"
-version = "0.1.2"
+version = "0.1.1"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#227278cb3a7f81b7fd393d3467866a126cdfccc3"
 dependencies = [
  "bincode",
  "serde",
