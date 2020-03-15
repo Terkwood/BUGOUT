@@ -33,7 +33,7 @@ pub struct KataGoResponse {
 pub struct Id(pub String);
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd)]
-pub struct Move(pub String, pub AlphaNumCoord);
+pub struct Move(pub String, pub AlphaNumOrPass);
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd)]
 pub struct Rules(pub String);
@@ -47,37 +47,42 @@ pub struct MoveInfo {
     pub r#move: String,
 }
 
+pub const PASS: &str = "pass";
 /// Alphanumeric coordinate as expected by KataGo, e.g. `Q16`
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd)]
-pub struct AlphaNumCoord(pub String);
+pub struct AlphaNumOrPass(pub String);
 
 impl Move {
-    pub fn from(player: Player, xy: Coord) -> Result<Self, CoordOutOfRange> {
+    pub fn from(player: Player, maybe_xy: Option<Coord>) -> Result<Self, CoordOutOfRange> {
         let p = match player {
             Player::BLACK => "B",
             _ => "W",
         };
-        AlphaNumCoord::from(xy).map(|c| Move(p.to_string(), c))
+        AlphaNumOrPass::from(maybe_xy).map(|c| Move(p.to_string(), c))
     }
 }
 
-impl AlphaNumCoord {
-    pub fn from(xy: Coord) -> Result<Self, CoordOutOfRange> {
-        let alphabet = (b'A'..=b'Z')
-            .filter_map(|c| {
-                let c = c as char;
-                if c.is_alphabetic() {
-                    Some(c)
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
-        let i = xy.x as usize;
-        if i < alphabet.len() {
-            Ok(AlphaNumCoord(format!("{}{}", alphabet[i], xy.y + 1)))
+impl AlphaNumOrPass {
+    pub fn from(maybe_xy: Option<Coord>) -> Result<Self, CoordOutOfRange> {
+        if let Some(xy) = maybe_xy {
+            let alphabet = (b'A'..=b'Z')
+                .filter_map(|c| {
+                    let c = c as char;
+                    if c.is_alphabetic() {
+                        Some(c)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+            let i = xy.x as usize;
+            if i < alphabet.len() {
+                Ok(AlphaNumOrPass(format!("{}{}", alphabet[i], xy.y + 1)))
+            } else {
+                Err(CoordOutOfRange)
+            }
         } else {
-            Err(CoordOutOfRange)
+            Ok(AlphaNumOrPass(PASS.to_string()))
         }
     }
 }
@@ -87,7 +92,7 @@ impl KataGoQuery {
         let moves_with_errors: Vec<Result<Move, CoordOutOfRange>> = game_state
             .moves
             .iter()
-            .map(|gsm| Move::from(gsm.player, gsm.coord.unwrap())) // TODO pass
+            .map(|gsm| Move::from(gsm.player, gsm.coord))
             .collect();
 
         if moves_with_errors.iter().any(|m| m.is_err()) {
@@ -194,7 +199,7 @@ mod tests {
                     captured: vec![],
                 },
                 MoveMade {
-                    coord: Some(Coord::of(10, 10)),
+                    coord: None,
                     event_id: EventId::new(),
                     game_id: game_id.clone(),
                     reply_to: ReqId(Uuid::nil()),
@@ -210,9 +215,9 @@ mod tests {
         let expected = KataGoQuery {
             id: Id("00000000-0000-0000-0000-000000000000_3_WHITE".to_string()),
             moves: vec![
-                Move("B".to_string(), AlphaNumCoord("A1".to_string())),
-                Move("W".to_string(), AlphaNumCoord("B2".to_string())),
-                Move("B".to_string(), AlphaNumCoord("K11".to_string())),
+                Move("B".to_string(), AlphaNumOrPass("A1".to_string())),
+                Move("W".to_string(), AlphaNumOrPass("B2".to_string())),
+                Move("B".to_string(), AlphaNumOrPass("pass".to_string())),
             ],
             ..KataGoQuery::default()
         };

@@ -9,7 +9,7 @@ use micro_model_moves::*;
 use tinybrain::{ComputeMove, MoveComputed};
 use tungstenite::accept_hdr;
 use tungstenite::handshake::server::{Request, Response};
-use tungstenite::{connect, Message};
+use tungstenite::Message;
 use uuid::Uuid;
 
 use std::net::TcpListener;
