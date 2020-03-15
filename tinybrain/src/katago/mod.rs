@@ -1,6 +1,7 @@
 use crate::*;
 use crossbeam_channel::{select, Receiver, Sender};
 use json::*;
+use std::convert::TryFrom;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, Command, Stdio};
 use std::thread;
@@ -53,11 +54,12 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
             Err(why) => panic!("couldn't read stdout: {:?}", why),
             Ok(_) => {
                 print!("< katago respond:\n{}", s);
-                match serde_json::from_str(&s.trim()) {
+                let deser: Result<KataGoResponse, _> = serde_json::from_str(&s.trim());
+                match deser {
                     Err(e) => println!("Deser error in katago response: {:?}", e),
                     Ok(kgr) => {
                         if let Err(e) = move_computed_in
-                            .send(MoveComputed::from(kgr).expect("couldnt make a movecomputed"))
+                            .send(MoveComputed::try_from(kgr).expect("couldnt make a movecomputed"))
                         {
                             println!("failed to send move_computed {:?}", e)
                         }
