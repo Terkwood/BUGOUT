@@ -48,7 +48,8 @@ pub struct MoveInfo {
 }
 
 pub const PASS: &str = "pass";
-/// Alphanumeric coordinate as expected by KataGo, e.g. `Q16`
+/// Alphanumeric coordinate as expected by KataGo, e.g. `Q16` or `pass`.
+/// This isn't strictly necessary, as KataGo supports numeric coords.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd)]
 pub struct AlphaNumOrPass(pub String);
 
@@ -83,6 +84,34 @@ impl AlphaNumOrPass {
             }
         } else {
             Ok(AlphaNumOrPass(PASS.to_string()))
+        }
+    }
+}
+
+pub fn interpret_coord(move_info_move: &str) -> Result<Option<Coord>, CoordOutOfRange> {
+    if move_info_move.trim().to_ascii_lowercase() == PASS {
+        Ok(None)
+    } else {
+        Ok(Some(from_alphanum(move_info_move)?))
+    }
+}
+
+fn from_alphanum(a: &str) -> Result<Coord, CoordOutOfRange> {
+    if a.len() < 2 {
+        Err(CoordOutOfRange)
+    } else {
+        let letter: char = a.chars().collect::<Vec<char>>()[0];
+        let number = &a[1..];
+        let y_plus_one = number.to_string().parse::<u16>()?;
+        let r: Vec<char> = (b'A'..=b'Z').map(char::from).collect();
+        let maybe_x = r.iter().position(|l| l == &letter);
+        if let Some(x) = maybe_x {
+            Ok(Coord {
+                x: x as u16,
+                y: y_plus_one - 1,
+            })
+        } else {
+            Err(CoordOutOfRange)
         }
     }
 }
@@ -269,5 +298,17 @@ mod tests {
 
         let actual = KataGoQuery::from(&game_id, &game_state).expect("move(s) out of range");
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_interpret_coord() {
+        let actual = interpret_coord("B3");
+        assert_eq!(actual.expect("parse"), Some(Coord { x: 1, y: 2 }))
+    }
+
+    #[test]
+    fn test_interpret_pass() {
+        let actual = interpret_coord("pass");
+        assert_eq!(actual.expect("parse"), None)
     }
 }

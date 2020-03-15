@@ -32,7 +32,7 @@ impl MoveComputed {
     pub fn from(response: KataGoResponse) -> Result<Self, err::KataGoParseErr> {
         let game_id = response.game_id()?;
         let player = response.player()?;
-        let coord: Option<Coord> = interpret_coord(&response.move_infos[0].r#move)?;
+        let coord: Option<Coord> = katago::json::interpret_coord(&response.move_infos[0].r#move)?;
         let req_id = ReqId(Uuid::new_v4());
         Ok(MoveComputed(MakeMoveCommand {
             game_id,
@@ -40,34 +40,6 @@ impl MoveComputed {
             coord,
             req_id,
         }))
-    }
-}
-
-fn interpret_coord(move_info_move: &str) -> Result<Option<Coord>, err::CoordOutOfRange> {
-    if move_info_move.trim().to_ascii_lowercase() == katago::json::PASS {
-        Ok(None)
-    } else {
-        Ok(Some(from_alphanum(move_info_move)?))
-    }
-}
-
-fn from_alphanum(a: &str) -> Result<Coord, err::CoordOutOfRange> {
-    if a.len() < 2 {
-        Err(err::CoordOutOfRange)
-    } else {
-        let letter: char = a.chars().collect::<Vec<char>>()[0];
-        let number = &a[1..];
-        let y_plus_one = number.to_string().parse::<u16>()?;
-        let r: Vec<char> = (b'A'..=b'Z').map(char::from).collect();
-        let maybe_x = r.iter().position(|l| l == &letter);
-        if let Some(x) = maybe_x {
-            Ok(Coord {
-                x: x as u16,
-                y: y_plus_one - 1,
-            })
-        } else {
-            Err(err::CoordOutOfRange)
-        }
     }
 }
 
@@ -94,17 +66,5 @@ mod tests {
             req_id: actual.0.req_id.clone(),
         });
         assert_eq!(actual, expected)
-    }
-
-    #[test]
-    fn test_interpret_coord() {
-        let actual = interpret_coord("B3");
-        assert_eq!(actual.expect("parse"), Some(Coord { x: 1, y: 2 }))
-    }
-
-    #[test]
-    fn test_interpret_pass() {
-        let actual = interpret_coord("pass");
-        assert_eq!(actual.expect("parse"), None)
     }
 }
