@@ -1,7 +1,6 @@
 use crate::*;
 use crossbeam_channel::{select, Receiver, Sender};
 use json::*;
-use std::error::Error;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, Command, Stdio};
 use std::thread;
@@ -31,7 +30,7 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
                             if let Ok(query) = KataGoQuery::from(&r.game_id, &r.game_state) {
                                 match query.to_json() {
                                     Ok(qj) => match child_in.write(&qj) {
-                                        Err(why) => panic!("couldn't write to stdin: {}", why.description().to_string()),
+                                        Err(why) => panic!("couldn't write to stdin: {:?}", why),
                                         Ok(_) => println!("> requested compute for {:?}",query),
                                     },
                                     Err(e) => println!("failed query ser {:?}",e)
@@ -51,7 +50,7 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
         let mut s = String::new();
 
         match child_out.read_line(&mut s) {
-            Err(why) => panic!("couldn't read stdout: {}", why.description().to_string()),
+            Err(why) => panic!("couldn't read stdout: {:?}", why),
             Ok(_) => {
                 print!("< katago respond:\n{}", s);
                 match serde_json::from_str(&s.trim()) {
