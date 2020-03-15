@@ -1,6 +1,6 @@
 [package]
 name = "tinybrain"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 
@@ -10,3 +10,11 @@ serde = "1.0.104"
 serde_json = "1.0.48"
 serde_derive = "1.0.104"
 uuid = { version = "0.8.1", features = [ "serde", "v4" ] }
+bincode = "1.2.1"
+tungstenite = { version= "0.10.1", features = ["tls"] }
+dotenv = "0.15.0"
+crossbeam = "0.7.3"
+crossbeam-channel = "0.4.2"
+lazy_static = "1.4.0" 
+base64 = "0.12.0"
+http = "0.2.0"
