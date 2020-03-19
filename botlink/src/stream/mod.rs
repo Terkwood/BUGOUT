@@ -2,6 +2,7 @@ pub mod topics;
 pub mod xread;
 
 use crate::registry::Components;
+use crate::repo::entry_id::EntryIdType;
 use crate::repo::{EntryIdRepo, GameRepo};
 use crossbeam_channel::{Receiver, Sender};
 use log::{error, info};
@@ -18,11 +19,14 @@ pub fn process(topics: Topics, opts: &mut StreamOpts) {
                 Ok(xrr) => {
                     for time_ordered_event in xrr {
                         match time_ordered_event {
-                            (_entry_id, StreamData::AB(AttachBot { game_id, player })) => {
+                            (entry_id, StreamData::AB(AttachBot { game_id, player })) => {
                                 if let Err(e) = opts.game_repo.attach(game_id, player) {
                                     error!("Error attaching bot {:?}", e)
                                 } else {
-                                    if let Err(e) = opts.entry_id_repo.update(todo!(), todo!()) {
+                                    if let Err(e) = opts
+                                        .entry_id_repo
+                                        .update(EntryIdType::AttachBotEvent, entry_id)
+                                    {
                                         error!("Error saving entry ID for attach bot {:?}", e)
                                     }
                                 }
