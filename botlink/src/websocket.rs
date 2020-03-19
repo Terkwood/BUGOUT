@@ -1,7 +1,8 @@
 use crossbeam_channel::{Receiver, Sender};
 use micro_model_bot::{ComputeMove, MoveComputed};
+
 pub fn listen(_opts: WSOpts) {
-    todo!()
+    todo!("Auth, and everything else")
 }
 
 pub struct WSOpts {
