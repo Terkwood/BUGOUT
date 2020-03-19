@@ -323,6 +323,7 @@ dependencies = [
 name = "micro_model_bot"
 version = "0.1.0"
 dependencies = [
+ "bincode",
  "micro_model_moves",
  "serde",
  "serde_derive",
