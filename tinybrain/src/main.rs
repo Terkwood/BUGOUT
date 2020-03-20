@@ -1,6 +1,7 @@
 extern crate tinybrain;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
+use micro_model_bot::*;
 use std::thread;
 use tinybrain::*;
 
