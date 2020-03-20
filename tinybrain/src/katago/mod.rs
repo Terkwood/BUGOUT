@@ -1,6 +1,7 @@
 use crate::*;
 use crossbeam_channel::{select, Receiver, Sender};
 use json::*;
+use std::convert::TryFrom;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, Command, Stdio};
 use std::thread;
@@ -53,11 +54,12 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
             Err(why) => panic!("couldn't read stdout: {:?}", why),
             Ok(_) => {
                 print!("< katago respond:\n{}", s);
-                match serde_json::from_str(&s.trim()) {
+                let deser: Result<KataGoResponse, _> = serde_json::from_str(&s.trim());
+                match deser {
                     Err(e) => println!("Deser error in katago response: {:?}", e),
                     Ok(kgr) => {
                         if let Err(e) = move_computed_in
-                            .send(MoveComputed::from(kgr).expect("couldnt make a movecomputed"))
+                            .send(MoveComputed::try_from(kgr).expect("couldnt make a movecomputed"))
                         {
                             println!("failed to send move_computed {:?}", e)
                         }
@@ -65,6 +67,22 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
                 }
             }
         }
+    }
+}
+
+impl TryFrom<KataGoResponse> for MoveComputed {
+    type Error = crate::err::KataGoParseErr;
+    fn try_from(response: KataGoResponse) -> Result<Self, Self::Error> {
+        let game_id = response.game_id()?;
+        let player = response.player()?;
+        let coord: Option<Coord> = interpret_coord(&response.move_infos[0].r#move)?;
+        let req_id = ReqId(Uuid::new_v4());
+        Ok(MoveComputed(MakeMoveCommand {
+            game_id,
+            player,
+            coord,
+            req_id,
+        }))
     }
 }
 
@@ -80,4 +98,29 @@ fn launch_child() -> Result<Child, std::io::Error> {
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use json::KataGoResponse;
+    #[test]
+    fn move_computed_from() {
+        let actual = MoveComputed::try_from(KataGoResponse {
+            id: Id(format!("{}_1_WHITE", Uuid::nil().to_string())),
+            turn_number: 1,
+            move_infos: vec![MoveInfo {
+                r#move: "B3".to_string(),
+                order: 0,
+            }],
+        })
+        .expect("fail");
+        let expected = MoveComputed(MakeMoveCommand {
+            game_id: GameId(Uuid::nil()),
+            coord: Some(Coord { x: 1, y: 2 }),
+            player: Player::WHITE,
+            req_id: actual.0.req_id.clone(),
+        });
+        assert_eq!(actual, expected)
+    }
 }

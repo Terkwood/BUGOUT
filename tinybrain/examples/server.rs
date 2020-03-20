@@ -1,12 +1,13 @@
 extern crate bincode;
+extern crate micro_model_bot;
 extern crate micro_model_moves;
 extern crate tinybrain;
 extern crate tungstenite;
 extern crate uuid;
 
+use micro_model_bot::*;
 use micro_model_moves::*;
 
-use tinybrain::{ComputeMove, MoveComputed};
 use tungstenite::accept_hdr;
 use tungstenite::handshake::server::{Request, Response};
 use tungstenite::Message;
