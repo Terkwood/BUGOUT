@@ -22,14 +22,19 @@ pub fn listen(opts: WSOpts) {
                     let mut is_authorized = false;
                     for (ref header, value) in req.headers() {
                         if **header == "Authorization" {
-                            is_authorized = *value == base64::encode(user_colon_pass)
+                            // see https://en.wikipedia.org/wiki/Basic_access_authentication
+                            is_authorized =
+                                *value == format!("Basic {}", base64::encode(user_colon_pass))
                         }
                     }
                     if is_authorized {
                         Ok(response)
                     } else {
                         warn!("No Auth");
-                        Err(http::response::Response::new(None))
+                        Err(http::response::Builder::new()
+                            .status(401)
+                            .body(None)
+                            .expect("cannot form response"))
                     }
                 } else {
                     Ok(response)
