@@ -1,6 +1,7 @@
 extern crate base64;
 extern crate bincode;
 extern crate dotenv;
+extern crate micro_model_moves;
 extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
@@ -15,4 +16,4 @@ mod err;
 pub mod katago;
 pub mod websocket;
 
-use micro_model_bot::*;
+pub use micro_model_bot::*;

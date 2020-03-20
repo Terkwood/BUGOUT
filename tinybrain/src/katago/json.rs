@@ -1,8 +1,8 @@
 use crate::err::*;
-use micro_model_bot::MoveComputed;
+
 use micro_model_moves::*;
 use serde_derive::{Deserialize, Serialize};
-use std::convert::TryFrom;
+
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -207,6 +207,8 @@ impl Default for Komi {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use micro_model_bot::MoveComputed;
+    use std::convert::TryFrom;
     use uuid::Uuid;
     #[test]
     fn query_from_game_state() {
