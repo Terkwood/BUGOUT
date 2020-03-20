@@ -1,6 +1,6 @@
 use std::env;
 
-const ENV_AUTHORIZATION: &str = "AUTHORIZATION";
+const ENV_AUTHORIZATION: &str = "AUTHORIZATION"; // username:password
 const ENV_ADDRESS: &str = "ADDRESS";
 
 const DEFAULT_ADDRESS: &str = "127.0.0.1:3012";

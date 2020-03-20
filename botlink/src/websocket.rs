@@ -1,5 +1,6 @@
 use crate::env;
 use crossbeam_channel::{Receiver, Sender};
+use log::warn;
 use micro_model_bot::{ComputeMove, MoveComputed};
 use std::net::TcpListener;
 use std::thread;
@@ -16,16 +17,23 @@ pub fn listen(opts: WSOpts) {
         let _move_computed_in = opts.move_computed_in.clone();
         let _compute_move_out = opts.compute_move_out.clone();
         thread::spawn(move || {
-            let callback = |req: &Request, _response: Response| {
-                println!("Received a new ws handshake");
-                println!("The request's path is: {}", req.uri().path());
-                println!("The request's headers are:");
-                for (ref header, _value) in req.headers() {
-                    println!("* {}", header);
-                    todo!("Auth")
+            let callback = |req: &Request, response: Response| {
+                if let Some(user_colon_pass) = &*env::AUTHORIZATION {
+                    let mut is_authorized = false;
+                    for (ref header, value) in req.headers() {
+                        if **header == "Authorization" {
+                            is_authorized = *value == base64::encode(user_colon_pass)
+                        }
+                    }
+                    if is_authorized {
+                        Ok(response)
+                    } else {
+                        warn!("No Auth");
+                        Err(http::response::Response::new(None))
+                    }
+                } else {
+                    Ok(response)
                 }
-
-                todo!("Auth")
             };
             let mut _websocket = accept_hdr(stream.expect("stream"), callback);
             todo!("The Rest")

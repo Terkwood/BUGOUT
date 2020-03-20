@@ -21,3 +21,4 @@ log = "0.4.8"
 lazy_static = "1.4.0"
 dotenv = "0.15.0"
 uuid =  { version = "0.8.1", features = ["v4", "serde"] }
+base64 = "0.12.0"
