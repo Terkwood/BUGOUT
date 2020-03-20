@@ -90,22 +90,6 @@ impl AlphaNumOrPass {
     }
 }
 
-impl TryFrom<KataGoResponse> for MoveComputed {
-    type Error = KataGoParseErr;
-    fn try_from(response: KataGoResponse) -> Result<Self, Self::Error> {
-        let game_id = response.game_id()?;
-        let player = response.player()?;
-        let coord: Option<Coord> = interpret_coord(&response.move_infos[0].r#move)?;
-        let req_id = ReqId(Uuid::new_v4());
-        Ok(MoveComputed(MakeMoveCommand {
-            game_id,
-            player,
-            coord,
-            req_id,
-        }))
-    }
-}
-
 pub fn interpret_coord(move_info_move: &str) -> Result<Option<Coord>, CoordOutOfRange> {
     if move_info_move.trim().to_ascii_lowercase() == PASS {
         Ok(None)
