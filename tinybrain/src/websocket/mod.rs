@@ -46,7 +46,7 @@ pub fn start(compute_move_in: Sender<ComputeMove>, move_computed_out: Receiver<M
                                         .expect("bincode move computed")
                                     )
                                 ).expect("write websocket message");
-                            error!("Wrote on socket")
+                            trace!("Wrote on socket")
                         }
             }
         }

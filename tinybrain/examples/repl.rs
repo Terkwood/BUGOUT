@@ -92,12 +92,9 @@ fn main() {
                                 let move_computed: MoveComputed =
                                     bincode::deserialize(&data).expect("bincode deser");
                                 let last_move = move_computed.0;
-                                info!(
-                                    "> {}",
-                                    json::Move::from(last_move.player, last_move.coord)
-                                        .expect("boom")
-                                        .0
-                                );
+                                let mmm = json::Move::from(last_move.player, last_move.coord)
+                                    .expect("boom");
+                                info!("> {} {}", mmm.0, (mmm.1).0);
 
                                 game_state.moves.push(MoveMade {
                                     coord: last_move.coord,
