@@ -85,6 +85,7 @@ fn main() {
                                 .expect("ser"),
                             ))
                             .unwrap();
+                        info!(".");
 
                         // block
                         match websocket.read_message().unwrap() {
