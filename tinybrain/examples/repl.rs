@@ -11,7 +11,7 @@ extern crate uuid;
 
 use micro_model_moves::*;
 
-use log::{error, info};
+use log::{error, info, trace};
 use std::net::TcpListener;
 use std::thread::spawn;
 use text_io::read;
@@ -48,9 +48,9 @@ fn main() {
             let game_id = &GameId(Uuid::new_v4());
 
             loop {
-                let word: String = read!();
-                let happy_coord = json::interpret_coord(&word);
                 info!("< B");
+                let line: String = read!("{}\n");
+                let happy_coord = json::interpret_coord(&line);
                 match happy_coord {
                     Err(_) => {
                         error!("! parse error");
@@ -71,6 +71,7 @@ fn main() {
                             game_state.board.pieces.insert(c, PLAYER);
                         }
 
+                        trace!("(writing to websocket)");
                         websocket
                             .write_message(Message::Binary(
                                 bincode::serialize(&ComputeMove {
