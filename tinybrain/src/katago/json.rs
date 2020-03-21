@@ -1,6 +1,8 @@
 use crate::err::*;
+
 use micro_model_moves::*;
 use serde_derive::{Deserialize, Serialize};
+
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -205,6 +207,8 @@ impl Default for Komi {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use micro_model_bot::MoveComputed;
+    use std::convert::TryFrom;
     use uuid::Uuid;
     #[test]
     fn query_from_game_state() {
@@ -310,5 +314,25 @@ mod tests {
     fn test_interpret_pass() {
         let actual = interpret_coord("pass");
         assert_eq!(actual.expect("parse"), None)
+    }
+
+    #[test]
+    fn move_computed_from() {
+        let actual = MoveComputed::try_from(KataGoResponse {
+            id: Id(format!("{}_1_WHITE", Uuid::nil().to_string())),
+            turn_number: 1,
+            move_infos: vec![MoveInfo {
+                r#move: "B3".to_string(),
+                order: 0,
+            }],
+        })
+        .expect("fail");
+        let expected = MoveComputed(MakeMoveCommand {
+            game_id: GameId(Uuid::nil()),
+            coord: Some(Coord { x: 1, y: 2 }),
+            player: Player::WHITE,
+            req_id: actual.0.req_id.clone(),
+        });
+        assert_eq!(actual, expected)
     }
 }

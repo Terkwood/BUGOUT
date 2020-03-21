@@ -1,14 +1,16 @@
 extern crate tinybrain;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
+use log::info;
+use micro_model_bot::*;
 use std::thread;
 use tinybrain::*;
 
-const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 fn main() {
-    println!("🔢 {:<8} {}", NAME, VERSION);
+    env_logger::init();
+    info!("🔢 {}", VERSION);
     env::init();
 
     let (compute_move_in, compute_move_out): (Sender<ComputeMove>, Receiver<ComputeMove>) =
