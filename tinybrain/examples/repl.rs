@@ -15,8 +15,7 @@ use log::{error, info};
 use std::net::TcpListener;
 use std::thread::spawn;
 use text_io::read;
-use tinybrain::katago::json::interpret_coord;
-use tinybrain::katago::json::Move;
+use tinybrain::katago::json;
 use tinybrain::{ComputeMove, MoveComputed};
 use tungstenite::accept_hdr;
 use tungstenite::handshake::server::{Request, Response};
@@ -24,6 +23,7 @@ use tungstenite::Message;
 use uuid::Uuid;
 
 const PLAYER: Player = Player::BLACK;
+const OPPONENT: Player = Player::WHITE;
 
 fn main() {
     let server = TcpListener::bind("127.0.0.1:3012").unwrap();
@@ -49,8 +49,8 @@ fn main() {
 
             loop {
                 let word: String = read!();
-                let happy_coord = interpret_coord(&word);
-                print!("< B ");
+                let happy_coord = json::interpret_coord(&word);
+                info!("< B");
                 match happy_coord {
                     Err(_) => {
                         error!("! parse error");
@@ -66,6 +66,10 @@ fn main() {
                             reply_to: ReqId(Uuid::nil()),
                         });
                         game_state.turn += 1;
+                        game_state.player_up = OPPONENT;
+                        if let Some(c) = coord {
+                            game_state.board.pieces.insert(c, PLAYER);
+                        }
 
                         websocket
                             .write_message(Message::Binary(
@@ -85,10 +89,24 @@ fn main() {
                                 let last_move = move_computed.0;
                                 info!(
                                     "> {}",
-                                    Move::from(last_move.player, last_move.coord)
+                                    json::Move::from(last_move.player, last_move.coord)
                                         .expect("boom")
                                         .0
                                 );
+
+                                game_state.moves.push(MoveMade {
+                                    coord: last_move.coord,
+                                    event_id: EventId::new(),
+                                    game_id: game_id.clone(),
+                                    player: OPPONENT,
+                                    captured: vec![], // Ignored by katago
+                                    reply_to: ReqId(Uuid::nil()),
+                                });
+                                game_state.player_up = PLAYER;
+                                game_state.turn += 1;
+                                if let Some(c) = last_move.coord {
+                                    game_state.board.pieces.insert(c, OPPONENT);
+                                }
                             }
                             _ => error!(">>> FAIL <<<"),
                         }
