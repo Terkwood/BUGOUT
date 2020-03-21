@@ -23,4 +23,6 @@ COPY analysis.cfg /var/BUGOUT/.
 
 RUN ldd --version
 
+ENV RUST_LOG=info
+
 CMD [ "./tinybrain" ]

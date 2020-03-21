@@ -1,43 +1,43 @@
 use crate::*;
 use crossbeam_channel::{select, Receiver, Sender};
 use http::Request;
+use log::{error, info, trace, warn};
 use tungstenite::util::NonBlockingResult;
 use tungstenite::{connect, Message};
-
 mod authorization;
 
 pub fn start(compute_move_in: Sender<ComputeMove>, move_computed_out: Receiver<MoveComputed>) {
     let (mut socket, response) =
         connect(create_request()).expect("cannot connect to robocall host");
-    println!("Connected to robocall, http status: {}", response.status());
+    trace!("Connected to botlink, http status: {}", response.status());
 
-    println!("Headers follow:");
+    trace!("Headers follow:");
     for (ref header, _value) in response.headers() {
-        println!("* {}", header)
+        trace!("* {}", header)
     }
 
     loop {
         let incoming_data = socket.read_message().no_block();
         match incoming_data {
-            Err(e) => println!("Error reading incoming data {:?}", e),
-            Ok(None) => println!("Nothing on the line"), // TODO
+            Err(e) => error!("Error reading incoming data {:?}", e),
+            Ok(None) => trace!("Empty read in ws"),
             Ok(Some(tungstenite::Message::Binary(data))) => {
                 let cm: Result<ComputeMove, _> = bincode::deserialize(&data);
                 match cm {
-                    Err(e) => println!("failed to deser compute move {:?}", e),
+                    Err(e) => error!("failed to deser compute move {:?}", e),
                     Ok(compute_move) => {
                         if let Err(e) = compute_move_in.send(compute_move) {
-                            println!("failed to send compute move {:?}", e)
+                            error!("failed to send compute move {:?}", e)
                         }
                     }
                 }
             }
-            Ok(_e) => println!("requires binary"),
+            Ok(_e) => warn!("requires binary"),
         };
         select! {
             recv(move_computed_out) -> mc =>
                 match mc {
-                    Err(e) => println!("Error reading move_computed_out {:?}",e),
+                    Err(e) => error!("Error reading move_computed_out {:?}",e),
                     Ok(move_computed) => {
                         socket
                             .write_message(
@@ -46,7 +46,7 @@ pub fn start(compute_move_in: Sender<ComputeMove>, move_computed_out: Receiver<M
                                         .expect("bincode move computed")
                                     )
                                 ).expect("write websocket message");
-                            println!("Wrote on socket")
+                            error!("Wrote on socket")
                         }
             }
         }
