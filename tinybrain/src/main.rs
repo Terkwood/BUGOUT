@@ -9,6 +9,7 @@ use tinybrain::*;
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 fn main() {
+    env_logger::init();
     info!("🔢 {}", VERSION);
     env::init();
 

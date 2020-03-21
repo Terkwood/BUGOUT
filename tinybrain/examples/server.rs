@@ -5,27 +5,27 @@ extern crate tinybrain;
 extern crate tungstenite;
 extern crate uuid;
 
+use log::{error, info};
 use micro_model_bot::*;
 use micro_model_moves::*;
-
+use std::net::TcpListener;
+use std::thread::spawn;
 use tungstenite::accept_hdr;
 use tungstenite::handshake::server::{Request, Response};
 use tungstenite::Message;
 use uuid::Uuid;
 
-use std::net::TcpListener;
-use std::thread::spawn;
-
 fn main() {
+    env_logger::init();
     let server = TcpListener::bind("127.0.0.1:3012").unwrap();
     for stream in server.incoming() {
         spawn(move || {
             let callback = |req: &Request, response: Response| {
-                println!("Received a new ws handshake");
-                println!("The request's path is: {}", req.uri().path());
-                println!("The request's headers are:");
+                info!("Received a new ws handshake");
+                info!("The request's path is: {}", req.uri().path());
+                info!("The request's headers are:");
                 for (ref header, _value) in req.headers() {
-                    println!("* {}", header);
+                    info!("* {}", header);
                 }
 
                 Ok(response)
@@ -57,9 +57,9 @@ fn main() {
                     Message::Binary(data) => {
                         let move_computed: MoveComputed =
                             bincode::deserialize(&data).expect("bincode deser");
-                        println!("Got move computed {:?}", move_computed);
+                        info!("Got move computed {:?}", move_computed);
                     }
-                    _ => println!("Got another response"),
+                    _ => error!("Got another response"),
                 }
             }
         });

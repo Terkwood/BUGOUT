@@ -26,11 +26,12 @@ const PLAYER: Player = Player::BLACK;
 const OPPONENT: Player = Player::WHITE;
 
 fn main() {
+    env_logger::init();
     let server = TcpListener::bind("127.0.0.1:3012").unwrap();
     for stream in server.incoming() {
         spawn(move || {
             let callback = |_: &Request, response: Response| {
-                trace!("(received a new ws handshake)");
+                info!("# Received WS handshake");
                 Ok(response)
             };
             let mut websocket = accept_hdr(stream.unwrap(), callback).unwrap();
