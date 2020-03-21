@@ -29,7 +29,10 @@ fn main() {
     let server = TcpListener::bind("127.0.0.1:3012").unwrap();
     for stream in server.incoming() {
         spawn(move || {
-            let callback = |_: &Request, response: Response| Ok(response);
+            let callback = |_: &Request, response: Response| {
+                trace!("(received a new ws handshake)");
+                Ok(response)
+            };
             let mut websocket = accept_hdr(stream.unwrap(), callback).unwrap();
 
             let size = 9;
