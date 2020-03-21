@@ -1,6 +1,7 @@
 use crate::*;
 use crossbeam_channel::{select, Receiver, Sender};
 use json::*;
+use log::{error, info};
 use micro_model_moves::*;
 use std::convert::TryFrom;
 use std::io::{BufRead, BufReader, Write};
@@ -34,15 +35,15 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
                                 match query.to_json() {
                                     Ok(qj) => match child_in.write(&qj) {
                                         Err(why) => panic!("couldn't write to stdin: {:?}", why),
-                                        Ok(_) => println!("> requested compute for {:?}",query),
+                                        Ok(_) => info!("> requested compute for {:?}",query),
                                     },
-                                    Err(e) => println!("failed query ser {:?}",e)
+                                    Err(e) => error!("failed query ser {:?}",e)
                                 }
                             } else {
-                                println!("ERR Bad coord in game state")
+                                error!("ERR Bad coord in game state")
                             }
                         }
-                        Err(_) => println!("Error receiving compute move in katago select")
+                        Err(_) => error!("Error receiving compute move in katago select")
                     },
         }
     });
@@ -55,15 +56,15 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
         match child_out.read_line(&mut s) {
             Err(why) => panic!("couldn't read stdout: {:?}", why),
             Ok(_) => {
-                print!("< katago respond:\n{}", s);
+                info!("< katago respond:\n{}", s);
                 let deser: Result<KataGoResponse, _> = serde_json::from_str(&s.trim());
                 match deser {
-                    Err(e) => println!("Deser error in katago response: {:?}", e),
+                    Err(e) => error!("Deser error in katago response: {:?}", e),
                     Ok(kgr) => {
                         if let Err(e) = move_computed_in
                             .send(MoveComputed::try_from(kgr).expect("couldnt make a movecomputed"))
                         {
-                            println!("failed to send move_computed {:?}", e)
+                            error!("failed to send move_computed {:?}", e)
                         }
                     }
                 }
