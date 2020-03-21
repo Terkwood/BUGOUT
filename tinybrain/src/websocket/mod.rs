@@ -1,7 +1,7 @@
 use crate::*;
 use crossbeam_channel::{select, Receiver, Sender};
 use http::Request;
-use log::{error, info, trace, warn};
+use log::{error, trace, warn};
 use tungstenite::util::NonBlockingResult;
 use tungstenite::{connect, Message};
 mod authorization;
