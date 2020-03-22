@@ -12,6 +12,7 @@ extern crate uuid;
 use micro_model_moves::*;
 
 use log::{error, info, trace};
+use std::io::{self, Write};
 use std::net::TcpListener;
 use std::thread::spawn;
 use text_io::read;
@@ -53,6 +54,9 @@ fn main() {
 
             loop {
                 print!("< B");
+                if let Err(e) = std::io::stdout().flush() {
+                    error!("{}", e)
+                };
                 let line: String = read!("{}\n");
                 let happy_coord = json::interpret_coord(&line);
                 match happy_coord {
