@@ -2,8 +2,7 @@ pub mod topics;
 pub mod xread;
 
 use crate::registry::Components;
-use crate::repo::entry_id::EntryIdType;
-use crate::repo::{EntryIdRepo, GameRepo};
+use crate::repo::{AttachedBotsRepo, EntryIdRepo, EntryIdType};
 use crossbeam_channel::{Receiver, Sender};
 use log::{error, info};
 use micro_model_bot::gateway::AttachBot;
@@ -68,7 +67,7 @@ pub fn process(topics: Topics, opts: &mut StreamOpts) {
 }
 
 pub struct StreamOpts {
-    pub game_repo: Box<dyn GameRepo>,
+    pub game_repo: Box<dyn AttachedBotsRepo>,
     pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub xreader: Box<dyn xread::XReader>,
     pub compute_move_in: Sender<ComputeMove>,

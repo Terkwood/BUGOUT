@@ -1,6 +1,6 @@
 use micro_model_moves::{GameId, Player};
 use redis_conn_pool::Pool;
-pub trait GameRepo {
+pub trait AttachedBotsRepo {
     fn is_attached(&self, game_id: &GameId, player: Player) -> Result<bool, RepoErr>;
 
     fn attach(&mut self, game_id: &GameId, player: Player) -> Result<(), RepoErr>;
@@ -10,10 +10,10 @@ pub enum RepoErr {
     Redis,
 }
 
-pub struct RedisGameRepo {
+pub struct RedisAttachedBotsRepo {
     pub pool: Pool,
 }
-impl GameRepo for RedisGameRepo {
+impl AttachedBotsRepo for RedisAttachedBotsRepo {
     fn is_attached(&self, _game_id: &GameId, _player: Player) -> Result<bool, RepoErr> {
         todo!()
     }

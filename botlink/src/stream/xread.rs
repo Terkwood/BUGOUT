@@ -1,5 +1,5 @@
 use super::topics::Topics;
-use crate::repo::entry_id::AllEntryIds;
+use crate::repo::AllEntryIds;
 use log::warn;
 use micro_model_bot::gateway::AttachBot;
 use micro_model_moves::{GameId, GameState};

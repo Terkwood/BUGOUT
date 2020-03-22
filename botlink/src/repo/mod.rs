@@ -1,6 +1,6 @@
-pub mod entry_id;
-pub mod game;
+pub mod entry_ids;
+pub mod attached_bots;
 pub mod redis_keys;
 
-pub use entry_id::EntryIdRepo;
-pub use game::GameRepo;
+pub use entry_ids::*;
+pub use attached_bots::*;
