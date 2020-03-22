@@ -23,7 +23,11 @@ impl AttachedBotsRepo for RedisAttachedBotsRepo {
     }
 
     fn attach(&mut self, game_id: &GameId, player: Player) -> Result<(), RepoErr> {
-        todo!()
+        let mut conn = self.pool.get().expect("pool");
+        Ok(conn.sadd(
+            self.key_provider.attached_bots(),
+            member_value(game_id, player),
+        )?)
     }
 }
 
