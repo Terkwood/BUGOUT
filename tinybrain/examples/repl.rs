@@ -32,13 +32,13 @@ fn main() {
     for stream in server.incoming() {
         spawn(move || {
             let callback = |_: &Request, response: Response| {
-                info!("# Received WS handshake");
+                info!("Received WS handshake");
                 Ok(response)
             };
             let mut websocket = accept_hdr(stream.unwrap(), callback).unwrap();
 
             let size = 9;
-            info!("# Board size {}x{}", size, size);
+            info!("Board size {}x{}", size, size);
 
             let game_state = &mut GameState {
                 board: Board {
@@ -61,7 +61,7 @@ fn main() {
                 let happy_coord = json::interpret_coord(&line);
                 match happy_coord {
                     Err(_) => {
-                        error!("! parse error");
+                        error!("parse error");
                         continue;
                     }
                     Ok(coord) => {
@@ -89,7 +89,7 @@ fn main() {
                                 .expect("ser"),
                             ))
                             .unwrap();
-                        info!(".");
+                        info!("(...waiting for katago...)");
 
                         // block
                         match websocket.read_message().unwrap() {
