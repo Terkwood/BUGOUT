@@ -12,7 +12,7 @@ extern crate uuid;
 use micro_model_moves::*;
 
 use log::{error, info, trace};
-use std::io::{self, Write};
+use std::io::Write;
 use std::net::TcpListener;
 use std::thread::spawn;
 use text_io::read;
@@ -53,7 +53,7 @@ fn main() {
             let game_id = &GameId(Uuid::new_v4());
 
             loop {
-                print!("< B");
+                print!("< B ");
                 if let Err(e) = std::io::stdout().flush() {
                     error!("{}", e)
                 };
@@ -99,7 +99,7 @@ fn main() {
                                 let last_move = move_computed.0;
                                 let mmm = json::Move::from(last_move.player, last_move.coord)
                                     .expect("boom");
-                                info!("> {} {}", mmm.0, (mmm.1).0);
+                                println!("> {} {}", mmm.0, (mmm.1).0);
 
                                 game_state.moves.push(MoveMade {
                                     coord: last_move.coord,
