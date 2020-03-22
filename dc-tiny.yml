@@ -52,3 +52,10 @@ services:
       - "redis"
     depends_on:
       - "redis"
+  botlink:
+    build: botlink/.
+    links:
+      - "redis"
+    depends_on:
+      - "redis"
+
