@@ -12,6 +12,7 @@ extern crate uuid;
 use micro_model_moves::*;
 
 use log::{error, info, trace};
+use std::io::Write;
 use std::net::TcpListener;
 use std::thread::spawn;
 use text_io::read;
@@ -31,13 +32,13 @@ fn main() {
     for stream in server.incoming() {
         spawn(move || {
             let callback = |_: &Request, response: Response| {
-                info!("# Received WS handshake");
+                info!("Received WS handshake");
                 Ok(response)
             };
             let mut websocket = accept_hdr(stream.unwrap(), callback).unwrap();
 
             let size = 9;
-            info!("# Board size {}x{}", size, size);
+            info!("Board size {}x{}", size, size);
 
             let game_state = &mut GameState {
                 board: Board {
@@ -52,12 +53,15 @@ fn main() {
             let game_id = &GameId(Uuid::new_v4());
 
             loop {
-                info!("< B");
+                print!("< B ");
+                if let Err(e) = std::io::stdout().flush() {
+                    error!("{}", e)
+                };
                 let line: String = read!("{}\n");
                 let happy_coord = json::interpret_coord(&line);
                 match happy_coord {
                     Err(_) => {
-                        error!("! parse error");
+                        error!("parse error");
                         continue;
                     }
                     Ok(coord) => {
@@ -85,7 +89,7 @@ fn main() {
                                 .expect("ser"),
                             ))
                             .unwrap();
-                        info!(".");
+                        info!("(...waiting for katago...)");
 
                         // block
                         match websocket.read_message().unwrap() {
@@ -95,7 +99,7 @@ fn main() {
                                 let last_move = move_computed.0;
                                 let mmm = json::Move::from(last_move.player, last_move.coord)
                                     .expect("boom");
-                                info!("> {} {}", mmm.0, (mmm.1).0);
+                                println!("> {} {}", mmm.0, (mmm.1).0);
 
                                 game_state.moves.push(MoveMade {
                                     coord: last_move.coord,
