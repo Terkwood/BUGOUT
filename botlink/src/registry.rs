@@ -24,7 +24,10 @@ impl Default for Components {
 
         let pool = redis_conn_pool::create(RedisHostUrl::default());
         Components {
-            game_repo: Box::new(RedisAttachedBotsRepo { pool: pool.clone() }),
+            game_repo: Box::new(RedisAttachedBotsRepo {
+                pool: pool.clone(),
+                key_provider: crate::repo::redis_keys::KeyProvider::default(),
+            }),
             entry_id_repo: Box::new(RedisEntryIdRepo {
                 pool: pool.clone(),
                 key_provider: crate::repo::redis_keys::KeyProvider::default(),
