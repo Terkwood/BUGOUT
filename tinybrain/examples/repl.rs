@@ -52,7 +52,7 @@ fn main() {
             let game_id = &GameId(Uuid::new_v4());
 
             loop {
-                info!("< B");
+                print!("< B");
                 let line: String = read!("{}\n");
                 let happy_coord = json::interpret_coord(&line);
                 match happy_coord {
