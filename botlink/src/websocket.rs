@@ -1,21 +1,23 @@
 use crate::env;
-use crossbeam_channel::{Receiver, Sender};
-use log::warn;
+use bincode::{deserialize, serialize};
+use crossbeam_channel::{select, Receiver, Sender};
+use log::{error, warn};
 use micro_model_bot::{ComputeMove, MoveComputed};
 use std::net::TcpListener;
 use std::thread;
+use std::time::Duration;
 use tungstenite::accept_hdr;
 use tungstenite::handshake::server::{Request, Response};
 use tungstenite::http;
+use tungstenite::util::NonBlockingResult;
 use tungstenite::Message;
-use uuid::Uuid;
 
 pub fn listen(opts: WSOpts) {
     let server = TcpListener::bind(&*env::ADDRESS).expect("WS bind");
 
     for stream in server.incoming() {
-        let _move_computed_in = opts.move_computed_in.clone();
-        let _compute_move_out = opts.compute_move_out.clone();
+        let move_computed_in = opts.move_computed_in.clone();
+        let compute_move_out = opts.compute_move_out.clone();
         thread::spawn(move || {
             let callback = |req: &Request, response: Response| {
                 if let Some(user_colon_pass) = &*env::AUTHORIZATION {
@@ -40,8 +42,29 @@ pub fn listen(opts: WSOpts) {
                     Ok(response)
                 }
             };
-            let mut _websocket = accept_hdr(stream.expect("stream"), callback);
-            todo!("The Rest")
+            let mut websocket = accept_hdr(stream.expect("stream"), callback).expect("websocket");
+            loop {
+                select! {
+                    recv(compute_move_out) -> msg => match msg {
+                        Ok(cm) => {
+                            let msg = Message::Binary(serialize(&cm).expect("bincode ser"));
+                            websocket
+                                .write_message(msg)
+                                .expect("ws write")
+                        },
+                        Err(e) => error!("error receiving cm {:?}",e)
+                    },
+                    default(Duration::from_millis(10)) => {
+                        while let Some(Message::Binary(data)) = websocket.read_message().no_block().expect("read no block")  {
+                            let move_computed: MoveComputed =
+                                deserialize(&data).expect("bincode deser");
+                            if let Err(e) = move_computed_in.send(move_computed) {
+                                error!("mc send err {:?}",e)
+                            }
+                        }
+                    },
+                }
+            }
         });
     }
 }
