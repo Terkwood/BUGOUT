@@ -3,3 +3,7 @@ localhost
 proxy /gateway gateway:3012 {
     websocket
 }
+
+proxy /botlink botlink:3012 {
+    websocket
+}
