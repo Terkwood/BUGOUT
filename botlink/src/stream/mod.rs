@@ -92,20 +92,66 @@ impl StreamOpts {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repo::*;
     use crossbeam_channel::unbounded;
     use std::thread;
     use std::time::Duration;
+    struct FakeEntryIdRepo;
+    impl EntryIdRepo for FakeEntryIdRepo {
+        fn fetch_all(&self) -> Result<AllEntryIds, RepoErr> {
+            unimplemented!()
+        }
+        fn update(
+            &self,
+            entry_id_type: EntryIdType,
+            entry_id: redis_streams::XReadEntryId,
+        ) -> Result<(), redis_conn_pool::redis::RedisError> {
+            unimplemented!()
+        }
+    }
+
+    struct FakeAttachedBotsRepo;
+    impl AttachedBotsRepo for FakeAttachedBotsRepo {
+        fn is_attached(
+            &self,
+            _: &micro_model_moves::GameId,
+            _: micro_model_moves::Player,
+        ) -> std::result::Result<bool, RepoErr> {
+            unimplemented!()
+        }
+        fn attach(
+            &mut self,
+            game_id: &micro_model_moves::GameId,
+            player: micro_model_moves::Player,
+        ) -> Result<(), RepoErr> {
+            unimplemented!()
+        }
+    }
+    struct FakeXReader;
+    impl xread::XReader for FakeXReader {
+        fn xread_sorted(
+            &self,
+            entry_ids: AllEntryIds,
+            topics: &Topics,
+        ) -> Result<
+            Vec<(redis_streams::XReadEntryId, StreamData)>,
+            redis_conn_pool::redis::RedisError,
+        > {
+            unimplemented!()
+        }
+    }
+
     #[test]
     fn basic_test() {
         let (compute_move_in, _): (Sender<ComputeMove>, _) = unbounded();
         let (_, move_computed_out): (_, Receiver<MoveComputed>) = unbounded();
 
         thread::spawn(move || {
-            let entry_id_repo = todo!();
-            let attached_bots_repo = todo!();
-            let xreader = todo!();
+            let entry_id_repo = Box::new(FakeEntryIdRepo);
+            let attached_bots_repo = Box::new(FakeAttachedBotsRepo);
+            let xreader = Box::new(FakeXReader);
 
-            let opts = StreamOpts {
+            let mut opts = StreamOpts {
                 compute_move_in,
                 move_computed_out,
                 entry_id_repo,
@@ -113,7 +159,7 @@ mod tests {
                 xreader,
             };
 
-            process(todo!(), &mut opts)
+            process(Topics::default(), &mut opts)
         });
         todo!()
     }

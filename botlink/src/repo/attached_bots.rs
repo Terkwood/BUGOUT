@@ -1,4 +1,5 @@
 use super::redis_keys::KeyProvider;
+use super::RepoErr;
 use micro_model_moves::{GameId, Player};
 use redis::Commands;
 use redis_conn_pool::{r2d2, r2d2_redis, redis, Pool};
@@ -47,14 +48,4 @@ impl RedisAttachedBotsRepo {
 }
 fn member_value(game_id: &GameId, player: Player) -> String {
     format!("{}_{}", game_id.0, player.to_string())
-}
-
-#[derive(Debug)]
-pub enum RepoErr {
-    Redis(redis::RedisError),
-}
-impl From<redis::RedisError> for RepoErr {
-    fn from(r: redis::RedisError) -> Self {
-        RepoErr::Redis(r)
-    }
 }

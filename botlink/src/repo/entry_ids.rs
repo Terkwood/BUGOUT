@@ -3,7 +3,7 @@ use redis_conn_pool::{redis, Pool};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 pub trait EntryIdRepo {
-    fn fetch_all(&self) -> Result<AllEntryIds, FetchErr>;
+    fn fetch_all(&self) -> Result<AllEntryIds, super::RepoErr>;
 
     fn update(
         &self,
@@ -12,22 +12,13 @@ pub trait EntryIdRepo {
     ) -> Result<(), redis::RedisError>;
 }
 
-#[derive(Debug)]
-pub enum FetchErr {
-    Redis(redis::RedisError),
-}
-impl From<redis::RedisError> for FetchErr {
-    fn from(r: redis::RedisError) -> Self {
-        FetchErr::Redis(r)
-    }
-}
 pub struct RedisEntryIdRepo {
     pub pool: Pool,
     pub key_provider: super::redis_keys::KeyProvider,
 }
 const EMPTY_EID: &str = "0-0";
 impl EntryIdRepo for RedisEntryIdRepo {
-    fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
+    fn fetch_all(&self) -> Result<AllEntryIds, super::RepoErr> {
         let mut conn = self.pool.get().expect("pool");
         let found: Result<HashMap<String, String>, _> = conn.hgetall(self.key_provider.entry_ids());
         if let Ok(f) = found {
