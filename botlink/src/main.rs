@@ -3,7 +3,7 @@ extern crate botlink;
 use botlink::{stream, websocket};
 use log::info;
 use std::thread;
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 use botlink::registry::Components;
 fn main() {

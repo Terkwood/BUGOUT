@@ -67,7 +67,7 @@ impl EntryIdType {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AllEntryIds {
     pub attach_bot_eid: XReadEntryId,
     pub game_states_eid: XReadEntryId,

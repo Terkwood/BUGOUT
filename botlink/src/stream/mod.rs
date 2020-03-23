@@ -94,37 +94,32 @@ mod tests {
     use super::*;
     use crate::repo::*;
     use crossbeam_channel::unbounded;
+    use micro_model_moves::*;
+    use redis_streams::XReadEntryId;
     use std::thread;
-    use std::time::Duration;
     struct FakeEntryIdRepo;
     impl EntryIdRepo for FakeEntryIdRepo {
         fn fetch_all(&self) -> Result<AllEntryIds, RepoErr> {
-            unimplemented!()
+            Ok(todo!())
         }
         fn update(
             &self,
             entry_id_type: EntryIdType,
             entry_id: redis_streams::XReadEntryId,
         ) -> Result<(), redis_conn_pool::redis::RedisError> {
-            unimplemented!()
+            Ok(todo!())
         }
     }
 
-    struct FakeAttachedBotsRepo;
+    struct FakeAttachedBotsRepo {
+        pub members: Vec<(GameId, Player)>,
+    }
     impl AttachedBotsRepo for FakeAttachedBotsRepo {
-        fn is_attached(
-            &self,
-            _: &micro_model_moves::GameId,
-            _: micro_model_moves::Player,
-        ) -> std::result::Result<bool, RepoErr> {
-            unimplemented!()
+        fn is_attached(&self, game_id: &GameId, player: Player) -> Result<bool, RepoErr> {
+            Ok(self.members.contains(&(game_id.clone(), player)))
         }
-        fn attach(
-            &mut self,
-            game_id: &micro_model_moves::GameId,
-            player: micro_model_moves::Player,
-        ) -> Result<(), RepoErr> {
-            unimplemented!()
+        fn attach(&mut self, game_id: &GameId, player: Player) -> Result<(), RepoErr> {
+            Ok(self.members.push((game_id.clone(), player)))
         }
     }
     struct FakeXReader;
@@ -148,7 +143,7 @@ mod tests {
 
         thread::spawn(move || {
             let entry_id_repo = Box::new(FakeEntryIdRepo);
-            let attached_bots_repo = Box::new(FakeAttachedBotsRepo);
+            let attached_bots_repo = Box::new(FakeAttachedBotsRepo { members: vec![] });
             let xreader = Box::new(FakeXReader);
 
             let mut opts = StreamOpts {
