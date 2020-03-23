@@ -91,10 +91,11 @@ impl AlphaNumOrPass {
 }
 
 pub fn interpret_coord(move_info_move: &str) -> Result<Option<Coord>, CoordOutOfRange> {
-    if move_info_move.trim().to_ascii_lowercase() == PASS {
+    let t = move_info_move.trim();
+    if t.to_ascii_lowercase() == PASS {
         Ok(None)
     } else {
-        Ok(Some(from_alphanum(move_info_move)?))
+        Ok(Some(from_alphanum(&t.to_ascii_uppercase())?))
     }
 }
 
@@ -306,14 +307,21 @@ mod tests {
 
     #[test]
     fn test_interpret_coord() {
-        let actual = interpret_coord("B3");
-        assert_eq!(actual.expect("parse"), Some(Coord { x: 1, y: 2 }))
+        assert_eq!(
+            interpret_coord("B3").expect("parse"),
+            Some(Coord { x: 1, y: 2 })
+        );
+        assert_eq!(
+            interpret_coord("c4").expect("parse"),
+            Some(Coord { x: 2, y: 3 })
+        );
     }
 
     #[test]
     fn test_interpret_pass() {
-        let actual = interpret_coord("pass");
-        assert_eq!(actual.expect("parse"), None)
+        assert_eq!(interpret_coord("pass").expect("parse"), None);
+        assert_eq!(interpret_coord("PASS").expect("parse"), None);
+        assert_eq!(interpret_coord(" PaSs   ").expect("parse"), None);
     }
 
     #[test]
