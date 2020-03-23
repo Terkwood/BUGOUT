@@ -54,7 +54,7 @@ pub fn start(compute_move_in: Sender<ComputeMove>, move_computed_out: Receiver<M
 }
 
 fn create_request() -> http::Request<()> {
-    let mut request = Request::builder().uri(&*env::ROBOCALL_URL);
+    let mut request = Request::builder().uri(&*env::BOTLINK_URL);
 
     if let Some(h) = authorization::header() {
         request = request.header("Authorization", h);
