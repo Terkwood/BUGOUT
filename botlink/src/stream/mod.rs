@@ -96,18 +96,41 @@ mod tests {
     use crossbeam_channel::unbounded;
     use micro_model_moves::*;
     use redis_streams::XReadEntryId;
+    use std::sync::atomic::{AtomicU64, Ordering};
     use std::thread;
     struct FakeEntryIdRepo;
+    static FAKE_AB_MILLIS: AtomicU64 = AtomicU64::new(0);
+    static FAKE_AB_SEQNO: AtomicU64 = AtomicU64::new(0);
+    static FAKE_GS_MILLIS: AtomicU64 = AtomicU64::new(0);
+    static FAKE_GS_SEQNO: AtomicU64 = AtomicU64::new(0);
     impl EntryIdRepo for FakeEntryIdRepo {
         fn fetch_all(&self) -> Result<AllEntryIds, RepoErr> {
-            Ok(todo!())
+            Ok(AllEntryIds {
+                attach_bot_eid: XReadEntryId {
+                    millis_time: FAKE_AB_MILLIS.load(Ordering::SeqCst),
+                    seq_no: FAKE_AB_SEQNO.load(Ordering::SeqCst),
+                },
+                game_states_eid: XReadEntryId {
+                    millis_time: FAKE_GS_MILLIS.load(Ordering::SeqCst),
+                    seq_no: FAKE_GS_MILLIS.load(Ordering::SeqCst),
+                },
+            })
         }
         fn update(
             &self,
             entry_id_type: EntryIdType,
             entry_id: redis_streams::XReadEntryId,
         ) -> Result<(), redis_conn_pool::redis::RedisError> {
-            Ok(todo!())
+            Ok(match entry_id_type {
+                EntryIdType::AttachBotEvent => {
+                    FAKE_AB_MILLIS.store(entry_id.millis_time, Ordering::SeqCst);
+                    FAKE_AB_SEQNO.store(entry_id.seq_no, Ordering::SeqCst)
+                }
+                EntryIdType::GameStateChangelog => {
+                    FAKE_GS_MILLIS.store(entry_id.millis_time, Ordering::SeqCst);
+                    FAKE_GS_SEQNO.store(entry_id.seq_no, Ordering::SeqCst)
+                }
+            })
         }
     }
 
