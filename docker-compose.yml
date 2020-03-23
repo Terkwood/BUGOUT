@@ -134,10 +134,6 @@ services:
       - "redis"
   botlink:
     build: botlink/.
-    ports:
-      - "30120:3012"
-    links:
-      - "redis"
     depends_on:
       - "redis"
     volumes:
