@@ -19,7 +19,7 @@ pub fn process(topics: Topics, opts: &mut StreamOpts) {
                     for time_ordered_event in xrr {
                         match time_ordered_event {
                             (entry_id, StreamData::AB(AttachBot { game_id, player })) => {
-                                if let Err(e) = opts.game_repo.attach(&game_id, player) {
+                                if let Err(e) = opts.attached_bots_repo.attach(&game_id, player) {
                                     error!("Error attaching bot {:?}", e)
                                 } else {
                                     if let Err(e) = opts
@@ -31,7 +31,10 @@ pub fn process(topics: Topics, opts: &mut StreamOpts) {
                                 }
                             }
                             (entry_id, StreamData::GS(game_id, game_state)) => {
-                                match opts.game_repo.is_attached(&game_id, game_state.player_up) {
+                                match opts
+                                    .attached_bots_repo
+                                    .is_attached(&game_id, game_state.player_up)
+                                {
                                     Ok(bot_game) => {
                                         if bot_game {
                                             if let Err(e) = opts.compute_move_in.send(ComputeMove {
@@ -67,7 +70,7 @@ pub fn process(topics: Topics, opts: &mut StreamOpts) {
 }
 
 pub struct StreamOpts {
-    pub game_repo: Box<dyn AttachedBotsRepo>,
+    pub attached_bots_repo: Box<dyn AttachedBotsRepo>,
     pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub xreader: Box<dyn xread::XReader>,
     pub compute_move_in: Sender<ComputeMove>,
@@ -77,11 +80,41 @@ pub struct StreamOpts {
 impl StreamOpts {
     pub fn from(components: Components) -> Self {
         StreamOpts {
-            game_repo: components.game_repo,
+            attached_bots_repo: components.game_repo,
             entry_id_repo: components.entry_id_repo,
             xreader: components.xreader,
             compute_move_in: components.compute_move_in,
             move_computed_out: components.move_computed_out,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crossbeam_channel::unbounded;
+    use std::thread;
+    use std::time::Duration;
+    #[test]
+    fn basic_test() {
+        let (compute_move_in, _): (Sender<ComputeMove>, _) = unbounded();
+        let (_, move_computed_out): (_, Receiver<MoveComputed>) = unbounded();
+
+        thread::spawn(move || {
+            let entry_id_repo = todo!();
+            let attached_bots_repo = todo!();
+            let xreader = todo!();
+
+            let opts = StreamOpts {
+                compute_move_in,
+                move_computed_out,
+                entry_id_repo,
+                attached_bots_repo,
+                xreader,
+            };
+
+            process(todo!(), &mut opts)
+        });
+        todo!()
     }
 }
