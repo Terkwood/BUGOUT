@@ -1,16 +1,18 @@
 use crate::*;
 use crossbeam_channel::{select, Receiver, Sender};
 use http::Request;
-use log::{error, trace, warn};
+use log::{error, info, trace, warn};
 use tungstenite::util::NonBlockingResult;
 use tungstenite::{connect, Message};
 mod authorization;
 use url::Url;
 
 pub fn start(compute_move_in: Sender<ComputeMove>, move_computed_out: Receiver<MoveComputed>) {
+    let url = Url::parse(&*env::BOTLINK_URL).expect("botlink url");
+    info!("Connecting to {}", url);
     let (mut socket, response) = connect(Url::parse(&*env::BOTLINK_URL).expect("botlink url"))
         .expect("cannot connect to robocall host");
-    trace!("Connected to botlink, http status: {}", response.status());
+    info!("Connected to botlink, http status: {}", response.status());
 
     trace!("Headers follow:");
     for (ref header, _value) in response.headers() {
