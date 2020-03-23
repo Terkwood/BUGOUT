@@ -12,7 +12,6 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate tungstenite;
 extern crate uuid;
-extern crate url;
 
 pub mod env;
 mod err;
