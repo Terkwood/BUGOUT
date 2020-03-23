@@ -57,6 +57,7 @@ services:
       - "443:443"
     depends_on:
       - "botlink"
+      - "gateway"
     volumes:
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy
