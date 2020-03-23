@@ -7,7 +7,7 @@ const DEFAULT_BOTLINK_URL: &str = "ws://127.0.0.1:3012";
 
 lazy_static! {
     pub static ref AUTHORIZATION: Option<String> = env::var(ENV_AUTHORIZATION).ok();
-    pub static ref ROBOCALL_URL: String =
+    pub static ref BOTLINK_URL: String =
         env::var(ENV_BOTLINK_URL).unwrap_or(DEFAULT_BOTLINK_URL.to_string());
 }
 
