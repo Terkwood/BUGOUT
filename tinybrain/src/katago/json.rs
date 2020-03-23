@@ -315,6 +315,10 @@ mod tests {
             interpret_coord("c4").expect("parse"),
             Some(Coord { x: 2, y: 3 })
         );
+        assert_eq!(
+            interpret_coord(" D5 ").expect("parse"),
+            Some(Coord { x: 3, y: 4 })
+        )
     }
 
     #[test]
