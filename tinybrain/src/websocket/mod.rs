@@ -5,10 +5,11 @@ use log::{error, trace, warn};
 use tungstenite::util::NonBlockingResult;
 use tungstenite::{connect, Message};
 mod authorization;
+use url::Url;
 
 pub fn start(compute_move_in: Sender<ComputeMove>, move_computed_out: Receiver<MoveComputed>) {
-    let (mut socket, response) =
-        connect(create_request()).expect("cannot connect to robocall host");
+    let (mut socket, response) = connect(Url::parse(&*env::BOTLINK_URL).expect("botlink url"))
+        .expect("cannot connect to robocall host");
     trace!("Connected to botlink, http status: {}", response.status());
 
     trace!("Headers follow:");
