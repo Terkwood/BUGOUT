@@ -135,7 +135,7 @@ services:
   botlink:
     build: botlink/.
     ports:
-      - "3012:30120"
+      - "30120:3012"
     links:
       - "redis"
     depends_on:
