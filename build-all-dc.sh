@@ -20,3 +20,4 @@ docker-compose build bugle
 docker-compose build kafkacat
 docker-compose build micro-judge
 docker-compose build micro-changelog
+docker-compose build botlink
