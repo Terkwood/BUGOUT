@@ -1,6 +1,6 @@
 [package]
 name = "tinybrain"
-version = "0.1.6"
+version = "0.1.5"
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 
@@ -21,7 +21,6 @@ base64 = "0.12.0"
 http = "0.2.0"
 env_logger = "0.7.1"
 log = "0.4.8"
-url = "2.1.1"
 
 [dev-dependencies]
 text_io = "0.1.8"

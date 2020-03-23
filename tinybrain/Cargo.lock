@@ -715,7 +715,7 @@ dependencies = [
 
 [[package]]
 name = "tinybrain"
-version = "0.1.6"
+version = "0.1.5"
 dependencies = [
  "base64 0.12.0",
  "bincode",
@@ -733,7 +733,6 @@ dependencies = [
  "serde_json",
  "text_io",
  "tungstenite",
- "url",
  "uuid",
 ]
 
