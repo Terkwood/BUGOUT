@@ -140,3 +140,5 @@ services:
       - "redis"
     depends_on:
       - "redis"
+    volumes:
+      - "./botlink/.env:/var/BUGOUT/botlink/.env"
