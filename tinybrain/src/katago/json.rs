@@ -257,7 +257,7 @@ mod tests {
         };
 
         let actual = KataGoQuery::from(&game_id, &game_state).expect("move(s) out of range");
-        assert_eq!(actual, expected);
+        assert_eq!(actual, expected)
     }
 
     #[test]
@@ -302,7 +302,7 @@ mod tests {
         };
 
         let actual = KataGoQuery::from(&game_id, &game_state).expect("move(s) out of range");
-        assert_eq!(actual, expected);
+        assert_eq!(actual, expected)
     }
 
     #[test]
@@ -325,7 +325,7 @@ mod tests {
     fn test_interpret_pass() {
         assert_eq!(interpret_coord("pass").expect("parse"), None);
         assert_eq!(interpret_coord("PASS").expect("parse"), None);
-        assert_eq!(interpret_coord(" PaSs   ").expect("parse"), None);
+        assert_eq!(interpret_coord(" PaSs   ").expect("parse"), None)
     }
 
     #[test]
