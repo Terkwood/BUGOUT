@@ -1,7 +1,7 @@
 use crate::env;
 use bincode::{deserialize, serialize};
 use crossbeam_channel::{select, Receiver, Sender};
-use log::{error, warn};
+use log::{info, error, warn};
 use micro_model_bot::{ComputeMove, MoveComputed};
 use std::net::TcpListener;
 use std::thread;
@@ -14,6 +14,7 @@ use tungstenite::Message;
 
 pub fn listen(opts: WSOpts) {
     let server = TcpListener::bind(&*env::ADDRESS).expect("WS bind");
+    info!("WS bound to {}", &*env::ADDRESS);
 
     for stream in server.incoming() {
         let move_computed_in = opts.move_computed_in.clone();
