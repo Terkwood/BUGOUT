@@ -45,7 +45,7 @@ services:
     depends_on:
       - "redis"
   botlink:
-    build: botlink/.
+    build: botlink/.  
     depends_on:
       - "redis"
     volumes:

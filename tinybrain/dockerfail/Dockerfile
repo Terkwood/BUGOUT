@@ -1,3 +1,8 @@
+### THIS DOESN'T WORK
+###     but you could probably salvage it
+###        after moving it into the parent directory
+
+
 FROM rust AS builder
 WORKDIR /var/BUGOUT
 COPY src src
