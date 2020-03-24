@@ -14,6 +14,9 @@ const BLOCK_MSEC: u32 = 5000;
 
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 
+/// xread_sorted performs a redis xread then sorts the results
+///
+/// entry_ids: the minimum entry ids from which to read
 pub trait XReader {
     fn xread_sorted(
         &self,

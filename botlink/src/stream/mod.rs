@@ -96,7 +96,7 @@ mod tests {
     use crossbeam_channel::unbounded;
     use micro_model_moves::*;
     use redis_streams::XReadEntryId;
-    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::sync::atomic::{AtomicPtr, AtomicU64, Ordering};
     use std::thread;
     struct FakeEntryIdRepo;
     static FAKE_AB_MILLIS: AtomicU64 = AtomicU64::new(0);
@@ -145,6 +145,7 @@ mod tests {
             Ok(self.members.push((game_id.clone(), player)))
         }
     }
+
     struct FakeXReader;
     impl xread::XReader for FakeXReader {
         fn xread_sorted(
