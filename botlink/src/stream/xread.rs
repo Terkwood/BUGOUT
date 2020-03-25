@@ -1,4 +1,4 @@
-use super::topics::Topics;
+use super::topics;
 use crate::repo::AllEntryIds;
 use log::warn;
 use micro_model_bot::gateway::AttachBot;
@@ -21,7 +21,6 @@ pub trait XReader {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
-        topics: &Topics,
     ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError>;
 }
 
@@ -32,19 +31,18 @@ impl XReader for RedisXReader {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
-        topics: &Topics,
     ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
         let mut conn = self.pool.get().unwrap();
         let xrr = redis::cmd("XREAD")
             .arg("BLOCK")
             .arg(&BLOCK_MSEC.to_string())
             .arg("STREAMS")
-            .arg(&topics.attach_bot_ev)
-            .arg(&topics.game_states_changelog)
+            .arg(topics::ATTACH_BOT_EV)
+            .arg(topics::GAME_STATES_CHANGELOG)
             .arg(entry_ids.attach_bot_eid.to_string())
             .arg(entry_ids.game_states_eid.to_string())
             .query::<XReadResult>(&mut *conn)?;
-        let unsorted = deser(xrr, &topics);
+        let unsorted = deser(xrr);
         let sorted_keys: Vec<XReadEntryId> = {
             let mut ks: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
             ks.sort();
@@ -66,12 +64,12 @@ pub enum StreamData {
     GS(GameId, GameState),
 }
 
-fn deser(xread_result: XReadResult, topics: &Topics) -> HashMap<XReadEntryId, StreamData> {
+fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
     let mut stream_data = HashMap::new();
 
     for hash in xread_result.iter() {
         for (xread_topic, xread_data) in hash.iter() {
-            if xread_topic[..] == topics.game_states_changelog {
+            if &xread_topic[..] == topics::GAME_STATES_CHANGELOG {
                 for with_timestamps in xread_data {
                     for (k, v) in with_timestamps {
                         let shape: Result<(String, String, String, Option<Vec<u8>>), _> = // game-id <uuidstr> data <bin>
@@ -92,7 +90,7 @@ fn deser(xread_result: XReadResult, topics: &Topics) -> HashMap<XReadEntryId, St
                         }
                     }
                 }
-            } else if xread_topic[..] == topics.attach_bot_ev {
+            } else if &xread_topic[..] == topics::ATTACH_BOT_EV {
                 for with_timestamps in xread_data {
                     for (k, v) in with_timestamps {
                         let shape: Result<(String, Vec<u8>), _> = // data <bin>

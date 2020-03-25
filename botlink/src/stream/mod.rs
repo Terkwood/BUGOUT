@@ -10,15 +10,13 @@ use log::{error, info};
 use micro_model_bot::gateway::AttachBot;
 use micro_model_bot::ComputeMove;
 use micro_model_moves::GameState;
-use topics::Topics;
 pub use write_moves::write_moves;
 use xread::StreamData;
 
-pub fn process(topics: Topics, opts: &mut StreamOpts) {
-    info!("Processing {:#?}", topics);
+pub fn process(opts: &mut StreamOpts) {
     loop {
         match opts.entry_id_repo.fetch_all() {
-            Ok(entry_ids) => match opts.xreader.xread_sorted(entry_ids, &topics) {
+            Ok(entry_ids) => match opts.xreader.xread_sorted(entry_ids) {
                 Ok(xrr) => {
                     for time_ordered_event in xrr {
                         match time_ordered_event {
@@ -184,7 +182,7 @@ mod tests {
             &self,
             game_id: GameId,
             game_state: GameState,
-        ) -> Result<(), redis_conn_pool::redis::RedisError> {
+        ) -> Result<(), crate::stream::xadd::XAddError> {
             Ok(self.added_in.send((game_id, game_state)).expect("send add"))
         }
     }
@@ -198,7 +196,6 @@ mod tests {
         fn xread_sorted(
             &self,
             entry_ids: AllEntryIds,
-            _: &Topics,
         ) -> Result<
             Vec<(redis_streams::XReadEntryId, StreamData)>,
             redis_conn_pool::redis::RedisError,
@@ -264,7 +261,7 @@ mod tests {
                 xadder,
             };
 
-            process(Topics::default(), &mut opts)
+            process(&mut opts)
         });
 
         // process xadd of game state correctly

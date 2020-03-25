@@ -16,8 +16,5 @@ fn main() {
     let mco = components.move_computed_out.clone();
     let xmm = components.xadder_mm.clone();
     thread::spawn(move || stream::write_moves(mco, xmm));
-    stream::process(
-        stream::topics::Topics::default(),
-        &mut stream::StreamOpts::from(components),
-    );
+    stream::process(&mut stream::StreamOpts::from(components));
 }
