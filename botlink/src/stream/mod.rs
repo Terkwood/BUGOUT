@@ -27,6 +27,8 @@ pub fn process(topics: Topics, opts: &mut StreamOpts) {
                                         .update(EntryIdType::AttachBotEvent, entry_id)
                                     {
                                         error!("Error saving entry ID for attach bot {:?}", e)
+                                    } else {
+                                        todo!("EMIT THE DEFAULT GAME STATE")
                                     }
                                 }
                             }
@@ -74,7 +76,6 @@ pub struct StreamOpts {
     pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub xreader: Box<dyn xread::XReader>,
     pub compute_move_in: Sender<ComputeMove>,
-    pub move_computed_out: Receiver<MoveComputed>,
 }
 
 impl StreamOpts {
@@ -84,7 +85,6 @@ impl StreamOpts {
             entry_id_repo: components.entry_id_repo,
             xreader: components.xreader,
             compute_move_in: components.compute_move_in,
-            move_computed_out: components.move_computed_out,
         }
     }
 }
@@ -93,16 +93,19 @@ impl StreamOpts {
 mod tests {
     use super::*;
     use crate::repo::*;
-    use crossbeam_channel::unbounded;
+    use crossbeam_channel::{after, never, select, unbounded};
     use micro_model_moves::*;
     use redis_streams::XReadEntryId;
     use std::sync::atomic::{AtomicU64, Ordering};
+    use std::sync::{Arc, Mutex};
     use std::thread;
     use std::time::Duration;
     use uuid::Uuid;
 
     #[derive(Clone)]
-    struct FakeEntryIdRepo;
+    struct FakeEntryIdRepo {
+        eid_update_in: Sender<(EntryIdType, XReadEntryId)>,
+    }
     static FAKE_AB_MILLIS: AtomicU64 = AtomicU64::new(0);
     static FAKE_AB_SEQNO: AtomicU64 = AtomicU64::new(0);
     static FAKE_GS_MILLIS: AtomicU64 = AtomicU64::new(0);
@@ -125,6 +128,10 @@ mod tests {
             entry_id_type: EntryIdType,
             entry_id: redis_streams::XReadEntryId,
         ) -> Result<(), redis_conn_pool::redis::RedisError> {
+            println!("EID UPDATE");
+            self.eid_update_in
+                .send((entry_id_type.clone(), entry_id))
+                .expect("eid update send");
             Ok(match entry_id_type {
                 EntryIdType::AttachBotEvent => {
                     FAKE_AB_MILLIS.store(entry_id.millis_time, Ordering::SeqCst);
@@ -140,14 +147,23 @@ mod tests {
 
     #[derive(Clone)]
     struct FakeAttachedBotsRepo {
-        pub members: Vec<(GameId, Player)>,
+        pub members: Arc<Mutex<Vec<(GameId, Player)>>>,
     }
     impl AttachedBotsRepo for FakeAttachedBotsRepo {
         fn is_attached(&self, game_id: &GameId, player: Player) -> Result<bool, RepoErr> {
-            Ok(self.members.contains(&(game_id.clone(), player)))
+            Ok(self
+                .members
+                .lock()
+                .expect("lock")
+                .contains(&(game_id.clone(), player)))
         }
         fn attach(&mut self, game_id: &GameId, player: Player) -> Result<(), RepoErr> {
-            Ok(self.members.push((game_id.clone(), player)))
+            println!("ATTACH");
+            Ok(self
+                .members
+                .lock()
+                .expect("lock")
+                .push((game_id.clone(), player)))
         }
     }
 
@@ -166,7 +182,7 @@ mod tests {
         > {
             let game_id = self.game_id.clone();
             let player = self.player;
-            Ok(vec![(
+            let v: Vec<(XReadEntryId, StreamData)> = vec![(
                 XReadEntryId {
                     millis_time: 10,
                     seq_no: 0,
@@ -175,13 +191,17 @@ mod tests {
             )]
             .iter()
             .filter(|(eid, data)| {
-                eid < match data {
+                eid > match data {
                     StreamData::AB(_) => &entry_ids.attach_bot_eid,
                     StreamData::GS(_, _) => &entry_ids.game_states_eid,
                 }
             })
             .cloned()
-            .collect())
+            .collect();
+            if !v.is_empty() {
+                println!("x read {:?}", v.clone());
+            }
+            Ok(v)
         }
     }
 
@@ -190,10 +210,15 @@ mod tests {
         let (compute_move_in, _): (Sender<ComputeMove>, _) = unbounded();
         let (_, move_computed_out): (_, Receiver<MoveComputed>) = unbounded();
 
-        let entry_id_repo = Box::new(FakeEntryIdRepo);
-        let attached_bots_repo = Box::new(FakeAttachedBotsRepo { members: vec![] });
+        let (eid_update_in, eid_update_out) = unbounded();
+
+        let entry_id_repo = Box::new(FakeEntryIdRepo { eid_update_in });
+
+        let bots_attached = Arc::new(Mutex::new(vec![]));
+        let attached_bots_repo = Box::new(FakeAttachedBotsRepo {
+            members: bots_attached.clone(),
+        });
         let abr = attached_bots_repo.clone();
-        let eir = entry_id_repo.clone();
 
         const GAME_ID: GameId = GameId(Uuid::nil());
         let player = Player::WHITE;
@@ -205,7 +230,6 @@ mod tests {
 
             let mut opts = StreamOpts {
                 compute_move_in,
-                move_computed_out,
                 entry_id_repo,
                 attached_bots_repo,
                 xreader,
@@ -213,9 +237,28 @@ mod tests {
 
             process(Topics::default(), &mut opts)
         });
-        let written_eids = eir.fetch_all().expect("eid repo");
-        assert!(written_eids.attach_bot_eid > XReadEntryId::default());
-        assert!(written_eids.game_states_eid > XReadEntryId::default());
-        assert!(abr.is_attached(&GAME_ID, player).expect("ab repo"))
+
+        thread::sleep(Duration::from_millis(1));
+        assert!(abr.is_attached(&GAME_ID, player).expect("ab repo"));
+
+        let duration = Some(Duration::from_millis(10));
+
+        // Create a channel that times out after the specified duration.
+        let timeout = duration.map(|d| after(d)).unwrap_or(never());
+        let mut eid_updates_observed = vec![];
+        select! {
+            recv(eid_update_out) -> msg => eid_updates_observed.push(msg.expect("msg")),
+            recv(timeout) -> _ => panic!("unexpected timeout")
+        }
+        select! {
+            recv(eid_update_out) -> msg => eid_updates_observed.push(msg.expect("msg")),
+            recv(timeout) -> _ => panic!("unexpected timeout 2")
+        }
+
+        assert!(eid_updates_observed.len() == 2);
+        assert_eq!(eid_updates_observed[0].0, EntryIdType::AttachBotEvent);
+        assert!(eid_updates_observed[0].1 > XReadEntryId::default());
+        assert_eq!(eid_updates_observed[1].0, EntryIdType::GameStateChangelog);
+        assert!(eid_updates_observed[1].1 > XReadEntryId::default());
     }
 }

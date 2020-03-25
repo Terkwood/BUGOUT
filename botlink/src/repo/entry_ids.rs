@@ -52,6 +52,7 @@ impl EntryIdRepo for RedisEntryIdRepo {
     }
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum EntryIdType {
     AttachBotEvent,
     GameStateChangelog,
