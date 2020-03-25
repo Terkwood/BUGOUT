@@ -1,13 +1,17 @@
 pub mod topics;
+mod write_moves;
+pub mod xadd;
 pub mod xread;
 
 use crate::registry::Components;
 use crate::repo::{AttachedBotsRepo, EntryIdRepo, EntryIdType};
-use crossbeam_channel::{Receiver, Sender};
+use crossbeam_channel::Sender;
 use log::{error, info};
 use micro_model_bot::gateway::AttachBot;
-use micro_model_bot::{ComputeMove, MoveComputed};
+use micro_model_bot::ComputeMove;
+use micro_model_moves::GameState;
 use topics::Topics;
+pub use write_moves::write_moves;
 use xread::StreamData;
 
 pub fn process(topics: Topics, opts: &mut StreamOpts) {
@@ -28,7 +32,12 @@ pub fn process(topics: Topics, opts: &mut StreamOpts) {
                                     {
                                         error!("Error saving entry ID for attach bot {:?}", e)
                                     } else {
-                                        todo!("EMIT THE DEFAULT GAME STATE")
+                                        if let Err(e) = opts
+                                            .xadder
+                                            .xadd_game_state(game_id, GameState::default())
+                                        {
+                                            error!("Error writing redis stream for game state changelog : {:?}",e)
+                                        }
                                     }
                                 }
                             }
@@ -75,6 +84,7 @@ pub struct StreamOpts {
     pub attached_bots_repo: Box<dyn AttachedBotsRepo>,
     pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub xreader: Box<dyn xread::XReader>,
+    pub xadder: Box<dyn xadd::XAdderGS>,
     pub compute_move_in: Sender<ComputeMove>,
 }
 
@@ -84,6 +94,7 @@ impl StreamOpts {
             attached_bots_repo: components.game_repo,
             entry_id_repo: components.entry_id_repo,
             xreader: components.xreader,
+            xadder: components.xadder_gs,
             compute_move_in: components.compute_move_in,
         }
     }
@@ -93,7 +104,7 @@ impl StreamOpts {
 mod tests {
     use super::*;
     use crate::repo::*;
-    use crossbeam_channel::{after, never, select, unbounded};
+    use crossbeam_channel::{after, never, select, unbounded, Receiver};
     use micro_model_moves::*;
     use redis_streams::XReadEntryId;
     use std::sync::atomic::{AtomicU64, Ordering};
@@ -128,7 +139,6 @@ mod tests {
             entry_id_type: EntryIdType,
             entry_id: redis_streams::XReadEntryId,
         ) -> Result<(), redis_conn_pool::redis::RedisError> {
-            println!("EID UPDATE");
             self.eid_update_in
                 .send((entry_id_type.clone(), entry_id))
                 .expect("eid update send");
@@ -158,7 +168,6 @@ mod tests {
                 .contains(&(game_id.clone(), player)))
         }
         fn attach(&mut self, game_id: &GameId, player: Player) -> Result<(), RepoErr> {
-            println!("ATTACH");
             Ok(self
                 .members
                 .lock()
@@ -167,9 +176,23 @@ mod tests {
         }
     }
 
+    struct FakeXAdder {
+        added_in: Sender<(GameId, GameState)>,
+    }
+    impl xadd::XAdderGS for FakeXAdder {
+        fn xadd_game_state(
+            &self,
+            game_id: GameId,
+            game_state: GameState,
+        ) -> Result<(), redis_conn_pool::redis::RedisError> {
+            Ok(self.added_in.send((game_id, game_state)).expect("send add"))
+        }
+    }
+
     struct FakeXReader {
         game_id: GameId,
         player: Player,
+        incoming_game_state: Arc<Mutex<Option<(XReadEntryId, StreamData)>>>,
     }
     impl xread::XReader for FakeXReader {
         fn xread_sorted(
@@ -182,35 +205,37 @@ mod tests {
         > {
             let game_id = self.game_id.clone();
             let player = self.player;
-            let v: Vec<(XReadEntryId, StreamData)> = vec![(
+            let mut v: Vec<(XReadEntryId, StreamData)> = vec![(
                 XReadEntryId {
                     millis_time: 10,
                     seq_no: 0,
                 },
                 StreamData::AB(AttachBot { game_id, player }),
-            )]
-            .iter()
-            .filter(|(eid, data)| {
-                eid > match data {
-                    StreamData::AB(_) => &entry_ids.attach_bot_eid,
-                    StreamData::GS(_, _) => &entry_ids.game_states_eid,
-                }
-            })
-            .cloned()
-            .collect();
-            if !v.is_empty() {
-                println!("x read {:?}", v.clone());
+            )];
+            if let Some((inc_eid, inc_game_state)) =
+                self.incoming_game_state.lock().expect("xrl").clone()
+            {
+                v.push((inc_eid, inc_game_state));
             }
-            Ok(v)
+
+            Ok(v.iter()
+                .filter(|(eid, data)| {
+                    eid > match data {
+                        StreamData::AB(_) => &entry_ids.attach_bot_eid,
+                        StreamData::GS(_, _) => &entry_ids.game_states_eid,
+                    }
+                })
+                .cloned()
+                .collect())
         }
     }
 
     #[test]
-    fn basic_test() {
+    fn process_test() {
         let (compute_move_in, _): (Sender<ComputeMove>, _) = unbounded();
-        let (_, move_computed_out): (_, Receiver<MoveComputed>) = unbounded();
-
         let (eid_update_in, eid_update_out) = unbounded();
+        let (added_in, added_out): (Sender<(GameId, GameState)>, Receiver<(GameId, GameState)>) =
+            unbounded();
 
         let entry_id_repo = Box::new(FakeEntryIdRepo { eid_update_in });
 
@@ -222,29 +247,42 @@ mod tests {
 
         const GAME_ID: GameId = GameId(Uuid::nil());
         let player = Player::WHITE;
-        thread::spawn(move || {
-            let xreader = Box::new(FakeXReader {
-                game_id: GAME_ID.clone(),
-                player,
-            });
+        let incoming_game_state = Arc::new(Mutex::new(None));
+        let xreader = Box::new(FakeXReader {
+            game_id: GAME_ID.clone(),
+            player,
+            incoming_game_state: incoming_game_state.clone(),
+        });
+        let xadder = Box::new(FakeXAdder { added_in });
 
+        thread::spawn(move || {
             let mut opts = StreamOpts {
                 compute_move_in,
                 entry_id_repo,
                 attached_bots_repo,
                 xreader,
+                xadder,
             };
 
             process(Topics::default(), &mut opts)
         });
 
+        // process xadd of game state correctly
+        thread::spawn(move || loop {
+            select! {
+                recv(added_out) -> msg => if let Ok(a) = msg {
+                    let mut data =  incoming_game_state.lock().expect("locked gs");
+                    *data = Some((XReadEntryId{millis_time: 1, seq_no: 0}, StreamData::GS(a.0, a.1))); }
+            }
+        });
+
         thread::sleep(Duration::from_millis(1));
         assert!(abr.is_attached(&GAME_ID, player).expect("ab repo"));
 
-        let duration = Some(Duration::from_millis(10));
+        let timeoutdur = Some(Duration::from_millis(30));
 
         // Create a channel that times out after the specified duration.
-        let timeout = duration.map(|d| after(d)).unwrap_or(never());
+        let timeout = timeoutdur.map(|d| after(d)).unwrap_or(never());
         let mut eid_updates_observed = vec![];
         select! {
             recv(eid_update_out) -> msg => eid_updates_observed.push(msg.expect("msg")),
