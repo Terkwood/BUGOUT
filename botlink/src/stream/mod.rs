@@ -96,8 +96,10 @@ mod tests {
     use crossbeam_channel::unbounded;
     use micro_model_moves::*;
     use redis_streams::XReadEntryId;
-    use std::sync::atomic::{AtomicPtr, AtomicU64, Ordering};
+    use std::sync::atomic::{AtomicU64, Ordering};
     use std::thread;
+    use uuid::Uuid;
+
     struct FakeEntryIdRepo;
     static FAKE_AB_MILLIS: AtomicU64 = AtomicU64::new(0);
     static FAKE_AB_SEQNO: AtomicU64 = AtomicU64::new(0);
@@ -151,12 +153,26 @@ mod tests {
         fn xread_sorted(
             &self,
             entry_ids: AllEntryIds,
-            topics: &Topics,
+            _: &Topics,
         ) -> Result<
             Vec<(redis_streams::XReadEntryId, StreamData)>,
             redis_conn_pool::redis::RedisError,
         > {
-            unimplemented!()
+            let game_id = GameId(Uuid::nil());
+            let player = Player::WHITE;
+            Ok(vec![(
+                XReadEntryId::default(),
+                StreamData::AB(AttachBot { game_id, player }),
+            )]
+            .iter()
+            .filter(|(eid, data)| {
+                eid < match data {
+                    StreamData::AB(_) => &entry_ids.attach_bot_eid,
+                    StreamData::GS(_, _) => &entry_ids.game_states_eid,
+                }
+            })
+            .cloned()
+            .collect())
         }
     }
 
