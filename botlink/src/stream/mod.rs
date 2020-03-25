@@ -98,8 +98,10 @@ mod tests {
     use redis_streams::XReadEntryId;
     use std::sync::atomic::{AtomicU64, Ordering};
     use std::thread;
+    use std::time::Duration;
     use uuid::Uuid;
 
+    #[derive(Clone)]
     struct FakeEntryIdRepo;
     static FAKE_AB_MILLIS: AtomicU64 = AtomicU64::new(0);
     static FAKE_AB_SEQNO: AtomicU64 = AtomicU64::new(0);
@@ -136,6 +138,7 @@ mod tests {
         }
     }
 
+    #[derive(Clone)]
     struct FakeAttachedBotsRepo {
         pub members: Vec<(GameId, Player)>,
     }
@@ -148,7 +151,10 @@ mod tests {
         }
     }
 
-    struct FakeXReader;
+    struct FakeXReader {
+        game_id: GameId,
+        player: Player,
+    }
     impl xread::XReader for FakeXReader {
         fn xread_sorted(
             &self,
@@ -158,10 +164,13 @@ mod tests {
             Vec<(redis_streams::XReadEntryId, StreamData)>,
             redis_conn_pool::redis::RedisError,
         > {
-            let game_id = GameId(Uuid::nil());
-            let player = Player::WHITE;
+            let game_id = self.game_id.clone();
+            let player = self.player;
             Ok(vec![(
-                XReadEntryId::default(),
+                XReadEntryId {
+                    millis_time: 10,
+                    seq_no: 0,
+                },
                 StreamData::AB(AttachBot { game_id, player }),
             )]
             .iter()
@@ -181,10 +190,18 @@ mod tests {
         let (compute_move_in, _): (Sender<ComputeMove>, _) = unbounded();
         let (_, move_computed_out): (_, Receiver<MoveComputed>) = unbounded();
 
+        let entry_id_repo = Box::new(FakeEntryIdRepo);
+        let attached_bots_repo = Box::new(FakeAttachedBotsRepo { members: vec![] });
+        let abr = attached_bots_repo.clone();
+        let eir = entry_id_repo.clone();
+
+        const GAME_ID: GameId = GameId(Uuid::nil());
+        let player = Player::WHITE;
         thread::spawn(move || {
-            let entry_id_repo = Box::new(FakeEntryIdRepo);
-            let attached_bots_repo = Box::new(FakeAttachedBotsRepo { members: vec![] });
-            let xreader = Box::new(FakeXReader);
+            let xreader = Box::new(FakeXReader {
+                game_id: GAME_ID.clone(),
+                player,
+            });
 
             let mut opts = StreamOpts {
                 compute_move_in,
@@ -196,6 +213,9 @@ mod tests {
 
             process(Topics::default(), &mut opts)
         });
-        todo!()
+        let written_eids = eir.fetch_all().expect("eid repo");
+        assert!(written_eids.attach_bot_eid > XReadEntryId::default());
+        assert!(written_eids.game_states_eid > XReadEntryId::default());
+        assert!(abr.is_attached(&GAME_ID, player).expect("ab repo"))
     }
 }
