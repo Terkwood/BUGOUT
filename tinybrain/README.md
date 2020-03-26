@@ -2,6 +2,13 @@
 
 We successfully built and ran KataGo on an [NVIDIA Jetson Nano developer board](https://developer.nvidia.com/embedded/jetson-nano-developer-kit). Here's how.
 
+## Running
+
+```sh
+cargo install --path . 
+target/release/tinybrain
+```
+
 ## Prereq: Set up the Jetson Nano
 
 [You can follow the NVIDIA guide](https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit).

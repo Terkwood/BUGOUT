@@ -32,14 +32,6 @@ services:
       - AWS_REGION
       - DISABLED
       - TAG_NAME
-  reverse-proxy:
-    image: abiosoft/caddy
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile
-      - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy
   micro-judge:
     build: micro-judge/.
     links:
@@ -52,3 +44,20 @@ services:
       - "redis"
     depends_on:
       - "redis"
+  botlink:
+    build: botlink/.  
+    depends_on:
+      - "redis"
+    volumes:
+      - "./botlink/.env:/var/BUGOUT/botlink/.env"
+  reverse-proxy:
+    image: abiosoft/caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - "botlink"
+      - "gateway"
+    volumes:
+      - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile
+      - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy
