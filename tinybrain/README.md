@@ -6,7 +6,7 @@ We successfully built and ran KataGo on an [NVIDIA Jetson Nano developer board](
 
 ```sh
 cargo install --path . 
-./tinybrain
+target/release/tinybrain
 ```
 
 ## Prereq: Set up the Jetson Nano
