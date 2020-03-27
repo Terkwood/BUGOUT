@@ -1,5 +1,4 @@
 use super::StreamTopics;
-use crate::model::*;
 use crate::redis;
 use crate::repo::entry_id_repo::AllEntryIds;
 use micro_model_moves::{GameId, GameState, MoveMade};
@@ -24,10 +23,8 @@ pub fn xread_sorted(
         .arg("BLOCK")
         .arg(&BLOCK_MSEC.to_string())
         .arg("STREAMS")
-        .arg(&topics.game_ready_ev)
         .arg(&topics.move_accepted_ev)
         .arg(&topics.game_states_changelog)
-        .arg(entry_ids.game_ready_eid.to_string())
         .arg(entry_ids.move_accepted_eid.to_string())
         .arg(entry_ids.game_states_eid.to_string())
         .query::<XReadResult>(&mut *conn)?;
@@ -49,29 +46,15 @@ pub fn xread_sorted(
 pub enum StreamData {
     MA(MoveMade),
     GS(GameId, GameState),
-    GR(GameReadyEvent),
 }
 
 fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntryId, StreamData> {
     let mut stream_data = HashMap::new();
-    let game_ready_topic = &topics.game_ready_ev;
     let move_accepted_topic = &topics.move_accepted_ev;
     let game_states_topic = &topics.game_states_changelog;
     for hash in xread_result.iter() {
         for (xread_topic, xread_move_data) in hash.iter() {
-            if &xread_topic[..] == game_ready_topic {
-                for with_timestamps in xread_move_data {
-                    for (k, v) in with_timestamps {
-                        if let (Ok(seq_no), Ok(gr)) =
-                            (XReadEntryId::from_str(k), deser_game_ready_ev(&v.1))
-                        {
-                            stream_data.insert(seq_no, StreamData::GR(gr));
-                        } else {
-                            println!("Unexpected result in Xread");
-                        }
-                    }
-                }
-            } else if &xread_topic[..] == move_accepted_topic {
+            if &xread_topic[..] == move_accepted_topic {
                 for with_timestamps in xread_move_data {
                     for (k, v) in with_timestamps {
                         if let (Ok(seq_no), Some(move_accepted)) = (
@@ -109,10 +92,4 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
     }
 
     stream_data
-}
-
-fn deser_game_ready_ev(game_id_str: &str) -> Result<GameReadyEvent, uuid::Error> {
-    Ok(GameReadyEvent {
-        game_id: GameId(Uuid::from_str(game_id_str)?),
-    })
 }

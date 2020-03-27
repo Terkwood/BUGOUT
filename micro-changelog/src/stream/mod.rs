@@ -49,24 +49,6 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                                     }
                                 }
                             }
-                            (entry_id, StreamData::GR(gr_ev)) => {
-                                if let Err(e) = game_states_repo::write(
-                                    gr_ev.game_id,
-                                    &GameState::default(), // TODO handicaps
-                                    &components,
-                                ) {
-                                    println!("error saving fresh game state {:#?}", e)
-                                } else {
-                                    println!("loop game ready");
-                                    if let Err(e) = entry_id_repo::update(
-                                        EntryIdType::GameReadyEvent,
-                                        entry_id,
-                                        &components,
-                                    ) {
-                                        println!("Error saving entry ID on game ready {:#?}", e)
-                                    }
-                                }
-                            }
                             (entry_id, StreamData::GS(game_id, gs)) => {
                                 if let Err(e) = game_states_repo::write(game_id, &gs, &components) {
                                     println!("Error saving game state {:#?}", e)

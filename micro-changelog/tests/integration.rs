@@ -139,7 +139,6 @@ fn panic_cleanup(stream_names: Vec<String>, keys: Vec<String>, pool: Pool) {
 fn test_topics() -> StreamTopics {
     StreamTopics {
         game_states_changelog: GAME_STATES_TOPIC.to_string(),
-        game_ready_ev: GAME_READY_EV_TOPIC.to_string(),
         move_accepted_ev: MOVE_ACCEPTED_EV_TOPIC.to_string(),
         move_made_ev: MOVE_MADE_EV_TOPIC.to_string(),
     }
