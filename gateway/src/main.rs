@@ -18,6 +18,7 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 fn main() {
     println!("🔢 {:<8} {}", NAME, VERSION);
 
+    env_logger::init();
     env::init();
 
     let (kafka_commands_in, kafka_commands_out): (Sender<KafkaCommands>, Receiver<KafkaCommands>) =

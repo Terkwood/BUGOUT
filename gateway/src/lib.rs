@@ -6,6 +6,8 @@ extern crate envy;
 extern crate harsh;
 #[macro_use]
 extern crate lazy_static;
+extern crate env_logger;
+extern crate log;
 extern crate mio_extras;
 extern crate r2d2_redis;
 extern crate rand;
