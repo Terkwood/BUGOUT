@@ -367,6 +367,10 @@ impl Handler for WsSession {
                     Ok(())
                 }
             }
+            Ok(ClientCommands::AttachBot(AttachBotClientCommand {
+                bot_player: _,
+                board_size: _,
+            })) => todo!(),
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",

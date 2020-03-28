@@ -348,7 +348,7 @@ dependencies = [
 
 [[package]]
 name = "gateway"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
  "chrono 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "crossbeam 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",

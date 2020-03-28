@@ -29,6 +29,15 @@ pub struct ChooseColorPrefClientCommand {
     pub color_pref: ColorPref,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct AttachBotClientCommand {
+    #[serde(rename = "botPlayer")]
+    pub bot_player: Player,
+    #[serde(rename = "boardSize")]
+    pub board_size: Option<u8>,
+}
+
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(tag = "type")]
 pub enum ClientCommands {
@@ -43,6 +52,7 @@ pub enum ClientCommands {
     ProvideIdleStatus,
     Identify(Identity),
     QuitGame,
+    AttachBot(AttachBotClientCommand),
 }
 
 #[cfg(test)]
