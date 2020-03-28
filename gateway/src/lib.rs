@@ -39,3 +39,4 @@ pub fn short_uuid(uuid: Uuid) -> String {
 }
 
 pub const FULL_BOARD_SIZE: u8 = 19;
+pub const SMALL_BOARD_SIZE: u8 = 9;

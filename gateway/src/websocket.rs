@@ -231,8 +231,6 @@ impl Handler for WsSession {
                 if let (None, Some(client_id)) = (self.current_game, self.client_id) {
                     println!("🤝 {} FINDPUBG", session_code(self));
 
-                    // ..and let the router know we're interested in it,
-                    // so that we can receive updates
                     if let Err(e) = self.kafka_commands_in.send(KafkaCommands::FindPublicGame(
                         FindPublicGameKafkaCommand {
                             client_id,
@@ -257,8 +255,6 @@ impl Handler for WsSession {
 
                     let board_size = cp.board_size.unwrap_or(crate::FULL_BOARD_SIZE);
 
-                    // ..and let the router know we're interested in it,
-                    // so that we can receive updates
                     if let Err(e) = self
                         .kafka_commands_in
                         .send(KafkaCommands::CreateGame(CreateGameKafkaCommand {
@@ -370,7 +366,15 @@ impl Handler for WsSession {
             Ok(ClientCommands::AttachBot(AttachBotClientCommand {
                 bot_player: _,
                 board_size: _,
-            })) => todo!(),
+            })) => {
+                if let Some(_client_id) = self.client_id {
+                    println!("🗳  {} ATACHBOT", session_code(self));
+
+                    todo!("redis send")
+                } else {
+                    complain_no_client_id()
+                }
+            }
             Err(_err) => {
                 println!(
                     "💥 {} {:<8} message deserialization {}",
