@@ -17,12 +17,14 @@ extern crate serde_json;
 extern crate time;
 extern crate ws;
 
+pub mod backend;
+pub mod backend_commands;
+pub mod backend_events;
 pub mod compact_ids;
 pub mod env;
 pub mod idle_status;
-pub mod kafka_commands;
-pub mod kafka_events;
 pub mod kafka_io;
+pub mod redis_io;
 pub mod router;
 pub mod websocket;
 

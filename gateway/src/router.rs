@@ -8,9 +8,9 @@ use crossbeam_channel::select;
 
 use uuid::Uuid;
 
+use crate::backend_events::BackendEvents;
 use crate::client_events::{ClientEvents, YourColorEvent};
 use crate::idle_status::IdleStatusResponse;
-use crate::kafka_events::KafkaEvents;
 use crate::model::*;
 use crate::{short_uuid, EMPTY_SHORT_UUID};
 
@@ -238,7 +238,7 @@ impl Router {
 /// it must respond to requests to add and drop listeners
 pub fn start(
     router_commands_out: Receiver<RouterCommand>,
-    kafka_events_out: Receiver<KafkaEvents>,
+    kafka_events_out: Receiver<BackendEvents>,
     idle_resp_out: Receiver<IdleStatusResponse>,
 ) {
     thread::spawn(move || {
@@ -293,27 +293,27 @@ pub fn start(
                 },
             recv(kafka_events_out) -> event =>
                 match event {
-                    Ok(KafkaEvents::MoveMade(m)) => {
+                    Ok(BackendEvents::MoveMade(m)) => {
                         let u = m.clone();
                         router.set_playerup(u.game_id, u.player.other());
-                        router.forward_by_game_id(KafkaEvents::MoveMade(m).to_client_event())
+                        router.forward_by_game_id(BackendEvents::MoveMade(m).to_client_event())
                     }
-                    Ok(KafkaEvents::GameReady(g)) => {
+                    Ok(BackendEvents::GameReady(g)) => {
                         router.route_new_game(g.sessions.first, g.game_id);
                         router.route_new_game(g.sessions.second, g.game_id);
-                        router.forward_by_game_id(KafkaEvents::GameReady(g).to_client_event());
+                        router.forward_by_game_id(BackendEvents::GameReady(g).to_client_event());
                     }
-                    Ok(KafkaEvents::PrivateGameRejected(p)) => {
+                    Ok(BackendEvents::PrivateGameRejected(p)) => {
                         // there's no game ID associated with
                         // this game, yet, so we need to
                         // forward via client ID
-                        router.forward_by_client_id(p.client_id, KafkaEvents::PrivateGameRejected(p).to_client_event())
+                        router.forward_by_client_id(p.client_id, BackendEvents::PrivateGameRejected(p).to_client_event())
                     }
-                    Ok(KafkaEvents::WaitForOpponent(w)) => {
+                    Ok(BackendEvents::WaitForOpponent(w)) => {
                         router.route_new_game(w.session_id, w.game_id);
-                        router.forward_by_game_id(KafkaEvents::WaitForOpponent(w).to_client_event())
+                        router.forward_by_game_id(BackendEvents::WaitForOpponent(w).to_client_event())
                     }
-                    Ok(KafkaEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
+                    Ok(BackendEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
                         // We want to forward by session ID
                         // so that we don't send TWO yourcolor events
                         // to each client

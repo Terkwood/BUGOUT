@@ -7,31 +7,31 @@ use crate::compact_ids::CompactId;
 use crate::model::*;
 
 #[derive(Debug)]
-pub enum KafkaEvents {
+pub enum BackendEvents {
     MoveMade(MoveMadeEvent),
     MoveRejected(MoveRejectedEvent),
     HistoryProvided(HistoryProvidedEvent),
-    GameReady(GameReadyKafkaEvent),
-    PrivateGameRejected(PrivateGameRejectedKafkaEvent),
-    WaitForOpponent(WaitForOpponentKafkaEvent),
+    GameReady(GameReadyBackendEvent),
+    PrivateGameRejected(PrivateGameRejectedBackendEvent),
+    WaitForOpponent(WaitForOpponentBackendEvent),
     ColorsChosen(ColorsChosenEvent),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ShutdownEvent(pub SystemTime);
+pub struct KafkaShutdownEvent(pub SystemTime);
 
-impl KafkaEvents {
+impl BackendEvents {
     pub fn to_client_event(self) -> ClientEvents {
         match self {
-            KafkaEvents::MoveMade(m) => ClientEvents::MoveMade(m),
-            KafkaEvents::MoveRejected(m) => ClientEvents::MoveRejected(m),
-            KafkaEvents::HistoryProvided(h) => ClientEvents::HistoryProvided(h),
+            BackendEvents::MoveMade(m) => ClientEvents::MoveMade(m),
+            BackendEvents::MoveRejected(m) => ClientEvents::MoveRejected(m),
+            BackendEvents::HistoryProvided(h) => ClientEvents::HistoryProvided(h),
             // Dummy impl, don't trust it
-            KafkaEvents::ColorsChosen(c) => ClientEvents::YourColor(YourColorEvent {
+            BackendEvents::ColorsChosen(c) => ClientEvents::YourColor(YourColorEvent {
                 game_id: c.game_id,
                 your_color: Player::BLACK,
             }),
-            KafkaEvents::GameReady(GameReadyKafkaEvent {
+            BackendEvents::GameReady(GameReadyBackendEvent {
                 game_id,
                 event_id,
                 board_size,
@@ -41,14 +41,14 @@ impl KafkaEvents {
                 event_id,
                 board_size,
             }),
-            KafkaEvents::PrivateGameRejected(p) => {
+            BackendEvents::PrivateGameRejected(p) => {
                 ClientEvents::PrivateGameRejected(PrivateGameRejectedClientEvent {
                     game_id: CompactId::encode(p.game_id),
                     event_id: p.event_id,
                 })
             }
 
-            KafkaEvents::WaitForOpponent(WaitForOpponentKafkaEvent {
+            BackendEvents::WaitForOpponent(WaitForOpponentBackendEvent {
                 game_id,
                 session_id: _,
                 event_id,
@@ -70,19 +70,19 @@ impl KafkaEvents {
 
     pub fn game_id(&self) -> GameId {
         match self {
-            KafkaEvents::MoveMade(e) => e.game_id,
-            KafkaEvents::MoveRejected(e) => e.game_id,
-            KafkaEvents::HistoryProvided(e) => e.game_id,
-            KafkaEvents::GameReady(e) => e.game_id,
-            KafkaEvents::PrivateGameRejected(e) => e.game_id,
-            KafkaEvents::WaitForOpponent(e) => e.game_id,
-            KafkaEvents::ColorsChosen(e) => e.game_id,
+            BackendEvents::MoveMade(e) => e.game_id,
+            BackendEvents::MoveRejected(e) => e.game_id,
+            BackendEvents::HistoryProvided(e) => e.game_id,
+            BackendEvents::GameReady(e) => e.game_id,
+            BackendEvents::PrivateGameRejected(e) => e.game_id,
+            BackendEvents::WaitForOpponent(e) => e.game_id,
+            BackendEvents::ColorsChosen(e) => e.game_id,
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GameReadyKafkaEvent {
+pub struct GameReadyBackendEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
     pub sessions: GameSessions,
@@ -93,7 +93,7 @@ pub struct GameReadyKafkaEvent {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct WaitForOpponentKafkaEvent {
+pub struct WaitForOpponentBackendEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
     #[serde(rename = "sessionId")]
@@ -104,7 +104,7 @@ pub struct WaitForOpponentKafkaEvent {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PrivateGameRejectedKafkaEvent {
+pub struct PrivateGameRejectedBackendEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
     #[serde(rename = "clientId")]

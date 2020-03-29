@@ -1,4 +1,4 @@
-use crate::kafka_events::*;
+use crate::backend_events::*;
 use crate::model::ClientId;
 use crate::wakeup::RedisWakeup;
 use chrono::{DateTime, Utc};
@@ -27,7 +27,7 @@ pub struct KafkaActivityObserved;
 
 pub fn start_monitor(
     status_resp_in: Sender<IdleStatusResponse>,
-    shutdown_out: Receiver<ShutdownEvent>,
+    shutdown_out: Receiver<KafkaShutdownEvent>,
     req_status_out: Receiver<RequestIdleStatus>,
     kafka_out: Receiver<KafkaActivityObserved>,
 ) {

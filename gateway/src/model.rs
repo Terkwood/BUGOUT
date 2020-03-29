@@ -155,3 +155,16 @@ pub struct Move {
     coord: Option<Coord>,
     turn: i32,
 }
+
+impl std::fmt::Display for Player {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Player::BLACK => "B",
+                Player::WHITE => "W",
+            }
+        )
+    }
+}
