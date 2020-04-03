@@ -1,12 +1,12 @@
+#[macro_use]
+extern crate lazy_static;
 extern crate chrono;
 extern crate crossbeam;
 extern crate crossbeam_channel;
 extern crate dotenv;
+extern crate env_logger;
 extern crate envy;
 extern crate harsh;
-#[macro_use]
-extern crate lazy_static;
-extern crate env_logger;
 extern crate log;
 extern crate mio_extras;
 extern crate r2d2_redis;

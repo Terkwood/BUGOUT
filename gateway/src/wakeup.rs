@@ -1,3 +1,4 @@
+use crate::redis_io::{RedisPool, REDIS_URL};
 use r2d2_redis::{r2d2, redis, RedisConnectionManager};
 use redis::Commands;
 use serde_derive::{Deserialize, Serialize};
@@ -11,9 +12,6 @@ pub struct WakeUpEvent {
     pub client_id: ClientId,
 }
 
-type RedisPool = r2d2_redis::r2d2::Pool<r2d2_redis::RedisConnectionManager>;
-
-const REDIS_URL: &str = "redis://redis";
 const TOPIC: &str = "wakeup-ev";
 
 pub struct RedisWakeup {
@@ -21,12 +19,8 @@ pub struct RedisWakeup {
 }
 
 impl RedisWakeup {
-    pub fn new() -> RedisWakeup {
-        let manager = RedisConnectionManager::new(REDIS_URL).unwrap();
-
-        RedisWakeup {
-            pool: r2d2::Pool::builder().build(manager).unwrap(),
-        }
+    pub fn new(pool: &RedisPool) -> RedisWakeup {
+        RedisWakeup { pool: pool.clone() }
     }
     pub fn publish(&self, client_id: ClientId) -> Result<(), r2d2_redis::redis::RedisError> {
         let mut conn = self.pool.get().unwrap();

@@ -1,6 +1,8 @@
 use crate::backend_events::*;
 use crate::model::ClientId;
+use crate::redis_io::RedisPool;
 use crate::wakeup::RedisWakeup;
+
 use chrono::{DateTime, Utc};
 use crossbeam::{Receiver, Sender};
 use crossbeam_channel::select;
@@ -30,10 +32,12 @@ pub fn start_monitor(
     shutdown_out: Receiver<KafkaShutdownEvent>,
     req_status_out: Receiver<RequestIdleStatus>,
     kafka_out: Receiver<KafkaActivityObserved>,
+    pool: &RedisPool,
 ) {
+    let pc = pool.clone();
     thread::spawn(move || {
         let mut status = IdleStatus::Idle { since: Utc::now() };
-        let redis_wakeup = RedisWakeup::new();
+        let redis_wakeup = RedisWakeup::new(&pc);
 
         loop {
             select! {

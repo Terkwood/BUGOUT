@@ -8,7 +8,7 @@ use gateway::backend::BackendInitOptions;
 use gateway::backend_commands::SessionCommand;
 use gateway::backend_events::{BackendEvents, KafkaShutdownEvent};
 use gateway::idle_status::{IdleStatusResponse, KafkaActivityObserved, RequestIdleStatus};
-
+use gateway::redis_io;
 use gateway::router::RouterCommand;
 use gateway::websocket::WsSession;
 use gateway::{backend, env, idle_status, router};
@@ -48,7 +48,15 @@ fn main() {
         Receiver<KafkaActivityObserved>,
     ) = unbounded();
 
-    idle_status::start_monitor(idle_resp_in, shutdown_out, req_idle_out, kafka_activity_out);
+    // TODO move this
+    let pool = redis_io::new_pool();
+    idle_status::start_monitor(
+        idle_resp_in,
+        shutdown_out,
+        req_idle_out,
+        kafka_activity_out,
+        &pool,
+    );
 
     router::start(router_commands_out, backend_events_out, idle_resp_out);
 
@@ -67,7 +75,7 @@ fn main() {
     // TODO move this
     let client_repo: Box<dyn ClientBackendRepo> = Box::new(RedisClientBackendRepo {
         key_provider: gateway::redis_io::KeyProvider::default(),
-        pool: todo!(),
+        pool,
     });
     backend::start_all(BackendInitOptions {
         backend_events_in,
