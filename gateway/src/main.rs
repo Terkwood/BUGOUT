@@ -3,9 +3,12 @@ extern crate gateway;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use log::info;
 
+use gateway::backend::repo::{ClientBackendRepo, RedisClientBackendRepo};
+use gateway::backend::BackendInitOptions;
 use gateway::backend_commands::SessionCommand;
 use gateway::backend_events::{BackendEvents, KafkaShutdownEvent};
 use gateway::idle_status::{IdleStatusResponse, KafkaActivityObserved, RequestIdleStatus};
+
 use gateway::router::RouterCommand;
 use gateway::websocket::WsSession;
 use gateway::{backend, env, idle_status, router};
@@ -61,10 +64,16 @@ fn main() {
         .unwrap()
     });
 
-    backend::start_all(
+    // TODO move this
+    let client_repo: Box<dyn ClientBackendRepo> = Box::new(RedisClientBackendRepo {
+        key_provider: gateway::redis_io::KeyProvider::default(),
+        pool: todo!(),
+    });
+    backend::start_all(BackendInitOptions {
         backend_events_in,
-        shutdown_in,
+        client_repo,
         kafka_activity_in,
         session_commands_out,
-    )
+        shutdown_in,
+    })
 }

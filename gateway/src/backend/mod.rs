@@ -30,12 +30,15 @@ impl std::fmt::Display for Backend {
     }
 }
 
-pub fn start_all(
-    backend_events_in: Sender<BackendEvents>,
-    shutdown_in: Sender<KafkaShutdownEvent>,
-    kafka_activity_in: Sender<KafkaActivityObserved>,
-    session_commands_out: Receiver<SessionCommand>,
-) {
+pub struct BackendInitOptions {
+    pub backend_events_in: Sender<BackendEvents>,
+    pub shutdown_in: Sender<KafkaShutdownEvent>,
+    pub kafka_activity_in: Sender<KafkaActivityObserved>,
+    pub session_commands_out: Receiver<SessionCommand>,
+    pub client_repo: Box<dyn repo::ClientBackendRepo>,
+}
+
+pub fn start_all(opts: BackendInitOptions) {
     let (kafka_commands_in, kafka_commands_out): (
         Sender<BackendCommands>,
         Receiver<BackendCommands>,
@@ -47,16 +50,17 @@ pub fn start_all(
     ) = unbounded();
 
     thread::spawn(move || redis_io::command_writer::start(redis_commands_out));
-    let bei = backend_events_in.clone();
+    let bei = opts.backend_events_in.clone();
     thread::spawn(move || redis_io::stream::process(bei));
 
-    thread::spawn(move || split(session_commands_out, kafka_commands_in, redis_commands_in));
+    let soc = opts.session_commands_out.clone();
+    thread::spawn(move || split(soc, kafka_commands_in, redis_commands_in));
 
     block_on(kafka_io::start(
-        backend_events_in,
-        shutdown_in,
-        kafka_activity_in,
-        kafka_commands_out,
+        opts.backend_events_in.clone(),
+        opts.shutdown_in.clone(),
+        opts.kafka_activity_in.clone(),
+        kafka_commands_out.clone(),
     ))
 }
 
