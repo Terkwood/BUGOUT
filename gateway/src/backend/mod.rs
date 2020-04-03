@@ -1,5 +1,6 @@
 use futures::executor::block_on;
 
+use crate::backend::repo::SessionBackendRepo;
 use crate::backend_commands::{BackendCommands, SessionCommand};
 use crate::backend_events::{BackendEvents, KafkaShutdownEvent};
 use crate::idle_status::KafkaActivityObserved;
@@ -35,7 +36,6 @@ pub struct BackendInitOptions {
     pub shutdown_in: Sender<KafkaShutdownEvent>,
     pub kafka_activity_in: Sender<KafkaActivityObserved>,
     pub session_commands_out: Receiver<SessionCommand>,
-    pub client_repo: Box<dyn repo::ClientBackendRepo>,
 }
 
 pub fn start_all(opts: BackendInitOptions) {
@@ -49,7 +49,9 @@ pub fn start_all(opts: BackendInitOptions) {
         Receiver<BackendCommands>,
     ) = unbounded();
 
-    thread::spawn(move || redis_io::command_writer::start(redis_commands_out));
+    thread::spawn(move || {
+        redis_io::command_writer::start(redis_commands_out, repo::create(redis_io::create_pool()))
+    });
     let bei = opts.backend_events_in.clone();
     thread::spawn(move || redis_io::stream::process(bei));
 

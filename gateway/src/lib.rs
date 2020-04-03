@@ -20,6 +20,7 @@ extern crate ws;
 pub mod backend;
 pub mod backend_commands;
 pub mod backend_events;
+pub mod channels;
 pub mod compact_ids;
 pub mod env;
 pub mod idle_status;
@@ -34,9 +35,7 @@ mod logging;
 mod model;
 mod topics;
 mod wakeup;
-
 use uuid::Uuid;
-
 pub const EMPTY_SHORT_UUID: &str = "        ";
 pub fn short_uuid(uuid: Uuid) -> String {
     uuid.to_string()[..8].to_string()

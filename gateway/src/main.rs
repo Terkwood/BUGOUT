@@ -1,15 +1,9 @@
 extern crate gateway;
-
-use crossbeam_channel::{unbounded, Receiver, Sender};
 use log::info;
 
-use gateway::backend::repo::{ClientBackendRepo, RedisClientBackendRepo};
 use gateway::backend::BackendInitOptions;
-use gateway::backend_commands::SessionCommand;
-use gateway::backend_events::{BackendEvents, KafkaShutdownEvent};
-use gateway::idle_status::{IdleStatusResponse, KafkaActivityObserved, RequestIdleStatus};
+use gateway::channels::MainChannels;
 use gateway::redis_io;
-use gateway::router::RouterCommand;
 use gateway::websocket::WsSession;
 use gateway::{backend, env, idle_status, router};
 
@@ -20,68 +14,36 @@ fn main() {
     info!("🔢 {}", VERSION);
 
     env::init();
-
-    let (session_commands_in, session_commands_out): (
-        Sender<SessionCommand>,
-        Receiver<SessionCommand>,
-    ) = unbounded();
-
-    let (backend_events_in, backend_events_out): (Sender<BackendEvents>, Receiver<BackendEvents>) =
-        unbounded();
-
-    let (router_commands_in, router_commands_out): (
-        Sender<RouterCommand>,
-        Receiver<RouterCommand>,
-    ) = unbounded();
-
-    let (shutdown_in, shutdown_out): (Sender<KafkaShutdownEvent>, Receiver<KafkaShutdownEvent>) =
-        unbounded();
-
-    let (req_idle_in, req_idle_out): (Sender<RequestIdleStatus>, Receiver<RequestIdleStatus>) =
-        unbounded();
-
-    let (idle_resp_in, idle_resp_out): (Sender<IdleStatusResponse>, Receiver<IdleStatusResponse>) =
-        unbounded();
-
-    let (kafka_activity_in, kafka_activity_out): (
-        Sender<KafkaActivityObserved>,
-        Receiver<KafkaActivityObserved>,
-    ) = unbounded();
-
-    // TODO move this
-    let pool = redis_io::new_pool();
+    let mc = MainChannels::create();
+    let pool = redis_io::create_pool();
     idle_status::start_monitor(
-        idle_resp_in,
-        shutdown_out,
-        req_idle_out,
-        kafka_activity_out,
+        mc.idle_resp_in,
+        mc.shutdown_out,
+        mc.req_idle_out,
+        mc.kafka_activity_out,
         &pool,
     );
 
-    router::start(router_commands_out, backend_events_out, idle_resp_out);
+    router::start(
+        mc.router_commands_out,
+        mc.backend_events_out,
+        mc.idle_resp_out,
+    );
 
+    let sci = mc.session_commands_in;
+    let rci = mc.router_commands_in;
+    let rii = mc.req_idle_in;
     std::thread::spawn(move || {
         ws::listen("0.0.0.0:3012", |ws_out| {
-            WsSession::new(
-                ws_out,
-                session_commands_in.clone(),
-                router_commands_in.clone(),
-                req_idle_in.clone(),
-            )
+            WsSession::new(ws_out, sci.clone(), rci.clone(), rii.clone())
         })
         .unwrap()
     });
 
-    // TODO move this
-    let client_repo: Box<dyn ClientBackendRepo> = Box::new(RedisClientBackendRepo {
-        key_provider: gateway::redis_io::KeyProvider::default(),
-        pool,
-    });
     backend::start_all(BackendInitOptions {
-        backend_events_in,
-        client_repo,
-        kafka_activity_in,
-        session_commands_out,
-        shutdown_in,
+        backend_events_in: mc.backend_events_in,
+        kafka_activity_in: mc.kafka_activity_in,
+        session_commands_out: mc.session_commands_out,
+        shutdown_in: mc.shutdown_in,
     })
 }

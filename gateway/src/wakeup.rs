@@ -1,5 +1,5 @@
-use crate::redis_io::{RedisPool, REDIS_URL};
-use r2d2_redis::{r2d2, redis, RedisConnectionManager};
+use crate::redis_io::RedisPool;
+use r2d2_redis::redis;
 use redis::Commands;
 use serde_derive::{Deserialize, Serialize};
 use serde_json;
