@@ -1,6 +1,6 @@
 use futures::executor::block_on;
 
-use crate::backend_commands::BackendCommands;
+use crate::backend_commands::{BackendCommands, SessionCommand};
 use crate::backend_events::{BackendEvents, KafkaShutdownEvent};
 use crate::idle_status::KafkaActivityObserved;
 use crate::kafka_io;
@@ -30,27 +30,11 @@ impl std::fmt::Display for Backend {
     }
 }
 
-impl Backend {
-    fn to_i8(self) -> i8 {
-        match self {
-            Backend::RedisStreams => 0,
-            Backend::Kafka => 1,
-        }
-    }
-
-    pub fn from_i8(n: i8) -> Self {
-        match n {
-            0 => Backend::RedisStreams,
-            _ => Backend::Kafka,
-        }
-    }
-}
-
 pub fn start_all(
     backend_events_in: Sender<BackendEvents>,
     shutdown_in: Sender<KafkaShutdownEvent>,
     kafka_activity_in: Sender<KafkaActivityObserved>,
-    backend_commands_out: Receiver<BackendCommands>,
+    session_commands_out: Receiver<SessionCommand>,
 ) {
     let (kafka_commands_in, kafka_commands_out): (
         Sender<BackendCommands>,
@@ -66,7 +50,7 @@ pub fn start_all(
     let bei = backend_events_in.clone();
     thread::spawn(move || redis_io::stream::process(bei));
 
-    thread::spawn(move || split(backend_commands_out, kafka_commands_in, redis_commands_in));
+    thread::spawn(move || split(session_commands_out, kafka_commands_in, redis_commands_in));
 
     block_on(kafka_io::start(
         backend_events_in,
@@ -77,13 +61,13 @@ pub fn start_all(
 }
 
 fn split(
-    backend_commands_out: Receiver<BackendCommands>,
+    session_commands_out: Receiver<SessionCommand>,
     _kafka_commands_in: Sender<BackendCommands>,
     _redis_commands_in: Sender<BackendCommands>,
 ) {
     loop {
         select! {
-            recv(backend_commands_out) -> _ => todo!()
+            recv(session_commands_out) -> _ => todo!()
         }
     }
 }

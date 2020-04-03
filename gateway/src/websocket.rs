@@ -33,7 +33,7 @@ pub struct WsSession {
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
     pub channel_recv_timeout: Option<Timeout>,
-    pub backend_commands_in: crossbeam_channel::Sender<BackendCommands>,
+    pub session_commands_in: crossbeam_channel::Sender<SessionCommand>,
     pub events_out: Option<crossbeam_channel::Receiver<ClientEvents>>,
     pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     pub req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
@@ -45,7 +45,7 @@ pub struct WsSession {
 impl WsSession {
     pub fn new(
         ws_out: ws::Sender,
-        backend_commands_in: crossbeam_channel::Sender<BackendCommands>,
+        session_commands_in: crossbeam_channel::Sender<SessionCommand>,
         router_commands_in: crossbeam_channel::Sender<RouterCommand>,
         req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
     ) -> WsSession {
@@ -55,7 +55,7 @@ impl WsSession {
             ping_timeout: None,
             expire_timeout: None,
             channel_recv_timeout: None,
-            backend_commands_in,
+            session_commands_in,
             events_out: None,
             router_commands_in,
             req_idle_status_in,
@@ -63,6 +63,16 @@ impl WsSession {
             expire_after: next_expiry(),
             client_id: None,
         }
+    }
+
+    fn send_session_command(
+        &self,
+        backend_command: BackendCommands,
+    ) -> std::result::Result<(), crossbeam::SendError<SessionCommand>> {
+        self.session_commands_in.send(SessionCommand {
+            session_id: self.session_id,
+            command: backend_command,
+        })
     }
 
     fn notify_router_close(&mut self) {
@@ -93,9 +103,8 @@ impl WsSession {
 
     fn produce_client_heartbeat(&mut self, heartbeat_type: HeartbeatType) {
         if let Some(client_id) = self.client_id {
-            if let Err(e) = self
-                .backend_commands_in
-                .send(BackendCommands::ClientHeartbeat(ClientHeartbeat {
+            if let Err(e) =
+                self.send_session_command(BackendCommands::ClientHeartbeat(ClientHeartbeat {
                     client_id,
                     heartbeat_type,
                 }))
@@ -165,8 +174,7 @@ impl Handler for WsSession {
                 if let Some(c) = self.current_game {
                     if c == game_id {
                         return self
-                            .backend_commands_in
-                            .send(BackendCommands::MakeMove(MakeMoveCommand {
+                            .send_session_command(BackendCommands::MakeMove(MakeMoveCommand {
                                 game_id,
                                 req_id,
                                 player,
@@ -213,12 +221,10 @@ impl Handler for WsSession {
             Ok(ClientCommands::ProvideHistory(ProvideHistoryCommand { game_id, req_id })) => {
                 info!("📋 {} PROVHIST", session_code(self));
 
-                if let Err(e) = self
-                    .backend_commands_in
-                    .send(BackendCommands::ProvideHistory(ProvideHistoryCommand {
-                        game_id,
-                        req_id,
-                    }))
+                if let Err(e) =
+                    self.send_session_command(BackendCommands::ProvideHistory(
+                        ProvideHistoryCommand { game_id, req_id },
+                    ))
                     .map_err(|e| ws::Error::from(Box::new(e)))
                 {
                     error!("ERROR on kafka send provhist {:?}", e)
@@ -232,15 +238,12 @@ impl Handler for WsSession {
                 if let (None, Some(client_id)) = (self.current_game, self.client_id) {
                     info!("🤝 {} FINDPUBG", session_code(self));
 
-                    if let Err(e) = self
-                        .backend_commands_in
-                        .send(BackendCommands::FindPublicGame(
-                            FindPublicGameBackendCommand {
-                                client_id,
-                                session_id: self.session_id,
-                            },
-                        ))
-                    {
+                    if let Err(e) = self.send_session_command(BackendCommands::FindPublicGame(
+                        FindPublicGameBackendCommand {
+                            client_id,
+                            session_id: self.session_id,
+                        },
+                    )) {
                         error!(
                             "😠 {} {:<8} kafka sending find public game command {}",
                             session_code(self),
@@ -260,13 +263,14 @@ impl Handler for WsSession {
                     let board_size = cp.board_size.unwrap_or(crate::FULL_BOARD_SIZE);
 
                     if let Err(e) = self
-                        .backend_commands_in
-                        .send(BackendCommands::CreateGame(CreateGameBackendCommand {
-                            client_id,
-                            visibility: Visibility::Private,
-                            session_id: self.session_id,
-                            board_size,
-                        }))
+                        .send_session_command(BackendCommands::CreateGame(
+                            CreateGameBackendCommand {
+                                client_id,
+                                visibility: Visibility::Private,
+                                session_id: self.session_id,
+                                board_size,
+                            },
+                        ))
                         .map_err(|e| ws::Error::from(Box::new(e)))
                     {
                         error!("ERROR on kafka send join private game {:?}", e)
@@ -282,8 +286,7 @@ impl Handler for WsSession {
                 if self.current_game.is_none() {
                     if let (Some(game_id), Some(client_id)) = (game_id.decode(), self.client_id) {
                         if let Err(e) = self
-                            .backend_commands_in
-                            .send(BackendCommands::JoinPrivateGame(
+                            .send_session_command(BackendCommands::JoinPrivateGame(
                                 JoinPrivateGameBackendCommand {
                                     game_id,
                                     client_id,
@@ -304,15 +307,14 @@ impl Handler for WsSession {
                 if let Some(client_id) = self.client_id {
                     info!("🗳  {} CHSCLRPF", session_code(self));
 
-                    self.backend_commands_in
-                        .send(BackendCommands::ChooseColorPref(
-                            ChooseColorPrefBackendCommand {
-                                client_id,
-                                color_pref,
-                                session_id: self.session_id,
-                            },
-                        ))
-                        .map_err(|e| ws::Error::from(Box::new(e)))
+                    self.send_session_command(BackendCommands::ChooseColorPref(
+                        ChooseColorPrefBackendCommand {
+                            client_id,
+                            color_pref,
+                            session_id: self.session_id,
+                        },
+                    ))
+                    .map_err(|e| ws::Error::from(Box::new(e)))
                 } else {
                     complain_no_client_id()
                 }
@@ -358,10 +360,11 @@ impl Handler for WsSession {
                         error!("ERROR SENDING ROUTER QUIT COMMAND: {}", e);
                     }
 
-                    let s = BackendCommands::QuitGame(QuitGameCommand { client_id, game_id });
-                    self.backend_commands_in
-                        .send(s)
-                        .map_err(|e| ws::Error::from(Box::new(e)))
+                    self.send_session_command(BackendCommands::QuitGame(QuitGameCommand {
+                        client_id,
+                        game_id,
+                    }))
+                    .map_err(|e| ws::Error::from(Box::new(e)))
                 } else {
                     error!("Can't quit without client ID + game ID");
                     Ok(())
@@ -414,9 +417,8 @@ impl Handler for WsSession {
         }
         // This is ultimately consumed by game lobby
         // and helps clean up abandoned games
-        if let Err(e) = self
-            .backend_commands_in
-            .send(BackendCommands::SessionDisconnected(SessionDisconnected {
+        if let Err(e) =
+            self.send_session_command(BackendCommands::SessionDisconnected(SessionDisconnected {
                 session_id: self.session_id,
             }))
         {

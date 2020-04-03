@@ -85,3 +85,9 @@ pub enum BackendCommands {
     SessionDisconnected(SessionDisconnected),
     QuitGame(QuitGameCommand),
 }
+
+#[derive(Debug)]
+pub struct SessionCommand {
+    pub session_id: SessionId,
+    pub command: BackendCommands,
+}

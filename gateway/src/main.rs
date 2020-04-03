@@ -3,7 +3,7 @@ extern crate gateway;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use log::info;
 
-use gateway::backend_commands::BackendCommands;
+use gateway::backend_commands::SessionCommand;
 use gateway::backend_events::{BackendEvents, KafkaShutdownEvent};
 use gateway::idle_status::{IdleStatusResponse, KafkaActivityObserved, RequestIdleStatus};
 use gateway::router::RouterCommand;
@@ -18,9 +18,9 @@ fn main() {
 
     env::init();
 
-    let (backend_commands_in, backend_commands_out): (
-        Sender<BackendCommands>,
-        Receiver<BackendCommands>,
+    let (session_commands_in, session_commands_out): (
+        Sender<SessionCommand>,
+        Receiver<SessionCommand>,
     ) = unbounded();
 
     let (backend_events_in, backend_events_out): (Sender<BackendEvents>, Receiver<BackendEvents>) =
@@ -53,7 +53,7 @@ fn main() {
         ws::listen("0.0.0.0:3012", |ws_out| {
             WsSession::new(
                 ws_out,
-                backend_commands_in.clone(),
+                session_commands_in.clone(),
                 router_commands_in.clone(),
                 req_idle_in.clone(),
             )
@@ -65,6 +65,6 @@ fn main() {
         backend_events_in,
         shutdown_in,
         kafka_activity_in,
-        backend_commands_out,
+        session_commands_out,
     )
 }
