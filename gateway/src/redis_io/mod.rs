@@ -1,11 +1,12 @@
-pub mod command_writer;
 pub mod entry_id_repo;
 mod key_provider;
 mod namespace;
 pub mod stream;
+pub mod xadd;
 
 pub use key_provider::*;
 pub use namespace::*;
+pub use xadd::xadd_commands;
 
 use r2d2_redis::{r2d2, RedisConnectionManager};
 

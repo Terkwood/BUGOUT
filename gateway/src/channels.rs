@@ -1,14 +1,14 @@
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
-use crate::backend_commands::SessionCommands;
+use crate::backend_commands::BackendCommands;
 use crate::backend_events::{BackendEvents, KafkaShutdownEvent};
 use crate::idle_status::{IdleStatusResponse, KafkaActivityObserved, RequestIdleStatus};
 use crate::router::RouterCommand;
 
 #[derive(Clone)]
 pub struct MainChannels {
-    pub session_commands_in: Sender<SessionCommands>,
-    pub session_commands_out: Receiver<SessionCommands>,
+    pub session_commands_in: Sender<BackendCommands>,
+    pub session_commands_out: Receiver<BackendCommands>,
     pub backend_events_in: Sender<BackendEvents>,
     pub backend_events_out: Receiver<BackendEvents>,
     pub router_commands_in: Sender<RouterCommand>,
@@ -26,8 +26,8 @@ pub struct MainChannels {
 impl MainChannels {
     pub fn create() -> Self {
         let (session_commands_in, session_commands_out): (
-            Sender<SessionCommands>,
-            Receiver<SessionCommands>,
+            Sender<BackendCommands>,
+            Receiver<BackendCommands>,
         ) = unbounded();
 
         let (backend_events_in, backend_events_out): (

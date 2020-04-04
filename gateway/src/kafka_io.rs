@@ -2,6 +2,7 @@ use std::thread;
 
 use crossbeam_channel::select;
 use futures::StreamExt;
+use log::{error, info, trace, warn};
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::{CommitMode, Consumer};
@@ -72,7 +73,10 @@ fn start_producer(kafka_out: crossbeam::Receiver<BackendCommands>) {
                     Ok(BackendCommands::QuitGame(q)) =>
                         write(&producer, QUIT_GAME_TOPIC, &serde_json::to_string(&q), &q.game_id.to_string())
                     ,
-                    Err(e) => println!("💩 Unable to receive command via kafka channel: {:?}", e)
+                    Ok(BackendCommands::AttachBot(_)) => 
+                        trace!("Ignoring attach bot")
+                    ,
+                    Err(e) => error!("💩 Unable to receive command via kafka channel: {:?}", e)
                     ,
                 }
         }
@@ -90,7 +94,7 @@ fn write(
         Ok(p) => {
             producer.send(FutureRecord::to(topic).payload(p).key(key), 0); // fire & forget
         }
-        Err(e) => println!("💩 Failed to serialize trivial kafka command: {}", e),
+        Err(e) => error!("💩 Failed to serialize trivial kafka command: {}", e),
     }
 }
 
@@ -129,13 +133,13 @@ async fn start_consumer(
     loop {
         for message in message_stream.next().await {
             match message {
-                Err(e) => println!("💩 Error waiting on kafka stream: {:?}", e),
+                Err(e) => error!("💩 Error waiting on kafka stream: {:?}", e),
                 Ok(msg) => {
                     let payload = match msg.payload_view::<str>() {
                         None => "",
                         Some(Ok(s)) => s,
                         Some(Err(e)) => {
-                            println!("💩 Error viewing kafka payload {:?}\nReturning an empty string as consumer payload", e);
+                            error!("💩 Error viewing kafka payload {:?}\nReturning an empty string as consumer payload", e);
                             ""
                         }
                     };
@@ -153,7 +157,7 @@ async fn start_consumer(
                             let deserialized: Result<MoveMadeEvent, _> =
                                 serde_json::from_str(payload);
                             match deserialized {
-                                Err(e) => println!("failed to deserialize move made {}", e),
+                                Err(e) => error!("failed to deserialize move made {}", e),
                                 Ok(m) => flail_on_fail(events_in.send(BackendEvents::MoveMade(m))),
                             }
                         }
@@ -161,7 +165,7 @@ async fn start_consumer(
                             let deserialized: Result<HistoryProvidedEvent, _> =
                                 serde_json::from_str(payload);
                             match deserialized {
-                                Err(e) => println!("failed to deserialize history prov {}", e),
+                                Err(e) => error!("failed to deserialize history prov {}", e),
                                 Ok(h) => {
                                     flail_on_fail(events_in.send(BackendEvents::HistoryProvided(h)))
                                 }
@@ -171,7 +175,7 @@ async fn start_consumer(
                             let deserialized: Result<PrivateGameRejectedBackendEvent, _> =
                                 serde_json::from_str(payload);
                             match deserialized {
-                                Err(e) => println!("failed to deserialize priv game reject {}", e),
+                                Err(e) => error!("failed to deserialize priv game reject {}", e),
                                 Ok(r) => flail_on_fail(
                                     events_in.send(BackendEvents::PrivateGameRejected(r)),
                                 ),
@@ -182,7 +186,7 @@ async fn start_consumer(
                                 serde_json::from_str(payload);
 
                             match deserialized {
-                                Err(e) => println!("failed to deserialize game ready {}", e),
+                                Err(e) => error!("failed to deserialize game ready {}", e),
                                 Ok(g) => flail_on_fail(events_in.send(BackendEvents::GameReady(g))),
                             }
                         }
@@ -191,7 +195,7 @@ async fn start_consumer(
                                 serde_json::from_str(payload);
 
                             match deserialized {
-                                Err(e) => println!("failed to deserialize wait for opponent {}", e),
+                                Err(e) => error!("failed to deserialize wait for opponent {}", e),
                                 Ok(w) => {
                                     flail_on_fail(events_in.send(BackendEvents::WaitForOpponent(w)))
                                 }
@@ -202,7 +206,7 @@ async fn start_consumer(
                                 serde_json::from_str(payload);
 
                             match deserialized {
-                                Err(e) => println!("failed to deserialize wait for opponent {}", e),
+                                Err(e) => error!("failed to deserialize wait for opponent {}", e),
                                 Ok(c) => {
                                     flail_on_fail(events_in.send(BackendEvents::ColorsChosen(c)))
                                 }
@@ -213,13 +217,13 @@ async fn start_consumer(
                                 serde_json::from_str(payload);
 
                             match deserialized {
-                                Err(e) => println!("failed to deserialize shutdown event {}", e),
+                                Err(e) => error!("failed to deserialize shutdown event {}", e),
                                 Ok(_s) => {
                                     let send_result = shutdown_in
                                         .send(KafkaShutdownEvent(std::time::SystemTime::now()));
 
                                     if let Err(e) = send_result {
-                                        println!(
+                                        error!(
                                             "HALP! Failed to send kafka event in crossbeam: {}",
                                             e
                                         )

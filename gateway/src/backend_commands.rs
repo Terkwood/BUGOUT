@@ -73,6 +73,17 @@ pub struct QuitGameCommand {
     pub game_id: GameId,
 }
 
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct AttachBotCommand {
+    #[serde(rename = "clientId")]
+    pub client_id: ClientId,
+    #[serde(rename = "botPlayer")]
+    pub bot_player: Player,
+    #[serde(rename = "boardSize")]
+    pub board_size: Option<u8>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum BackendCommands {
     MakeMove(MakeMoveCommand),
@@ -84,22 +95,5 @@ pub enum BackendCommands {
     ClientHeartbeat(ClientHeartbeat),
     SessionDisconnected(SessionDisconnected),
     QuitGame(QuitGameCommand),
-}
-
-#[derive(Clone, Debug)]
-pub enum SessionCommands {
-    StartBotSession {
-        session_id: SessionId,
-        bot_player: crate::model::Player,
-        board_size: Option<u8>,
-    },
-    Reconnect {
-        session_id: SessionId,
-        client_id: ClientId,
-        game_id: GameId,
-    },
-    Backend {
-        session_id: SessionId,
-        command: BackendCommands,
-    },
+    AttachBot(AttachBotCommand), 
 }

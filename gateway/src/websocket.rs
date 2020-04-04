@@ -33,7 +33,7 @@ pub struct WsSession {
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
     pub channel_recv_timeout: Option<Timeout>,
-    pub session_commands_in: crossbeam_channel::Sender<SessionCommands>,
+    pub session_commands_in: crossbeam_channel::Sender<BackendCommands>,
     pub events_out: Option<crossbeam_channel::Receiver<ClientEvents>>,
     pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     pub req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
@@ -45,7 +45,7 @@ pub struct WsSession {
 impl WsSession {
     pub fn new(
         ws_out: ws::Sender,
-        session_commands_in: crossbeam_channel::Sender<SessionCommands>,
+        session_commands_in: crossbeam_channel::Sender<BackendCommands>,
         router_commands_in: crossbeam_channel::Sender<RouterCommand>,
         req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
     ) -> WsSession {
@@ -68,11 +68,8 @@ impl WsSession {
     fn send_to_backend(
         &self,
         backend_command: BackendCommands,
-    ) -> std::result::Result<(), crossbeam::SendError<SessionCommands>> {
-        self.session_commands_in.send(SessionCommands::Backend {
-            session_id: self.session_id,
-            command: backend_command,
-        })
+    ) -> std::result::Result<(), crossbeam::SendError<BackendCommands>> {
+        self.session_commands_in.send(backend_command)
     }
 
     fn notify_router_close(&mut self) {
@@ -373,18 +370,17 @@ impl Handler for WsSession {
                 bot_player,
                 board_size,
             })) => {
-                if let Some(_client_id) = self.client_id {
+                if let Some(client_id) = self.client_id {
                     info!("🗳  {} ATACHBOT", session_code(self));
 
                     Ok(
-                        if let Err(e) =
-                            self.session_commands_in
-                                .send(SessionCommands::StartBotSession {
-                                    session_id: self.session_id.clone(),
-                                    bot_player,
-                                    board_size
-                                })
-                        {
+                        if let Err(e) = self.session_commands_in.send(BackendCommands::AttachBot(
+                            AttachBotCommand {
+                                client_id,
+                                bot_player,
+                                board_size,
+                            },
+                        )) {
                             error!("could not set up bot backend {:?}", e)
                         } else {
                             trace!("bot backend configured")
