@@ -62,7 +62,7 @@ pub fn start_all(opts: BackendInitOptions) {
     let bei = opts.backend_events_in.clone();
     thread::spawn(move || redis_io::stream::process(bei));
 
-    let soc = opts.session_commands_out.clone();
+    let soc = opts.session_commands_out;
     thread::spawn(move || {
         split(
             soc,
@@ -76,7 +76,7 @@ pub fn start_all(opts: BackendInitOptions) {
         opts.backend_events_in.clone(),
         opts.shutdown_in.clone(),
         opts.kafka_activity_in.clone(),
-        kafka_commands_out.clone(),
+        kafka_commands_out,
     ))
 }
 
