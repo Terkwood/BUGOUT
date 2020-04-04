@@ -10,9 +10,13 @@ use crossbeam_channel::{select, unbounded, Receiver, Sender};
 use log::{error, trace};
 use std::thread;
 
-pub use repo::SessionBackendRepo;
+pub use client_repo::ClientBackendRepo;
+pub use game_repo::GameBackendRepo;
+pub use session_repo::SessionBackendRepo;
 
-pub mod repo;
+pub mod client_repo;
+pub mod game_repo;
+pub mod session_repo;
 
 mod choose;
 
@@ -54,22 +58,22 @@ pub fn start_all(opts: BackendInitOptions) {
     ) = unbounded();
 
     thread::spawn(move || {
-        redis_io::command_writer::process_xadds(
-            redis_commands_out,
-            repo::create(redis_io::create_pool()),
-        )
+        redis_io::command_writer::process_xadds(redis_commands_out, &redis_io::create_pool())
     });
+
     let bei = opts.backend_events_in.clone();
     thread::spawn(move || redis_io::stream::process(bei));
 
     let soc = opts.session_commands_out;
     thread::spawn(move || {
-        split(
-            soc,
+        split_commands(SplitOpts {
+            session_commands_out: soc,
             kafka_commands_in,
             redis_commands_in,
-            repo::create(redis_io::create_pool()),
-        )
+            sb_repo: session_repo::create(redis_io::create_pool()),
+            cb_repo: todo!(),
+            gb_repo: todo!(),
+        })
     });
 
     block_on(kafka_io::start(
@@ -80,17 +84,12 @@ pub fn start_all(opts: BackendInitOptions) {
     ))
 }
 
-fn split(
-    session_commands_out: Receiver<SessionCommands>,
-    kafka_commands_in: Sender<BackendCommands>,
-    redis_commands_in: Sender<BackendCommands>,
-    sb_repo: Box<dyn SessionBackendRepo>,
-) {
+fn split_commands(opts: SplitOpts) {
     loop {
         select! {
-            recv(session_commands_out) -> msg => match msg {
+            recv(opts.session_commands_out) -> msg => match msg {
                 Ok(SessionCommands::StartBotSession { session_id, bot_player: _, board_size: _ }) => {
-                    if let Err(e) = sb_repo.assign(&session_id, Backend::RedisStreams) {
+                    if let Err(e) = opts.sb_repo.assign(&session_id, Backend::RedisStreams) {
                         error!("error in session start {:?}", e)
                     } else {
                         trace!("session started with redis bot backend ");
@@ -101,24 +100,24 @@ fn split(
                 Ok(SessionCommands::Backend {session_id, command}) => {
                     trace!("Hello splitter {:?} ",session_id);
                     if let BackendCommands::SessionDisconnected(crate::backend_commands::SessionDisconnected{session_id}) = command {
-                        if let Err(_) = sb_repo.unassign(&session_id) {
+                        if let Err(_) = opts.sb_repo.unassign(&session_id) {
                             error!("UNASSIGN ERR")
                         } else {
                             trace!("..unassigned..")
                         }
                     }
-                    match sb_repo.backend_for(&session_id) {
+                    match opts.sb_repo.backend_for(&session_id) {
                         Ok(Some(backend)) =>
-                            split_send(backend,command,&kafka_commands_in,&redis_commands_in)
+                            split_send(backend,command,&opts.kafka_commands_in,&opts.redis_commands_in)
                         ,
                         Ok(None) => {
                             let cc = command.clone();
                             let chosen_backend = choose::fallback(&SessionCommands::Backend {
                                 session_id, command });
-                            if let Err(e) = sb_repo.assign(&session_id, chosen_backend) {
+                            if let Err(e) = opts.sb_repo.assign(&session_id, chosen_backend) {
                                 error!("error in CHOSEN backend {:?}", e)
                             } else {
-                                split_send(chosen_backend,cc,&kafka_commands_in,&redis_commands_in)
+                                split_send(chosen_backend,cc,&opts.kafka_commands_in,&opts.redis_commands_in)
                             }
                         },
                         Err(_) => error!("backend fetch err")
@@ -128,6 +127,15 @@ fn split(
             }
         }
     }
+}
+
+pub struct SplitOpts {
+    pub session_commands_out: Receiver<SessionCommands>,
+    pub kafka_commands_in: Sender<BackendCommands>,
+    pub redis_commands_in: Sender<BackendCommands>,
+    sb_repo: Box<dyn SessionBackendRepo>,
+    cb_repo: Box<dyn ClientBackendRepo>,
+    gb_repo: Box<dyn GameBackendRepo>,
 }
 
 fn split_send(
