@@ -92,12 +92,23 @@ fn split(
                 Ok(SessionCommands::Start {session_id,backend}) => {
                     if let Err(e) = sb_repo.assign(&session_id, backend) {
                         error!("error in session start {:?}", e)
+                    } else {
+                        trace!("session started with backend {:?}",backend)
                     }
                 },
                 Ok(SessionCommands::Backend {session_id, command}) => {
                     trace!("Hello splitter {:?} ",session_id);
+                    if let BackendCommands::SessionDisconnected(crate::backend_commands::SessionDisconnected{session_id}) = command {
+                        if let Err(_) = sb_repo.unassign(&session_id) {
+                            error!("UNASSIGN ERR")
+                        } else {
+                            trace!("..unassigned..")
+                        }
+                    }
                     match sb_repo.backend_for(&session_id) {
-                        Ok(Some(backend)) => split_send(backend,command,&kafka_commands_in,&redis_commands_in),
+                        Ok(Some(backend)) =>
+                            split_send(backend,command,&kafka_commands_in,&redis_commands_in)
+                        ,
                         Ok(None) => {
                             let cc = command.clone();
                             let chosen_backend = choose::fallback(&SessionCommands::Backend {

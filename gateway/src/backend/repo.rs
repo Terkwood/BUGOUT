@@ -12,6 +12,8 @@ pub trait SessionBackendRepo {
 
     fn assign(&self, session_id: &SessionId, backend: Backend) -> Result<(), BackendRepoErr>;
 
+    fn unassign(&self, session_id: &SessionId) -> Result<(), BackendRepoErr>;
+
     fn unassign_all(&mut self, backend: Backend) -> Result<(), BackendRepoErr>;
 }
 
@@ -58,6 +60,19 @@ impl SessionBackendRepo for RedisSessionBackendRepo {
         let result = conn.sadd(self.key_provider.backend(backend), session_id.to_string())?;
         self.expire(backend, &mut conn)?;
         Ok(result)
+    }
+
+    fn unassign(&self, session_id: &SessionId) -> Result<(), BackendRepoErr> {
+        let mut conn = self.pool.get().expect("pool");
+
+        conn.srem(
+            self.key_provider.backend(Backend::RedisStreams),
+            session_id.to_string(),
+        )?;
+        Ok(conn.srem(
+            self.key_provider.backend(Backend::Kafka),
+            session_id.to_string(),
+        )?)
     }
 
     fn unassign_all(&mut self, backend: Backend) -> std::result::Result<(), BackendRepoErr> {
