@@ -75,15 +75,18 @@ mod tests {
         }
 
         {
-            let client_id = Uuid::new_v4();
-            let board_size = Some(9);
-            let bot_player = Player::WHITE;
+            let game_id = micro_model_moves::GameId(Uuid::new_v4());
+            let player = Player::WHITE;
             session_commands_in
-                .send(BackendCommands::AttachBot(AttachBotCommand {
-                    client_id,
-                    bot_player,
-                    board_size,
-                }))
+                .send(BackendCommands::AttachBot(
+                    micro_model_bot::gateway::AttachBot {
+                        game_id,
+                        player: match player {
+                            Player::WHITE => micro_model_moves::Player::WHITE,
+                            _ => micro_model_moves::Player::BLACK,
+                        },
+                    },
+                ))
                 .expect("send1")
         }
 

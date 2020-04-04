@@ -31,7 +31,7 @@ impl Player {
             Player::BLACK => Player::WHITE,
             Player::WHITE => Player::BLACK,
         }
-    }
+    }  
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]

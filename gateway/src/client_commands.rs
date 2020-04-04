@@ -30,9 +30,8 @@ pub struct ChooseColorPrefClientCommand {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct AttachBotClientCommand {
-    #[serde(rename = "botPlayer")]
-    pub bot_player: Player,
+pub struct AttachBotClientCommand { 
+    pub  player: Player,
     #[serde(rename = "boardSize")]
     pub board_size: Option<u8>,
 }
