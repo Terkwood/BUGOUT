@@ -153,3 +153,113 @@ fn split_send(
         trace!("..split ok..")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::*;
+
+    use crossbeam_channel::select;
+    use std::thread;
+
+    struct FakeSbRepo {
+        sb_calls_in: Sender<SbInvocations>,
+    }
+    enum SbInvocations {
+        BackendFor(SessionId),
+        Assign(SessionId, Backend),
+        Unassign(SessionId),
+        UnassignAll(Backend),
+    }
+    impl SessionBackendRepo for FakeSbRepo {
+        fn backend_for(
+            &self,
+            session_id: &crate::model::SessionId,
+        ) -> Result<Option<Backend>, session_repo::BackendRepoErr> {
+            unimplemented!()
+        }
+        fn assign(
+            &self,
+            session_id: &crate::model::SessionId,
+            backend: Backend,
+        ) -> Result<(), session_repo::BackendRepoErr> {
+            unimplemented!()
+        }
+        fn unassign(
+            &self,
+            session_id: &crate::model::SessionId,
+        ) -> Result<(), session_repo::BackendRepoErr> {
+            unimplemented!()
+        }
+        fn unassign_all(&mut self, backend: Backend) -> Result<(), session_repo::BackendRepoErr> {
+            unimplemented!()
+        }
+    }
+    struct FakeCbRepo {
+        cb_calls_in: Sender<CbInvocations>,
+    }
+    enum CbInvocations {
+        Get,
+        Set,
+    }
+    impl ClientBackendRepo for FakeCbRepo {}
+    struct FakeGbRepo {
+        gb_calls_in: Sender<GbInvocations>,
+    }
+    enum GbInvocations {
+        Get,
+        Set,
+    }
+    impl GameBackendRepo for FakeGbRepo {}
+
+    #[test]
+    fn test_split_commands() {
+        let (session_commands_in, session_commands_out): (
+            Sender<SessionCommands>,
+            Receiver<SessionCommands>,
+        ) = unbounded();
+
+        let (kafka_commands_in, kafka_commands_out): (
+            Sender<BackendCommands>,
+            Receiver<BackendCommands>,
+        ) = unbounded();
+
+        let (redis_commands_in, redis_commands_out): (
+            Sender<BackendCommands>,
+            Receiver<BackendCommands>,
+        ) = unbounded();
+
+        let (sb_calls_in, sb_calls_out): (Sender<SbInvocations>, Receiver<SbInvocations>) =
+            unbounded();
+        let (cb_calls_in, cb_calls_out): (Sender<CbInvocations>, Receiver<CbInvocations>) =
+            unbounded();
+        let (gb_calls_in, gb_calls_out): (Sender<GbInvocations>, Receiver<GbInvocations>) =
+            unbounded();
+
+        thread::spawn(move || {
+            let opts = SplitOpts {
+                kafka_commands_in,
+                redis_commands_in,
+                session_commands_out,
+                sb_repo: Box::new(FakeSbRepo { sb_calls_in }),
+                cb_repo: Box::new(FakeCbRepo { cb_calls_in }),
+                gb_repo: Box::new(FakeGbRepo { gb_calls_in }),
+            };
+            split_commands(opts)
+        });
+        todo!("send stuff");
+        todo!("send stuff");
+        todo!("send stuff");
+
+        todo!("verify backends are called correctly");
+        todo!("verify it gets to the right place");
+
+        select! {
+            recv(sb_calls_out) -> _ => todo!(),
+            recv(cb_calls_out) -> _ => todo!(),
+            recv(gb_calls_out) -> _ => todo!()
+        }
+
+        todo!("NO, DO NOT fake kafka backend or redis stream processing");
+    }
+}
