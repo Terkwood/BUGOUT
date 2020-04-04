@@ -14,7 +14,6 @@ pub struct AttachBot {
 /// This reply is sent once a bot is listening
 /// as a certain player in a certain game.
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
 pub struct BotAttached {
     pub game_id: GameId,
     pub player: Player,
