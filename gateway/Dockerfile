@@ -26,4 +26,8 @@ RUN cargo install --path .
 
 ENV RUST_LOG info
 
-CMD ["gateway"]
+# TODO
+CMD [ "tail", "-f", "/dev/null" ]
+
+# TODO
+# CMD ["gateway"]
