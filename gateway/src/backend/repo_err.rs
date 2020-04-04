@@ -7,3 +7,4 @@ impl From<r2d2_redis::redis::RedisError> for BackendRepoErr {
         BackendRepoErr::Redis(r)
     }
 }
+

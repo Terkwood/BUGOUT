@@ -22,7 +22,8 @@ RUN rustup default stable
 # not just what's on the git branch
 COPY . /var/BUGOUT/gateway/.
 
-RUN cargo install --path .
+# TODOO
+#RUN cargo install --path .
 
 ENV RUST_LOG info
 
