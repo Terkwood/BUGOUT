@@ -73,7 +73,7 @@ pub struct QuitGameCommand {
     pub game_id: GameId,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum BackendCommands {
     MakeMove(MakeMoveCommand),
     ProvideHistory(ProvideHistoryCommand),
@@ -86,8 +86,14 @@ pub enum BackendCommands {
     QuitGame(QuitGameCommand),
 }
 
-#[derive(Debug)]
-pub struct SessionCommand {
-    pub session_id: SessionId,
-    pub command: BackendCommands,
+#[derive(Clone, Debug)]
+pub enum SessionCommands {
+    Start {
+        session_id: SessionId,
+        backend: crate::backend::Backend,
+    },
+    Backend {
+        session_id: SessionId,
+        command: BackendCommands,
+    },
 }

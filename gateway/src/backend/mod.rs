@@ -1,16 +1,21 @@
 use futures::executor::block_on;
 
-use crate::backend::repo::SessionBackendRepo;
-use crate::backend_commands::{BackendCommands, SessionCommand};
+use crate::backend_commands::{BackendCommands, SessionCommands};
 use crate::backend_events::{BackendEvents, KafkaShutdownEvent};
 use crate::idle_status::KafkaActivityObserved;
 use crate::kafka_io;
 use crate::redis_io;
 
 use crossbeam_channel::{select, unbounded, Receiver, Sender};
+use log::{error, info, trace, warn};
 use std::thread;
 
+pub use choose::choose;
+pub use repo::SessionBackendRepo;
+
 pub mod repo;
+
+mod choose;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Backend {
@@ -35,7 +40,7 @@ pub struct BackendInitOptions {
     pub backend_events_in: Sender<BackendEvents>,
     pub shutdown_in: Sender<KafkaShutdownEvent>,
     pub kafka_activity_in: Sender<KafkaActivityObserved>,
-    pub session_commands_out: Receiver<SessionCommand>,
+    pub session_commands_out: Receiver<SessionCommands>,
 }
 
 pub fn start_all(opts: BackendInitOptions) {
@@ -56,7 +61,14 @@ pub fn start_all(opts: BackendInitOptions) {
     thread::spawn(move || redis_io::stream::process(bei));
 
     let soc = opts.session_commands_out.clone();
-    thread::spawn(move || split(soc, kafka_commands_in, redis_commands_in));
+    thread::spawn(move || {
+        split(
+            soc,
+            kafka_commands_in,
+            redis_commands_in,
+            repo::create(redis_io::create_pool()),
+        )
+    });
 
     block_on(kafka_io::start(
         opts.backend_events_in.clone(),
@@ -67,13 +79,54 @@ pub fn start_all(opts: BackendInitOptions) {
 }
 
 fn split(
-    session_commands_out: Receiver<SessionCommand>,
-    _kafka_commands_in: Sender<BackendCommands>,
-    _redis_commands_in: Sender<BackendCommands>,
+    session_commands_out: Receiver<SessionCommands>,
+    kafka_commands_in: Sender<BackendCommands>,
+    redis_commands_in: Sender<BackendCommands>,
+    sb_repo: Box<dyn SessionBackendRepo>,
 ) {
     loop {
         select! {
-            recv(session_commands_out) -> _ => todo!()
+            recv(session_commands_out) -> msg => match msg {
+                Ok(SessionCommands::Start {session_id,backend}) => {
+                    if let Err(e) = sb_repo.assign(&session_id, backend) {
+                        error!("error in session start {:?}", e)
+                    }
+                },
+                Ok(SessionCommands::Backend {session_id, command}) => {
+                    trace!("Hello splitter {:?} ",session_id);
+                    match sb_repo.backend_for(&session_id) {
+                        Ok(Some(backend)) => split_send(backend,command,&kafka_commands_in,&redis_commands_in),
+                        Ok(None) => {
+                            let cc = command.clone();
+                            let chosen_backend = choose(&SessionCommands::Backend {
+                                session_id, command });
+                            if let Err(e) = sb_repo.assign(&session_id, chosen_backend) {
+                                error!("error in CHOSEN backend {:?}", e)
+                            } else {
+                                split_send(chosen_backend,cc,&kafka_commands_in,&redis_commands_in)
+                            }
+                        },
+                        Err(_) => error!("backend fetch err")
+                    }
+                },
+                Err(e) => error!("session command out: {:?}",e)
+            }
         }
+    }
+}
+
+fn split_send(
+    backend: Backend,
+    command: BackendCommands,
+    kafka_commands_in: &Sender<BackendCommands>,
+    redis_commands_in: &Sender<BackendCommands>,
+) {
+    if let Err(e) = match backend {
+        Backend::RedisStreams => redis_commands_in.send(command),
+        Backend::Kafka => kafka_commands_in.send(command),
+    } {
+        error!("FAILED SPLIT TO BACKEND {:?}", e)
+    } else {
+        trace!("..split ok..")
     }
 }

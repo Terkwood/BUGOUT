@@ -55,7 +55,7 @@ pub struct ColorsChosenEvent {
     pub white: SessionId,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct MakeMoveCommand {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
@@ -65,7 +65,7 @@ pub struct MakeMoveCommand {
     pub coord: Option<Coord>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct ProvideHistoryCommand {
     #[serde(rename = "gameId")]
     pub game_id: GameId,

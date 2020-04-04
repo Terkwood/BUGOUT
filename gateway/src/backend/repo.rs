@@ -10,7 +10,7 @@ use r2d2_redis::RedisConnectionManager;
 pub trait SessionBackendRepo {
     fn backend_for(&self, session_id: &SessionId) -> Result<Option<Backend>, BackendRepoErr>;
 
-    fn assign(&mut self, session_id: &SessionId, backend: Backend) -> Result<(), BackendRepoErr>;
+    fn assign(&self, session_id: &SessionId, backend: Backend) -> Result<(), BackendRepoErr>;
 
     fn unassign_all(&mut self, backend: Backend) -> Result<(), BackendRepoErr>;
 }
@@ -52,7 +52,7 @@ impl SessionBackendRepo for RedisSessionBackendRepo {
         )
     }
 
-    fn assign(&mut self, session_id: &SessionId, backend: Backend) -> Result<(), BackendRepoErr> {
+    fn assign(&self, session_id: &SessionId, backend: Backend) -> Result<(), BackendRepoErr> {
         let mut conn = self.pool.get().expect("pool");
 
         let result = conn.sadd(self.key_provider.backend(backend), session_id.to_string())?;
