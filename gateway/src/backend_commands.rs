@@ -93,6 +93,11 @@ pub enum SessionCommands {
         bot_player: crate::model::Player,
         board_size: Option<u8>,
     },
+    Reconnect {
+        session_id: SessionId,
+        client_id: ClientId,
+        game_id: GameId,
+    },
     Backend {
         session_id: SessionId,
         command: BackendCommands,

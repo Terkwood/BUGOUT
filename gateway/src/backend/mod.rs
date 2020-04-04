@@ -1,6 +1,18 @@
 use futures::executor::block_on;
 
 use crate::backend_commands::{BackendCommands, SessionCommands};
+pub mod client_repo;
+pub mod game_repo;
+pub mod session_repo;
+
+mod choose;
+mod repo_err;
+
+pub use client_repo::ClientBackendRepo;
+pub use game_repo::GameBackendRepo;
+pub use repo_err::*;
+pub use session_repo::SessionBackendRepo;
+
 use crate::backend_events::{BackendEvents, KafkaShutdownEvent};
 use crate::idle_status::KafkaActivityObserved;
 use crate::kafka_io;
@@ -9,16 +21,6 @@ use crate::redis_io;
 use crossbeam_channel::{select, unbounded, Receiver, Sender};
 use log::{error, trace};
 use std::thread;
-
-pub use client_repo::ClientBackendRepo;
-pub use game_repo::GameBackendRepo;
-pub use session_repo::SessionBackendRepo;
-
-pub mod client_repo;
-pub mod game_repo;
-pub mod session_repo;
-
-mod choose;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Backend {
@@ -88,6 +90,10 @@ fn split_commands(opts: SplitOpts) {
     loop {
         select! {
             recv(opts.session_commands_out) -> msg => match msg {
+                Ok(SessionCommands::Reconnect { session_id, client_id, game_id }) => {
+                    todo!("need to link this game ID to the last known backend available to the CLIENT. ");
+                    todo!(" then need to update sb_repo with the found backend ")
+                },
                 Ok(SessionCommands::StartBotSession { session_id, bot_player: _, board_size: _ }) => {
                     if let Err(e) = opts.sb_repo.assign(&session_id, Backend::RedisStreams) {
                         error!("error in session start {:?}", e)
@@ -175,23 +181,20 @@ mod tests {
         fn backend_for(
             &self,
             session_id: &crate::model::SessionId,
-        ) -> Result<Option<Backend>, session_repo::BackendRepoErr> {
+        ) -> Result<Option<Backend>, BackendRepoErr> {
             unimplemented!()
         }
         fn assign(
             &self,
             session_id: &crate::model::SessionId,
             backend: Backend,
-        ) -> Result<(), session_repo::BackendRepoErr> {
+        ) -> Result<(), BackendRepoErr> {
             unimplemented!()
         }
-        fn unassign(
-            &self,
-            session_id: &crate::model::SessionId,
-        ) -> Result<(), session_repo::BackendRepoErr> {
+        fn unassign(&self, session_id: &crate::model::SessionId) -> Result<(), BackendRepoErr> {
             unimplemented!()
         }
-        fn unassign_all(&mut self, backend: Backend) -> Result<(), session_repo::BackendRepoErr> {
+        fn unassign_all(&mut self, backend: Backend) -> Result<(), BackendRepoErr> {
             unimplemented!()
         }
     }
@@ -199,18 +202,32 @@ mod tests {
         cb_calls_in: Sender<CbInvocations>,
     }
     enum CbInvocations {
-        Get,
-        Set,
+        Get(ClientId),
+        Set(ClientId, Backend),
     }
-    impl ClientBackendRepo for FakeCbRepo {}
+    impl ClientBackendRepo for FakeCbRepo {
+        fn get(&self, client_id: &ClientId) -> Result<Option<Backend>, BackendRepoErr> {
+            unimplemented!()
+        }
+        fn set(&self, client_id: &ClientId, backend: Backend) -> Result<(), BackendRepoErr> {
+            unimplemented!()
+        }
+    }
     struct FakeGbRepo {
         gb_calls_in: Sender<GbInvocations>,
     }
     enum GbInvocations {
-        Get,
-        Set,
+        Get(GameId),
+        Set(GameId, Backend),
     }
-    impl GameBackendRepo for FakeGbRepo {}
+    impl GameBackendRepo for FakeGbRepo {
+        fn get(&self, game_id: &GameId) -> Result<Option<Backend>, BackendRepoErr> {
+            unimplemented!()
+        }
+        fn set(&self, game_id: &GameId, backend: Backend) -> Result<(), BackendRepoErr> {
+            unimplemented!()
+        }
+    }
 
     #[test]
     fn test_split_commands() {
