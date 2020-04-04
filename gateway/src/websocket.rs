@@ -2,6 +2,7 @@ use std::ops::Add;
 use std::str::from_utf8;
 use std::time::{Duration, Instant};
 
+use log::{error, info, trace};
 use mio_extras::timer::Timeout;
 
 use crossbeam_channel::unbounded;
@@ -9,10 +10,10 @@ use crossbeam_channel::unbounded;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
+use crate::backend_commands::*;
 use crate::client_commands::*;
 use crate::client_events::*;
 use crate::idle_status::RequestIdleStatus;
-use crate::kafka_commands::*;
 use crate::logging::*;
 use crate::model::*;
 use crate::router::RouterCommand;
@@ -32,7 +33,7 @@ pub struct WsSession {
     pub ping_timeout: Option<Timeout>,
     pub expire_timeout: Option<Timeout>,
     pub channel_recv_timeout: Option<Timeout>,
-    pub kafka_commands_in: crossbeam_channel::Sender<KafkaCommands>,
+    pub session_commands_in: crossbeam_channel::Sender<BackendCommands>,
     pub events_out: Option<crossbeam_channel::Receiver<ClientEvents>>,
     pub router_commands_in: crossbeam_channel::Sender<RouterCommand>,
     pub req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
@@ -44,7 +45,7 @@ pub struct WsSession {
 impl WsSession {
     pub fn new(
         ws_out: ws::Sender,
-        kafka_commands_in: crossbeam_channel::Sender<KafkaCommands>,
+        session_commands_in: crossbeam_channel::Sender<BackendCommands>,
         router_commands_in: crossbeam_channel::Sender<RouterCommand>,
         req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
     ) -> WsSession {
@@ -54,7 +55,7 @@ impl WsSession {
             ping_timeout: None,
             expire_timeout: None,
             channel_recv_timeout: None,
-            kafka_commands_in,
+            session_commands_in,
             events_out: None,
             router_commands_in,
             req_idle_status_in,
@@ -64,13 +65,20 @@ impl WsSession {
         }
     }
 
+    fn send_to_backend(
+        &self,
+        backend_command: BackendCommands,
+    ) -> std::result::Result<(), crossbeam::SendError<BackendCommands>> {
+        self.session_commands_in.send(backend_command)
+    }
+
     fn notify_router_close(&mut self) {
         if let Err(e) = self.router_commands_in.send(RouterCommand::DeleteSession {
             session_id: self.session_id,
             game_id: self.current_game,
             client_id: self.client_id,
         }) {
-            println!(
+            error!(
                 "😤 {} ERROR  send router command delete client {}",
                 session_code(self),
                 e
@@ -85,7 +93,7 @@ impl WsSession {
                 .router_commands_in
                 .send(RouterCommand::ObserveGame(gid))
             {
-                println!("eeeeerrrrrr")
+                error!("observe game")
             }
         }
     }
@@ -93,13 +101,12 @@ impl WsSession {
     fn produce_client_heartbeat(&mut self, heartbeat_type: HeartbeatType) {
         if let Some(client_id) = self.client_id {
             if let Err(e) =
-                self.kafka_commands_in
-                    .send(KafkaCommands::ClientHeartbeat(ClientHeartbeat {
-                        client_id,
-                        heartbeat_type,
-                    }))
+                self.send_to_backend(BackendCommands::ClientHeartbeat(ClientHeartbeat {
+                    client_id,
+                    heartbeat_type,
+                }))
             {
-                println!("Failed to send client heartbeat via crossbeam {}", e)
+                error!("Failed to send client heartbeat via crossbeam {}", e)
             }
         }
     }
@@ -107,7 +114,7 @@ impl WsSession {
 
 impl Handler for WsSession {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
-        println!("🎫 {} OPEN", session_code(self));
+        info!("🎫 {} OPEN", session_code(self));
 
         // Router needs to know about this client immediately
         // so that it can handle PROVIDLE, FINDPUBG, JOINPRIV
@@ -117,7 +124,7 @@ impl Handler for WsSession {
             session_id: self.session_id,
             events_in,
         }) {
-            println!(
+            error!(
                 "😠 {} {:<8} sending router command to add session {}",
                 session_code(self),
                 "ERROR",
@@ -148,7 +155,7 @@ impl Handler for WsSession {
                 player,
                 coord,
             })) => {
-                println!(
+                info!(
                     "{}  {} {:<8} {:?} {}",
                     emoji(&player),
                     session_code(self),
@@ -164,8 +171,7 @@ impl Handler for WsSession {
                 if let Some(c) = self.current_game {
                     if c == game_id {
                         return self
-                            .kafka_commands_in
-                            .send(KafkaCommands::MakeMove(MakeMoveCommand {
+                            .send_to_backend(BackendCommands::MakeMove(MakeMoveCommand {
                                 game_id,
                                 req_id,
                                 player,
@@ -177,7 +183,7 @@ impl Handler for WsSession {
                 Ok(self.observe_game())
             }
             Ok(ClientCommands::Beep) => {
-                println!("🤖 {} BEEP   ", session_code(self));
+                info!("🤖 {} BEEP   ", session_code(self));
 
                 self.produce_client_heartbeat(HeartbeatType::UserInterfaceBeep);
                 Ok(self.observe_game())
@@ -187,7 +193,7 @@ impl Handler for WsSession {
                     // accept whatever game_id the client shares with us
                     self.current_game = Some(game_id);
 
-                    println!("🔌 {} RECONN", session_code(self));
+                    info!("🔌 {} RECONN", session_code(self));
 
                     // ..and let the router know we're interested in it,
                     // so that we can receive updates
@@ -196,7 +202,7 @@ impl Handler for WsSession {
                         game_id,
                         req_id,
                     }) {
-                        println!(
+                        error!(
                             "😫 {} {:<8} sending router command to reconnect client {:?}",
                             session_code(self),
                             "ERROR",
@@ -210,17 +216,16 @@ impl Handler for WsSession {
                 }
             }
             Ok(ClientCommands::ProvideHistory(ProvideHistoryCommand { game_id, req_id })) => {
-                println!("📋 {} PROVHIST", session_code(self));
+                info!("📋 {} PROVHIST", session_code(self));
 
                 if let Err(e) = self
-                    .kafka_commands_in
-                    .send(KafkaCommands::ProvideHistory(ProvideHistoryCommand {
+                    .send_to_backend(BackendCommands::ProvideHistory(ProvideHistoryCommand {
                         game_id,
                         req_id,
                     }))
                     .map_err(|e| ws::Error::from(Box::new(e)))
                 {
-                    println!("ERROR on kafka send provhist {:?}", e)
+                    error!("ERROR on kafka send provhist {:?}", e)
                 }
 
                 Ok(self.observe_game())
@@ -229,17 +234,15 @@ impl Handler for WsSession {
                 // Ignore this request if we already have a game
                 // in progress.
                 if let (None, Some(client_id)) = (self.current_game, self.client_id) {
-                    println!("🤝 {} FINDPUBG", session_code(self));
+                    info!("🤝 {} FINDPUBG", session_code(self));
 
-                    // ..and let the router know we're interested in it,
-                    // so that we can receive updates
-                    if let Err(e) = self.kafka_commands_in.send(KafkaCommands::FindPublicGame(
-                        FindPublicGameKafkaCommand {
+                    if let Err(e) = self.send_to_backend(BackendCommands::FindPublicGame(
+                        FindPublicGameBackendCommand {
                             client_id,
                             session_id: self.session_id,
                         },
                     )) {
-                        println!(
+                        error!(
                             "😠 {} {:<8} kafka sending find public game command {}",
                             session_code(self),
                             "ERROR",
@@ -253,15 +256,12 @@ impl Handler for WsSession {
                 // Ignore this request if we already have a game
                 // in progress.
                 if let (None, Some(client_id)) = (self.current_game, self.client_id) {
-                    println!("🔒 {} CRETPRIV", session_code(self));
+                    info!("🔒 {} CRETPRIV", session_code(self));
 
                     let board_size = cp.board_size.unwrap_or(crate::FULL_BOARD_SIZE);
 
-                    // ..and let the router know we're interested in it,
-                    // so that we can receive updates
                     if let Err(e) = self
-                        .kafka_commands_in
-                        .send(KafkaCommands::CreateGame(CreateGameKafkaCommand {
+                        .send_to_backend(BackendCommands::CreateGame(CreateGameBackendCommand {
                             client_id,
                             visibility: Visibility::Private,
                             session_id: self.session_id,
@@ -269,22 +269,21 @@ impl Handler for WsSession {
                         }))
                         .map_err(|e| ws::Error::from(Box::new(e)))
                     {
-                        println!("ERROR on kafka send join private game {:?}", e)
+                        error!("ERROR on kafka send join private game {:?}", e)
                     }
                 }
                 Ok(self.observe_game())
             }
             Ok(ClientCommands::JoinPrivateGame(JoinPrivateGameClientCommand { game_id })) => {
-                println!("🔑 {} JOINPRIV", session_code(self));
+                info!("🔑 {} JOINPRIV", session_code(self));
 
                 // Ignore this request if we already have a game
                 // in progress.
                 if self.current_game.is_none() {
                     if let (Some(game_id), Some(client_id)) = (game_id.decode(), self.client_id) {
                         if let Err(e) = self
-                            .kafka_commands_in
-                            .send(KafkaCommands::JoinPrivateGame(
-                                JoinPrivateGameKafkaCommand {
+                            .send_to_backend(BackendCommands::JoinPrivateGame(
+                                JoinPrivateGameBackendCommand {
                                     game_id,
                                     client_id,
                                     session_id: self.session_id,
@@ -292,34 +291,33 @@ impl Handler for WsSession {
                             ))
                             .map_err(|e| ws::Error::from(Box::new(e)))
                         {
-                            println!("ERROR on kafka send join private game {:?}", e)
+                            error!("ERROR on kafka send join private game {:?}", e)
                         }
                     }
                 } else {
-                    println!("🏴‍☠️ FAILED TO DECODE PRIVATE GAME ID 🏴‍☠️")
+                    error!("🏴‍☠️ FAILED TO DECODE PRIVATE GAME ID 🏴‍☠️")
                 }
                 Ok(self.observe_game())
             }
             Ok(ClientCommands::ChooseColorPref(ChooseColorPrefClientCommand { color_pref })) => {
                 if let Some(client_id) = self.client_id {
-                    println!("🗳  {} CHSCLRPF", session_code(self));
+                    info!("🗳  {} CHSCLRPF", session_code(self));
 
-                    self.kafka_commands_in
-                        .send(KafkaCommands::ChooseColorPref(
-                            ChooseColorPrefKafkaCommand {
-                                client_id,
-                                color_pref,
-                                session_id: self.session_id,
-                            },
-                        ))
-                        .map_err(|e| ws::Error::from(Box::new(e)))
+                    self.send_to_backend(BackendCommands::ChooseColorPref(
+                        ChooseColorPrefBackendCommand {
+                            client_id,
+                            color_pref,
+                            session_id: self.session_id,
+                        },
+                    ))
+                    .map_err(|e| ws::Error::from(Box::new(e)))
                 } else {
                     complain_no_client_id()
                 }
             }
             Ok(ClientCommands::ProvideIdleStatus) => {
                 if let Some(client_id) = self.client_id {
-                    println!("🏕  {} PROVIDLE", session_code(self));
+                    info!("🏕  {} PROVIDLE", session_code(self));
 
                     // Request the idle status
                     self.req_idle_status_in
@@ -331,7 +329,7 @@ impl Handler for WsSession {
             }
             Ok(ClientCommands::Identify(id)) => {
                 self.client_id = Some(id.client_id);
-                println!("🆔 {} IDENTIFY", session_code(self));
+                info!("🆔 {} IDENTIFY", session_code(self));
 
                 self.router_commands_in
                     .send(RouterCommand::IdentifyClient {
@@ -347,7 +345,7 @@ impl Handler for WsSession {
             }
             Ok(ClientCommands::QuitGame) => {
                 if let (Some(client_id), Some(game_id)) = (self.client_id, self.current_game) {
-                    println!("🏳️  {} {:<8}", session_code(self), "QUITGAME");
+                    info!("🏳️  {} {:<8}", session_code(self), "QUITGAME");
 
                     self.current_game = None;
 
@@ -355,20 +353,48 @@ impl Handler for WsSession {
                         session_id: self.session_id,
                         game_id,
                     }) {
-                        println!("ERROR SENDING ROUTER QUIT COMMAND: {}", e);
+                        error!("ERROR SENDING ROUTER QUIT COMMAND: {}", e);
                     }
 
-                    let s = KafkaCommands::QuitGame(QuitGameCommand { client_id, game_id });
-                    self.kafka_commands_in
-                        .send(s)
-                        .map_err(|e| ws::Error::from(Box::new(e)))
+                    self.send_to_backend(BackendCommands::QuitGame(QuitGameCommand {
+                        client_id,
+                        game_id,
+                    }))
+                    .map_err(|e| ws::Error::from(Box::new(e)))
                 } else {
-                    println!("Can't quit without client ID + game ID");
+                    error!("Can't quit without client ID + game ID");
                     Ok(())
                 }
             }
+            Ok(ClientCommands::AttachBot(AttachBotClientCommand {
+                player: lp,
+                board_size: _,
+            })) => {
+                if let Some(_client_id) = self.client_id {
+                    info!("🗳  {} ATACHBOT", session_code(self));
+
+                    let _player = match lp {
+                        Player::BLACK => micro_model_moves::Player::BLACK,
+                        _ => micro_model_moves::Player::WHITE,
+                    };
+                    Ok(
+                        if let Err(e) = self.session_commands_in.send(BackendCommands::AttachBot(
+                            micro_model_bot::gateway::AttachBot {
+                                game_id: todo!(),
+                                player: _player,
+                            },
+                        )) {
+                            error!("could not set up bot backend {:?}", e)
+                        } else {
+                            trace!("bot backend configured")
+                        },
+                    )
+                } else {
+                    complain_no_client_id()
+                }
+            }
             Err(_err) => {
-                println!(
+                error!(
                     "💥 {} {:<8} message deserialization {}",
                     session_code(self),
                     "ERROR",
@@ -380,7 +406,7 @@ impl Handler for WsSession {
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
-        println!(
+        info!(
             "🚪 {} {:<8} {:?} {}",
             session_code(self),
             "CLOSE",
@@ -402,19 +428,18 @@ impl Handler for WsSession {
         }
         // This is ultimately consumed by game lobby
         // and helps clean up abandoned games
-        if let Err(e) = self
-            .kafka_commands_in
-            .send(KafkaCommands::SessionDisconnected(SessionDisconnected {
+        if let Err(e) =
+            self.send_to_backend(BackendCommands::SessionDisconnected(SessionDisconnected {
                 session_id: self.session_id,
             }))
         {
-            println!("Couldn't send client disconnect to kafka {}", e)
+            error!("Couldn't send client disconnect to kafka {}", e)
         }
     }
 
     fn on_error(&mut self, err: Error) {
         // Log any error
-        println!("🔥 {} {:<8} {:?}", session_code(self), "ERROR", err)
+        error!("🔥 {} {:<8} {:?}", session_code(self), "ERROR", err)
     }
 
     fn on_timeout(&mut self, event: Token) -> Result<()> {
@@ -432,7 +457,7 @@ impl Handler for WsSession {
                     // this means that the connection is inactive
                     // so we close it
                     if dur.as_millis() >= EXPIRE_TIMEOUT_MS.into() {
-                        println!(
+                        info!(
                             "⌛️ {} {:<8} Closing connection",
                             session_code(self),
                             "EXPIRE"
@@ -454,7 +479,7 @@ impl Handler for WsSession {
                                 board_size: _,
                             }) => {
                                 self.current_game = Some(game_id);
-                                println!("🎳 {} {:<8}", session_code(self), "GAMEREDY");
+                                info!("🎳 {} {:<8}", session_code(self), "GAMEREDY");
                             }
                             ClientEvents::WaitForOpponent(WaitForOpponentClientEvent {
                                 game_id,
@@ -463,19 +488,19 @@ impl Handler for WsSession {
                                 link: _,
                             }) => {
                                 self.current_game = Some(game_id);
-                                println!("⏳ {} {:<8}", session_code(self), "WAITOPPO");
+                                info!("⏳ {} {:<8}", session_code(self), "WAITOPPO");
                             }
                             ClientEvents::YourColor(YourColorEvent {
                                 game_id: _,
                                 your_color,
                             }) if your_color == Player::BLACK => {
-                                println!("⚫️ {} {:<8} Black", session_code(self), "YOURCOLR")
+                                info!("⚫️ {} {:<8} Black", session_code(self), "YOURCOLR")
                             }
                             ClientEvents::YourColor(YourColorEvent {
                                 game_id: _,
                                 your_color,
                             }) if your_color == Player::WHITE => {
-                                println!("⚪️ {} {:<8} White", session_code(self), "YOURCOLR")
+                                info!("⚪️ {} {:<8} White", session_code(self), "YOURCOLR")
                             }
                             ClientEvents::OpponentQuit => {
                                 self.current_game = None;
@@ -530,14 +555,14 @@ impl Handler for WsSession {
                 self.produce_client_heartbeat(HeartbeatType::WebSocketPong);
 
                 let now = time::precise_time_ns();
-                println!(
+                info!(
                     "🏓 {} {:<8} {:.0}ms",
                     session_code(self),
                     "PINGPONG",
                     (now - pong) as f64 / 1_000_000f64
                 );
             } else {
-                println!("😐 {} {:<8} gOnE wRoNg", session_code(self), "PINGPONG");
+                error!("😐 {} {:<8} gOnE wRoNg", session_code(self), "PINGPONG");
             }
         }
 
@@ -566,6 +591,5 @@ fn client_event_channels() -> (
 }
 
 fn complain_no_client_id() -> Result<()> {
-    println!("❌ UNEXPECTED: NO CLIENT ID DEFINED ❌");
-    Ok(())
+    Ok(error!("❌ UNEXPECTED: NO CLIENT ID DEFINED ❌"))
 }
