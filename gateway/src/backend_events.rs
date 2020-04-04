@@ -67,10 +67,7 @@ impl BackendEvents {
                 })
             }
 
-            BackendEvents::BotAttached(micro_model_bot::gateway::BotAttached {
-                game_id,
-                player,
-            }) => todo!(),
+            BackendEvents::BotAttached(ba) => ClientEvents::BotAttached(ba),
         }
     }
 
@@ -83,8 +80,7 @@ impl BackendEvents {
             BackendEvents::PrivateGameRejected(e) => e.game_id,
             BackendEvents::WaitForOpponent(e) => e.game_id,
             BackendEvents::ColorsChosen(e) => e.game_id,
-            BackendEvents::BotAttached(e) => e.game_id.0
-            ,
+            BackendEvents::BotAttached(e) => e.game_id.0,
         }
     }
 }

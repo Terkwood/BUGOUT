@@ -19,7 +19,7 @@ pub enum ClientEvents {
     IdleStatusProvided(IdleStatus),
     IdentityAcknowledged(Identity),
     OpponentQuit,
-    BotAttached(BotAttachedClientEvent),
+    BotAttached(micro_model_bot::gateway::BotAttached),
 }
 
 impl ClientEvents {
@@ -32,6 +32,7 @@ impl ClientEvents {
             ClientEvents::GameReady(e) => Some(e.game_id),
             ClientEvents::WaitForOpponent(w) => Some(w.game_id),
             ClientEvents::YourColor(y) => Some(y.game_id),
+            ClientEvents::BotAttached(b) => Some(b.game_id.0),
             _ => None, // priv game rejected, see https://github.com/Terkwood/BUGOUT/issues/90
         }
     }

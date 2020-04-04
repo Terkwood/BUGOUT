@@ -2,7 +2,7 @@ use std::thread;
 
 use crossbeam_channel::select;
 use futures::StreamExt;
-use log::{error, info, trace, warn};
+use log::{error, trace};
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::{CommitMode, Consumer};
@@ -73,7 +73,7 @@ fn start_producer(kafka_out: crossbeam::Receiver<BackendCommands>) {
                     Ok(BackendCommands::QuitGame(q)) =>
                         write(&producer, QUIT_GAME_TOPIC, &serde_json::to_string(&q), &q.game_id.to_string())
                     ,
-                    Ok(BackendCommands::AttachBot(_)) => 
+                    Ok(BackendCommands::AttachBot(_)) =>
                         trace!("Ignoring attach bot")
                     ,
                     Err(e) => error!("💩 Unable to receive command via kafka channel: {:?}", e)
