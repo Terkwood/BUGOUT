@@ -2,7 +2,7 @@ use std::ops::Add;
 use std::str::from_utf8;
 use std::time::{Duration, Instant};
 
-use log::{error, info};
+use log::{error, info, trace, warn};
 use mio_extras::timer::Timeout;
 
 use crossbeam_channel::unbounded;
@@ -376,7 +376,14 @@ impl Handler for WsSession {
                 if let Some(_client_id) = self.client_id {
                     info!("🗳  {} ATACHBOT", session_code(self));
 
-                    todo!("redis send")
+                    if let Err(e) = self.session_commands_in.send(SessionCommands::Start {
+                        session_id: self.session_id.clone(),
+                        backend: crate::backend::Backend::RedisStreams,
+                    }) {
+                        Ok(error!("could not set up bot backend {:?}", e))
+                    } else {
+                        Ok(trace!("bot backend configured"))
+                    }
                 } else {
                     complain_no_client_id()
                 }
@@ -579,6 +586,5 @@ fn client_event_channels() -> (
 }
 
 fn complain_no_client_id() -> Result<()> {
-    error!("❌ UNEXPECTED: NO CLIENT ID DEFINED ❌");
-    Ok(())
+    Ok(error!("❌ UNEXPECTED: NO CLIENT ID DEFINED ❌"))
 }
