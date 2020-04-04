@@ -7,10 +7,9 @@ use crate::kafka_io;
 use crate::redis_io;
 
 use crossbeam_channel::{select, unbounded, Receiver, Sender};
-use log::{error, info, trace, warn};
+use log::{error, trace};
 use std::thread;
 
-pub use choose::choose;
 pub use repo::SessionBackendRepo;
 
 pub mod repo;
@@ -55,7 +54,10 @@ pub fn start_all(opts: BackendInitOptions) {
     ) = unbounded();
 
     thread::spawn(move || {
-        redis_io::command_writer::start(redis_commands_out, repo::create(redis_io::create_pool()))
+        redis_io::command_writer::process_xadds(
+            redis_commands_out,
+            repo::create(redis_io::create_pool()),
+        )
     });
     let bei = opts.backend_events_in.clone();
     thread::spawn(move || redis_io::stream::process(bei));
@@ -98,7 +100,7 @@ fn split(
                         Ok(Some(backend)) => split_send(backend,command,&kafka_commands_in,&redis_commands_in),
                         Ok(None) => {
                             let cc = command.clone();
-                            let chosen_backend = choose(&SessionCommands::Backend {
+                            let chosen_backend = choose::fallback(&SessionCommands::Backend {
                                 session_id, command });
                             if let Err(e) = sb_repo.assign(&session_id, chosen_backend) {
                                 error!("error in CHOSEN backend {:?}", e)

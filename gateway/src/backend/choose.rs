@@ -1,6 +1,8 @@
 use super::*;
 use crate::backend_commands::SessionCommands;
-pub fn choose(command: &SessionCommands) -> Backend {
+
+/// For now, a trivial choice
+pub fn fallback(command: &SessionCommands) -> Backend {
     match command {
         &SessionCommands::Start {
             session_id: _,

@@ -2,7 +2,7 @@ use std::ops::Add;
 use std::str::from_utf8;
 use std::time::{Duration, Instant};
 
-use log::{error, info, trace, warn};
+use log::{error, info, trace};
 use mio_extras::timer::Timeout;
 
 use crossbeam_channel::unbounded;
@@ -380,10 +380,12 @@ impl Handler for WsSession {
                         session_id: self.session_id.clone(),
                         backend: crate::backend::Backend::RedisStreams,
                     }) {
-                        Ok(error!("could not set up bot backend {:?}", e))
+                        error!("could not set up bot backend {:?}", e)
                     } else {
-                        Ok(trace!("bot backend configured"))
+                        trace!("bot backend configured")
                     }
+
+                    todo!("Actually attach the bot  ...  !!")
                 } else {
                     complain_no_client_id()
                 }
