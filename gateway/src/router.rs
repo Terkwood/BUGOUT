@@ -137,13 +137,7 @@ impl Router {
             }
         }
     }
-
-    // TODO bot game reconnect
-    // TODO bot game reconnect
-    // TODO bot game reconnect
-    // TODO bot game reconnect
-    // TODO bot game reconnect
-    // TODO bot game reconnect
+ 
     fn reconnect(
         &mut self,
         session_id: SessionId,

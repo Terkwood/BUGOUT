@@ -12,4 +12,3 @@ pub struct ComputeMove {
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct MoveComputed(pub MakeMoveCommand);
-

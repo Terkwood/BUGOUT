@@ -1,11 +1,12 @@
 [package]
 name = "micro_model_bot"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
 serde = "1.0.104"
 serde_derive = "1.0.104"
-micro_model_moves = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
+#TODO
+micro_model_moves = { git = "https://github.com/Terkwood/BUGOUT", branch = "tinker/doubler" }
 bincode = "1.2.1"

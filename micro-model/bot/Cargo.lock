@@ -41,7 +41,7 @@ checksum = "eb147597cdf94ed43ab7a9038716637d2d1bf2bc571da995d0028dec06bd3018"
 
 [[package]]
 name = "micro_model_bot"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bincode",
  "micro_model_moves",
@@ -52,7 +52,7 @@ dependencies = [
 [[package]]
 name = "micro_model_moves"
 version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#065316d70ea1d5d341fde28a691953d1eab81a11"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=tinker/doubler#55a4913319bac664b6c1d5ffebff629019651cdc"
 dependencies = [
  "bincode",
  "serde",

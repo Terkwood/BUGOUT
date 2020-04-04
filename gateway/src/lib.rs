@@ -8,6 +8,8 @@ extern crate env_logger;
 extern crate envy;
 extern crate harsh;
 extern crate log;
+extern crate micro_model_bot;
+extern crate micro_model_moves;
 extern crate mio_extras;
 extern crate r2d2_redis;
 extern crate rand;

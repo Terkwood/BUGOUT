@@ -19,6 +19,7 @@ pub enum ClientEvents {
     IdleStatusProvided(IdleStatus),
     IdentityAcknowledged(Identity),
     OpponentQuit,
+    BotAttached(BotAttachedClientEvent),
 }
 
 impl ClientEvents {
