@@ -4,10 +4,11 @@ use crate::backend_commands::SessionCommands;
 /// For now, a trivial choice
 pub fn fallback(command: &SessionCommands) -> Backend {
     match command {
-        &SessionCommands::Start {
+        &SessionCommands::StartBotSession {
             session_id: _,
-            backend,
-        } => backend,
+            bot_player: _,
+            board_size: _,
+        } => Backend::RedisStreams,
         _ => Backend::Kafka,
     }
 }

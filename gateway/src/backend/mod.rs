@@ -89,11 +89,13 @@ fn split(
     loop {
         select! {
             recv(session_commands_out) -> msg => match msg {
-                Ok(SessionCommands::Start {session_id,backend}) => {
-                    if let Err(e) = sb_repo.assign(&session_id, backend) {
+                Ok(SessionCommands::StartBotSession { session_id, bot_player: _, board_size: _ }) => {
+                    if let Err(e) = sb_repo.assign(&session_id, Backend::RedisStreams) {
                         error!("error in session start {:?}", e)
                     } else {
-                        trace!("session started with backend {:?}",backend)
+                        trace!("session started with redis bot backend ");
+
+                        todo!(".... Actually attach the bot using an XADD ...")
                     }
                 },
                 Ok(SessionCommands::Backend {session_id, command}) => {

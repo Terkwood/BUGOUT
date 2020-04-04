@@ -370,22 +370,26 @@ impl Handler for WsSession {
                 }
             }
             Ok(ClientCommands::AttachBot(AttachBotClientCommand {
-                bot_player: _,
-                board_size: _,
+                bot_player,
+                board_size,
             })) => {
                 if let Some(_client_id) = self.client_id {
                     info!("🗳  {} ATACHBOT", session_code(self));
 
-                    if let Err(e) = self.session_commands_in.send(SessionCommands::Start {
-                        session_id: self.session_id.clone(),
-                        backend: crate::backend::Backend::RedisStreams,
-                    }) {
-                        error!("could not set up bot backend {:?}", e)
-                    } else {
-                        trace!("bot backend configured")
-                    }
-
-                    todo!("Actually attach the bot  ...  !!")
+                    Ok(
+                        if let Err(e) =
+                            self.session_commands_in
+                                .send(SessionCommands::StartBotSession {
+                                    session_id: self.session_id.clone(),
+                                    bot_player,
+                                    board_size
+                                })
+                        {
+                            error!("could not set up bot backend {:?}", e)
+                        } else {
+                            trace!("bot backend configured")
+                        },
+                    )
                 } else {
                     complain_no_client_id()
                 }

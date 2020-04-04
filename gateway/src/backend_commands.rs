@@ -88,9 +88,10 @@ pub enum BackendCommands {
 
 #[derive(Clone, Debug)]
 pub enum SessionCommands {
-    Start {
+    StartBotSession {
         session_id: SessionId,
-        backend: crate::backend::Backend,
+        bot_player: crate::model::Player,
+        board_size: Option<u8>,
     },
     Backend {
         session_id: SessionId,
