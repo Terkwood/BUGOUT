@@ -1,90 +1,29 @@
-use futures::executor::block_on;
-
-use crate::backend_commands::{BackendCommands, SessionCommands};
 pub mod client_repo;
 pub mod game_repo;
 pub mod session_repo;
 
-mod choose;
 mod repo_err;
+mod start;
 
 pub use client_repo::ClientBackendRepo;
 pub use game_repo::GameBackendRepo;
 pub use repo_err::*;
 pub use session_repo::SessionBackendRepo;
+pub use start::start_all;
 
+use crate::backend_commands::{BackendCommands, SessionCommands};
 use crate::backend_events::{BackendEvents, KafkaShutdownEvent};
 use crate::idle_status::KafkaActivityObserved;
-use crate::kafka_io;
-use crate::redis_io;
 
-use crossbeam_channel::{select, unbounded, Receiver, Sender};
+use crossbeam_channel::{select, Receiver, Sender};
 use log::{error, trace};
-use std::thread;
-
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Backend {
     RedisStreams,
     Kafka,
 }
 
-impl std::fmt::Display for Backend {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Backend::RedisStreams => "rs",
-                Backend::Kafka => "k",
-            }
-        )
-    }
-}
-
-pub struct BackendInitOptions {
-    pub backend_events_in: Sender<BackendEvents>,
-    pub shutdown_in: Sender<KafkaShutdownEvent>,
-    pub kafka_activity_in: Sender<KafkaActivityObserved>,
-    pub session_commands_out: Receiver<SessionCommands>,
-}
-
-pub fn start_all(opts: BackendInitOptions) {
-    let (kafka_commands_in, kafka_commands_out): (
-        Sender<BackendCommands>,
-        Receiver<BackendCommands>,
-    ) = unbounded();
-
-    let (redis_commands_in, redis_commands_out): (
-        Sender<BackendCommands>,
-        Receiver<BackendCommands>,
-    ) = unbounded();
-
-    thread::spawn(move || {
-        redis_io::command_writer::process_xadds(redis_commands_out, &redis_io::create_pool())
-    });
-
-    let bei = opts.backend_events_in.clone();
-    thread::spawn(move || redis_io::stream::process(bei));
-
-    let soc = opts.session_commands_out;
-    thread::spawn(move || {
-        split_commands(SplitOpts {
-            session_commands_out: soc,
-            kafka_commands_in,
-            redis_commands_in,
-            sb_repo: session_repo::create(redis_io::create_pool()),
-            cb_repo: todo!(),
-            gb_repo: todo!(),
-        })
-    });
-
-    block_on(kafka_io::start(
-        opts.backend_events_in.clone(),
-        opts.shutdown_in.clone(),
-        opts.kafka_activity_in.clone(),
-        kafka_commands_out,
-    ))
-}
+const FALLBACK: Backend = Backend::Kafka;
 
 fn split_commands(opts: SplitOpts) {
     loop {
@@ -103,9 +42,9 @@ fn split_commands(opts: SplitOpts) {
                         todo!(".... Actually attach the bot using an XADD ...")
                     }
                 },
-                Ok(SessionCommands::Backend {session_id, command}) => {
+                Ok(SessionCommands::Backend {session_id, command: backend_command}) => {
                     trace!("Hello splitter {:?} ",session_id);
-                    if let BackendCommands::SessionDisconnected(crate::backend_commands::SessionDisconnected{session_id}) = command {
+                    if let BackendCommands::SessionDisconnected(crate::backend_commands::SessionDisconnected{session_id}) = backend_command {
                         if let Err(_) = opts.sb_repo.unassign(&session_id) {
                             error!("UNASSIGN ERR")
                         } else {
@@ -114,16 +53,14 @@ fn split_commands(opts: SplitOpts) {
                     }
                     match opts.sb_repo.backend_for(&session_id) {
                         Ok(Some(backend)) =>
-                            split_send(backend,command,&opts.kafka_commands_in,&opts.redis_commands_in)
+                            split_send(backend,backend_command,&opts.kafka_commands_in,&opts.redis_commands_in)
                         ,
                         Ok(None) => {
-                            let cc = command.clone();
-                            let chosen_backend = choose::fallback(&SessionCommands::Backend {
-                                session_id, command });
-                            if let Err(e) = opts.sb_repo.assign(&session_id, chosen_backend) {
+                            let cc = backend_command.clone();
+                            if let Err(e) = opts.sb_repo.assign(&session_id,  FALLBACK) {
                                 error!("error in CHOSEN backend {:?}", e)
                             } else {
-                                split_send(chosen_backend,cc,&opts.kafka_commands_in,&opts.redis_commands_in)
+                                split_send( FALLBACK,cc,&opts.kafka_commands_in,&opts.redis_commands_in)
                             }
                         },
                         Err(_) => error!("backend fetch err")
@@ -160,12 +97,32 @@ fn split_send(
     }
 }
 
+impl std::fmt::Display for Backend {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Backend::RedisStreams => "rs",
+                Backend::Kafka => "k",
+            }
+        )
+    }
+}
+
+pub struct BackendInitOptions {
+    pub backend_events_in: Sender<BackendEvents>,
+    pub shutdown_in: Sender<KafkaShutdownEvent>,
+    pub kafka_activity_in: Sender<KafkaActivityObserved>,
+    pub session_commands_out: Receiver<SessionCommands>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::model::*;
 
-    use crossbeam_channel::select;
+    use crossbeam_channel::{select, unbounded};
     use std::thread;
 
     struct FakeSbRepo {
