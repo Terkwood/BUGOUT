@@ -379,7 +379,7 @@ dependencies = [
 [[package]]
 name = "micro_model_bot"
 version = "0.1.1"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0d0bd72a15a4d2506a0cf4a14b620ffb9a207724"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#2bf8df9c615dcb05a62b4a1bcce518e3bc78ff51"
 dependencies = [
  "bincode",
  "micro_model_moves",
@@ -390,7 +390,7 @@ dependencies = [
 [[package]]
 name = "micro_model_moves"
 version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0d0bd72a15a4d2506a0cf4a14b620ffb9a207724"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#2bf8df9c615dcb05a62b4a1bcce518e3bc78ff51"
 dependencies = [
  "bincode",
  "serde",
@@ -716,7 +716,7 @@ dependencies = [
 
 [[package]]
 name = "tinybrain"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "base64 0.12.0",
  "bincode",
