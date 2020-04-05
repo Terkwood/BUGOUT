@@ -9,3 +9,7 @@ serde = "1.0.104"
 serde_derive = "1.0.104"
 micro_model_moves = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 bincode = "1.2.1"
+
+[dev-dependencies]
+serde_json = "1.0.51"
+uuid = { version = "0.8.1", features = ["v4", "serde"] }
