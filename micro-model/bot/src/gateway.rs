@@ -6,14 +6,17 @@ use serde_derive::{Deserialize, Serialize};
 /// tinybrain to generate moves for a given
 /// game ID and player.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct AttachBot {
     pub game_id: GameId,
     pub player: Player,
+    pub board_size: Option<u8>,
 }
 
 /// This reply is sent once a bot is listening
 /// as a certain player in a certain game.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct BotAttached {
     pub game_id: GameId,
     pub player: Player,
