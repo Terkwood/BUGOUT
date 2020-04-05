@@ -368,7 +368,7 @@ impl Handler for WsSession {
             }
             Ok(ClientCommands::AttachBot(AttachBotClientCommand {
                 player: lp,
-                board_size: _,
+                board_size,
             })) => {
                 if let Some(_client_id) = self.client_id {
                     info!("🗳  {} ATACHBOT", session_code(self));
@@ -382,6 +382,7 @@ impl Handler for WsSession {
                             micro_model_bot::gateway::AttachBot {
                                 game_id: todo!(),
                                 player: _player,
+                                board_size,
                             },
                         )) {
                             error!("could not set up bot backend {:?}", e)
