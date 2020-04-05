@@ -3,7 +3,7 @@ use serde_derive::{Deserialize, Serialize};
 use crate::model::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct JoinPrivateGameKafkaCommand {
+pub struct JoinPrivateGameBackendCommand {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
     #[serde(rename = "clientId")]
@@ -13,7 +13,7 @@ pub struct JoinPrivateGameKafkaCommand {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct FindPublicGameKafkaCommand {
+pub struct FindPublicGameBackendCommand {
     #[serde(rename = "clientId")]
     pub client_id: ClientId,
     #[serde(rename = "sessionId")]
@@ -21,7 +21,7 @@ pub struct FindPublicGameKafkaCommand {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ChooseColorPrefKafkaCommand {
+pub struct ChooseColorPrefBackendCommand {
     #[serde(rename = "clientId")]
     pub client_id: ClientId,
     #[serde(rename = "colorPref")]
@@ -35,7 +35,7 @@ pub struct ChooseColorPrefKafkaCommand {
 /// We omit specifying the game ID here, and
 /// let game lobby choose it for us.
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CreateGameKafkaCommand {
+pub struct CreateGameBackendCommand {
     #[serde(rename = "clientId")]
     pub client_id: ClientId,
     pub visibility: Visibility,
@@ -73,15 +73,16 @@ pub struct QuitGameCommand {
     pub game_id: GameId,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum KafkaCommands {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum BackendCommands {
     MakeMove(MakeMoveCommand),
     ProvideHistory(ProvideHistoryCommand),
-    JoinPrivateGame(JoinPrivateGameKafkaCommand),
-    FindPublicGame(FindPublicGameKafkaCommand),
-    CreateGame(CreateGameKafkaCommand),
-    ChooseColorPref(ChooseColorPrefKafkaCommand),
+    JoinPrivateGame(JoinPrivateGameBackendCommand),
+    FindPublicGame(FindPublicGameBackendCommand),
+    CreateGame(CreateGameBackendCommand),
+    ChooseColorPref(ChooseColorPrefBackendCommand),
     ClientHeartbeat(ClientHeartbeat),
     SessionDisconnected(SessionDisconnected),
     QuitGame(QuitGameCommand),
+    AttachBot(micro_model_bot::gateway::AttachBot),
 }

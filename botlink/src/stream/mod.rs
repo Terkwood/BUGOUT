@@ -20,7 +20,14 @@ pub fn process(opts: &mut StreamOpts) {
                 Ok(xrr) => {
                     for time_ordered_event in xrr {
                         match time_ordered_event {
-                            (entry_id, StreamData::AB(AttachBot { game_id, player })) => {
+                            (
+                                entry_id,
+                                StreamData::AB(AttachBot {
+                                    game_id,
+                                    player,
+                                    board_size,
+                                }),
+                            ) => {
                                 if let Err(e) = opts.attached_bots_repo.attach(&game_id, player) {
                                     error!("Error attaching bot {:?}", e)
                                 } else {
@@ -30,9 +37,13 @@ pub fn process(opts: &mut StreamOpts) {
                                     {
                                         error!("Error saving entry ID for attach bot {:?}", e)
                                     } else {
-                                        if let Err(e) = opts
-                                            .xadder
-                                            .xadd_game_state(game_id, GameState::default())
+                                        let mut game_state = GameState::default();
+                                        if let Some(bs) = board_size {
+                                            game_state.board.size = bs.into()
+                                        }
+
+                                        if let Err(e) =
+                                            opts.xadder.xadd_game_state(game_id, game_state)
                                         {
                                             error!("Error writing redis stream for game state changelog : {:?}",e)
                                         }
@@ -190,6 +201,7 @@ mod tests {
     struct FakeXReader {
         game_id: GameId,
         player: Player,
+        board_size: Option<u8>,
         incoming_game_state: Arc<Mutex<Option<(XReadEntryId, StreamData)>>>,
     }
     impl xread::XReader for FakeXReader {
@@ -202,12 +214,17 @@ mod tests {
         > {
             let game_id = self.game_id.clone();
             let player = self.player;
+            let board_size = self.board_size;
             let mut v: Vec<(XReadEntryId, StreamData)> = vec![(
                 XReadEntryId {
                     millis_time: 10,
                     seq_no: 0,
                 },
-                StreamData::AB(AttachBot { game_id, player }),
+                StreamData::AB(AttachBot {
+                    game_id,
+                    player,
+                    board_size,
+                }),
             )];
             if let Some((inc_eid, inc_game_state)) =
                 self.incoming_game_state.lock().expect("xrl").clone()
@@ -244,10 +261,12 @@ mod tests {
 
         const GAME_ID: GameId = GameId(Uuid::nil());
         let player = Player::WHITE;
+        let board_size = Some(13);
         let incoming_game_state = Arc::new(Mutex::new(None));
         let xreader = Box::new(FakeXReader {
             game_id: GAME_ID.clone(),
             player,
+            board_size,
             incoming_game_state: incoming_game_state.clone(),
         });
         let xadder = Box::new(FakeXAdder { added_in });

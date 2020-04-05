@@ -1,14 +1,12 @@
 const DEFAULT_GAME_STATES_CHANGELOG: &str = "bugout-game-states";
 const DEFAULT_MOVE_ACCEPTED_EV: &str = "bugout-move-accepted-ev";
 const DEFAULT_MOVE_MADE_EV: &str = "bugout-move-made-ev";
-const DEFAULT_GAME_READY_EV: &str = "bugout-game-ready-ev";
 
 #[derive(Clone, Debug)]
 pub struct StreamTopics {
     pub game_states_changelog: String,
     pub move_accepted_ev: String,
     pub move_made_ev: String,
-    pub game_ready_ev: String,
 }
 impl Default for StreamTopics {
     fn default() -> Self {
@@ -16,7 +14,6 @@ impl Default for StreamTopics {
             game_states_changelog: DEFAULT_GAME_STATES_CHANGELOG.to_string(),
             move_accepted_ev: DEFAULT_MOVE_ACCEPTED_EV.to_string(),
             move_made_ev: DEFAULT_MOVE_MADE_EV.to_string(),
-            game_ready_ev: DEFAULT_GAME_READY_EV.to_string(),
         }
     }
 }
@@ -35,9 +32,5 @@ mod tests {
             DEFAULT_MOVE_ACCEPTED_EV
         );
         assert_eq!(&StreamTopics::default().move_made_ev, DEFAULT_MOVE_MADE_EV);
-        assert_eq!(
-            &StreamTopics::default().game_ready_ev,
-            DEFAULT_GAME_READY_EV
-        );
     }
 }

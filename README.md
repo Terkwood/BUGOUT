@@ -6,6 +6,9 @@
 
 ![BUGOUT Online Go](BUGOUT.jpeg)
 
+Read about the evolution of the project [on terkwood.farm](https://terkwood.farm/tech/BUGOUT/index.html).
+
+
 ## Design
 
 - Powered by [Sabaki](https://sabaki.yichuanshen.de/), [kafka](https://kafka.apache.org/), and [Redis](https://redis.io/) 
