@@ -1,13 +1,19 @@
 use crate::stream::topics;
 use micro_model_moves::{Coord, GameId, GameState, MakeMoveCommand};
+use micro_model_bot::gateway::BotAttached;
 use redis_conn_pool::redis::RedisError;
 use redis_conn_pool::{redis, Pool};
+
 pub trait XAdderGS {
-    fn xadd_game_state(&self, game_id: GameId, game_state: GameState) -> Result<(), XAddError>;
+    fn xadd_game_state(&self, game_id: &GameId, game_state: &GameState) -> Result<(), XAddError>;
 }
 
 pub trait XAdderMM: Send + Sync {
     fn xadd_make_move_command(&self, command: MakeMoveCommand) -> Result<(), XAddError>;
+}
+
+pub trait XAdderBA {
+    fn xadd_bot_attached(&self, bot_attached: BotAttached) -> Result<(), XAddError>;
 }
 
 #[derive(Debug)]
@@ -20,7 +26,7 @@ pub struct RedisXAdderGS {
     pub pool: Pool,
 }
 impl XAdderGS for RedisXAdderGS {
-    fn xadd_game_state(&self, game_id: GameId, game_state: GameState) -> Result<(), XAddError> {
+    fn xadd_game_state(&self, game_id: &GameId, game_state: &GameState) -> Result<(), XAddError> {
         let mut conn = self.pool.get().expect("redis pool");
         redis::cmd("XADD")
             .arg(topics::GAME_STATES_CHANGELOG)
@@ -61,6 +67,27 @@ impl XAdderMM for RedisXAdderMM {
             redis_cmd.arg("coord_x").arg(x).arg("coord_y").arg(y);
         }
         redis_cmd.query::<String>(&mut *conn)?;
+        Ok(())
+    }
+}
+
+
+pub struct RedisXAdderBA {
+    pub pool: Pool,
+}
+
+impl XAdderBA for RedisXAdderBA {
+    fn xadd_bot_attached(&self, bot_attached: BotAttached) -> Result<(), XAddError> {  
+        let mut conn = self.pool.get().expect("redis pool");
+        redis::cmd("XADD")
+            .arg(topics::BOT_ATTACHED_EV)
+            .arg("MAXLEN")
+            .arg("~")
+            .arg("1000")
+            .arg("*")
+            .arg("data")
+            .arg(bot_attached.serialize()?)
+            .query::<String>(&mut *conn)?;
         Ok(())
     }
 }

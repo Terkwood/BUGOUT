@@ -43,9 +43,14 @@ pub fn process(opts: &mut StreamOpts) {
                                         }
 
                                         if let Err(e) =
-                                            opts.xadder.xadd_game_state(game_id, game_state)
+                                            opts.xadder_gs.xadd_game_state(&game_id, &game_state)
                                         {
                                             error!("Error writing redis stream for game state changelog : {:?}",e)
+                                        } else {
+                                            if let Err(e) = opts.xadder_ba.xadd_bot_attached(micro_model_bot::gateway::BotAttached { game_id, player }) {
+
+                                                error!("Error xadd bot attached {:?}",e)
+                                            }
                                         }
                                     }
                                 }
@@ -62,6 +67,8 @@ pub fn process(opts: &mut StreamOpts) {
                                                 game_state,
                                             }) {
                                                 error!("WS SEND ERROR {:?}", e)
+                                            } else {
+                                                info!("Sent CM"); // TODO
                                             }
                                         } else {
                                             info!(
@@ -93,7 +100,8 @@ pub struct StreamOpts {
     pub attached_bots_repo: Box<dyn AttachedBotsRepo>,
     pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub xreader: Box<dyn xread::XReader>,
-    pub xadder: Box<dyn xadd::XAdderGS>,
+    pub xadder_gs: Box<dyn xadd::XAdderGS>,
+    pub xadder_ba: Box<dyn xadd::XAdderBA>,
     pub compute_move_in: Sender<ComputeMove>,
 }
 
@@ -103,7 +111,8 @@ impl StreamOpts {
             attached_bots_repo: components.game_repo,
             entry_id_repo: components.entry_id_repo,
             xreader: components.xreader,
-            xadder: components.xadder_gs,
+            xadder_gs: components.xadder_gs,
+            xadder_ba: components.xadder_ba,
             compute_move_in: components.compute_move_in,
         }
     }
@@ -185,18 +194,25 @@ mod tests {
         }
     }
 
-    struct FakeXAdder {
+    struct FakeXAdderGS {
         added_in: Sender<(GameId, GameState)>,
     }
-    impl xadd::XAdderGS for FakeXAdder {
+    impl xadd::XAdderGS for FakeXAdderGS {
         fn xadd_game_state(
             &self,
-            game_id: GameId,
-            game_state: GameState,
+            game_id: &GameId,
+            game_state: &GameState,
         ) -> Result<(), crate::stream::xadd::XAddError> {
-            Ok(self.added_in.send((game_id, game_state)).expect("send add"))
+            Ok(self.added_in.send((game_id.clone(), game_state.clone())).expect("send add"))
+        }
+    } 
+    struct FakeXAdderBA;
+    impl xadd::XAdderBA for FakeXAdderBA {
+        fn xadd_bot_attached(&self, _bot_attached: micro_model_bot::gateway::BotAttached) -> Result<(), crate::stream::xadd::XAddError> {
+            Ok(())
         }
     }
+
 
     struct FakeXReader {
         game_id: GameId,
@@ -269,7 +285,8 @@ mod tests {
             board_size,
             incoming_game_state: incoming_game_state.clone(),
         });
-        let xadder = Box::new(FakeXAdder { added_in });
+        let xadder_gs = Box::new(FakeXAdderGS { added_in });
+        let xadder_ba = Box::new(FakeXAdderBA);
 
         thread::spawn(move || {
             let mut opts = StreamOpts {
@@ -277,7 +294,8 @@ mod tests {
                 entry_id_repo,
                 attached_bots_repo,
                 xreader,
-                xadder,
+                xadder_gs,
+                xadder_ba
             };
 
             process(&mut opts)

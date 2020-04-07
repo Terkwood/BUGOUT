@@ -1,6 +1,6 @@
 use super::topics;
 use crate::repo::AllEntryIds;
-use log::warn;
+use log::{warn,info};
 use micro_model_bot::gateway::AttachBot;
 use micro_model_moves::{GameId, GameState};
 use redis_conn_pool::redis;
@@ -32,17 +32,23 @@ impl XReader for RedisXReader {
         &self,
         entry_ids: AllEntryIds,
     ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
+        // trim TODO
+        info!("xreading from {} and {}", topics::ATTACH_BOT_CMD,topics::GAME_STATES_CHANGELOG);
         let mut conn = self.pool.get().unwrap();
         let xrr = redis::cmd("XREAD")
             .arg("BLOCK")
             .arg(&BLOCK_MSEC.to_string())
             .arg("STREAMS")
-            .arg(topics::ATTACH_BOT_EV)
+            .arg(topics::ATTACH_BOT_CMD)
             .arg(topics::GAME_STATES_CHANGELOG)
             .arg(entry_ids.attach_bot_eid.to_string())
             .arg(entry_ids.game_states_eid.to_string())
             .query::<XReadResult>(&mut *conn)?;
         let unsorted = deser(xrr);
+        // TODO remove logging
+        for m in unsorted.iter() {
+            info!("    - {:?}", m)
+        }
         let sorted_keys: Vec<XReadEntryId> = {
             let mut ks: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
             ks.sort();
@@ -90,7 +96,7 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                         }
                     }
                 }
-            } else if &xread_topic[..] == topics::ATTACH_BOT_EV {
+            } else if &xread_topic[..] == topics::ATTACH_BOT_CMD {
                 for with_timestamps in xread_data {
                     for (k, v) in with_timestamps {
                         let shape: Result<(String, Vec<u8>), _> = // data <bin>
