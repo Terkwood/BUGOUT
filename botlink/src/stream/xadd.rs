@@ -4,15 +4,9 @@ use micro_model_bot::gateway::BotAttached;
 use redis_conn_pool::redis::RedisError;
 use redis_conn_pool::{redis, Pool};
 
-pub trait XAdderGS {
+pub trait XAdder: Send + Sync {
     fn xadd_game_state(&self, game_id: &GameId, game_state: &GameState) -> Result<(), XAddError>;
-}
-
-pub trait XAdderMM: Send + Sync {
     fn xadd_make_move_command(&self, command: MakeMoveCommand) -> Result<(), XAddError>;
-}
-
-pub trait XAdderBA {
     fn xadd_bot_attached(&self, bot_attached: BotAttached) -> Result<(), XAddError>;
 }
 
@@ -22,10 +16,10 @@ pub enum XAddError {
     Ser(Box<bincode::ErrorKind>),
 }
 
-pub struct RedisXAdderGS {
+pub struct RedisXAdder {
     pub pool: Pool,
 }
-impl XAdderGS for RedisXAdderGS {
+impl XAdder for RedisXAdder {
     fn xadd_game_state(&self, game_id: &GameId, game_state: &GameState) -> Result<(), XAddError> {
         let mut conn = self.pool.get().expect("redis pool");
         redis::cmd("XADD")
@@ -41,12 +35,6 @@ impl XAdderGS for RedisXAdderGS {
             .query::<String>(&mut *conn)?;
         Ok(())
     }
-}
-
-pub struct RedisXAdderMM {
-    pub pool: Pool,
-}
-impl XAdderMM for RedisXAdderMM {
     fn xadd_make_move_command(&self, command: MakeMoveCommand) -> Result<(), XAddError> {
         let mut conn = self.pool.get().unwrap();
 
@@ -69,14 +57,6 @@ impl XAdderMM for RedisXAdderMM {
         redis_cmd.query::<String>(&mut *conn)?;
         Ok(())
     }
-}
-
-
-pub struct RedisXAdderBA {
-    pub pool: Pool,
-}
-
-impl XAdderBA for RedisXAdderBA {
     fn xadd_bot_attached(&self, bot_attached: BotAttached) -> Result<(), XAddError> {  
         let mut conn = self.pool.get().expect("redis pool");
         redis::cmd("XADD")
@@ -91,6 +71,7 @@ impl XAdderBA for RedisXAdderBA {
         Ok(())
     }
 }
+
 
 impl From<RedisError> for XAddError {
     fn from(r: RedisError) -> Self {
