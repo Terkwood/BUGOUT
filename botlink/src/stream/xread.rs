@@ -1,6 +1,6 @@
 use super::topics;
 use crate::repo::AllEntryIds;
-use log::{warn,info,trace};
+use log::{trace, warn};
 use micro_model_bot::gateway::AttachBot;
 use micro_model_moves::{GameId, GameState};
 use redis_conn_pool::redis;
@@ -33,7 +33,11 @@ impl XReader for RedisXReader {
         &self,
         entry_ids: AllEntryIds,
     ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
-        trace!("xreading from {} and {}", topics::ATTACH_BOT_CMD,topics::GAME_STATES_CHANGELOG);
+        trace!(
+            "xreading from {} and {}",
+            topics::ATTACH_BOT_CMD,
+            topics::GAME_STATES_CHANGELOG
+        );
         let mut conn = self.pool.get().unwrap();
         let xrr = redis::cmd("XREAD")
             .arg("BLOCK")
@@ -45,10 +49,6 @@ impl XReader for RedisXReader {
             .arg(entry_ids.game_states_eid.to_string())
             .query::<XReadResult>(&mut *conn)?;
         let unsorted = deser(xrr);
-        // TODO remove logging
-        for m in unsorted.iter() {
-            info!("    - {:?}", m)
-        }
         let sorted_keys: Vec<XReadEntryId> = {
             let mut ks: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
             ks.sort();

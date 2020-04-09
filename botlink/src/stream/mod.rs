@@ -10,8 +10,8 @@ use log::{error, info};
 use micro_model_bot::gateway::AttachBot;
 use micro_model_bot::ComputeMove;
 use micro_model_moves::GameState;
-pub use write_moves::write_moves;
 use std::sync::Arc;
+pub use write_moves::write_moves;
 use xread::StreamData;
 
 pub fn process(opts: &mut StreamOpts) {
@@ -48,9 +48,13 @@ pub fn process(opts: &mut StreamOpts) {
                                         {
                                             error!("Error writing redis stream for game state changelog : {:?}",e)
                                         } else {
-                                            if let Err(e) = opts.xadder.xadd_bot_attached(micro_model_bot::gateway::BotAttached { game_id, player }) {
-
-                                                error!("Error xadd bot attached {:?}",e)
+                                            if let Err(e) = opts.xadder.xadd_bot_attached(
+                                                micro_model_bot::gateway::BotAttached {
+                                                    game_id,
+                                                    player,
+                                                },
+                                            ) {
+                                                error!("Error xadd bot attached {:?}", e)
                                             }
                                         }
                                     }
@@ -68,8 +72,6 @@ pub fn process(opts: &mut StreamOpts) {
                                                 game_state,
                                             }) {
                                                 error!("WS SEND ERROR {:?}", e)
-                                            } else {
-                                                info!("Sent CM"); // TODO
                                             }
                                         } else {
                                             info!(
@@ -111,7 +113,7 @@ impl StreamOpts {
             attached_bots_repo: components.game_repo,
             entry_id_repo: components.entry_id_repo,
             xreader: components.xreader,
-            xadder:  components.xadder,
+            xadder: components.xadder,
             compute_move_in: components.compute_move_in,
         }
     }
@@ -202,16 +204,22 @@ mod tests {
             &self,
             game_id: &GameId,
             game_state: &GameState,
-        ) -> Result<(),  XAddError> {
-            Ok(self.added_in.send((game_id.clone(), game_state.clone())).expect("send add"))
+        ) -> Result<(), XAddError> {
+            Ok(self
+                .added_in
+                .send((game_id.clone(), game_state.clone()))
+                .expect("send add"))
         }
-        fn xadd_bot_attached(&self, _bot_attached: micro_model_bot::gateway::BotAttached) -> Result<(), crate::stream::xadd::XAddError> {
+        fn xadd_bot_attached(
+            &self,
+            _bot_attached: micro_model_bot::gateway::BotAttached,
+        ) -> Result<(), crate::stream::xadd::XAddError> {
             Ok(())
         }
-        fn xadd_make_move_command(&self, _command: MakeMoveCommand) -> Result<(), XAddError> {todo!()}
-    }  
-
-
+        fn xadd_make_move_command(&self, _command: MakeMoveCommand) -> Result<(), XAddError> {
+            Ok(info!("Doing nothing for xadd make move"))
+        }
+    }
 
     struct FakeXReader {
         game_id: GameId,
@@ -286,14 +294,13 @@ mod tests {
         });
         let xadder = Arc::new(FakeXAdder { added_in });
 
-
         thread::spawn(move || {
             let mut opts = StreamOpts {
                 compute_move_in,
                 entry_id_repo,
                 attached_bots_repo,
                 xreader,
-                xadder
+                xadder,
             };
 
             process(&mut opts)
