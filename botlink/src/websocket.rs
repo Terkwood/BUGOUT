@@ -3,16 +3,49 @@ use bincode::{deserialize, serialize};
 use crossbeam_channel::{select, Receiver, Sender};
 use log::{error, info, warn};
 use micro_model_bot::{ComputeMove, MoveComputed};
-use std::net::TcpListener;
+use std::net::SocketAddr;
 use std::thread;
 use std::time::Duration;
+use tokio::net::{TcpListener, TcpStream};
+use tokio_tungstenite::accept_hdr_async;
 use tungstenite::accept_hdr;
 use tungstenite::handshake::server::{Request, Response};
 use tungstenite::http;
 use tungstenite::util::NonBlockingResult;
-use tungstenite::Message;
+use tungstenite::{Message, Result};
 
 pub async fn listen(opts: WSOpts) {
+    todo!()
+}
+
+async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> Result<()> {
+    let callback = |req: &Request, response: Response| {
+        if let Some(user_colon_pass) = &*env::AUTHORIZATION {
+            let mut is_authorized = false;
+            for (ref header, value) in req.headers() {
+                if **header == "Authorization" {
+                    // see https://en.wikipedia.org/wiki/Basic_access_authentication
+                    is_authorized = *value == format!("Basic {}", base64::encode(user_colon_pass))
+                }
+            }
+            if is_authorized {
+                info!("Connection open");
+                Ok(response)
+            } else {
+                warn!("No Auth");
+                Err(http::response::Builder::new()
+                    .status(401)
+                    .body(None)
+                    .expect("cannot form response"))
+            }
+        } else {
+            info!("Connection open");
+            Ok(response)
+        }
+    };
+    let ws_stream = accept_hdr_async(stream, callback)
+        .await
+        .expect("failed to accept");
     todo!()
 }
 /*
@@ -24,31 +57,6 @@ pub fn listen(opts: WSOpts) {
         let move_computed_in = opts.move_computed_in.clone();
         let compute_move_out = opts.compute_move_out.clone();
         thread::spawn(move || {
-            let callback = |req: &Request, response: Response| {
-                if let Some(user_colon_pass) = &*env::AUTHORIZATION {
-                    let mut is_authorized = false;
-                    for (ref header, value) in req.headers() {
-                        if **header == "Authorization" {
-                            // see https://en.wikipedia.org/wiki/Basic_access_authentication
-                            is_authorized =
-                                *value == format!("Basic {}", base64::encode(user_colon_pass))
-                        }
-                    }
-                    if is_authorized {
-                        info!("Connection open");
-                        Ok(response)
-                    } else {
-                        warn!("No Auth");
-                        Err(http::response::Builder::new()
-                            .status(401)
-                            .body(None)
-                            .expect("cannot form response"))
-                    }
-                } else {
-                    info!("Connection open");
-                    Ok(response)
-                }
-            };
             let mut websocket = accept_hdr(stream.expect("stream"), callback).expect("websocket");
             loop {
                 select! {
