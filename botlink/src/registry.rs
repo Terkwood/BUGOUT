@@ -11,8 +11,7 @@ pub struct Components {
     pub game_repo: Box<dyn AttachedBotsRepo>,
     pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub xreader: Box<dyn XReader>,
-    pub xadder_gs: Box<dyn XAdderGS>,
-    pub xadder_mm: Arc<dyn XAdderMM>,
+    pub xadder: Arc<dyn XAdder>,
     pub compute_move_in: Sender<ComputeMove>,
     pub compute_move_out: Receiver<ComputeMove>,
     pub move_computed_in: Sender<MoveComputed>,
@@ -26,7 +25,7 @@ impl Default for Components {
         let (move_computed_in, move_computed_out): (Sender<MoveComputed>, Receiver<MoveComputed>) =
             unbounded();
 
-        let pool = redis_conn_pool::create(RedisHostUrl::default());
+        let pool = Arc::new(redis_conn_pool::create(RedisHostUrl::default()));
         Components {
             game_repo: Box::new(RedisAttachedBotsRepo {
                 pool: pool.clone(),
@@ -36,9 +35,8 @@ impl Default for Components {
                 pool: pool.clone(),
                 key_provider: crate::repo::redis_keys::KeyProvider::default(),
             }),
-            xreader: Box::new(RedisXReader { pool: pool.clone() }),
-            xadder_gs: Box::new(RedisXAdderGS { pool: pool.clone() }),
-            xadder_mm: Arc::new(RedisXAdderMM { pool }),
+            xreader: Box::new(RedisXReader { pool: pool.clone() }), 
+            xadder: Arc::new(RedisXAdder { pool }),
             compute_move_in,
             compute_move_out,
             move_computed_in,

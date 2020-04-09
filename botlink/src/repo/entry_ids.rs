@@ -2,6 +2,8 @@ use redis_conn_pool::redis::Commands;
 use redis_conn_pool::{redis, Pool};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
+use std::sync::Arc;
+
 pub trait EntryIdRepo {
     fn fetch_all(&self) -> Result<AllEntryIds, super::RepoErr>;
 
@@ -13,7 +15,8 @@ pub trait EntryIdRepo {
 }
 
 pub struct RedisEntryIdRepo {
-    pub pool: Pool,
+    pub pool: Arc<Pool>
+    ,
     pub key_provider: super::redis_keys::KeyProvider,
 }
 const EMPTY_EID: &str = "0-0";
