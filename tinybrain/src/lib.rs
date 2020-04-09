@@ -10,6 +10,8 @@ extern crate micro_model_moves;
 extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
+pub extern crate tokio;
+extern crate tokio_tungstenite;
 extern crate tungstenite;
 extern crate uuid;
 

@@ -6,7 +6,10 @@ use tungstenite::util::NonBlockingResult;
 use tungstenite::{connect, Message};
 mod authorization;
 
-pub fn start(compute_move_in: Sender<ComputeMove>, move_computed_out: Receiver<MoveComputed>) {
+pub async fn start(
+    compute_move_in: Sender<ComputeMove>,
+    move_computed_out: Receiver<MoveComputed>,
+) {
     let (mut socket, response) =
         connect(create_request()).expect("cannot connect to robocall host");
     trace!("Connected to botlink, http status: {}", response.status());

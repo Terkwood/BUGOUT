@@ -8,7 +8,8 @@ use tinybrain::*;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
     info!("🔢 {}", VERSION);
     env::init();
