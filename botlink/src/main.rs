@@ -15,6 +15,6 @@ fn main() {
     thread::spawn(move || websocket::listen(ws_opts));
     let mco = components.move_computed_out.clone();
     let xmm = components.xadder.clone();
-    thread::spawn(move || stream::write_moves(mco, xmm));
+    thread::spawn(move || { stream::write_moves(mco, xmm) } );
     stream::process(&mut stream::StreamOpts::from(components));
 }

@@ -4,6 +4,8 @@ use micro_model_moves::{GameId, Player};
 use redis::Commands;
 use redis_conn_pool::{r2d2, r2d2_redis, redis, Pool};
 
+use std::sync::Arc;
+
 pub trait AttachedBotsRepo {
     fn is_attached(&self, game_id: &GameId, player: Player) -> Result<bool, RepoErr>;
 
@@ -13,7 +15,7 @@ pub trait AttachedBotsRepo {
 const TTL_SECS: usize = 86400;
 
 pub struct RedisAttachedBotsRepo {
-    pub pool: Pool,
+    pub pool: Arc<Pool>,
     pub key_provider: KeyProvider,
 }
 

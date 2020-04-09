@@ -4,6 +4,8 @@ use micro_model_bot::gateway::BotAttached;
 use redis_conn_pool::redis::RedisError;
 use redis_conn_pool::{redis, Pool};
 
+use std::sync::Arc;
+
 pub trait XAdder: Send + Sync {
     fn xadd_game_state(&self, game_id: &GameId, game_state: &GameState) -> Result<(), XAddError>;
     fn xadd_make_move_command(&self, command: MakeMoveCommand) -> Result<(), XAddError>;
@@ -17,7 +19,7 @@ pub enum XAddError {
 }
 
 pub struct RedisXAdder {
-    pub pool: Pool,
+    pub pool: Arc<Pool>,
 }
 impl XAdder for RedisXAdder {
     fn xadd_game_state(&self, game_id: &GameId, game_state: &GameState) -> Result<(), XAddError> {

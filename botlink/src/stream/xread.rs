@@ -8,6 +8,7 @@ use redis_conn_pool::Pool;
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::str::FromStr;
+use std::sync::Arc;
 use uuid::Uuid;
 
 const BLOCK_MSEC: u32 = 5000;
@@ -25,7 +26,7 @@ pub trait XReader {
 }
 
 pub struct RedisXReader {
-    pub pool: Pool,
+    pub pool: Arc<Pool>,
 }
 impl XReader for RedisXReader {
     fn xread_sorted(

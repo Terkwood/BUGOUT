@@ -11,6 +11,7 @@ use micro_model_bot::gateway::AttachBot;
 use micro_model_bot::ComputeMove;
 use micro_model_moves::GameState;
 pub use write_moves::write_moves;
+use std::sync::Arc;
 use xread::StreamData;
 
 pub fn process(opts: &mut StreamOpts) {
@@ -100,7 +101,7 @@ pub struct StreamOpts {
     pub attached_bots_repo: Box<dyn AttachedBotsRepo>,
     pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub xreader: Box<dyn xread::XReader>,
-    pub xadder: std::sync::Arc<dyn xadd::XAdder>,
+    pub xadder: Arc<dyn xadd::XAdder>,
     pub compute_move_in: Sender<ComputeMove>,
 }
 

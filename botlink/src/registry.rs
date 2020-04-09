@@ -25,7 +25,7 @@ impl Default for Components {
         let (move_computed_in, move_computed_out): (Sender<MoveComputed>, Receiver<MoveComputed>) =
             unbounded();
 
-        let pool = redis_conn_pool::create(RedisHostUrl::default());
+        let pool = Arc::new(redis_conn_pool::create(RedisHostUrl::default()));
         Components {
             game_repo: Box::new(RedisAttachedBotsRepo {
                 pool: pool.clone(),
