@@ -1,7 +1,7 @@
 use crate::env;
 use bincode::{deserialize, serialize};
 use crossbeam_channel::{select, Receiver, Sender};
-use log::{info, error, warn};
+use log::{error, info, warn};
 use micro_model_bot::{ComputeMove, MoveComputed};
 use std::net::TcpListener;
 use std::thread;
@@ -12,6 +12,10 @@ use tungstenite::http;
 use tungstenite::util::NonBlockingResult;
 use tungstenite::Message;
 
+pub async fn listen(opts: WSOpts) {
+    todo!()
+}
+/*
 pub fn listen(opts: WSOpts) {
     let server = TcpListener::bind(&*env::ADDRESS).expect("WS bind");
     info!("WS bound to {}", &*env::ADDRESS);
@@ -71,6 +75,7 @@ pub fn listen(opts: WSOpts) {
         });
     }
 }
+*/
 
 pub struct WSOpts {
     pub compute_move_out: Receiver<ComputeMove>,
