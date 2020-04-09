@@ -31,6 +31,7 @@ pub fn listen(opts: WSOpts) {
                         }
                     }
                     if is_authorized {
+                        info!("Connection open");
                         Ok(response)
                     } else {
                         warn!("No Auth");
@@ -40,6 +41,7 @@ pub fn listen(opts: WSOpts) {
                             .expect("cannot form response"))
                     }
                 } else {
+                    info!("Connection open");
                     Ok(response)
                 }
             };

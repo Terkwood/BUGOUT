@@ -1,6 +1,6 @@
 use super::topics;
 use crate::repo::AllEntryIds;
-use log::{warn,info};
+use log::{warn,info,trace};
 use micro_model_bot::gateway::AttachBot;
 use micro_model_moves::{GameId, GameState};
 use redis_conn_pool::redis;
@@ -33,8 +33,7 @@ impl XReader for RedisXReader {
         &self,
         entry_ids: AllEntryIds,
     ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
-        // trim TODO
-        info!("xreading from {} and {}", topics::ATTACH_BOT_CMD,topics::GAME_STATES_CHANGELOG);
+        trace!("xreading from {} and {}", topics::ATTACH_BOT_CMD,topics::GAME_STATES_CHANGELOG);
         let mut conn = self.pool.get().unwrap();
         let xrr = redis::cmd("XREAD")
             .arg("BLOCK")
