@@ -13,7 +13,6 @@ extern crate serde_derive;
 extern crate serde_json;
 pub extern crate tokio;
 extern crate tokio_tungstenite;
-extern crate tungstenite;
 extern crate uuid;
 
 pub mod env;
