@@ -8,7 +8,7 @@ use redis_conn_pool::RedisHostUrl;
 use std::sync::Arc;
 
 pub struct Components {
-    pub game_repo: Box<dyn AttachedBotsRepo>,
+    pub ab_repo: Box<dyn AttachedBotsRepo>,
     pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub xreader: Box<dyn XReader>,
     pub xadder: Arc<dyn XAdder>,
@@ -27,7 +27,7 @@ impl Default for Components {
 
         let pool = Arc::new(redis_conn_pool::create(RedisHostUrl::default()));
         Components {
-            game_repo: Box::new(RedisAttachedBotsRepo {
+            ab_repo: Box::new(RedisAttachedBotsRepo {
                 pool: pool.clone(),
                 key_provider: crate::repo::redis_keys::KeyProvider::default(),
             }),
@@ -35,7 +35,7 @@ impl Default for Components {
                 pool: pool.clone(),
                 key_provider: crate::repo::redis_keys::KeyProvider::default(),
             }),
-            xreader: Box::new(RedisXReader { pool: pool.clone() }), 
+            xreader: Box::new(RedisXReader { pool: pool.clone() }),
             xadder: Arc::new(RedisXAdder { pool }),
             compute_move_in,
             compute_move_out,

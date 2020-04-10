@@ -6,7 +6,7 @@ use redis_conn_pool::{r2d2, r2d2_redis, redis, Pool};
 
 use std::sync::Arc;
 
-pub trait AttachedBotsRepo {
+pub trait AttachedBotsRepo: Send + Sync {
     fn is_attached(&self, game_id: &GameId, player: Player) -> Result<bool, RepoErr>;
 
     fn attach(&mut self, game_id: &GameId, player: Player) -> Result<(), RepoErr>;
