@@ -4,7 +4,7 @@ use crossbeam_channel::{select, Receiver, Sender};
 use http::Request;
 use log::{error, info, trace, warn};
 use std::net::SocketAddr;
-
+use std::time::Duration;
 use futures_util::{future, pin_mut, StreamExt};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
@@ -19,7 +19,11 @@ pub async fn start(
         .expect("cannot connect to botlink host");
     trace!("Connected to botlink, http status: {}", response.status());
 
-    let (write, read) = socket.split();
+    let (mut write, mut read) = socket.split();
+
+    let mut interval = tokio::time::interval(Duration::from_millis(WRITE_TICK_MS));
+    let mut msg_fut = read.next();
+    let mut tick_fut = interval.next();
     todo!("hack loop");
     /*
     loop {
@@ -60,6 +64,8 @@ pub async fn start(
         }
     }*/
 }
+
+const WRITE_TICK_MS: u64 = 10;
 
 fn create_request() -> http::Request<()> {
     let mut request = Request::builder().uri(&*env::BOTLINK_URL);
