@@ -1,11 +1,12 @@
 use crate::*;
 
-use crossbeam_channel::{select, Receiver, Sender};
+use crossbeam_channel::{Receiver, Sender};
+use future::{select, Either};
+use futures_util::{future, pin_mut, StreamExt};
 use http::Request;
 use log::{error, info, trace, warn};
 use std::net::SocketAddr;
 use std::time::Duration;
-use futures_util::{future, pin_mut, StreamExt};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 mod authorization;
@@ -22,11 +23,15 @@ pub async fn start(
     let (mut write, mut read) = socket.split();
 
     let mut interval = tokio::time::interval(Duration::from_millis(WRITE_TICK_MS));
-    let mut msg_fut = read.next();
-    let mut tick_fut = interval.next();
+    let mut read_msg_fut = read.next();
+    let mut write_tick_fut = interval.next();
     todo!("hack loop");
-    /*
     loop {
+        match select(read_msg_fut, write_tick_fut).await {
+            Either::Left((msg, write_tick_fut_continue)) => todo!(),
+            Either::Right((_, read_msg_fut_continue)) => todo!(),
+        }
+        /*
         if let Ok(incoming_data) = todo!() {
             match incoming_data {
                 tungstenite::Message::Binary(data) => {
@@ -61,8 +66,8 @@ pub async fn start(
                             trace!("Wrote on socket")
                         }
             }
-        }
-    }*/
+        }*/
+    }
 }
 
 const WRITE_TICK_MS: u64 = 10;

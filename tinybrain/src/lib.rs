@@ -1,4 +1,6 @@
 #[macro_use]
+extern crate futures_util;
+#[macro_use]
 extern crate lazy_static;
 extern crate base64;
 extern crate bincode;
