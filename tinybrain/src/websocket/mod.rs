@@ -1,59 +1,64 @@
 use crate::*;
+
 use crossbeam_channel::{select, Receiver, Sender};
 use http::Request;
-use log::{error, trace, warn};
-use tungstenite::util::NonBlockingResult;
-use tungstenite::{connect, Message};
+use log::{error, info, trace, warn};
+use std::net::SocketAddr;
+
+use futures_util::{future, pin_mut, StreamExt};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 mod authorization;
 
 pub async fn start(
     compute_move_in: Sender<ComputeMove>,
     move_computed_out: Receiver<MoveComputed>,
 ) {
-    let (mut socket, response) =
-        connect(create_request()).expect("cannot connect to robocall host");
+    let (mut socket, response) = connect_async(create_request())
+        .await
+        .expect("cannot connect to botlink host");
     trace!("Connected to botlink, http status: {}", response.status());
 
-    trace!("Headers follow:");
-    for (ref header, _value) in response.headers() {
-        trace!("* {}", header)
-    }
-
+    let (write, read) = socket.split();
+    todo!("hack loop");
+    /*
     loop {
-        let incoming_data = socket.read_message().no_block();
-        match incoming_data {
-            Err(e) => error!("Error reading incoming data {:?}", e),
-            Ok(None) => trace!("Empty read in ws"),
-            Ok(Some(tungstenite::Message::Binary(data))) => {
-                let cm: Result<ComputeMove, _> = bincode::deserialize(&data);
-                match cm {
-                    Err(e) => error!("failed to deser compute move {:?}", e),
-                    Ok(compute_move) => {
-                        if let Err(e) = compute_move_in.send(compute_move) {
-                            error!("failed to send compute move {:?}", e)
+        if let Ok(incoming_data) = todo!() {
+            match incoming_data {
+                tungstenite::Message::Binary(data) => {
+                    let cm: Result<ComputeMove, _> = bincode::deserialize(&data);
+                    match cm {
+                        Err(e) => error!("failed to deser compute move {:?}", e),
+                        Ok(compute_move) => {
+                            if let Err(e) = compute_move_in.send(compute_move) {
+                                error!("failed to send compute move {:?}", e)
+                            }
                         }
                     }
                 }
+                _ => warn!("unmatched message"),
             }
-            Ok(_e) => warn!("requires binary"),
         };
         select! {
             recv(move_computed_out) -> mc =>
                 match mc {
                     Err(e) => error!("Error reading move_computed_out {:?}",e),
                     Ok(move_computed) => {
-                        socket
-                            .write_message(
+                        todo!();
+                        if let Ok(m) = socket.next().await.expect("socket"){
+                        m.write();
+                        }
+                        /*let wr_m = socket.write_message(
                                 Message::Binary(
                                     bincode::serialize(&move_computed)
                                         .expect("bincode move computed")
                                     )
-                                ).expect("write websocket message");
+                                ).expect("write websocket message");*/
                             trace!("Wrote on socket")
                         }
             }
         }
-    }
+    }*/
 }
 
 fn create_request() -> http::Request<()> {
