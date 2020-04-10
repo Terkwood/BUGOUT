@@ -5,21 +5,21 @@ use crate::*;
 use bincode;
 use crossbeam_channel::{Receiver, Sender};
 use future::{select, Either};
-use futures_util::{future, pin_mut, StreamExt};
+use futures_util::{future, SinkExt, StreamExt};
 use http::Request;
-use log::{error, info, trace, warn};
-use std::net::SocketAddr;
+use log::{error, info, warn};
 use std::time::Duration;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
+
+const WRITE_TICK_MS: u64 = 10;
 pub async fn start(
     compute_move_in: Sender<ComputeMove>,
     move_computed_out: Receiver<MoveComputed>,
 ) {
-    let (mut socket, response) = connect_async(create_request())
+    let (socket, response) = connect_async(create_request())
         .await
         .expect("cannot connect to botlink host");
-    trace!("Connected to botlink, http status: {}", response.status());
+    info!("Connected to botlink, http status: {}", response.status());
 
     let (mut write, mut read) = socket.split();
 
@@ -54,32 +54,22 @@ pub async fn start(
                 }
                 None => break, // ws stream terminated
             },
-            Either::Right((_, read_msg_fut_continue)) => todo!(),
-        }
-        /*
-        select! {
-            recv(move_computed_out) -> mc =>
-                match mc {
-                    Err(e) => error!("Error reading move_computed_out {:?}",e),
-                    Ok(move_computed) => {
-                        todo!();
-                        if let Ok(m) = socket.next().await.expect("socket"){
-                        m.write();
-                        }
-                        /*let wr_m = socket.write_message(
-                                Message::Binary(
-                                    bincode::serialize(&move_computed)
-                                        .expect("bincode move computed")
-                                    )
-                                ).expect("write websocket message");*/
-                            trace!("Wrote on socket")
-                        }
+            Either::Right((_, read_msg_fut_continue)) => {
+                while let Ok(mc) = move_computed_out.try_recv() {
+                    if let Err(e) = write
+                        .send(Message::Binary(bincode::serialize(&mc).expect("ser")))
+                        .await
+                    {
+                        error!("write {}", e)
+                    }
+                }
+
+                read_msg_fut = read_msg_fut_continue;
+                write_tick_fut = interval.next();
             }
-        }*/
+        }
     }
 }
-
-const WRITE_TICK_MS: u64 = 10;
 
 fn create_request() -> http::Request<()> {
     let mut request = Request::builder().uri(&*env::BOTLINK_URL);

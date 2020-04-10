@@ -20,5 +20,5 @@ async fn main() {
         unbounded();
 
     thread::spawn(|| katago::start(move_computed_in, compute_move_out));
-    websocket::start(compute_move_in, move_computed_out).await
+    websocket::start(compute_move_in, move_computed_out).await;
 }

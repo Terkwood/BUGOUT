@@ -1,11 +1,10 @@
 #[macro_use]
-extern crate futures_util;
-#[macro_use]
 extern crate lazy_static;
 extern crate base64;
 extern crate bincode;
 extern crate dotenv;
 extern crate env_logger;
+extern crate futures_util;
 extern crate http;
 extern crate log;
 extern crate micro_model_moves;
