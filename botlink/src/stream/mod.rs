@@ -31,32 +31,25 @@ pub fn process(opts: &mut StreamOpts) {
                             ) => {
                                 if let Err(e) = opts.attached_bots_repo.attach(&game_id, player) {
                                     error!("Error attaching bot {:?}", e)
+                                } else if let Err(e) = opts
+                                    .entry_id_repo
+                                    .update(EntryIdType::AttachBotEvent, entry_id)
+                                {
+                                    error!("Error saving entry ID for attach bot {:?}", e)
                                 } else {
-                                    if let Err(e) = opts
-                                        .entry_id_repo
-                                        .update(EntryIdType::AttachBotEvent, entry_id)
-                                    {
-                                        error!("Error saving entry ID for attach bot {:?}", e)
-                                    } else {
-                                        let mut game_state = GameState::default();
-                                        if let Some(bs) = board_size {
-                                            game_state.board.size = bs.into()
-                                        }
+                                    let mut game_state = GameState::default();
+                                    if let Some(bs) = board_size {
+                                        game_state.board.size = bs.into()
+                                    }
 
-                                        if let Err(e) =
-                                            opts.xadder.xadd_game_state(&game_id, &game_state)
-                                        {
-                                            error!("Error writing redis stream for game state changelog : {:?}",e)
-                                        } else {
-                                            if let Err(e) = opts.xadder.xadd_bot_attached(
-                                                micro_model_bot::gateway::BotAttached {
-                                                    game_id,
-                                                    player,
-                                                },
-                                            ) {
-                                                error!("Error xadd bot attached {:?}", e)
-                                            }
-                                        }
+                                    if let Err(e) =
+                                        opts.xadder.xadd_game_state(&game_id, &game_state)
+                                    {
+                                        error!("Error writing redis stream for game state changelog : {:?}",e)
+                                    } else if let Err(e) = opts.xadder.xadd_bot_attached(
+                                        micro_model_bot::gateway::BotAttached { game_id, player },
+                                    ) {
+                                        error!("Error xadd bot attached {:?}", e)
                                     }
                                 }
                             }

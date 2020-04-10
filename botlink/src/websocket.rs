@@ -6,7 +6,6 @@ use crossbeam_channel::{Receiver, Sender};
 use futures_util::future::{select, Either};
 use futures_util::{SinkExt, StreamExt};
 use log::{error, info, warn};
-use std::net::SocketAddr;
 use std::time::Duration;
 use tokio;
 use tokio::net::{TcpListener, TcpStream};
@@ -24,12 +23,12 @@ pub async fn listen(opts: WSOpts) {
             .peer_addr()
             .expect("connected stream should have a peer address");
         info!("Peer address: {}", peer);
-        tokio::spawn(accept_connection(peer, stream, opts.clone()));
+        tokio::spawn(accept_connection(stream, opts.clone()));
     }
 }
 
-async fn accept_connection(peer: SocketAddr, stream: TcpStream, opts: WSOpts) {
-    if let Err(e) = handle_connection(peer, stream, &opts).await {
+async fn accept_connection(stream: TcpStream, opts: WSOpts) {
+    if let Err(e) = handle_connection(stream, &opts).await {
         match e {
             Error::ConnectionClosed | Error::Protocol(_) | Error::Utf8 => (),
             err => error!("Error processing connection: {}", err),
@@ -39,7 +38,7 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream, opts: WSOpts) {
 
 const WRITE_TICK_MS: u64 = 10;
 
-async fn handle_connection(peer: SocketAddr, stream: TcpStream, opts: &WSOpts) -> Result<()> {
+async fn handle_connection(stream: TcpStream, opts: &WSOpts) -> Result<()> {
     let callback = |req: &Request, response: Response| {
         if let Some(user_colon_pass) = &*env::AUTHORIZATION {
             let mut is_authorized = false;
@@ -67,8 +66,6 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream, opts: &WSOpts) -
     let ws_stream = accept_hdr_async(stream, callback)
         .await
         .expect("failed to accept");
-
-    info!("Peer: {}", peer);
 
     let (mut ws_sender, mut ws_receiver) = ws_stream.split();
     let mut interval = tokio::time::interval(Duration::from_millis(WRITE_TICK_MS));
