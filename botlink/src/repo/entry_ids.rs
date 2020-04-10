@@ -4,7 +4,7 @@ use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-pub trait EntryIdRepo {
+pub trait EntryIdRepo: Send + Sync {
     fn fetch_all(&self) -> Result<AllEntryIds, super::RepoErr>;
 
     fn update(
@@ -15,8 +15,7 @@ pub trait EntryIdRepo {
 }
 
 pub struct RedisEntryIdRepo {
-    pub pool: Arc<Pool>
-    ,
+    pub pool: Arc<Pool>,
     pub key_provider: super::redis_keys::KeyProvider,
 }
 const EMPTY_EID: &str = "0-0";

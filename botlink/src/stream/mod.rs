@@ -101,8 +101,8 @@ pub fn process(opts: &mut StreamOpts) {
 
 pub struct StreamOpts {
     pub attached_bots_repo: Box<dyn AttachedBotsRepo>,
-    pub entry_id_repo: Box<dyn EntryIdRepo>,
-    pub xreader: Box<dyn xread::XReader>,
+    pub entry_id_repo: Arc<dyn EntryIdRepo>,
+    pub xreader: Arc<dyn xread::XReader>,
     pub xadder: Arc<dyn xadd::XAdder>,
     pub compute_move_in: Sender<ComputeMove>,
 }
@@ -274,7 +274,7 @@ mod tests {
         let (added_in, added_out): (Sender<(GameId, GameState)>, Receiver<(GameId, GameState)>) =
             unbounded();
 
-        let entry_id_repo = Box::new(FakeEntryIdRepo { eid_update_in });
+        let entry_id_repo = Arc::new(FakeEntryIdRepo { eid_update_in });
 
         let bots_attached = Arc::new(Mutex::new(vec![]));
         let attached_bots_repo = Box::new(FakeAttachedBotsRepo {
@@ -286,7 +286,7 @@ mod tests {
         let player = Player::WHITE;
         let board_size = Some(13);
         let incoming_game_state = Arc::new(Mutex::new(None));
-        let xreader = Box::new(FakeXReader {
+        let xreader = Arc::new(FakeXReader {
             game_id: GAME_ID.clone(),
             player,
             board_size,
