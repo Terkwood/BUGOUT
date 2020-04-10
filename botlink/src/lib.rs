@@ -9,6 +9,8 @@ extern crate env_logger;
 extern crate log;
 extern crate micro_model_bot;
 extern crate micro_model_moves;
+pub extern crate tokio;
+extern crate tokio_tungstenite;
 extern crate uuid;
 
 pub mod env;
