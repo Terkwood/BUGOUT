@@ -35,7 +35,6 @@ pub fn process(opts: ProcessOpts, pool: &Pool) {
                                             }
                                         }
                                         Judgement::Rejected => {
-                                            //err_count += 1; // TODO
                                             error!("MOVE REJECTED: {:#?}", mm)
                                         }
                                     },
