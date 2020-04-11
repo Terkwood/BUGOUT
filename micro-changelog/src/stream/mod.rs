@@ -152,7 +152,6 @@ fn xadd_game_states_changelog(
     components: &Components,
 ) -> Result<String, WriteErr> {
     let mut conn = components.pool.get().unwrap();
-    info!("Must XADD game state: {:?}", gs);
     Ok(redis::cmd("XADD")
         .arg(stream_name)
         .arg("MAXLEN")
