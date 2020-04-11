@@ -13,6 +13,7 @@ extern crate micro_model_moves;
 extern crate mio_extras;
 extern crate r2d2_redis;
 extern crate rand;
+extern crate redis_streams;
 extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;

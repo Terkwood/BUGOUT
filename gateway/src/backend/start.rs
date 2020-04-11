@@ -19,10 +19,25 @@ pub fn start_all(opts: BackendInitOptions) {
         Receiver<BackendCommands>,
     ) = unbounded();
 
-    thread::spawn(move || redis_io::xadd_commands(redis_commands_out, &redis_io::create_pool()));
+    thread::spawn(move || {
+        redis_io::start(
+            redis_commands_out,
+            &redis_io::xadd::RedisXAddCommands::create(),
+        )
+    });
 
     let bei = opts.backend_events_in.clone();
-    thread::spawn(move || redis_io::stream::process(bei));
+    thread::spawn(move || {
+        redis_io::stream::process(
+            bei,
+            redis_io::stream::StreamOpts {
+                entry_id_repo: redis_io::entry_id_repo::RedisEntryIdRepo::create_boxed(),
+                xreader: Box::new(redis_io::xread::RedisXReader {
+                    pool: redis_io::create_pool(),
+                }),
+            },
+        )
+    });
 
     let soc = opts.session_commands_out;
     thread::spawn(move || {
