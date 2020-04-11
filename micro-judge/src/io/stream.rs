@@ -10,13 +10,10 @@ use crate::repo::game_states::GameStatesRepo;
 
 use log::{error, info, warn};
 
+/// Spins too much.  See https://github.com/Terkwood/BUGOUT/issues/217
 pub fn process(opts: ProcessOpts, pool: &Pool) {
     let eid_repo = opts.entry_id_repo;
 
-    let mut _last_err_count: u64 = 0; // TODO
-    let mut _err_count: u64 = 0; // TODO
-
-    // You know what?  This spins.  TODO
     loop {
         match eid_repo.fetch_all() {
             Ok(entry_ids) => {
@@ -76,12 +73,6 @@ pub fn process(opts: ProcessOpts, pool: &Pool) {
             Err(FetchErr::Deser) => error!("Deserialization err in stream processing"),
             Err(FetchErr::Redis(r)) => error!("Redis error in stream processing {:?}", r),
         }
-
-        // TODO
-        /*if err_count % 100 == 0 && err_count != last_err_count {
-            last_err_count = err_count;
-            error!("Err count: {}", err_count);
-        }*/
     }
 }
 
