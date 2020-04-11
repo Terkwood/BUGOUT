@@ -34,9 +34,7 @@ pub fn process(opts: ProcessOpts, pool: &Pool) {
                                                 error!("Error XADD to move_accepted {:?}", e)
                                             }
                                         }
-                                        Judgement::Rejected => {
-                                            error!("MOVE REJECTED: {:#?}", mm)
-                                        }
+                                        Judgement::Rejected => error!("MOVE REJECTED: {:#?}", mm),
                                     },
                                     Ok(None) => warn!("No game state for game {}", mm.game_id.0),
                                     Err(e) => error!("Deser error ({:?})!", e),
