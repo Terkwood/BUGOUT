@@ -1,29 +1,30 @@
 FROM rust
 
+RUN apt-get update -y 
+RUN apt-get install -y clang
+
+RUN rustup default stable   
+
 WORKDIR /var/
-# git clone to support the librdkafka submodule
+
+# supports the librdkafka submodule
 RUN git clone https://github.com/Terkwood/BUGOUT
 WORKDIR /var/BUGOUT/gateway
 RUN git submodule update --init
 
-RUN apt-get update -y 
-RUN apt-get install -y clang
-
-# optional: useful for wait-run.sh
-RUN curl -O https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
-RUN chmod 755 wait-for-it.sh
-
 RUN git fetch && git pull
 RUN git rev-parse HEAD
-
-RUN rustup default stable   
 
 # make sure we have the most recent of everything,
 # not just what's on the git branch
 COPY . /var/BUGOUT/gateway/.
 
-RUN cargo install --path .
+#TODO
+#RUN cargo install --path .
 
 ENV RUST_LOG info
 
-CMD ["gateway"]
+### TODO
+# CMD ["gateway"]
+### TODO
+CMD ["tail","-f","/dev/null"] 

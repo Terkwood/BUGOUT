@@ -2,7 +2,7 @@ use std::ops::Add;
 use std::str::from_utf8;
 use std::time::{Duration, Instant};
 
-use log::{error, info, trace};
+use log::{error, info};
 use mio_extras::timer::Timeout;
 
 use crossbeam_channel::unbounded;
@@ -370,29 +370,37 @@ impl Handler for WsSession {
                 player: lp,
                 board_size,
             })) => {
-                if let Some(_client_id) = self.client_id {
-                    info!("🗳  {} ATACHBOT", session_code(self));
+                info!("🗳  {} ATACHBOT", session_code(self));
 
-                    let _player = match lp {
-                        Player::BLACK => micro_model_moves::Player::BLACK,
-                        _ => micro_model_moves::Player::WHITE,
-                    };
-                    Ok(
-                        if let Err(e) = self.session_commands_in.send(BackendCommands::AttachBot(
-                            micro_model_bot::gateway::AttachBot {
-                                game_id: todo!(),
-                                player: _player,
-                                board_size,
-                            },
-                        )) {
-                            error!("could not set up bot backend {:?}", e)
-                        } else {
-                            trace!("bot backend configured")
-                        },
-                    )
-                } else {
-                    complain_no_client_id()
+                let player = match lp {
+                    Player::BLACK => micro_model_moves::Player::BLACK,
+                    _ => micro_model_moves::Player::WHITE,
+                };
+                let game_id = uuid::Uuid::new_v4();
+                if let Err(e) = self.router_commands_in.send(RouterCommand::RouteGame {
+                    session_id: self.session_id,
+                    game_id,
+                }) {
+                    error!("failed to send RouteGame command {:?}", e)
                 }
+
+                Ok(
+                    {
+                        let payload = BackendCommands::AttachBot(
+                            micro_model_bot::gateway::AttachBot {
+                                game_id: micro_model_moves::GameId(game_id),
+                                player,
+                                board_size,
+                            }
+                        );
+                        
+                        if let Err(e) = self.session_commands_in.send(payload) {
+                            error!("could not set up bot backend {:?}", e)
+                        }
+
+                        self.current_game = Some(game_id);
+                    }
+                )
             }
             Err(_err) => {
                 error!(
