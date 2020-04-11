@@ -384,23 +384,19 @@ impl Handler for WsSession {
                     error!("failed to send RouteGame command {:?}", e)
                 }
 
-                Ok(
-                    {
-                        let payload = BackendCommands::AttachBot(
-                            micro_model_bot::gateway::AttachBot {
-                                game_id: micro_model_moves::GameId(game_id),
-                                player,
-                                board_size,
-                            }
-                        );
-                        
-                        if let Err(e) = self.session_commands_in.send(payload) {
-                            error!("could not set up bot backend {:?}", e)
-                        }
+                Ok({
+                    let payload = BackendCommands::AttachBot(micro_model_bot::gateway::AttachBot {
+                        game_id: micro_model_moves::GameId(game_id),
+                        player,
+                        board_size,
+                    });
 
-                        self.current_game = Some(game_id);
+                    if let Err(e) = self.session_commands_in.send(payload) {
+                        error!("could not set up bot backend {:?}", e)
                     }
-                )
+
+                    self.current_game = Some(game_id);
+                })
             }
             Err(_err) => {
                 error!(

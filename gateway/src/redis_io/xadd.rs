@@ -5,7 +5,7 @@ use crate::topics::{ATTACH_BOT_TOPIC, MAKE_MOVE_TOPIC};
 use micro_model_bot::gateway::AttachBot;
 
 use crossbeam_channel::{select, Receiver};
-use log::{error,info};
+use log::{error, info};
 use r2d2_redis::redis;
 
 pub trait XAddCommands {

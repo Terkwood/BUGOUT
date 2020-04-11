@@ -4,7 +4,7 @@ use crate::backend_events::BackendEvents;
 use crate::model::{Coord, MoveMadeEvent, Player};
 
 use crossbeam_channel::Sender;
-use log::{info,error};
+use log::{error, info};
 
 pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
     loop {
