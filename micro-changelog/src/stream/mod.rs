@@ -31,7 +31,7 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                                             components,
                                         ) {
                                             error!("could not XADD to game state changelog {:?}", e)
-                                        } 
+                                        }
 
                                         if let Err(e) = xadd_move_made(
                                             &move_acc,

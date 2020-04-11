@@ -3,7 +3,7 @@ use super::redis;
 use super::topics::*;
 use crate::model::*;
 use crate::repo::entry_id::AllEntryIds;
-use log::{error, info};
+use log::error;
 use redis_streams::*;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -31,7 +31,6 @@ pub fn xread_sort(
     let unsorted = deser(ser, &topics);
     let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
     sorted_keys.sort();
-    let skc = sorted_keys.clone();
 
     let mut answer = vec![];
     for sk in sorted_keys {
@@ -40,19 +39,6 @@ pub fn xread_sort(
         }
     }
 
-    if !unsorted.is_empty() || !skc.is_empty() || !answer.is_empty() {
-        info!(
-            "MM_EID {} GS_EID {}",
-            entry_ids.make_moves_eid.to_string(),
-            entry_ids.game_states_eid.to_string()
-        );
-        info!(
-            "Unsorted {} Sorted_keys {} answer {}",
-            unsorted.len(),
-            skc.len(),
-            answer.len()
-        );
-    }
     Ok(answer)
 }
 
