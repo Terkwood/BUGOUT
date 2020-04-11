@@ -8,4 +8,6 @@ COPY . /var/BUGOUT/micro-changelog/.
 
 RUN cargo install --path .
 
+ENV RUST_LOG info
+
 CMD ["micro_changelog"]

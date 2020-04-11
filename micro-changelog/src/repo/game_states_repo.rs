@@ -21,16 +21,16 @@ pub fn fetch(game_id: &GameId, components: &Components) -> Result<Option<GameSta
 }
 
 pub fn write(
-    game_id: GameId,
+    game_id: &GameId,
     game_state: &GameState,
     components: &Components,
-) -> Result<String, WriteErr> { 
+) -> Result<String, WriteErr> {
     let mut conn = components.pool.get().unwrap();
 
-    let key = components.redis_key_provider.game_states(&game_id);
+    let key = components.redis_key_provider.game_states(game_id);
     let done = conn.set(&key, game_state.serialize()?)?;
     // Touch TTL whenever you set the record
     conn.expire(key, EXPIRY_SECS)?;
- 
+
     Ok(done)
 }
