@@ -6,6 +6,11 @@ RUN rustup default stable
 
 COPY . /var/BUGOUT/micro-changelog/.
 
-RUN cargo install --path .
+#TODO
+#RUN cargo install --path .
 
-CMD ["micro_changelog"]
+ENV RUST_LOG info
+
+#TODO
+#CMD ["micro_changelog"]
+CMD [ "tail","-f","/dev/null"]

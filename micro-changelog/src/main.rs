@@ -1,11 +1,13 @@
-const NAME: &'static str = env!("CARGO_PKG_NAME");
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-
 use micro_changelog::stream;
 use micro_changelog::Components;
 use stream::StreamTopics;
 
+use log::info;
+
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 fn main() {
-    println!("🔢 {:<8} {}", NAME, VERSION);
+    env_logger::init();
+    info!("🔢 {}", VERSION);
     stream::process(StreamTopics::default(), &Components::default())
 }
