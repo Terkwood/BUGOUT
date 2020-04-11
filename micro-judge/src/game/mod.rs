@@ -1,6 +1,8 @@
 use crate::model::*;
 pub use capturing::captures_for;
 
+use log::info;
+
 mod capturing;
 
 pub enum Judgement {
@@ -8,6 +10,7 @@ pub enum Judgement {
     Rejected,
 }
 pub fn judge(mm: &MakeMoveCommand, game_state: &GameState) -> Judgement {
+    info!("Judge {:?}", mm);
     if validate_move(mm, game_state) {
         let captured: Vec<Coord> = mm
             .coord

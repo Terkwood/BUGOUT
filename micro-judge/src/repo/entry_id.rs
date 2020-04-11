@@ -4,6 +4,7 @@ use io::r2d2_redis::redis;
 use io::redis::Commands;
 use io::redis_keys::*;
 use io::FetchErr;
+use log::info;
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 
@@ -46,6 +47,12 @@ impl EntryIdRepo {
         entry_id: XReadEntryId,
     ) -> Result<(), redis::RedisError> {
         let mut conn = self.pool.get().unwrap();
+        info!(
+            "Update {} {} {} ",
+            entry_ids_hash_key(&self.namespace),
+            entry_id_type.hash_field(),
+            entry_id.to_string()
+        );
         conn.hset(
             entry_ids_hash_key(&self.namespace),
             entry_id_type.hash_field(),
