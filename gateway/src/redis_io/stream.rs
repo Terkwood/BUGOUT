@@ -63,6 +63,8 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
                                     opts.entry_id_repo.update(EntryIdType::MoveMade, entry_id)
                                 {
                                     error!("err tracking EID move made {:?}", e)
+                                } else {
+                                    info!("📝 Updated move_made eid to {:?}", entry_id)
                                 }
                             }
                         }
