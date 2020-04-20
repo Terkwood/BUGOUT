@@ -56,7 +56,7 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
                                 {
                                     error!("send err move made {:?}", e)
                                 } else {
-                                    info!("sent move made backend event in channel")
+                                    info!("🎠 {}", player.to_string())
                                 }
 
                                 if let Err(e) =

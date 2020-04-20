@@ -296,7 +296,6 @@ pub fn start(
             recv(backend_events_out) -> event =>
                 match event {
                     Ok(BackendEvents::MoveMade(m)) => {
-                        info!("Routing backend event {:?}",m);
                         let u = m.clone();
                         router.set_playerup(u.game_id, u.player.other());
                         router.forward_by_game_id(BackendEvents::MoveMade(m).to_client_event())
