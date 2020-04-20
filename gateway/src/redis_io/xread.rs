@@ -51,7 +51,7 @@ impl XReader for RedisXReader {
             if let Some(data) = unsorted.get(&sk) {
                 answer.push((sk, data.clone()))
             } else {
-                error!("💫 No Good Bad XREADs {:?}", sk)
+                error!("💫 {:?}", sk)
             }
         }
         Ok(answer)
