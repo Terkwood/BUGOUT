@@ -73,17 +73,24 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
     }
 }
 
+const PASS: &str = "PASS";
 impl TryFrom<KataGoResponse> for MoveComputed {
     type Error = crate::err::KataGoParseErr;
     fn try_from(response: KataGoResponse) -> Result<Self, Self::Error> {
         let game_id = response.game_id()?;
         let player = response.player()?;
-        let coord: Option<String> = response.move_infos[0].r#move?;
+        let alpha_num_or_pass: String = response.move_infos[0].r#move;
+
+        let alphanum_coord = if alpha_num_or_pass.to_ascii_uppercase().trim() == PASS {
+            None
+        } else {
+            Some(AlphaNumCoord(alpha_num_or_pass[0], &alpha_num_or_pass[..][1].parse::<u16>.expect("alphanum ")))
+        };
         let req_id = ReqId(Uuid::new_v4());
         Ok(MoveComputed { 
             game_id,
             player,
-            coord,
+            alphanum_coord,
         })
     }
 }
