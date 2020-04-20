@@ -47,9 +47,18 @@ pub fn process(opts: &mut StreamOpts) {
                                     {
                                         error!("Error writing redis stream for game state changelog : {:?}",e)
                                     } else if let Err(e) = opts.xadder.xadd_bot_attached(
-                                        micro_model_bot::gateway::BotAttached { game_id, player },
+                                        micro_model_bot::gateway::BotAttached {
+                                            game_id: game_id.clone(),
+                                            player,
+                                        },
                                     ) {
                                         error!("Error xadd bot attached {:?}", e)
+                                    }
+
+                                    if let Err(e) =
+                                        opts.board_size_repo.set(&game_id, game_state.board.size)
+                                    {
+                                        error!("Failed to write board size {:?}", e)
                                     }
                                 }
                             }
@@ -122,7 +131,7 @@ mod tests {
     use crossbeam_channel::{after, never, select, unbounded, Receiver};
     use micro_model_moves::*;
     use redis_streams::XReadEntryId;
-    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::sync::atomic::{AtomicU16, AtomicU64, Ordering};
     use std::sync::{Arc, Mutex};
     use std::thread;
     use std::time::Duration;
@@ -191,15 +200,14 @@ mod tests {
         }
     }
 
-    struct FakeBoardSizeRepo {
-        pub last: u16,
-    }
+    static FAKE_BOARD_SIZE: AtomicU16 = AtomicU16::new(0);
+    struct FakeBoardSizeRepo;
     impl BoardSizeRepo for FakeBoardSizeRepo {
         fn get(&self, _game_id: &GameId) -> Result<u16, RepoErr> {
-            Ok(self.last)
+            Ok(FAKE_BOARD_SIZE.load(Ordering::SeqCst))
         }
-        fn set(&mut self, _game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
-            self.last = board_size;
+        fn set(&self, _game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
+            FAKE_BOARD_SIZE.store(board_size, Ordering::SeqCst);
             Ok(())
         }
     }
@@ -290,7 +298,7 @@ mod tests {
         });
         let abr = attached_bots_repo.clone();
 
-        let board_size_repo = Arc::new(FakeBoardSizeRepo { last: 0 });
+        let board_size_repo = Arc::new(FakeBoardSizeRepo);
 
         const GAME_ID: GameId = GameId(Uuid::nil());
         let player = Player::WHITE;
