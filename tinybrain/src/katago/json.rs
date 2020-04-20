@@ -57,23 +57,19 @@ pub const PASS: &str = "pass";
 pub struct KataCoordOrPass(pub String);
 
 impl Move {
-    pub fn from(
-        player: Player,
-        maybe_xy: Option<Coord>,
-        board_y_size: u16,
-    ) -> Result<Self, CoordOutOfRange> {
+    pub fn from(player: Player, maybe_xy: Option<Coord>) -> Result<Self, CoordOutOfRange> {
         let p = match player {
             Player::BLACK => "B",
             _ => "W",
         };
-        KataCoordOrPass::from(maybe_xy, board_y_size).map(|c| Move(p.to_string(), c))
+        KataCoordOrPass::from(maybe_xy).map(|c| Move(p.to_string(), c))
     }
 }
 
 const MAX_COORD: u16 = 19;
 
 impl KataCoordOrPass {
-    pub fn from(maybe_xy: Option<Coord>, board_y_size: u16) -> Result<Self, CoordOutOfRange> {
+    pub fn from(maybe_xy: Option<Coord>) -> Result<Self, CoordOutOfRange> {
         if let Some(xy) = maybe_xy {
             if xy.x > MAX_COORD || xy.y > MAX_COORD {
                 Err(CoordOutOfRange)
@@ -91,7 +87,7 @@ impl KataGoQuery {
         let moves_with_errors: Vec<Result<Move, CoordOutOfRange>> = game_state
             .moves
             .iter()
-            .map(|gsm| Move::from(gsm.player, gsm.coord, game_state.board.size))
+            .map(|gsm| Move::from(gsm.player, gsm.coord))
             .collect();
 
         if moves_with_errors.iter().any(|m| m.is_err()) {
@@ -175,8 +171,6 @@ impl Default for Komi {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use micro_model_bot::*;
-    use std::convert::TryFrom;
     use uuid::Uuid;
 
     #[test]

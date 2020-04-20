@@ -2,12 +2,10 @@ use crate::*;
 use crossbeam_channel::{select, Receiver, Sender};
 use json::*;
 use log::{error, info};
-use micro_model_moves::*;
 use std::convert::TryFrom;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, Command, Stdio};
 use std::thread;
-use uuid::Uuid;
 
 pub mod json;
 
@@ -118,6 +116,8 @@ fn launch_child() -> Result<Child, std::io::Error> {
 mod tests {
     use super::*;
     use json::KataGoResponse;
+    use micro_model_moves::*;
+    use uuid::Uuid;
     #[test]
     fn move_computed_from_play() {
         let actual = MoveComputed::try_from(KataGoResponse {
