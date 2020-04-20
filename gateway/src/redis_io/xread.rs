@@ -2,7 +2,7 @@ use super::stream::StreamData;
 use crate::topics::{BOT_ATTACHED_TOPIC, MOVE_MADE_TOPIC};
 use redis_streams::XReadEntryId;
 
-use log::{error, warn};
+use log::{error, warn, info};
 use r2d2_redis::redis;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -50,6 +50,8 @@ impl XReader for RedisXReader {
         for sk in sorted_keys {
             if let Some(data) = unsorted.get(&sk) {
                 answer.push((sk, data.clone()))
+            } else {
+                error!("💫 No Good Bad XREADs {:?}", sk)
             }
         }
         Ok(answer)
@@ -78,7 +80,7 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                                 warn!("Xread: Deser error   bot attached data")
                             }
                         } else {
-                            warn!("Fail XREAD")
+                            error!("Fail XREAD bot attached")
                         }
                     }
                 }
@@ -94,6 +96,7 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                                 bincode::deserialize::<micro_model_moves::MoveMade>(&s.3.clone())
                                     .ok(),
                             ) {
+                                info!("🤓 MoveMade deser OK");
                                 stream_data.insert(seq_no, StreamData::MoveMade(move_made));
                             } else {
                                 error!("fail  move made xread inner")
