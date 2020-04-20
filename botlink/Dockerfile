@@ -6,10 +6,8 @@ RUN rustup default stable
 
 COPY . /var/BUGOUT/botlink/.
 
-#TODO
-#RUN cargo install --path .
+RUN cargo install --path .
 
 ENV RUST_LOG info
 
-#CMD ["botlink"]
-CMD ["tail","-f","/dev/null"]
+CMD ["botlink"]

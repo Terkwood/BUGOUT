@@ -17,10 +17,8 @@ RUN git rev-parse HEAD
 
 COPY . /var/BUGOUT/gateway/.
 
-# TODO
-# RUN cargo install --path .
+RUN cargo install --path .
 
 ENV RUST_LOG info
 
-# CMD ["gateway"]
-CMD [ "tail", "-f", "/dev/null" ]
+CMD ["gateway"]

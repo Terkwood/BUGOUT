@@ -576,8 +576,8 @@ dependencies = [
 
 [[package]]
 name = "micro_model_bot"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/all-the-coord#709bc55533ac878588fce2f204dce7d9e0726ff9"
+version = "0.1.1"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#cb74cece9eef762aa90a34d985669c101105d56a"
 dependencies = [
  "bincode",
  "micro_model_moves",

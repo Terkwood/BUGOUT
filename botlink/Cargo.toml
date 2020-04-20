@@ -8,8 +8,7 @@ edition = "2018"
 
 [dependencies]
 tungstenite = "0.10.1"
-#TODO
-micro_model_bot = { git = "https://github.com/Terkwood/BUGOUT", branch = "fix/all-the-coord" }
+micro_model_bot = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 micro_model_moves =  { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 bincode = "1.2.1"
 redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
