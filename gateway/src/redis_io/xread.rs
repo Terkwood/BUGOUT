@@ -2,7 +2,7 @@ use super::stream::StreamData;
 use crate::topics::{BOT_ATTACHED_TOPIC, MOVE_MADE_TOPIC};
 use redis_streams::XReadEntryId;
 
-use log::{error, warn, info};
+use log::{error, info, warn};
 use r2d2_redis::redis;
 use std::collections::HashMap;
 use std::str::FromStr;

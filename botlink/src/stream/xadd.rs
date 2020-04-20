@@ -67,7 +67,7 @@ impl XAdder for RedisXAdder {
         redis_cmd.query::<String>(&mut *conn)?;
 
         info!(
-            "🏃🏽‍♂️ {} {}",
+            "🏇 {} {}",
             &command.game_id.0.to_string()[0..8],
             command.player.to_string()
         );

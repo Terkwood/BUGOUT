@@ -56,7 +56,7 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
                                 {
                                     error!("send err move made {:?}", e)
                                 } else {
-                                    info!("🎠 {}", player.to_string())
+                                    info!("🎠 {} {:?}", player.to_string(), coord)
                                 }
 
                                 if let Err(e) =
