@@ -159,7 +159,7 @@ impl Handler for WsSession {
                     "{}  {} {:<8} {:?} {}",
                     emoji(&player),
                     session_code(self),
-                    "MOVE",
+                    "MAKEMOVE",
                     player,
                     if let Some(Coord { x, y }) = coord {
                         format!("{{ {:<2}, {:<2} }}", x, y)

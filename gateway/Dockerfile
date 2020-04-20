@@ -15,12 +15,12 @@ RUN git submodule update --init
 RUN git fetch && git pull
 RUN git rev-parse HEAD
 
-# make sure we have the most recent of everything,
-# not just what's on the git branch
 COPY . /var/BUGOUT/gateway/.
 
-RUN cargo install --path .
+# TODO
+# RUN cargo install --path .
 
 ENV RUST_LOG info
 
-CMD ["gateway"]
+# CMD ["gateway"]
+CMD [ "tail", "-f", "/dev/null" ]
