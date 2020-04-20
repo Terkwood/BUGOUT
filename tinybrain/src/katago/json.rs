@@ -57,7 +57,11 @@ pub const PASS: &str = "pass";
 pub struct KataCoordOrPass(pub String);
 
 impl Move {
-    pub fn from(player: Player, maybe_xy: Option<Coord>, board_y_size: u16) -> Result<Self, CoordOutOfRange> {
+    pub fn from(
+        player: Player,
+        maybe_xy: Option<Coord>,
+        board_y_size: u16,
+    ) -> Result<Self, CoordOutOfRange> {
         let p = match player {
             Player::BLACK => "B",
             _ => "W",
@@ -171,7 +175,7 @@ impl Default for Komi {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use micro_model_bot::MoveComputed;
+    use micro_model_bot::*;
     use std::convert::TryFrom;
     use uuid::Uuid;
 
@@ -266,26 +270,6 @@ mod tests {
         };
 
         let actual = KataGoQuery::from(&game_id, &game_state).expect("move(s) out of range");
-        assert_eq!(actual, expected)
-    }
-
-    #[test]
-    fn move_computed_from() {
-        let actual = MoveComputed::try_from(KataGoResponse {
-            id: Id(format!("{}_1_WHITE", Uuid::nil().to_string())),
-            turn_number: 1,
-            move_infos: vec![MoveInfo {
-                r#move: "B3".to_string(),
-                order: 0,
-            }],
-        })
-        .expect("fail");
-        let expected = MoveComputed(MakeMoveCommand {
-            game_id: GameId(Uuid::nil()),
-            coord: Some(Coord { x: 1, y: 2 }),
-            player: Player::WHITE,
-            req_id: actual.0.req_id.clone(),
-        });
         assert_eq!(actual, expected)
     }
 }

@@ -505,7 +505,7 @@ dependencies = [
 [[package]]
 name = "micro_model_bot"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/gateway-bot-log#ebc9c87b87d574295936fe5d0918ed048f7b6544"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/gateway-bot-log#1cef96b973e9a683fa57cf0adf370580b7645d83"
 dependencies = [
  "bincode",
  "micro_model_moves",

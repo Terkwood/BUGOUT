@@ -79,16 +79,20 @@ impl TryFrom<KataGoResponse> for MoveComputed {
     fn try_from(response: KataGoResponse) -> Result<Self, Self::Error> {
         let game_id = response.game_id()?;
         let player = response.player()?;
-        let alpha_num_or_pass: String = response.move_infos[0].r#move;
+        let alpha_num_or_pass = &response.move_infos[0].r#move;
 
         let alphanum_coord = if alpha_num_or_pass.to_ascii_uppercase().trim() == PASS {
             None
         } else {
-            let ans = alpha_num_or_pass.chars().collect();
-            Some(AlphaNumCoord(ans[0], &alpha_num_or_pass[1..1].parse::<u16>.expect("alphanum ")))
+            let ans: Vec<char> = alpha_num_or_pass.chars().collect();
+            let left: char = ans[0];
+            Some(AlphaNumCoord(
+                left,
+                alpha_num_or_pass[1..2].parse::<u16>().expect("alphanum "),
+            ))
         };
-        let req_id = ReqId(Uuid::new_v4());
-        Ok(MoveComputed { 
+
+        Ok(MoveComputed {
             game_id,
             player,
             alphanum_coord,
@@ -115,7 +119,7 @@ mod tests {
     use super::*;
     use json::KataGoResponse;
     #[test]
-    fn move_computed_from() {
+    fn move_computed_from_play() {
         let actual = MoveComputed::try_from(KataGoResponse {
             id: Id(format!("{}_1_WHITE", Uuid::nil().to_string())),
             turn_number: 1,
@@ -125,12 +129,30 @@ mod tests {
             }],
         })
         .expect("fail");
-        let expected = MoveComputed(MakeMoveCommand {
+        let expected = MoveComputed {
             game_id: GameId(Uuid::nil()),
-            coord: Some(Coord { x: 1, y: 2 }),
+            alphanum_coord: Some(AlphaNumCoord('B', 3)),
             player: Player::WHITE,
-            req_id: actual.0.req_id.clone(),
-        });
+        };
+        assert_eq!(actual, expected)
+    }
+
+    #[test]
+    fn move_computed_from_pass() {
+        let actual = MoveComputed::try_from(KataGoResponse {
+            id: Id(format!("{}_1_BLACK", Uuid::nil().to_string())),
+            turn_number: 1,
+            move_infos: vec![MoveInfo {
+                r#move: "pass".to_string(),
+                order: 0,
+            }],
+        })
+        .expect("fail");
+        let expected = MoveComputed {
+            game_id: GameId(Uuid::nil()),
+            alphanum_coord: None,
+            player: Player::BLACK,
+        };
         assert_eq!(actual, expected)
     }
 }
