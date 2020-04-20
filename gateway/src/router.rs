@@ -323,8 +323,6 @@ pub fn start(
                         router.forward_by_session_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
                     },
                     Ok(e) => {
-                        info!("Routing Catch-all {:?}",e);
-
                         router.observe_game(e.game_id());
 
                         router.forward_by_game_id(e.to_client_event())
