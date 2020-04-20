@@ -10,6 +10,7 @@ use log::{error, info};
 use micro_model_bot::gateway::AttachBot;
 use micro_model_bot::ComputeMove;
 use micro_model_moves::GameState;
+use redis_streams::XReadEntryId;
 use std::sync::Arc;
 pub use write_moves::write_moves;
 use xread::StreamData;
@@ -21,46 +22,8 @@ pub fn process(opts: &mut StreamOpts) {
                 Ok(xrr) => {
                     for time_ordered_event in xrr {
                         match time_ordered_event {
-                            (
-                                entry_id,
-                                StreamData::AB(AttachBot {
-                                    game_id,
-                                    player,
-                                    board_size,
-                                }),
-                            ) => {
-                                if let Err(e) = opts.attached_bots_repo.attach(&game_id, player) {
-                                    error!("Error attaching bot {:?}", e)
-                                } else if let Err(e) = opts
-                                    .entry_id_repo
-                                    .update(EntryIdType::AttachBotEvent, entry_id)
-                                {
-                                    error!("Error saving entry ID for attach bot {:?}", e)
-                                } else {
-                                    let mut game_state = GameState::default();
-                                    if let Some(bs) = board_size {
-                                        game_state.board.size = bs.into()
-                                    }
-
-                                    if let Err(e) =
-                                        opts.xadder.xadd_game_state(&game_id, &game_state)
-                                    {
-                                        error!("Error writing redis stream for game state changelog : {:?}",e)
-                                    } else if let Err(e) = opts.xadder.xadd_bot_attached(
-                                        micro_model_bot::gateway::BotAttached {
-                                            game_id: game_id.clone(),
-                                            player,
-                                        },
-                                    ) {
-                                        error!("Error xadd bot attached {:?}", e)
-                                    }
-
-                                    if let Err(e) =
-                                        opts.board_size_repo.set(&game_id, game_state.board.size)
-                                    {
-                                        error!("Failed to write board size {:?}", e)
-                                    }
-                                }
+                            (entry_id, StreamData::AB(ab)) => {
+                                process_attach_bot(ab, entry_id, opts)
                             }
                             (entry_id, StreamData::GS(game_id, game_state)) => {
                                 match opts
@@ -119,6 +82,41 @@ impl StreamOpts {
             xreader: components.xreader,
             xadder: components.xadder,
             compute_move_in: components.compute_move_in,
+        }
+    }
+}
+
+fn process_attach_bot(ab: AttachBot, entry_id: XReadEntryId, opts: &mut StreamOpts) {
+    if let Err(e) = opts.attached_bots_repo.attach(&ab.game_id, ab.player) {
+        error!("Error attaching bot {:?}", e)
+    } else if let Err(e) = opts
+        .entry_id_repo
+        .update(EntryIdType::AttachBotEvent, entry_id)
+    {
+        error!("Error saving entry ID for attach bot {:?}", e)
+    } else {
+        let mut game_state = GameState::default();
+        if let Some(bs) = ab.board_size {
+            game_state.board.size = bs.into()
+        }
+
+        if let Err(e) = opts.xadder.xadd_game_state(&ab.game_id, &game_state) {
+            error!(
+                "Error writing redis stream for game state changelog : {:?}",
+                e
+            )
+        } else if let Err(e) =
+            opts.xadder
+                .xadd_bot_attached(micro_model_bot::gateway::BotAttached {
+                    game_id: ab.game_id.clone(),
+                    player: ab.player,
+                })
+        {
+            error!("Error xadd bot attached {:?}", e)
+        }
+
+        if let Err(e) = opts.board_size_repo.set(&ab.game_id, game_state.board.size) {
+            error!("Failed to write board size {:?}", e)
         }
     }
 }
