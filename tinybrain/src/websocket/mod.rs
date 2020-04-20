@@ -61,6 +61,8 @@ pub async fn start(
                         .await
                     {
                         error!("write {}", e)
+                    } else {
+                        info!("🆗 {:?}", mc)
                     }
                 }
 
