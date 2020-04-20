@@ -38,7 +38,13 @@ pub fn write_moves(
 }
 
 fn convert(a: AlphaNumCoord, board_size: u16) -> Coord {
-    todo!()
+    let r: Vec<char> = (b'A'..=b'Z').map(char::from).collect();
+    let x = r.iter().position(|l| l == &a.0).expect("convert") as u16;
+
+    Coord {
+        x,
+        y: board_size - a.1,
+    }
 }
 
 #[cfg(test)]
