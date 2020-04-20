@@ -1,4 +1,4 @@
-use crate::repo::{AttachedBotsRepo, EntryIdRepo, RedisAttachedBotsRepo, RedisEntryIdRepo};
+use crate::repo::*;
 use crate::stream::xadd::*;
 use crate::stream::xread::{RedisXReader, XReader};
 use crossbeam_channel::{unbounded, Receiver, Sender};
@@ -10,6 +10,7 @@ use std::sync::Arc;
 pub struct Components {
     pub ab_repo: Box<dyn AttachedBotsRepo>,
     pub entry_id_repo: Box<dyn EntryIdRepo>,
+    pub board_size_repo: Arc<dyn BoardSizeRepo>,
     pub xreader: Box<dyn XReader>,
     pub xadder: Arc<dyn XAdder>,
     pub compute_move_in: Sender<ComputeMove>,
@@ -26,14 +27,19 @@ impl Default for Components {
             unbounded();
 
         let pool = Arc::new(redis_conn_pool::create(RedisHostUrl::default()));
+        let key_provider = crate::repo::redis_keys::KeyProvider::default();
         Components {
             ab_repo: Box::new(RedisAttachedBotsRepo {
                 pool: pool.clone(),
-                key_provider: crate::repo::redis_keys::KeyProvider::default(),
+                key_provider: key_provider.clone(),
             }),
             entry_id_repo: Box::new(RedisEntryIdRepo {
                 pool: pool.clone(),
-                key_provider: crate::repo::redis_keys::KeyProvider::default(),
+                key_provider: key_provider.clone(),
+            }),
+            board_size_repo: Arc::new(RedisBoardSizeRepo {
+                pool: pool.clone(),
+                key_provider,
             }),
             xreader: Box::new(RedisXReader { pool: pool.clone() }),
             xadder: Arc::new(RedisXAdder { pool }),

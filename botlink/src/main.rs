@@ -16,8 +16,9 @@ async fn main() {
     let ws_opts = websocket::WSOpts::from(&components);
     let mco = components.move_computed_out.clone();
     let xmm = components.xadder.clone();
+    let bsr = components.board_size_repo.clone();
 
-    thread::spawn(move || stream::write_moves(mco, xmm));
+    thread::spawn(move || stream::write_moves(mco, xmm, bsr));
     thread::spawn(move || stream::process(&mut stream::StreamOpts::from(components)));
     websocket::listen(ws_opts).await;
 }

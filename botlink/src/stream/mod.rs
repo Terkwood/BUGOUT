@@ -4,7 +4,7 @@ pub mod xadd;
 pub mod xread;
 
 use crate::registry::Components;
-use crate::repo::{AttachedBotsRepo, EntryIdRepo, EntryIdType};
+use crate::repo::{AttachedBotsRepo, BoardSizeRepo, EntryIdRepo, EntryIdType};
 use crossbeam_channel::Sender;
 use log::{error, info};
 use micro_model_bot::gateway::AttachBot;
@@ -95,6 +95,7 @@ pub fn process(opts: &mut StreamOpts) {
 pub struct StreamOpts {
     pub attached_bots_repo: Box<dyn AttachedBotsRepo>,
     pub entry_id_repo: Box<dyn EntryIdRepo>,
+    pub board_size_repo: Arc<dyn BoardSizeRepo>,
     pub xreader: Box<dyn xread::XReader>,
     pub xadder: Arc<dyn xadd::XAdder>,
     pub compute_move_in: Sender<ComputeMove>,
@@ -105,6 +106,7 @@ impl StreamOpts {
         StreamOpts {
             attached_bots_repo: components.ab_repo,
             entry_id_repo: components.entry_id_repo,
+            board_size_repo: components.board_size_repo,
             xreader: components.xreader,
             xadder: components.xadder,
             compute_move_in: components.compute_move_in,
@@ -186,6 +188,16 @@ mod tests {
                 .lock()
                 .expect("lock")
                 .push((game_id.clone(), player)))
+        }
+    }
+
+    struct FakeBoardSizeRepo;
+    impl BoardSizeRepo for FakeBoardSizeRepo {
+        fn get(&self, game_id: &GameId) -> Result<u16, RepoErr> {
+            todo!()
+        }
+        fn set(&mut self, game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
+            todo!()
         }
     }
 
@@ -275,6 +287,8 @@ mod tests {
         });
         let abr = attached_bots_repo.clone();
 
+        let board_size_repo = Arc::new(FakeBoardSizeRepo);
+
         const GAME_ID: GameId = GameId(Uuid::nil());
         let player = Player::WHITE;
         let board_size = Some(13);
@@ -292,6 +306,7 @@ mod tests {
                 compute_move_in,
                 entry_id_repo,
                 attached_bots_repo,
+                board_size_repo,
                 xreader,
                 xadder,
             };
