@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 #TODO branch
-micro_model_bot = { git = "https://github.com/Terkwood/BUGOUT", branch = "fix/gateway-bot-log" }
+micro_model_bot = { git = "https://github.com/Terkwood/BUGOUT", branch = "fix/all-the-coord" }
 micro_model_moves = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 serde = "1.0.104"
 serde_json = "1.0.48"
