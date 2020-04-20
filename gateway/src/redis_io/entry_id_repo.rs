@@ -62,10 +62,13 @@ impl EntryIdRepo for RedisEntryIdRepo {
                 .to_string(),
         )
         .unwrap_or(XReadEntryId::default());
-        Ok(AllEntryIds {
+
+        let r = AllEntryIds {
             bot_attached_eid,
             move_made_eid,
-        })
+        };
+        log::info!("🙈 {:?}", r);
+        Ok(r)
     }
 
     fn update(&self, entry_id_type: EntryIdType, entry_id: XReadEntryId) -> Result<(), EidRepoErr> {
