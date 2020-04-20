@@ -14,5 +14,8 @@ pub struct ComputeMove {
 pub struct MoveComputed {
     pub game_id: GameId,
     pub player: Player,
-    pub alphanum_coord: Option<String>,
+    pub alphanum_coord: Option<AlphaNumCoord>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct AlphaNumCoord(char, u16);
