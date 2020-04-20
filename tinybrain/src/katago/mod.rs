@@ -2,12 +2,10 @@ use crate::*;
 use crossbeam_channel::{select, Receiver, Sender};
 use json::*;
 use log::{error, info};
-use micro_model_moves::*;
 use std::convert::TryFrom;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, Command, Stdio};
 use std::thread;
-use uuid::Uuid;
 
 pub mod json;
 
@@ -73,19 +71,30 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
     }
 }
 
+const PASS: &str = "PASS";
 impl TryFrom<KataGoResponse> for MoveComputed {
     type Error = crate::err::KataGoParseErr;
     fn try_from(response: KataGoResponse) -> Result<Self, Self::Error> {
         let game_id = response.game_id()?;
         let player = response.player()?;
-        let coord: Option<Coord> = interpret_coord(&response.move_infos[0].r#move)?;
-        let req_id = ReqId(Uuid::new_v4());
-        Ok(MoveComputed(MakeMoveCommand {
+        let alpha_num_or_pass = &response.move_infos[0].r#move;
+
+        let alphanum_coord = if alpha_num_or_pass.to_ascii_uppercase().trim() == PASS {
+            None
+        } else {
+            let ans: Vec<char> = alpha_num_or_pass.chars().collect();
+            let left: char = ans[0];
+            Some(AlphaNumCoord(
+                left,
+                alpha_num_or_pass[1..2].parse::<u16>().expect("alphanum "),
+            ))
+        };
+
+        Ok(MoveComputed {
             game_id,
             player,
-            coord,
-            req_id,
-        }))
+            alphanum_coord,
+        })
     }
 }
 
@@ -107,8 +116,10 @@ fn launch_child() -> Result<Child, std::io::Error> {
 mod tests {
     use super::*;
     use json::KataGoResponse;
+    use micro_model_moves::*;
+    use uuid::Uuid;
     #[test]
-    fn move_computed_from() {
+    fn move_computed_from_play() {
         let actual = MoveComputed::try_from(KataGoResponse {
             id: Id(format!("{}_1_WHITE", Uuid::nil().to_string())),
             turn_number: 1,
@@ -118,12 +129,30 @@ mod tests {
             }],
         })
         .expect("fail");
-        let expected = MoveComputed(MakeMoveCommand {
+        let expected = MoveComputed {
             game_id: GameId(Uuid::nil()),
-            coord: Some(Coord { x: 1, y: 2 }),
+            alphanum_coord: Some(AlphaNumCoord('B', 3)),
             player: Player::WHITE,
-            req_id: actual.0.req_id.clone(),
-        });
+        };
+        assert_eq!(actual, expected)
+    }
+
+    #[test]
+    fn move_computed_from_pass() {
+        let actual = MoveComputed::try_from(KataGoResponse {
+            id: Id(format!("{}_1_BLACK", Uuid::nil().to_string())),
+            turn_number: 1,
+            move_infos: vec![MoveInfo {
+                r#move: "pass".to_string(),
+                order: 0,
+            }],
+        })
+        .expect("fail");
+        let expected = MoveComputed {
+            game_id: GameId(Uuid::nil()),
+            alphanum_coord: None,
+            player: Player::BLACK,
+        };
         assert_eq!(actual, expected)
     }
 }

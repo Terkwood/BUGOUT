@@ -62,6 +62,7 @@ impl EntryIdRepo for RedisEntryIdRepo {
                 .to_string(),
         )
         .unwrap_or(XReadEntryId::default());
+
         Ok(AllEntryIds {
             bot_attached_eid,
             move_made_eid,

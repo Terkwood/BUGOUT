@@ -1,6 +1,6 @@
 [package]
 name = "botlink"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 

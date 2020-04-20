@@ -50,6 +50,8 @@ impl XReader for RedisXReader {
         for sk in sorted_keys {
             if let Some(data) = unsorted.get(&sk) {
                 answer.push((sk, data.clone()))
+            } else {
+                error!("💫 {:?}", sk)
             }
         }
         Ok(answer)
@@ -78,7 +80,7 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                                 warn!("Xread: Deser error   bot attached data")
                             }
                         } else {
-                            warn!("Fail XREAD")
+                            error!("Fail XREAD bot attached")
                         }
                     }
                 }

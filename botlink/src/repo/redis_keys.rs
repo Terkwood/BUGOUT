@@ -21,4 +21,7 @@ impl KeyProvider {
     pub fn attached_bots(&self) -> String {
         format!("/{}/botlink/attached_bots", (self.0).0)
     }
+    pub fn board_size(&self, game_id: &uuid::Uuid) -> String {
+        format!("/{}/botlink/board_size/{}", (self.0).0, game_id.to_string())
+    }
 }

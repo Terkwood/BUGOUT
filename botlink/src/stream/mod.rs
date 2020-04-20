@@ -4,12 +4,13 @@ pub mod xadd;
 pub mod xread;
 
 use crate::registry::Components;
-use crate::repo::{AttachedBotsRepo, EntryIdRepo, EntryIdType};
+use crate::repo::{AttachedBotsRepo, BoardSizeRepo, EntryIdRepo, EntryIdType};
 use crossbeam_channel::Sender;
 use log::{error, info};
 use micro_model_bot::gateway::AttachBot;
 use micro_model_bot::ComputeMove;
 use micro_model_moves::GameState;
+use redis_streams::XReadEntryId;
 use std::sync::Arc;
 pub use write_moves::write_moves;
 use xread::StreamData;
@@ -21,37 +22,8 @@ pub fn process(opts: &mut StreamOpts) {
                 Ok(xrr) => {
                     for time_ordered_event in xrr {
                         match time_ordered_event {
-                            (
-                                entry_id,
-                                StreamData::AB(AttachBot {
-                                    game_id,
-                                    player,
-                                    board_size,
-                                }),
-                            ) => {
-                                if let Err(e) = opts.attached_bots_repo.attach(&game_id, player) {
-                                    error!("Error attaching bot {:?}", e)
-                                } else if let Err(e) = opts
-                                    .entry_id_repo
-                                    .update(EntryIdType::AttachBotEvent, entry_id)
-                                {
-                                    error!("Error saving entry ID for attach bot {:?}", e)
-                                } else {
-                                    let mut game_state = GameState::default();
-                                    if let Some(bs) = board_size {
-                                        game_state.board.size = bs.into()
-                                    }
-
-                                    if let Err(e) =
-                                        opts.xadder.xadd_game_state(&game_id, &game_state)
-                                    {
-                                        error!("Error writing redis stream for game state changelog : {:?}",e)
-                                    } else if let Err(e) = opts.xadder.xadd_bot_attached(
-                                        micro_model_bot::gateway::BotAttached { game_id, player },
-                                    ) {
-                                        error!("Error xadd bot attached {:?}", e)
-                                    }
-                                }
+                            (entry_id, StreamData::AB(ab)) => {
+                                process_attach_bot(ab, entry_id, opts)
                             }
                             (entry_id, StreamData::GS(game_id, game_state)) => {
                                 match opts
@@ -95,6 +67,7 @@ pub fn process(opts: &mut StreamOpts) {
 pub struct StreamOpts {
     pub attached_bots_repo: Box<dyn AttachedBotsRepo>,
     pub entry_id_repo: Box<dyn EntryIdRepo>,
+    pub board_size_repo: Arc<dyn BoardSizeRepo>,
     pub xreader: Box<dyn xread::XReader>,
     pub xadder: Arc<dyn xadd::XAdder>,
     pub compute_move_in: Sender<ComputeMove>,
@@ -105,9 +78,45 @@ impl StreamOpts {
         StreamOpts {
             attached_bots_repo: components.ab_repo,
             entry_id_repo: components.entry_id_repo,
+            board_size_repo: components.board_size_repo,
             xreader: components.xreader,
             xadder: components.xadder,
             compute_move_in: components.compute_move_in,
+        }
+    }
+}
+
+fn process_attach_bot(ab: AttachBot, entry_id: XReadEntryId, opts: &mut StreamOpts) {
+    if let Err(e) = opts.attached_bots_repo.attach(&ab.game_id, ab.player) {
+        error!("Error attaching bot {:?}", e)
+    } else if let Err(e) = opts
+        .entry_id_repo
+        .update(EntryIdType::AttachBotEvent, entry_id)
+    {
+        error!("Error saving entry ID for attach bot {:?}", e)
+    } else {
+        let mut game_state = GameState::default();
+        if let Some(bs) = ab.board_size {
+            game_state.board.size = bs.into()
+        }
+
+        if let Err(e) = opts.xadder.xadd_game_state(&ab.game_id, &game_state) {
+            error!(
+                "Error writing redis stream for game state changelog : {:?}",
+                e
+            )
+        } else if let Err(e) =
+            opts.xadder
+                .xadd_bot_attached(micro_model_bot::gateway::BotAttached {
+                    game_id: ab.game_id.clone(),
+                    player: ab.player,
+                })
+        {
+            error!("Error xadd bot attached {:?}", e)
+        }
+
+        if let Err(e) = opts.board_size_repo.set(&ab.game_id, game_state.board.size) {
+            error!("Failed to write board size {:?}", e)
         }
     }
 }
@@ -120,7 +129,7 @@ mod tests {
     use crossbeam_channel::{after, never, select, unbounded, Receiver};
     use micro_model_moves::*;
     use redis_streams::XReadEntryId;
-    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::sync::atomic::{AtomicU16, AtomicU64, Ordering};
     use std::sync::{Arc, Mutex};
     use std::thread;
     use std::time::Duration;
@@ -189,6 +198,18 @@ mod tests {
         }
     }
 
+    static FAKE_BOARD_SIZE: AtomicU16 = AtomicU16::new(0);
+    struct FakeBoardSizeRepo;
+    impl BoardSizeRepo for FakeBoardSizeRepo {
+        fn get(&self, _game_id: &GameId) -> Result<u16, RepoErr> {
+            Ok(FAKE_BOARD_SIZE.load(Ordering::SeqCst))
+        }
+        fn set(&self, _game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
+            FAKE_BOARD_SIZE.store(board_size, Ordering::SeqCst);
+            Ok(())
+        }
+    }
+
     struct FakeXAdder {
         added_in: Sender<(GameId, GameState)>,
     }
@@ -209,7 +230,7 @@ mod tests {
         ) -> Result<(), crate::stream::xadd::XAddError> {
             Ok(())
         }
-        fn xadd_make_move_command(&self, _command: MakeMoveCommand) -> Result<(), XAddError> {
+        fn xadd_make_move_command(&self, _command: &MakeMoveCommand) -> Result<(), XAddError> {
             Ok(info!("Doing nothing for xadd make move"))
         }
     }
@@ -275,6 +296,8 @@ mod tests {
         });
         let abr = attached_bots_repo.clone();
 
+        let board_size_repo = Arc::new(FakeBoardSizeRepo);
+
         const GAME_ID: GameId = GameId(Uuid::nil());
         let player = Player::WHITE;
         let board_size = Some(13);
@@ -292,6 +315,7 @@ mod tests {
                 compute_move_in,
                 entry_id_repo,
                 attached_bots_repo,
+                board_size_repo,
                 xreader,
                 xadder,
             };

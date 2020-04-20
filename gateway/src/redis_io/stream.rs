@@ -4,7 +4,7 @@ use crate::backend_events::BackendEvents;
 use crate::model::{Coord, MoveMadeEvent, Player};
 
 use crossbeam_channel::Sender;
-use log::{error, info};
+use log::error;
 
 pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
     loop {
@@ -55,8 +55,6 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
                                     }))
                                 {
                                     error!("send err move made {:?}", e)
-                                } else {
-                                    info!("sent move made backend event in channel")
                                 }
 
                                 if let Err(e) =

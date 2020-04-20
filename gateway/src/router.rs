@@ -296,7 +296,6 @@ pub fn start(
             recv(backend_events_out) -> event =>
                 match event {
                     Ok(BackendEvents::MoveMade(m)) => {
-                        info!("Routing backend event {:?}",m);
                         let u = m.clone();
                         router.set_playerup(u.game_id, u.player.other());
                         router.forward_by_game_id(BackendEvents::MoveMade(m).to_client_event())
@@ -324,8 +323,6 @@ pub fn start(
                         router.forward_by_session_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
                     },
                     Ok(e) => {
-                        info!("Routing Catch-all {:?}",e);
-
                         router.observe_game(e.game_id());
 
                         router.forward_by_game_id(e.to_client_event())
