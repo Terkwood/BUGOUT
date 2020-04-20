@@ -3,16 +3,17 @@ use super::redis;
 use super::topics::*;
 use crate::model::*;
 use crate::repo::entry_id::AllEntryIds;
+use log::error;
 use redis_streams::*;
 use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
 const BLOCK_MSEC: u32 = 5000;
-pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, HashMap<String, String>>>>>;
+pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, HashMap<String, Vec<u8>>>>>>;
 
 pub fn xread_sort(
-    entry_ids: AllEntryIds,
+    entry_ids: &AllEntryIds,
     topics: &StreamTopics,
     pool: &Pool,
 ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
@@ -37,6 +38,7 @@ pub fn xread_sort(
             answer.push((sk, data.clone()))
         }
     }
+
     Ok(answer)
 }
 
@@ -60,7 +62,7 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                         ) {
                             stream_data.insert(seq_no, StreamData::MM(m));
                         } else {
-                            println!("Deser error around make move cmd")
+                            error!("Deser error around make move cmd")
                         }
                     }
                 }
@@ -69,13 +71,14 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                     for (k, v) in with_timestamps {
                         if let (Ok(seq_no), Some(game_id), Some(game_state)) = (
                             XReadEntryId::from_str(k),
-                            v.get("game_id").and_then(|g| Uuid::from_str(g).ok()),
-                            v.get("data")
-                                .and_then(|gs| GameState::from(gs.as_bytes()).ok()),
+                            v.get("game_id").and_then(|g| {
+                                Uuid::from_str(std::str::from_utf8(g).expect("utf8")).ok()
+                            }),
+                            v.get("data").and_then(|gs| GameState::from(gs).ok()),
                         ) {
                             stream_data.insert(seq_no, StreamData::GS(GameId(game_id), game_state));
                         } else {
-                            println!("Deser error around make move cmd")
+                            error!("Deser error around make move cmd")
                         }
                     }
                 }
@@ -89,12 +92,16 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
 }
 
 fn deser_make_move_command(
-    xread_result: HashMap<String, String>,
+    xread_result: HashMap<String, Vec<u8>>,
 ) -> Result<MakeMoveCommand, uuid::Error> {
-    let mx: Option<u16> = xread_result
+    let values_as_strings: HashMap<String, String> = xread_result
+        .iter()
+        .map(|(k, v)| (k.clone(), String::from_utf8(v.clone()).expect("bytes")))
+        .collect();
+    let mx: Option<u16> = values_as_strings
         .get("coord_x")
         .and_then(|s| s.parse::<u16>().ok());
-    let my: Option<u16> = xread_result
+    let my: Option<u16> = values_as_strings
         .get("coord_y")
         .and_then(|s| s.parse::<u16>().ok());
     let coord = match (mx, my) {
@@ -102,9 +109,9 @@ fn deser_make_move_command(
         _ => None,
     };
     Ok(MakeMoveCommand {
-        game_id: GameId(Uuid::from_str(&xread_result["game_id"])?),
-        req_id: ReqId(Uuid::from_str(&xread_result["req_id"])?),
-        player: Player::from_str(&xread_result["player"]),
+        game_id: GameId(Uuid::from_str(&values_as_strings["game_id"])?),
+        req_id: ReqId(Uuid::from_str(&values_as_strings["req_id"])?),
+        player: Player::from_str(&values_as_strings["player"]),
         coord,
     })
 }

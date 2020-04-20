@@ -35,7 +35,7 @@ pub struct KataGoResponse {
 pub struct Id(pub String);
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd)]
-pub struct Move(pub String, pub AlphaNumOrPass);
+pub struct Move(pub String, pub KataCoordOrPass);
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd)]
 pub struct Rules(pub String);
@@ -50,10 +50,11 @@ pub struct MoveInfo {
 }
 
 pub const PASS: &str = "pass";
-/// Alphanumeric coordinate as expected by KataGo, e.g. `Q16` or `pass`.
-/// This isn't strictly necessary, as KataGo supports numeric coords.
+
+/// Represent coords as (0,13) or PASS.
+/// See https://github.com/lightvector/KataGo/blob/master/docs/Analysis_Engine.md#queries
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd)]
-pub struct AlphaNumOrPass(pub String);
+pub struct KataCoordOrPass(pub String);
 
 impl Move {
     pub fn from(player: Player, maybe_xy: Option<Coord>) -> Result<Self, CoordOutOfRange> {
@@ -61,60 +62,22 @@ impl Move {
             Player::BLACK => "B",
             _ => "W",
         };
-        AlphaNumOrPass::from(maybe_xy).map(|c| Move(p.to_string(), c))
+        KataCoordOrPass::from(maybe_xy).map(|c| Move(p.to_string(), c))
     }
 }
 
-impl AlphaNumOrPass {
+const MAX_COORD: u16 = 19;
+
+impl KataCoordOrPass {
     pub fn from(maybe_xy: Option<Coord>) -> Result<Self, CoordOutOfRange> {
         if let Some(xy) = maybe_xy {
-            let alphabet = (b'A'..=b'Z')
-                .filter_map(|c| {
-                    let c = c as char;
-                    if c.is_alphabetic() {
-                        Some(c)
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<_>>();
-            let i = xy.x as usize;
-            if i < alphabet.len() {
-                Ok(AlphaNumOrPass(format!("{}{}", alphabet[i], xy.y + 1)))
-            } else {
+            if xy.x > MAX_COORD || xy.y > MAX_COORD {
                 Err(CoordOutOfRange)
+            } else {
+                Ok(KataCoordOrPass(format!("({},{})", xy.x, xy.y)))
             }
         } else {
-            Ok(AlphaNumOrPass(PASS.to_string()))
-        }
-    }
-}
-
-pub fn interpret_coord(move_info_move: &str) -> Result<Option<Coord>, CoordOutOfRange> {
-    let t = move_info_move.trim();
-    if t.to_ascii_lowercase() == PASS {
-        Ok(None)
-    } else {
-        Ok(Some(from_alphanum(&t.to_ascii_uppercase())?))
-    }
-}
-
-fn from_alphanum(a: &str) -> Result<Coord, CoordOutOfRange> {
-    if a.len() < 2 {
-        Err(CoordOutOfRange)
-    } else {
-        let letter: char = a.chars().collect::<Vec<char>>()[0];
-        let number = &a[1..];
-        let y_plus_one = number.to_string().parse::<u16>()?;
-        let r: Vec<char> = (b'A'..=b'Z').map(char::from).collect();
-        let maybe_x = r.iter().position(|l| l == &letter);
-        if let Some(x) = maybe_x {
-            Ok(Coord {
-                x: x as u16,
-                y: y_plus_one - 1,
-            })
-        } else {
-            Err(CoordOutOfRange)
+            Ok(KataCoordOrPass(PASS.to_string()))
         }
     }
 }
@@ -160,7 +123,7 @@ impl KataGoQuery {
 
 impl KataGoResponse {
     pub fn game_id(&self) -> Result<GameId, KataGoParseErr> {
-        let parts: Vec<&str> = self.id.0.split("_").collect();
+        let parts: Vec<&str> = self.id.0.split('_').collect();
         if parts.is_empty() {
             Err(KataGoParseErr::WrongFormat)
         } else {
@@ -169,7 +132,7 @@ impl KataGoResponse {
     }
 
     pub fn player(&self) -> Result<Player, KataGoParseErr> {
-        let parts: Vec<&str> = self.id.0.split("_").collect();
+        let parts: Vec<&str> = self.id.0.split('_').collect();
         if parts.len() < 2 {
             Err(KataGoParseErr::WrongFormat)
         } else {
@@ -208,9 +171,8 @@ impl Default for Komi {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use micro_model_bot::MoveComputed;
-    use std::convert::TryFrom;
     use uuid::Uuid;
+
     #[test]
     fn query_from_game_state() {
         let game_id = GameId(Uuid::nil());
@@ -249,9 +211,9 @@ mod tests {
         let expected = KataGoQuery {
             id: Id("00000000-0000-0000-0000-000000000000_3_WHITE".to_string()),
             moves: vec![
-                Move("B".to_string(), AlphaNumOrPass("A1".to_string())),
-                Move("W".to_string(), AlphaNumOrPass("B2".to_string())),
-                Move("B".to_string(), AlphaNumOrPass("pass".to_string())),
+                Move("B".to_string(), KataCoordOrPass("(0,0)".to_string())),
+                Move("W".to_string(), KataCoordOrPass("(1,1)".to_string())),
+                Move("B".to_string(), KataCoordOrPass("pass".to_string())),
             ],
             ..KataGoQuery::default()
         };
@@ -302,49 +264,6 @@ mod tests {
         };
 
         let actual = KataGoQuery::from(&game_id, &game_state).expect("move(s) out of range");
-        assert_eq!(actual, expected)
-    }
-
-    #[test]
-    fn test_interpret_coord() {
-        assert_eq!(
-            interpret_coord("B3").expect("parse"),
-            Some(Coord { x: 1, y: 2 })
-        );
-        assert_eq!(
-            interpret_coord("c4").expect("parse"),
-            Some(Coord { x: 2, y: 3 })
-        );
-        assert_eq!(
-            interpret_coord(" D5 ").expect("parse"),
-            Some(Coord { x: 3, y: 4 })
-        )
-    }
-
-    #[test]
-    fn test_interpret_pass() {
-        assert_eq!(interpret_coord("pass").expect("parse"), None);
-        assert_eq!(interpret_coord("PASS").expect("parse"), None);
-        assert_eq!(interpret_coord(" PaSs   ").expect("parse"), None)
-    }
-
-    #[test]
-    fn move_computed_from() {
-        let actual = MoveComputed::try_from(KataGoResponse {
-            id: Id(format!("{}_1_WHITE", Uuid::nil().to_string())),
-            turn_number: 1,
-            move_infos: vec![MoveInfo {
-                r#move: "B3".to_string(),
-                order: 0,
-            }],
-        })
-        .expect("fail");
-        let expected = MoveComputed(MakeMoveCommand {
-            game_id: GameId(Uuid::nil()),
-            coord: Some(Coord { x: 1, y: 2 }),
-            player: Player::WHITE,
-            req_id: actual.0.req_id.clone(),
-        });
         assert_eq!(actual, expected)
     }
 }

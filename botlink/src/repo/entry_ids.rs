@@ -62,7 +62,7 @@ pub enum EntryIdType {
 const GAME_STATES_EID: &str = "game_states_eid";
 const ATTACH_BOT_EID: &str = "attach_bot_eid";
 impl EntryIdType {
-    pub fn hash_field(&self) -> String {
+    pub fn hash_field(self) -> String {
         match self {
             EntryIdType::GameStateChangelog => GAME_STATES_EID.to_string(),
             EntryIdType::AttachBotEvent => ATTACH_BOT_EID.to_string(),

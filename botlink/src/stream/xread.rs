@@ -50,7 +50,7 @@ impl XReader for RedisXReader {
             .query::<XReadResult>(&mut *conn)?;
         let unsorted = deser(xrr);
         let sorted_keys: Vec<XReadEntryId> = {
-            let mut ks: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
+            let mut ks: Vec<XReadEntryId> = unsorted.keys().copied().collect();
             ks.sort();
             ks
         };

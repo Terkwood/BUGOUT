@@ -1,6 +1,7 @@
 use super::StreamTopics;
 use crate::redis;
 use crate::repo::entry_id_repo::AllEntryIds;
+use log::{error, warn};
 use micro_model_moves::{GameId, GameState, MoveMade};
 use redis_conn_pool::Pool;
 use redis_streams::XReadEntryId;
@@ -67,7 +68,7 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                         ) {
                             stream_data.insert(seq_no, StreamData::MA(move_accepted));
                         } else {
-                            println!("Xread: Deser err in move accepted ")
+                            error!("Xread: Deser err in move accepted ")
                         }
                     }
                 }
@@ -81,12 +82,12 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                         ) {
                             stream_data.insert(seq_no, StreamData::GS(GameId(game_id), game_state));
                         } else {
-                            println!("Xread: Deser error around game states data")
+                            error!("Xread: Deser error around game states data")
                         }
                     }
                 }
             } else {
-                println!("Ignoring topic {}", &xread_topic[..])
+                warn!("Ignoring topic {}", &xread_topic[..])
             }
         }
     }

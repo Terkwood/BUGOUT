@@ -16,6 +16,7 @@ pub struct EntryIdRepo {
     pub namespace: RedisKeyNamespace,
     pub pool: Pool,
 }
+
 impl EntryIdRepo {
     pub fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
         let mut conn = self.pool.get().unwrap();
@@ -46,6 +47,7 @@ impl EntryIdRepo {
         entry_id: XReadEntryId,
     ) -> Result<(), redis::RedisError> {
         let mut conn = self.pool.get().unwrap();
+
         conn.hset(
             entry_ids_hash_key(&self.namespace),
             entry_id_type.hash_field(),

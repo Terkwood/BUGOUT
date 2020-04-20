@@ -1,4 +1,5 @@
 use crate::redis_io::RedisPool;
+use log::info;
 use r2d2_redis::redis;
 use redis::Commands;
 use serde_derive::{Deserialize, Serialize};
@@ -31,7 +32,7 @@ impl RedisWakeup {
         );
 
         p.map(|_| {
-            println!(
+            info!(
                 "☀️  {} {:<8} WAKEUP",
                 short_uuid(client_id),
                 EMPTY_SHORT_UUID

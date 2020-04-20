@@ -14,17 +14,22 @@ pub struct GameStatesRepo {
 }
 
 impl GameStatesRepo {
-    pub fn fetch(&self, game_id: &GameId) -> Result<GameState, FetchErr> {
+    pub fn fetch(&self, game_id: &GameId) -> Result<Option<GameState>, FetchErr> {
         let mut conn = self.pool.get().unwrap();
         let key = game_states_key(&self.namespace, &game_id);
-        let bin_data: Vec<u8> = conn.get(&key)?;
-        let r = GameState::from(&bin_data)?;
-        // Touch TTL whenever you get the record
-        conn.expire(key, EXPIRY_SECS)?;
+        let bin_data: Option<Vec<u8>> = conn.get(&key)?;
+        let r = if let Some(b) = bin_data {
+            // Touch TTL whenever you get the record
+            conn.expire(key, EXPIRY_SECS)?;
+            Some(GameState::from(&b)?)
+        } else {
+            None
+        };
+
         Ok(r)
     }
 
-    pub fn write(&self, game_id: GameId, game_state: GameState) -> Result<String, WriteErr> {
+    pub fn write(&self, game_id: &GameId, game_state: &GameState) -> Result<String, WriteErr> {
         let mut conn = self.pool.get().unwrap();
 
         let key = game_states_key(&self.namespace, &game_id);

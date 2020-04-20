@@ -2,7 +2,7 @@ use std::ops::Add;
 use std::str::from_utf8;
 use std::time::{Duration, Instant};
 
-use log::{error, info, trace};
+use log::{error, info};
 use mio_extras::timer::Timeout;
 
 use crossbeam_channel::unbounded;
@@ -159,7 +159,7 @@ impl Handler for WsSession {
                     "{}  {} {:<8} {:?} {}",
                     emoji(&player),
                     session_code(self),
-                    "MOVE",
+                    "MAKEMOVE",
                     player,
                     if let Some(Coord { x, y }) = coord {
                         format!("{{ {:<2}, {:<2} }}", x, y)
@@ -370,29 +370,33 @@ impl Handler for WsSession {
                 player: lp,
                 board_size,
             })) => {
-                if let Some(_client_id) = self.client_id {
-                    info!("🗳  {} ATACHBOT", session_code(self));
+                info!("🗳  {} ATACHBOT", session_code(self));
 
-                    let _player = match lp {
-                        Player::BLACK => micro_model_moves::Player::BLACK,
-                        _ => micro_model_moves::Player::WHITE,
-                    };
-                    Ok(
-                        if let Err(e) = self.session_commands_in.send(BackendCommands::AttachBot(
-                            micro_model_bot::gateway::AttachBot {
-                                game_id: todo!(),
-                                player: _player,
-                                board_size,
-                            },
-                        )) {
-                            error!("could not set up bot backend {:?}", e)
-                        } else {
-                            trace!("bot backend configured")
-                        },
-                    )
-                } else {
-                    complain_no_client_id()
+                let player = match lp {
+                    Player::BLACK => micro_model_moves::Player::BLACK,
+                    _ => micro_model_moves::Player::WHITE,
+                };
+                let game_id = uuid::Uuid::new_v4();
+                if let Err(e) = self.router_commands_in.send(RouterCommand::RouteGame {
+                    session_id: self.session_id,
+                    game_id,
+                }) {
+                    error!("failed to send RouteGame command {:?}", e)
                 }
+
+                Ok({
+                    let payload = BackendCommands::AttachBot(micro_model_bot::gateway::AttachBot {
+                        game_id: micro_model_moves::GameId(game_id),
+                        player,
+                        board_size,
+                    });
+
+                    if let Err(e) = self.session_commands_in.send(payload) {
+                        error!("could not set up bot backend {:?}", e)
+                    }
+
+                    self.current_game = Some(game_id);
+                })
             }
             Err(_err) => {
                 error!(
@@ -473,13 +477,13 @@ impl Handler for WsSession {
             CHANNEL_RECV => {
                 if let Some(eo) = &self.events_out {
                     while let Ok(event) = eo.try_recv() {
-                        match event {
+                        match &event {
                             ClientEvents::GameReady(GameReadyClientEvent {
                                 game_id,
                                 event_id: _,
                                 board_size: _,
                             }) => {
-                                self.current_game = Some(game_id);
+                                self.current_game = Some(game_id.clone());
                                 info!("🎳 {} {:<8}", session_code(self), "GAMEREDY");
                             }
                             ClientEvents::WaitForOpponent(WaitForOpponentClientEvent {
@@ -488,24 +492,31 @@ impl Handler for WsSession {
                                 visibility: _,
                                 link: _,
                             }) => {
-                                self.current_game = Some(game_id);
+                                self.current_game = Some(game_id.clone());
                                 info!("⏳ {} {:<8}", session_code(self), "WAITOPPO");
                             }
                             ClientEvents::YourColor(YourColorEvent {
                                 game_id: _,
                                 your_color,
-                            }) if your_color == Player::BLACK => {
+                            }) if your_color == &Player::BLACK => {
                                 info!("⚫️ {} {:<8} Black", session_code(self), "YOURCOLR")
                             }
                             ClientEvents::YourColor(YourColorEvent {
                                 game_id: _,
                                 your_color,
-                            }) if your_color == Player::WHITE => {
+                            }) if your_color == &Player::WHITE => {
                                 info!("⚪️ {} {:<8} White", session_code(self), "YOURCOLR")
                             }
                             ClientEvents::OpponentQuit => {
                                 self.current_game = None;
                             }
+                            ClientEvents::MoveMade(m) => info!(
+                                "🆗 {} {:<8} {} {:?}",
+                                session_code(self),
+                                "MOVEMADE",
+                                m.player,
+                                m.coord
+                            ),
                             _ => (),
                         }
 

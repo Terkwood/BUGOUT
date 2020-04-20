@@ -15,6 +15,9 @@ pub const COLORS_CHOSEN_TOPIC: &str = "bugout-colors-chosen-ev";
 pub const CLIENT_HEARTBEAT_TOPIC: &str = "bugout-client-heartbeat-ev";
 pub const SESSION_DISCONNECTED_TOPIC: &str = "bugout-session-disconnected-ev";
 
+pub const ATTACH_BOT_TOPIC: &str = "bugout-attach-bot-cmd";
+pub const BOT_ATTACHED_TOPIC: &str = "bugout-bot-attached-ev";
+
 pub const SHUTDOWN_TOPIC: &str = "bugout-shutdown-ev";
 
 pub const CONSUME_TOPICS: &[&str] = &[

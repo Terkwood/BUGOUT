@@ -8,8 +8,11 @@ use micro_model_moves::*;
 use redis_conn_pool::redis;
 pub use topics::StreamTopics;
 use xread::*;
+
+use log::{error, info};
+
 pub fn process(topics: StreamTopics, components: &crate::Components) {
-    println!("Processing {:#?}", topics);
+    info!("Processing {:#?}", topics);
     loop {
         match entry_id_repo::fetch_all(components) {
             Ok(entry_ids) => match xread_sorted(entry_ids, &topics, &components.pool) {
@@ -18,58 +21,59 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                         match time_ordered_event {
                             (entry_id, StreamData::MA(move_acc)) => {
                                 match update_game_state(&move_acc, &components) {
-                                    Err(e) => println!("err updating game state {:?}", e),
+                                    Err(e) => error!("err updating game state {:?}", e),
                                     Ok(gs) => {
+                                        // These next two ops are concurrent in the kafka impl
+                                        if let Err(e) = xadd_game_states_changelog(
+                                            &move_acc.game_id,
+                                            gs,
+                                            &topics.game_states_changelog,
+                                            components,
+                                        ) {
+                                            error!("could not XADD to game state changelog {:?}", e)
+                                        }
+
                                         if let Err(e) = xadd_move_made(
                                             &move_acc,
                                             &topics.move_made_ev,
                                             &components,
-                                        )
-                                        .and_then(|_| {
-                                            xadd_game_states_changelog(
-                                                &move_acc.game_id,
-                                                gs,
-                                                &topics.game_states_changelog,
-                                                components,
-                                            )
-                                        }) {
-                                            println!("err in XADDs {:?}", e)
-                                        } else {
-                                            if let Err(e) = entry_id_repo::update(
-                                                EntryIdType::MoveAcceptedEvent,
-                                                entry_id,
-                                                &components,
-                                            ) {
-                                                println!(
-                                                    "err saving entry id for move accepted {:?}",
-                                                    e
-                                                )
-                                            }
+                                        ) {
+                                            error!("err in XADD move made {:?}", e)
+                                        }
+
+                                        if let Err(e) = entry_id_repo::update(
+                                            EntryIdType::MoveAcceptedEvent,
+                                            entry_id,
+                                            &components,
+                                        ) {
+                                            error!("err saving entry id for move accepted {:?}", e)
                                         }
                                     }
                                 }
                             }
                             (entry_id, StreamData::GS(game_id, gs)) => {
-                                if let Err(e) = game_states_repo::write(game_id, &gs, &components) {
-                                    println!("Error saving game state {:#?}", e)
+                                if let Err(e) = game_states_repo::write(&game_id, &gs, &components)
+                                {
+                                    error!("Error saving game state {:#?}", e)
                                 } else {
-                                    println!("loop game STATE");
-                                    if let Err(e) = entry_id_repo::update(
-                                        EntryIdType::GameStateChangelog,
-                                        entry_id,
-                                        &components,
-                                    ) {
-                                        println!("Error saving entry ID for game state {:#?}", e)
-                                    }
+                                    info!("wrote game state: {:?} {:?}", game_id, gs);
+                                }
+
+                                if let Err(e) = entry_id_repo::update(
+                                    EntryIdType::GameStateChangelog,
+                                    entry_id,
+                                    &components,
+                                ) {
+                                    error!("Error saving entry ID for game state {:#?}", e)
                                 }
                             }
                         }
                     }
                 }
-                Err(e) => println!("Redis err in xread: {:#?}", e),
+                Err(e) => error!("Redis err in xread: {:#?}", e),
             },
-            Err(FetchErr::Deser) => println!("Unable to deserialize entry IDs"),
-            Err(FetchErr::Redis(r)) => println!("Redis err {:#?}", r),
+            Err(FetchErr::Deser) => error!("Unable to deserialize entry IDs"),
+            Err(FetchErr::Redis(r)) => error!("Redis err {:#?}", r),
         }
     }
 }
@@ -102,7 +106,7 @@ fn update_game_state(
         og.moves.push(move_acc.clone());
         og
     })?;
-    game_states_repo::write(game_id, &new_game_state, &components)?;
+    game_states_repo::write(&game_id, &new_game_state, &components)?;
     Ok(new_game_state)
 }
 

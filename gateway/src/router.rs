@@ -1,11 +1,10 @@
+use crossbeam::{Receiver, Sender};
+use crossbeam_channel::select;
+use log::{error, info};
 use std::collections::HashMap;
 use std::ops::Add;
 use std::thread;
 use std::time::{Duration, Instant};
-
-use crossbeam::{Receiver, Sender};
-use crossbeam_channel::select;
-
 use uuid::Uuid;
 
 use crate::backend_events::BackendEvents;
@@ -38,7 +37,7 @@ impl Router {
     pub fn forward_by_session_id(&self, session_id: SessionId, ev: ClientEvents) {
         if let Some(events_in) = self.sessions.get(&session_id) {
             if let Err(e) = events_in.send(ev.clone()) {
-                println!(
+                error!(
                     "😗 {} {:<8} {:<8} forwarding event by session ID {}",
                     "", "", "ERROR", e
                 )
@@ -49,7 +48,7 @@ impl Router {
     pub fn forward_by_client_id(&self, client_id: ClientId, ev: ClientEvents) {
         if let Some(session_sender) = self.client_sessions.get(&client_id) {
             if let Err(e) = session_sender.events_in.send(ev.clone()) {
-                println!(
+                error!(
                     "😗 {} {:<8} {:<8} forwarding event by client ID {}",
                     short_uuid(client_id),
                     "",
@@ -58,7 +57,7 @@ impl Router {
                 )
             }
         } else {
-            println!("Could not forward to client ID, perhaps it was already cleaned up ?")
+            error!("Could not forward to client ID, perhaps it was already cleaned up ?")
         }
     }
 
@@ -72,7 +71,7 @@ impl Router {
             {
                 for s in sessions {
                     if let Err(err) = s.events_in.send(ev.clone()) {
-                        println!(
+                        error!(
                             "😑 {} {} {:<8} forwarding event by game ID {}",
                             &crate::EMPTY_SHORT_UUID,
                             short_uuid(*gid),
@@ -81,6 +80,8 @@ impl Router {
                         )
                     }
                 }
+            } else {
+                info!("NO GAME SESSIONS for {:?}", ev); // todo
             }
         }
     }
@@ -137,7 +138,6 @@ impl Router {
             }
         }
     }
- 
     fn reconnect(
         &mut self,
         session_id: SessionId,
@@ -198,7 +198,7 @@ impl Router {
 
                 self.last_cleanup = Instant::now();
                 if count > 0 {
-                    println!(
+                    info!(
                         "🗑 {} {}  {:<8} {:<4} game records",
                         EMPTY_SHORT_UUID, EMPTY_SHORT_UUID, "CLEANUP", count
                     )
@@ -238,7 +238,7 @@ impl Router {
 /// it must respond to requests to add and drop listeners
 pub fn start(
     router_commands_out: Receiver<RouterCommand>,
-    kafka_events_out: Receiver<BackendEvents>,
+    backend_events_out: Receiver<BackendEvents>,
     idle_resp_out: Receiver<IdleStatusResponse>,
 ) {
     thread::spawn(move || {
@@ -263,7 +263,7 @@ pub fn start(
                             let event_clone = session_sender.events_in.clone();
                             router.reconnect(client_id, game_id, event_clone.clone());
                             if let Err(err) = event_clone.send(ClientEvents::Reconnected(ReconnectedEvent{game_id, reply_to: req_id, event_id: Uuid::new_v4(), player_up: router.playerup(game_id)})) {
-                                println!(
+                                error!(
                                     "😦 {} {} {:<8} could not send reconnect reply {}",
                                     short_uuid(client_id),
                                     short_uuid(game_id),
@@ -281,7 +281,7 @@ pub fn start(
                             for game_session in sessions {
                                 if game_session.session_id != session_id {
                                     if let Err(e) = game_session.events_in.send(ClientEvents::OpponentQuit) {
-                                        println!("failed to pass along Opponent Quit : {}", e)
+                                        error!("failed to pass along Opponent Quit : {}", e)
                                     }
                                 }
                             }
@@ -289,9 +289,11 @@ pub fn start(
 
                         router.game_sessions.remove(&game_id);
                     },
+                    Ok(RouterCommand::RouteGame { session_id, game_id }) =>
+                        router.route_new_game(session_id, game_id),
                     Err(e) => panic!("Unable to receive command via router channel: {:?}", e),
                 },
-            recv(kafka_events_out) -> event =>
+            recv(backend_events_out) -> event =>
                 match event {
                     Ok(BackendEvents::MoveMade(m)) => {
                         let u = m.clone();
@@ -331,7 +333,7 @@ pub fn start(
             recv(idle_resp_out) -> idle_status_response => if let Ok(IdleStatusResponse(client_id, status)) = idle_status_response {
                 router.forward_by_client_id(client_id, ClientEvents::IdleStatusProvided(status))
             } else {
-                println!("router error reading idle response")
+                error!("router error reading idle response")
             }}
         }
     });
@@ -393,6 +395,10 @@ pub enum RouterCommand {
         client_id: ClientId,
     },
     QuitGame {
+        session_id: SessionId,
+        game_id: GameId,
+    },
+    RouteGame {
         session_id: SessionId,
         game_id: GameId,
     },

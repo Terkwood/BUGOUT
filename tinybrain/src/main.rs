@@ -6,9 +6,10 @@ use micro_model_bot::*;
 use std::thread;
 use tinybrain::*;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
     info!("🔢 {}", VERSION);
     env::init();
@@ -19,5 +20,5 @@ fn main() {
         unbounded();
 
     thread::spawn(|| katago::start(move_computed_in, compute_move_out));
-    websocket::start(compute_move_in, move_computed_out)
+    websocket::start(compute_move_in, move_computed_out).await;
 }

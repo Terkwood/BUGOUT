@@ -1,6 +1,6 @@
 [package]
 name = "tinybrain"
-version = "0.1.6"
+version = "0.1.8"
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 
@@ -12,7 +12,6 @@ serde_json = "1.0.48"
 serde_derive = "1.0.104"
 uuid = { version = "0.8.1", features = [ "serde", "v4" ] }
 bincode = "1.2.1"
-tungstenite = { version= "0.10.1", features = ["tls"] }
 dotenv = "0.15.0"
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.2"
@@ -21,6 +20,10 @@ base64 = "0.12.0"
 http = "0.2.0"
 env_logger = "0.7.1"
 log = "0.4.8"
+futures-util = { version="0.3.4", default-features = false, features = ["async-await", "sink", "std"] }
+tokio-tungstenite = { version = "0.10.1", features = ["tls"] }
+tokio = { version="0.2.17", default-features = false, features = ["io-std", "io-util", "macros", "stream", "time"] }
 
 [dev-dependencies]
 text_io = "0.1.8"
+tungstenite = { version = "0.10.1", features = ["tls"] }
