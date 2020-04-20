@@ -209,7 +209,7 @@ mod tests {
         ) -> Result<(), crate::stream::xadd::XAddError> {
             Ok(())
         }
-        fn xadd_make_move_command(&self, _command: MakeMoveCommand) -> Result<(), XAddError> {
+        fn xadd_make_move_command(&self, _command: &MakeMoveCommand) -> Result<(), XAddError> {
             Ok(info!("Doing nothing for xadd make move"))
         }
     }
