@@ -35,7 +35,7 @@ pub struct KataGoResponse {
 pub struct Id(pub String);
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd)]
-pub struct Move(pub String, pub AlphaNumOrPass);
+pub struct Move(pub String, pub KataCoordOrPass);
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd)]
 pub struct Rules(pub String);
@@ -50,10 +50,11 @@ pub struct MoveInfo {
 }
 
 pub const PASS: &str = "pass";
-/// Alphanumeric coordinate as expected by KataGo, e.g. `Q16` or `pass`.
-/// This isn't strictly necessary, as KataGo supports numeric coords.
+
+/// Represent coords as (0,13) or PASS.
+/// See https://github.com/lightvector/KataGo/blob/master/docs/Analysis_Engine.md#queries
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd)]
-pub struct AlphaNumOrPass(pub String);
+pub struct KataCoordOrPass(pub String);
 
 impl Move {
     pub fn from(player: Player, maybe_xy: Option<Coord>) -> Result<Self, CoordOutOfRange> {
@@ -61,31 +62,22 @@ impl Move {
             Player::BLACK => "B",
             _ => "W",
         };
-        AlphaNumOrPass::from(maybe_xy).map(|c| Move(p.to_string(), c))
+        KataCoordOrPass::from(maybe_xy).map(|c| Move(p.to_string(), c))
     }
 }
 
-impl AlphaNumOrPass {
+const MAX_COORD: u16 = 19;
+
+impl KataCoordOrPass {
     pub fn from(maybe_xy: Option<Coord>) -> Result<Self, CoordOutOfRange> {
         if let Some(xy) = maybe_xy {
-            let alphabet = (b'A'..=b'Z')
-                .filter_map(|c| {
-                    let c = c as char;
-                    if c.is_alphabetic() {
-                        Some(c)
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<_>>();
-            let i = xy.x as usize;
-            if i < alphabet.len() {
-                Ok(AlphaNumOrPass(format!("{}{}", alphabet[i], xy.y + 1)))
-            } else {
+            if xy.x > MAX_COORD || xy.y > MAX_COORD {
                 Err(CoordOutOfRange)
+            } else {
+                Ok(KataCoordOrPass(format!("({},{})", xy.x, xy.y)))
             }
         } else {
-            Ok(AlphaNumOrPass(PASS.to_string()))
+            Ok(KataCoordOrPass(PASS.to_string()))
         }
     }
 }
@@ -160,7 +152,7 @@ impl KataGoQuery {
 
 impl KataGoResponse {
     pub fn game_id(&self) -> Result<GameId, KataGoParseErr> {
-        let parts: Vec<&str> = self.id.0.split("_").collect();
+        let parts: Vec<&str> = self.id.0.split('_').collect();
         if parts.is_empty() {
             Err(KataGoParseErr::WrongFormat)
         } else {
@@ -169,7 +161,7 @@ impl KataGoResponse {
     }
 
     pub fn player(&self) -> Result<Player, KataGoParseErr> {
-        let parts: Vec<&str> = self.id.0.split("_").collect();
+        let parts: Vec<&str> = self.id.0.split('_').collect();
         if parts.len() < 2 {
             Err(KataGoParseErr::WrongFormat)
         } else {
@@ -249,9 +241,9 @@ mod tests {
         let expected = KataGoQuery {
             id: Id("00000000-0000-0000-0000-000000000000_3_WHITE".to_string()),
             moves: vec![
-                Move("B".to_string(), AlphaNumOrPass("A1".to_string())),
-                Move("W".to_string(), AlphaNumOrPass("B2".to_string())),
-                Move("B".to_string(), AlphaNumOrPass("pass".to_string())),
+                Move("B".to_string(), KataCoordOrPass("(0,0)".to_string())),
+                Move("W".to_string(), KataCoordOrPass("(1,1)".to_string())),
+                Move("B".to_string(), KataCoordOrPass("pass".to_string())),
             ],
             ..KataGoQuery::default()
         };
@@ -318,6 +310,10 @@ mod tests {
         assert_eq!(
             interpret_coord(" D5 ").expect("parse"),
             Some(Coord { x: 3, y: 4 })
+        );
+        assert_eq!(
+            interpret_coord("I2").expect("parse"),
+            Some(Coord { x: 8, y: 1 })
         )
     }
 

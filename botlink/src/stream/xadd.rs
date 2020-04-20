@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 pub trait XAdder: Send + Sync {
     fn xadd_game_state(&self, game_id: &GameId, game_state: &GameState) -> Result<(), XAddError>;
-    fn xadd_make_move_command(&self, command: MakeMoveCommand) -> Result<(), XAddError>;
+    fn xadd_make_move_command(&self, command: &MakeMoveCommand) -> Result<(), XAddError>;
     fn xadd_bot_attached(&self, bot_attached: BotAttached) -> Result<(), XAddError>;
 }
 
@@ -37,7 +37,7 @@ impl XAdder for RedisXAdder {
             .query::<String>(&mut *conn)?;
         Ok(())
     }
-    fn xadd_make_move_command(&self, command: MakeMoveCommand) -> Result<(), XAddError> {
+    fn xadd_make_move_command(&self, command: &MakeMoveCommand) -> Result<(), XAddError> {
         let mut conn = self.pool.get().unwrap();
 
         let mut redis_cmd = redis::cmd("XADD");
