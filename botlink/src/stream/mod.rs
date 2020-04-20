@@ -195,10 +195,10 @@ mod tests {
         pub last: u16,
     }
     impl BoardSizeRepo for FakeBoardSizeRepo {
-        fn get(&self, game_id: &GameId) -> Result<u16, RepoErr> {
+        fn get(&self, _game_id: &GameId) -> Result<u16, RepoErr> {
             Ok(self.last)
         }
-        fn set(&mut self, game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
+        fn set(&mut self, _game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
             self.last = board_size;
             Ok(())
         }
