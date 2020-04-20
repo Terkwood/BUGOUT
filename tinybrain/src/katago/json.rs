@@ -57,19 +57,19 @@ pub const PASS: &str = "pass";
 pub struct KataCoordOrPass(pub String);
 
 impl Move {
-    pub fn from(player: Player, maybe_xy: Option<Coord>) -> Result<Self, CoordOutOfRange> {
+    pub fn from(player: Player, maybe_xy: Option<Coord>, board_y_size: u16) -> Result<Self, CoordOutOfRange> {
         let p = match player {
             Player::BLACK => "B",
             _ => "W",
         };
-        KataCoordOrPass::from(maybe_xy).map(|c| Move(p.to_string(), c))
+        KataCoordOrPass::from(maybe_xy, board_y_size).map(|c| Move(p.to_string(), c))
     }
 }
 
 const MAX_COORD: u16 = 19;
 
 impl KataCoordOrPass {
-    pub fn from(maybe_xy: Option<Coord>) -> Result<Self, CoordOutOfRange> {
+    pub fn from(maybe_xy: Option<Coord>, board_y_size: u16) -> Result<Self, CoordOutOfRange> {
         if let Some(xy) = maybe_xy {
             if xy.x > MAX_COORD || xy.y > MAX_COORD {
                 Err(CoordOutOfRange)
@@ -82,41 +82,12 @@ impl KataCoordOrPass {
     }
 }
 
-pub fn interpret_coord(move_info_move: &str) -> Result<Option<Coord>, CoordOutOfRange> {
-    let t = move_info_move.trim();
-    if t.to_ascii_lowercase() == PASS {
-        Ok(None)
-    } else {
-        Ok(Some(from_alphanum(&t.to_ascii_uppercase())?))
-    }
-}
-
-fn from_alphanum(a: &str) -> Result<Coord, CoordOutOfRange> {
-    if a.len() < 2 {
-        Err(CoordOutOfRange)
-    } else {
-        let letter: char = a.chars().collect::<Vec<char>>()[0];
-        let number = &a[1..];
-        let y_plus_one = number.to_string().parse::<u16>()?;
-        let r: Vec<char> = (b'A'..=b'Z').map(char::from).collect();
-        let maybe_x = r.iter().position(|l| l == &letter);
-        if let Some(x) = maybe_x {
-            Ok(Coord {
-                x: x as u16,
-                y: y_plus_one - 1,
-            })
-        } else {
-            Err(CoordOutOfRange)
-        }
-    }
-}
-
 impl KataGoQuery {
     pub fn from(game_id: &GameId, game_state: &GameState) -> Result<Self, CoordOutOfRange> {
         let moves_with_errors: Vec<Result<Move, CoordOutOfRange>> = game_state
             .moves
             .iter()
-            .map(|gsm| Move::from(gsm.player, gsm.coord))
+            .map(|gsm| Move::from(gsm.player, gsm.coord, game_state.board.size))
             .collect();
 
         if moves_with_errors.iter().any(|m| m.is_err()) {
@@ -203,6 +174,7 @@ mod tests {
     use micro_model_bot::MoveComputed;
     use std::convert::TryFrom;
     use uuid::Uuid;
+
     #[test]
     fn query_from_game_state() {
         let game_id = GameId(Uuid::nil());
@@ -295,33 +267,6 @@ mod tests {
 
         let actual = KataGoQuery::from(&game_id, &game_state).expect("move(s) out of range");
         assert_eq!(actual, expected)
-    }
-
-    #[test]
-    fn test_interpret_coord() {
-        assert_eq!(
-            interpret_coord("B3").expect("parse"),
-            Some(Coord { x: 1, y: 2 })
-        );
-        assert_eq!(
-            interpret_coord("c4").expect("parse"),
-            Some(Coord { x: 2, y: 3 })
-        );
-        assert_eq!(
-            interpret_coord(" D5 ").expect("parse"),
-            Some(Coord { x: 3, y: 4 })
-        );
-        assert_eq!(
-            interpret_coord("I2").expect("parse"),
-            Some(Coord { x: 8, y: 1 })
-        )
-    }
-
-    #[test]
-    fn test_interpret_pass() {
-        assert_eq!(interpret_coord("pass").expect("parse"), None);
-        assert_eq!(interpret_coord("PASS").expect("parse"), None);
-        assert_eq!(interpret_coord(" PaSs   ").expect("parse"), None)
     }
 
     #[test]

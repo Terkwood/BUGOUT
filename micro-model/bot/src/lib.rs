@@ -11,5 +11,8 @@ pub struct ComputeMove {
     pub game_state: GameState,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct MoveComputed(pub MakeMoveCommand);
-
+pub struct MoveComputed {
+    pub game_id: GameId,
+    pub player: Player,
+    pub alphanum_coord: Option<String>,
+}

@@ -78,14 +78,13 @@ impl TryFrom<KataGoResponse> for MoveComputed {
     fn try_from(response: KataGoResponse) -> Result<Self, Self::Error> {
         let game_id = response.game_id()?;
         let player = response.player()?;
-        let coord: Option<Coord> = interpret_coord(&response.move_infos[0].r#move)?;
+        let coord: Option<String> = response.move_infos[0].r#move?;
         let req_id = ReqId(Uuid::new_v4());
-        Ok(MoveComputed(MakeMoveCommand {
+        Ok(MoveComputed { 
             game_id,
             player,
             coord,
-            req_id,
-        }))
+        })
     }
 }
 
