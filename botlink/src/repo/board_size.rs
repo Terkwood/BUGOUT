@@ -18,9 +18,27 @@ pub struct RedisBoardSizeRepo {
 
 impl BoardSizeRepo for RedisBoardSizeRepo {
     fn get(&self, game_id: &GameId) -> Result<u16, RepoErr> {
-        todo!()
+        let mut conn = self.pool.get().expect("pool");
+        let result = conn.get(self.key_provider.board_size(&game_id.0))?;
+        self.expire(game_id, &mut conn)?;
+        Ok(result)
     }
     fn set(&mut self, game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
-        todo!()
+        let mut conn = self.pool.get().expect("pool");
+        let result = conn.set(self.key_provider.board_size(&game_id.0), board_size)?;
+        self.expire(game_id, &mut conn)?;
+        Ok(result)
+    }
+}
+
+const TTL_SECS: usize = 86400;
+
+impl RedisBoardSizeRepo {
+    fn expire(
+        &self,
+        game_id: &GameId,
+        conn: &mut r2d2::PooledConnection<r2d2_redis::RedisConnectionManager>,
+    ) -> Result<(), RepoErr> {
+        Ok(conn.expire(self.key_provider.board_size(&game_id.0), TTL_SECS)?)
     }
 }

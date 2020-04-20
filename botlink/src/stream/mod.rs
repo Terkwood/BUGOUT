@@ -191,13 +191,16 @@ mod tests {
         }
     }
 
-    struct FakeBoardSizeRepo;
+    struct FakeBoardSizeRepo {
+        pub last: u16,
+    }
     impl BoardSizeRepo for FakeBoardSizeRepo {
         fn get(&self, game_id: &GameId) -> Result<u16, RepoErr> {
-            todo!()
+            Ok(self.last)
         }
         fn set(&mut self, game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
-            todo!()
+            self.last = board_size;
+            Ok(())
         }
     }
 
@@ -287,7 +290,7 @@ mod tests {
         });
         let abr = attached_bots_repo.clone();
 
-        let board_size_repo = Arc::new(FakeBoardSizeRepo);
+        let board_size_repo = Arc::new(FakeBoardSizeRepo { last: 0 });
 
         const GAME_ID: GameId = GameId(Uuid::nil());
         let player = Player::WHITE;
