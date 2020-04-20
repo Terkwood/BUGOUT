@@ -510,9 +510,13 @@ impl Handler for WsSession {
                             ClientEvents::OpponentQuit => {
                                 self.current_game = None;
                             }
-                            ClientEvents::MoveMade(m) => {
-                                info!("🆗 {} {:<8} {}", session_code(self), "MOVEMADE", m.player)
-                            }
+                            ClientEvents::MoveMade(m) => info!(
+                                "🆗 {} {:<8} {} {:?}",
+                                session_code(self),
+                                "MOVEMADE",
+                                m.player,
+                                m.coord
+                            ),
                             _ => (),
                         }
 

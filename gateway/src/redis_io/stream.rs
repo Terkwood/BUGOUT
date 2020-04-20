@@ -4,7 +4,7 @@ use crate::backend_events::BackendEvents;
 use crate::model::{Coord, MoveMadeEvent, Player};
 
 use crossbeam_channel::Sender;
-use log::{error, info};
+use log::error;
 
 pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
     loop {
@@ -55,16 +55,12 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
                                     }))
                                 {
                                     error!("send err move made {:?}", e)
-                                } else {
-                                    info!("🎠 {} {:?}", player.to_string(), coord)
                                 }
 
                                 if let Err(e) =
                                     opts.entry_id_repo.update(EntryIdType::MoveMade, entry_id)
                                 {
                                     error!("err tracking EID move made {:?}", e)
-                                } else {
-                                    info!("📝 Updated move_made eid to {:?}", entry_id)
                                 }
                             }
                         }

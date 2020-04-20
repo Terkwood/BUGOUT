@@ -2,7 +2,7 @@ use super::stream::StreamData;
 use crate::topics::{BOT_ATTACHED_TOPIC, MOVE_MADE_TOPIC};
 use redis_streams::XReadEntryId;
 
-use log::{error, info, warn};
+use log::{error, warn};
 use r2d2_redis::redis;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -96,7 +96,6 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                                 bincode::deserialize::<micro_model_moves::MoveMade>(&s.3.clone())
                                     .ok(),
                             ) {
-                                info!("🤓 MoveMade deser OK");
                                 stream_data.insert(seq_no, StreamData::MoveMade(move_made));
                             } else {
                                 error!("fail  move made xread inner")
