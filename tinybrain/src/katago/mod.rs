@@ -84,7 +84,8 @@ impl TryFrom<KataGoResponse> for MoveComputed {
         let alphanum_coord = if alpha_num_or_pass.to_ascii_uppercase().trim() == PASS {
             None
         } else {
-            Some(AlphaNumCoord(alpha_num_or_pass[0], &alpha_num_or_pass[..][1].parse::<u16>.expect("alphanum ")))
+            let ans = alpha_num_or_pass.chars().collect();
+            Some(AlphaNumCoord(ans[0], &alpha_num_or_pass[1..1].parse::<u16>.expect("alphanum ")))
         };
         let req_id = ReqId(Uuid::new_v4());
         Ok(MoveComputed { 

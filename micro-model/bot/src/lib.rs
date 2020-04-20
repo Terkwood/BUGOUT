@@ -18,4 +18,4 @@ pub struct MoveComputed {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct AlphaNumCoord(char, u16);
+pub struct AlphaNumCoord(pub char, pub u16);
