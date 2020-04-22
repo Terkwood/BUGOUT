@@ -38,7 +38,10 @@ pub fn write_moves(
 }
 
 fn convert(a: AlphaNumCoord, board_size: u16) -> Coord {
-    let r: Vec<char> = (b'A'..=b'Z').map(char::from).collect();
+    let r: Vec<char> = (b'A'..=b'Z')
+        .filter(|l| l != &b'I')
+        .map(char::from)
+        .collect();
     let x = r.iter().position(|l| l == &a.0).expect("convert") as u16;
 
     Coord {
@@ -56,6 +59,15 @@ mod tests {
         let board_size = 9;
         let actual = convert(a, board_size);
         let expected = Coord { x: 0, y: 8 };
+        assert_eq!(actual, expected)
+    }
+
+    #[test]
+    fn test_skip_i() {
+        let j = AlphaNumCoord('J', 19);
+        let board_size = 19;
+        let actual = convert(j, board_size);
+        let expected = Coord { x: 8, y: 0 };
         assert_eq!(actual, expected)
     }
 }
