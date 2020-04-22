@@ -1,3 +1,11 @@
+# NOTICE
+
+This project is not affiliated with [Sabaki](https://github.com/SabakiHQ/Sabaki).  It is a direct descendant of that code base but is no longer kept in parity and is not intended to be resubmitted upstream.
+
+🚧 We are in the processing of cleaning up the README and documentation to better reflect the state of this project. Thank you for your patience! 🚧
+
+_ORIGINAL SABAKI DOCUMENTATION FOLLOWS._
+
 # Sabaki [![Build Status](https://travis-ci.org/SabakiHQ/Sabaki.svg?branch=master)](https://travis-ci.org/SabakiHQ/Sabaki) [![Donate](https://img.shields.io/badge/donate-paypal-blue.svg)](https://www.paypal.me/yishn/5)
 
 <img src="logo.png" width="156" height="156">
