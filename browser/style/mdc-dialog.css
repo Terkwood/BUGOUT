@@ -1,0 +1,163 @@
+/*!
+ Material Components for the Web
+ Thanks, Google! (It's their work, copyrighted in 2018)
+ Terkwood has modified this file to suit our needs
+ License: MIT
+*/
+.mdc-dialog {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  visibility: hidden;
+  z-index: 11; }
+
+.mdc-dialog__backdrop {
+  background-color: rgba(1,1,1,0.65);
+  position: fixed;
+  top: 0;
+  left: 0;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  z-index: 20; 
+  visibility: visible;
+}
+
+.mdc-dialog__surface {
+  box-shadow: 0px 33px 45px -21px rgba(0, 0, 0, 0.2), 0px 72px 114px 9px rgba(0, 0, 0, 0.14), 0px 27px 138px 24px rgba(0, 0, 0, 0.12);
+  background-color: #fff;
+  /* @alternate */
+  background-color: var(--mdc-theme-background, #fff);
+  display: inline-flex;
+  flex-direction: column;
+  width: calc(100% - 90px);
+  min-width: 640px;
+  max-width: 865px;
+  -webkit-transform: translateY(150px) scale(1.15);
+          transform: translateY(0px) scale(1.15);
+  border-radius: 2px;
+  visibility: visible;
+  z-index: 30;
+ }
+  .mdc-dialog[dir="rtl"] .mdc-dialog__surface,
+  [dir="rtl"] .mdc-dialog .mdc-dialog__surface {
+    text-align: right; }
+
+.mdc-dialog__header {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 24px 24px 0; }
+  .mdc-dialog[dir="rtl"] .mdc-dialog__header,
+  [dir="rtl"] .mdc-dialog .mdc-dialog__header {
+    text-align: right; }
+
+.mdc-dialog__header__empty {
+  padding: 0; }
+
+.mdc-dialog__header__title {
+  font-family: Consolas, Menlo, Monaco, 'Ubuntu Mono', monospace;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  font-size: 32px;
+  line-height: 1.5;
+  font-weight: 500;
+  letter-spacing: 0.03125em;
+  text-decoration: inherit;
+  text-transform: inherit;
+  flex: 1;
+  margin: 0; }
+
+.mdc-dialog__body {
+  color: rgba(0, 0, 0, 0.54);
+  /* @alternate */
+  color: var(--mdc-theme-text-secondary-on-light, rgba(0, 0, 0, 0.54));
+  font-family: Consolas, Menlo, Monaco, 'Ubuntu Mono', monospace;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  font-size: 24px;
+  line-height: 1.5;
+  font-weight: 400;
+  /* 24 * 0.0416 ≈ 1px */
+  letter-spacing: 0.0416667em;
+  text-decoration: inherit;
+  text-transform: inherit;
+  margin-top: 86px;
+  padding: 0 24px 24px; }
+
+.mdc-dialog__body--scrollable {
+  max-height: 195px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch; }
+
+.mdc-dialog__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 24px; }
+
+.mdc-dialog__footer__button {
+  transform: translateX(-38%) scale(1.7); 
+  /* @noflip */
+  margin-left: 0;
+  /* @noflip */
+  margin-right: 24px; }
+  [dir="rtl"] .mdc-dialog__footer__button, .mdc-dialog__footer__button[dir="rtl"] {
+    /* @noflip */
+    margin-left: 24px;
+    /* @noflip */
+    margin-right: 0; }
+  .mdc-dialog__footer__button:last-child {
+    /* @noflip */
+    margin-left: 0;
+    /* @noflip */
+    margin-right: 0; }
+    [dir="rtl"] .mdc-dialog__footer__button:last-child, .mdc-dialog__footer__button:last-child[dir="rtl"] {
+      /* @noflip */
+      margin-left: 0;
+      /* @noflip */
+      margin-right: 0; }
+
+.mdc-dialog__action:not(:disabled) {
+  color: #018786;
+  /* @alternate */
+  color: var(--mdc-theme-secondary, #018786); }
+
+@media (max-width: 640px) {
+  .mdc-dialog {
+    min-width: 140px; }
+  .mdc-dialog__surface {
+    min-width: 140px; }
+  .mdc-dialog__body {
+    line-height: 1.5; } }
+
+.mdc-dialog--animating {
+  visibility: visible; }
+  .mdc-dialog--animating .mdc-dialog__backdrop {
+    transition: opacity 120ms 0ms cubic-bezier(0, 0, 0.2, 1); }
+  .mdc-dialog--animating .mdc-dialog__surface {
+    transition: opacity 120ms 0ms cubic-bezier(0, 0, 0.2, 1), -webkit-transform 120ms 0ms cubic-bezier(0, 0, 0.2, 1);
+    transition: opacity 120ms 0ms cubic-bezier(0, 0, 0.2, 1), transform 120ms 0ms cubic-bezier(0, 0, 0.2, 1);
+    transition: opacity 120ms 0ms cubic-bezier(0, 0, 0.2, 1), transform 120ms 0ms cubic-bezier(0, 0, 0.2, 1), -webkit-transform 120ms 0ms cubic-bezier(0, 0, 0.2, 1); }
+
+.mdc-dialog--open {
+  visibility: visible; }
+  .mdc-dialog--open .mdc-dialog__backdrop {
+    opacity: .3; }
+  .mdc-dialog--open .mdc-dialog__surface {
+    -webkit-transform: translateY(0) scale(1);
+            transform: translateY(0) scale(1);
+    opacity: 1; }
+
+.mdc-dialog-scroll-lock {
+  overflow: hidden; }
