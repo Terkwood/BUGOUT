@@ -1,8 +1,8 @@
 # BUGOUT
 
-🐛 Play Go against your friends,   _over the web!_ 🕸
+🐛 Play Go against your friends, over the web! 🕸
 
-🚧 Under construction: support for playing against KataGo on a power-efficient dev board 🚧
+🤖 _Or play against KataGo AI_ on a power-efficient dev board! 🤖
 
 ![BUGOUT Online Go](BUGOUT.jpeg)
 
