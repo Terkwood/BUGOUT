@@ -25,9 +25,9 @@ impl BoardSizeRepo for RedisBoardSizeRepo {
     }
     fn set(&self, game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
         let mut conn = self.pool.get().expect("pool");
-        let result = conn.set(self.key_provider.board_size(&game_id.0), board_size)?;
+        conn.set(self.key_provider.board_size(&game_id.0), board_size)?;
         self.expire(game_id, &mut conn)?;
-        Ok(result)
+        Ok(())
     }
 }
 
