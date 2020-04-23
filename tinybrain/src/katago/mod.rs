@@ -86,7 +86,7 @@ impl TryFrom<KataGoResponse> for MoveComputed {
             let left: char = ans[0];
             Some(AlphaNumCoord(
                 left,
-                alpha_num_or_pass[1..2].parse::<u16>().expect("alphanum "),
+                alpha_num_or_pass[1..].parse::<u16>().expect("alphanum"),
             ))
         };
 
