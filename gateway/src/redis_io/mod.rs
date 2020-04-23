@@ -11,14 +11,15 @@ pub use xadd::start;
 
 use r2d2_redis::{r2d2, RedisConnectionManager};
 use redis_streams::XReadEntryId;
+use std::sync::Arc;
 
 pub type RedisPool = r2d2_redis::r2d2::Pool<r2d2_redis::RedisConnectionManager>;
 
 pub const REDIS_URL: &str = "redis://redis";
 
-pub fn create_pool() -> RedisPool {
+pub fn create_pool() -> Arc<RedisPool> {
     let manager = RedisConnectionManager::new(REDIS_URL).unwrap();
-    r2d2::Pool::builder().build(manager).unwrap()
+    Arc::new(r2d2::Pool::builder().build(manager).unwrap())
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
