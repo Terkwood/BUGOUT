@@ -7,19 +7,19 @@ use crate::game::*;
 use crate::model::*;
 use crate::repo::entry_id::{EntryIdRepo, EntryIdType};
 use crate::repo::game_states::GameStatesRepo;
+use std::rc::Rc;
 
 use log::{error, info, warn};
 
 /// Spins too much.  See https://github.com/Terkwood/BUGOUT/issues/217
-pub fn process(opts: ProcessOpts, pool: &Pool) {
+pub fn process(opts: ProcessOpts) {
     let eid_repo = opts.entry_id_repo;
 
     loop {
         match eid_repo.fetch_all() {
             Ok(entry_ids) => {
-                if let Ok(xread_result) = xread_sort(&entry_ids, &opts.topics, &pool) {
+                if let Ok(xread_result) = xread_sort(&entry_ids, &opts.topics, &opts.pool) {
                     for time_ordered_event in xread_result {
-                        info!("EIDS {:?}", entry_ids);
                         match time_ordered_event {
                             (entry_id, StreamData::MM(mm)) => {
                                 let fetched_gs = opts.game_states_repo.fetch(&mm.game_id);
@@ -28,7 +28,7 @@ pub fn process(opts: ProcessOpts, pool: &Pool) {
                                         Judgement::Accepted(move_made) => {
                                             if let Err(e) = xadd_move_accepted(
                                                 &move_made,
-                                                &pool,
+                                                &opts.pool,
                                                 &opts.topics.move_accepted_ev,
                                             ) {
                                                 error!("Error XADD to move_accepted {:?}", e)
@@ -78,18 +78,25 @@ pub struct ProcessOpts {
     pub topics: StreamTopics,
     pub entry_id_repo: EntryIdRepo,
     pub game_states_repo: GameStatesRepo,
+    pub pool: Rc<Pool>,
 }
 impl Default for ProcessOpts {
     fn default() -> Self {
         let namespace = RedisKeyNamespace::default();
-        let pool = super::conn_pool::create(super::conn_pool::RedisHostUrl::default());
+        let pool = Rc::new(super::conn_pool::create(
+            super::conn_pool::RedisHostUrl::default(),
+        ));
         ProcessOpts {
             topics: StreamTopics::default(),
             entry_id_repo: EntryIdRepo {
                 namespace: namespace.clone(),
                 pool: pool.clone(),
             },
-            game_states_repo: GameStatesRepo { namespace, pool },
+            game_states_repo: GameStatesRepo {
+                namespace,
+                pool: pool.clone(),
+            },
+            pool,
         }
     }
 }
