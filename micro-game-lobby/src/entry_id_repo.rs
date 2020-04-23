@@ -1,5 +1,8 @@
 use redis_conn_pool::Pool;
 use redis_streams::*;
+
+use std::sync::Arc;
+
 pub trait EntryIdRepo {
     fn fetch_all(&self) -> Result<AllEntryIds, FetchErr>;
 }
@@ -13,9 +16,14 @@ pub struct AllEntryIds {
 
 pub enum FetchErr {}
 
-impl EntryIdRepo for Pool {
+struct RedisEntryIdRepo {
+    pool: Arc<Pool>,
+    key_provider: (), // TODO
+}
+
+impl EntryIdRepo for RedisEntryIdRepo {
     fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
-        let mut conn = self.get().unwrap();
+        let mut conn = self.pool.get().unwrap();
         todo!()
     }
 }
