@@ -95,9 +95,9 @@ checksum = "130aac562c0dd69c56b3b1cc8ffd2e17be31d0b6c25b61c96b76231aa23e39e1"
 
 [[package]]
 name = "cc"
-version = "1.0.50"
+version = "1.0.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95e28fa049fda1c330bcf9d723be7663a899c4679724b34c81e9f5a326aab8cd"
+checksum = "c3d87b23d6a92cd03af510a5ade527033f6aa6fa92161e2d5863a907d4c5e31d"
 
 [[package]]
 name = "cfg-if"
@@ -504,8 +504,8 @@ dependencies = [
 
 [[package]]
 name = "micro_model_bot"
-version = "0.1.1"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#cb74cece9eef762aa90a34d985669c101105d56a"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#d756a05caa9adad6d323a0b0884c93736b36a42c"
 dependencies = [
  "bincode",
  "micro_model_moves",
@@ -516,7 +516,7 @@ dependencies = [
 [[package]]
 name = "micro_model_moves"
 version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#cb74cece9eef762aa90a34d985669c101105d56a"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#d756a05caa9adad6d323a0b0884c93736b36a42c"
 dependencies = [
  "bincode",
  "serde",
@@ -668,9 +668,9 @@ checksum = "237844750cfbb86f67afe27eee600dfbbcb6188d734139b534cbfbf4f96792ae"
 
 [[package]]
 name = "pin-utils"
-version = "0.1.0-alpha.4"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5894c618ce612a3fa23881b152b608bafb8c56cfc22f434a3ba3120b40f7b587"
+checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "pkg-config"
@@ -796,9 +796,9 @@ dependencies = [
 
 [[package]]
 name = "ryu"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "535622e6be132bccd223f4bb2b8ac8d53cda3c7a6394944d3b2b33fb974f9d76"
+checksum = "ed3d612bc64430efeb3f7ee6ef26d590dce0c43249217bddc62112540c7941e1"
 
 [[package]]
 name = "schannel"
@@ -945,7 +945,7 @@ dependencies = [
 
 [[package]]
 name = "tinybrain"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "base64 0.12.0",
  "bincode",

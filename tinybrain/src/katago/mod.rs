@@ -138,6 +138,25 @@ mod tests {
     }
 
     #[test]
+    fn y_coord_not_truncated() {
+        let actual = MoveComputed::try_from(KataGoResponse {
+            id: Id(format!("{}_1_WHITE", Uuid::nil().to_string())),
+            turn_number: 1,
+            move_infos: vec![MoveInfo {
+                r#move: "D10".to_string(),
+                order: 0,
+            }],
+        })
+        .expect("fail");
+        let expected = MoveComputed {
+            game_id: GameId(Uuid::nil()),
+            alphanum_coord: Some(AlphaNumCoord('D', 10)),
+            player: Player::WHITE,
+        };
+        assert_eq!(actual, expected)
+    }
+
+    #[test]
     fn move_computed_from_pass() {
         let actual = MoveComputed::try_from(KataGoResponse {
             id: Id(format!("{}_1_BLACK", Uuid::nil().to_string())),
