@@ -7,6 +7,7 @@ use micro_model_bot::gateway::AttachBot;
 use crossbeam_channel::{select, Receiver};
 use log::{error, info};
 use r2d2_redis::redis;
+use std::sync::Arc;
 
 pub trait XAddCommands {
     fn xadd_attach_bot(&self, attach_bot: AttachBot);
@@ -32,7 +33,7 @@ pub fn start(commands_out: Receiver<BackendCommands>, cmds: &dyn XAddCommands) {
 }
 
 pub struct RedisXAddCommands {
-    pub pool: RedisPool,
+    pub pool: Arc<RedisPool>,
 }
 
 impl XAddCommands for RedisXAddCommands {
@@ -84,10 +85,8 @@ impl XAddCommands for RedisXAddCommands {
 }
 
 impl RedisXAddCommands {
-    pub fn create() -> Self {
-        RedisXAddCommands {
-            pool: crate::redis_io::create_pool(),
-        }
+    pub fn create(pool: Arc<RedisPool>) -> Self {
+        RedisXAddCommands { pool }
     }
 }
 
