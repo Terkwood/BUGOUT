@@ -22,6 +22,7 @@ use redis::Commands;
 use redis_keys::RedisKeyNamespace;
 use redis_streams::XReadEntryId;
 use std::panic;
+use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
 use std::thread;
 use std::time::Duration;
@@ -50,6 +51,7 @@ fn test_namespace() -> RedisKeyNamespace {
 }
 
 fn test_opts() -> stream::ProcessOpts {
+    let pool = std::rc::Rc::new(redis_pool());
     stream::ProcessOpts {
         topics: StreamTopics {
             make_move_cmd: TEST_MAKE_MOVE_CMD_TOPIC.to_string(),
@@ -58,12 +60,13 @@ fn test_opts() -> stream::ProcessOpts {
         },
         entry_id_repo: EntryIdRepo {
             namespace: test_namespace(),
-            pool: redis_pool(),
+            pool: pool.clone(),
         },
         game_states_repo: GameStatesRepo {
             namespace: test_namespace(),
-            pool: redis_pool(),
+            pool: pool.clone(),
         },
+        pool,
     }
 }
 
@@ -79,7 +82,7 @@ fn panic_cleanup(stream_names: Vec<String>, keys: Vec<String>, pool: Pool) {
 
 #[test]
 fn test_emitted_game_states() {
-    let pool = redis_pool();
+    let test_pool = redis_pool();
     let streams_to_clean = vec![TEST_GAME_STATES_TOPIC.to_string()];
 
     let game_id = GameId(uuid::Uuid::new_v4());
@@ -91,15 +94,16 @@ fn test_emitted_game_states() {
     panic_cleanup(
         streams_to_clean.clone(),
         keys_to_clean.clone(),
-        pool.clone(),
+        test_pool.clone(),
     );
 
-    let p2 = pool.clone();
-    let stream_opts = test_opts();
-    let eid_repo = stream_opts.clone().entry_id_repo;
-    thread::spawn(move || stream::process(stream_opts, &p2));
+    let eid_repo = EntryIdRepo {
+        namespace: test_namespace(),
+        pool: Rc::new(test_pool.clone()),
+    };
+    thread::spawn(move || stream::process(test_opts()));
 
-    let mut conn = pool.get().unwrap();
+    let mut conn = test_pool.get().unwrap();
 
     // Check precondition
     assert_eq!(eid_repo.fetch_all().unwrap().game_states_eid.millis_time, 0);
@@ -151,8 +155,8 @@ fn test_emitted_game_states() {
     }
     assert!(time_updated);
 
-    clean_streams(streams_to_clean, &pool);
-    clean_keys(keys_to_clean, &pool);
+    clean_streams(streams_to_clean, &test_pool);
+    clean_keys(keys_to_clean, &test_pool);
 
     FIRST_TEST_COMPLETE.swap(true, std::sync::atomic::Ordering::Relaxed);
 }
@@ -162,7 +166,7 @@ fn test_moves_processed() {
     while !FIRST_TEST_COMPLETE.load(std::sync::atomic::Ordering::Relaxed) {
         thread::sleep(Duration::from_secs(1))
     }
-    let pool = redis_pool();
+    let test_pool = redis_pool();
     let streams_to_clean = vec![
         TEST_GAME_STATES_TOPIC.to_string(),
         TEST_MAKE_MOVE_CMD_TOPIC.to_string(),
@@ -178,15 +182,16 @@ fn test_moves_processed() {
     panic_cleanup(
         streams_to_clean.clone(),
         keys_to_clean.clone(),
-        pool.clone(),
+        test_pool.clone(),
     );
 
-    let p2 = pool.clone();
-    let stream_opts = test_opts();
-    let eid_repo = stream_opts.clone().entry_id_repo;
-    thread::spawn(move || stream::process(stream_opts, &p2));
+    let eid_repo = EntryIdRepo {
+        namespace: test_namespace(),
+        pool: Rc::new(test_pool.clone()),
+    };
+    thread::spawn(move || stream::process(test_opts()));
 
-    let mut conn = pool.get().unwrap();
+    let mut conn = test_pool.get().unwrap();
 
     // Clear entry ids in redis
     eid_repo
@@ -287,7 +292,7 @@ fn test_moves_processed() {
     // Above moves should all be ACCEPTED by judge.  Check
     // that there is data on `bugtest-move-accepted-ev`
     // to confirm this.
-    let mut conn = pool.get().unwrap();
+    let mut conn = test_pool.get().unwrap();
     let move_accepted_data = redis::cmd("XREAD")
         .arg("BLOCK")
         .arg(5000)
@@ -327,8 +332,8 @@ fn test_moves_processed() {
     assert_eq!(accepted.coord, Some(first_coord));
     assert_eq!(accepted.player, first_player);
 
-    clean_streams(streams_to_clean, &pool);
-    clean_keys(keys_to_clean, &pool);
+    clean_streams(streams_to_clean, &test_pool);
+    clean_keys(keys_to_clean, &test_pool);
 }
 
 fn clean_keys(keys: Vec<String>, pool: &Pool) {

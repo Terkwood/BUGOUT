@@ -10,7 +10,7 @@ const EXPIRY_SECS: usize = 86400;
 #[derive(Clone, Debug)]
 pub struct GameStatesRepo {
     pub namespace: RedisKeyNamespace,
-    pub pool: Pool,
+    pub pool: std::rc::Rc<Pool>,
 }
 
 impl GameStatesRepo {

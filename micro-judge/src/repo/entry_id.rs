@@ -6,6 +6,7 @@ use io::redis_keys::*;
 use io::FetchErr;
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 const MAKE_MOVES_EID: &str = "make_moves_eid";
 const GAME_STATES_EID: &str = "game_states_eid";
@@ -14,7 +15,7 @@ const EMPTY_EID: &str = "0-0";
 #[derive(Clone)]
 pub struct EntryIdRepo {
     pub namespace: RedisKeyNamespace,
-    pub pool: Pool,
+    pub pool: Rc<Pool>,
 }
 
 impl EntryIdRepo {
