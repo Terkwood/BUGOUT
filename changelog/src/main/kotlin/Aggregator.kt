@@ -104,9 +104,12 @@ class Aggregator(private val brokers: String) {
         .to(MOVE_MADE_EV,
             Produced.with(Serdes.UUID(), Serdes.String()))
 
+        // We'll join on this event in game-lobby, prior to
+        // emitting the GameReady event.
         gameStatesIn.filter { _, v -> v.turn == 1 }
             .map { k, _ -> KeyValue(k, k) }
-            .to(GAME_STATE_INITIALIZED, Produced.with(Serdes.UUID(), Serdes.UUID()))
+            .to(GAME_STATE_INITIALIZED,
+                Produced.with(Serdes.UUID(), Serdes.UUID()))
 
         val topology = streamsBuilder.build()
 
