@@ -1,6 +1,7 @@
 import Topics.GAME_READY
 import Topics.GAME_STATES_CHANGELOG
 import Topics.GAME_STATES_STORE_NAME
+import Topics.GAME_STATE_INITIALIZED
 import Topics.MOVE_ACCEPTED_EV
 import Topics.MOVE_MADE_EV
 import org.apache.kafka.clients.admin.AdminClient
@@ -102,6 +103,10 @@ class Aggregator(private val brokers: String) {
         .mapValues { v -> jsonMapper.writeValueAsString(v) }
         .to(MOVE_MADE_EV,
             Produced.with(Serdes.UUID(), Serdes.String()))
+
+        gameStatesIn.filter { _, v -> v.turn == 1 }
+            .map { k, _ -> KeyValue(k, k) }
+            .to(GAME_STATE_INITIALIZED, Produced.with(Serdes.UUID(), Serdes.UUID()))
 
         val topology = streamsBuilder.build()
 
