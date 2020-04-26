@@ -4,9 +4,11 @@ object Topics {
     const val GAME_STATES_STORE_NAME = "bugout-game-states-store"
     const val GAME_STATES_CHANGELOG = "bugout-game-states"
     const val GAME_READY = "bugout-game-ready-ev"
+    const val GAME_STATE_INITIALIZED = "bugout-game-state-initialized-ev"
 
     val all = arrayOf(MOVE_ACCEPTED_EV,
         MOVE_MADE_EV,
         GAME_STATES_CHANGELOG,
+        GAME_STATE_INITIALIZED,
         GAME_READY)
 }
