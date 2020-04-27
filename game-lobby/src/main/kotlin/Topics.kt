@@ -10,6 +10,9 @@ object Topics {
     const val GAME_LOBBY_CHANGELOG = "bugout-game-lobby"
 
     const val GAME_STATES_CHANGELOG = "bugout-game-states"
+
+    /** Emitted by changelog when a new game state is created */
+    const val GAME_STATE_INITIALIZED = "bugout-game-state-initialized-ev"
     
     const val SESSION_DISCONNECTED = "bugout-session-disconnected-ev"
 
@@ -21,5 +24,6 @@ object Topics {
     val all = arrayOf(FIND_PUBLIC_GAME, CREATE_GAME, WAIT_FOR_OPPONENT,
         GAME_READY, PRIVATE_GAME_REJECTED, JOIN_PRIVATE_GAME,
         GAME_LOBBY_COMMANDS, GAME_LOBBY_CHANGELOG, GAME_STATES_CHANGELOG,
+        GAME_STATE_INITIALIZED,
         SESSION_DISCONNECTED)
 }

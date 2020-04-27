@@ -131,6 +131,7 @@ class Application(private val brokers: String) {
             }
 
 
+        // TODO join
         popPrivateGame.map { finderSessionId, gameCommand ->
             KeyValue(
                 gameCommand.game.gameId,
