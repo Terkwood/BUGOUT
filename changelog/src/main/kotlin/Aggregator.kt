@@ -62,7 +62,7 @@ class Aggregator(private val brokers: String) {
                     Serdes.Integer()))
 
 
-        val gameStatesOut: KTable<UUID, GameState> =
+        val gameStates: KTable<UUID, GameState> =
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
             pair
                 .groupByKey()
@@ -90,7 +90,7 @@ class Aggregator(private val brokers: String) {
                         )
                 )
 
-        gameStatesOut
+        gameStates
             .toStream()
             .map { k, v ->
                 println("\uD83D\uDCBE          ${k?.toString()?.take(8)} AGGRGATE Turn ${v.turn} PlayerUp ${v.playerUp}")
@@ -100,17 +100,11 @@ class Aggregator(private val brokers: String) {
                 Produced.with(Serdes.UUID(), Serdes.String())
             )
 
-        val gameStatesIn: KStream<UUID, GameState> =
-            streamsBuilder.stream<UUID, String>(
-                GAME_STATES_CHANGELOG,
-                Consumed.with(Serdes.UUID(), Serdes.String())
-            ).mapValues { v ->
-                jsonMapper.readValue(v, GameState::class.java)
+        gameStates
+            .toStream()
+            .filter { _, v ->
+                v.moves.isNotEmpty()
             }
-
-        gameStatesIn.filter { _, v ->
-            v.moves.isNotEmpty()
-        }
             .mapValues { v -> v.moves.last() }
             .mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(MOVE_MADE_EV,
