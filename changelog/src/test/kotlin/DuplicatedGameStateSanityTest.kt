@@ -12,6 +12,15 @@ import java.util.*
 class DuplicatedGameStateSanityTest {
     private val testDriver: TopologyTestDriver = setup()
 
+    @Test
+    fun bogus() {
+        assert(false)
+    }
+
+    @AfterAll
+    fun tearDown() {
+        testDriver.close()
+    }
 }
 
 fun setup(): TopologyTestDriver {
