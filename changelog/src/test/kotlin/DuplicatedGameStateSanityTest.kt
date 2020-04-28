@@ -17,7 +17,7 @@ class DuplicatedGameStateSanityTest {
     private val testDriver: TopologyTestDriver = setup()
 
     @Test
-    fun duplicateGameStatesCannotTriggerDuplicateMoveMadeEvents() {
+    fun gameTest() {
 
         val gameId = UUID.randomUUID()
         val replyTo = UUID.randomUUID()
@@ -27,9 +27,7 @@ class DuplicatedGameStateSanityTest {
 
         val gameReady = GameReady()
 
-        val mvAccepted = MoveMade(  gameId, replyTo, eventId, player, coord, listOf())
-
-        val beginningState = GameState()
+        val firstMove = MoveMade(  gameId, replyTo, eventId, player, coord, listOf())
 
         val factory =
             ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
@@ -39,34 +37,18 @@ class DuplicatedGameStateSanityTest {
                 gameId,
                 jsonMapper.writeValueAsString(gameReady)))
 
-        testDriver.pipeInput(
-            factory.create(
-                Topics.GAME_STATES_CHANGELOG,
-                gameId,
-                jsonMapper.writeValueAsString(beginningState)
-            )
-        )
 
         testDriver.pipeInput(
             factory.create(
                 Topics.MOVE_ACCEPTED_EV,
                 gameId,
-                jsonMapper.writeValueAsString(mvAccepted)
-            )
-        )
-
-        // Dangerously repeat!
-        testDriver.pipeInput(
-            factory.create(
-                Topics.GAME_STATES_CHANGELOG,
-                gameId,
-                jsonMapper.writeValueAsString(beginningState)
+                jsonMapper.writeValueAsString(firstMove)
             )
         )
 
 
 
-        val outputRecord =
+        val firstOutputRecord =
             testDriver.readOutput(
                 Topics.MOVE_MADE_EV,
                 UUIDDeserializer(),
@@ -75,13 +57,13 @@ class DuplicatedGameStateSanityTest {
 
 
 
-        val actual: MoveMade =
-            jsonMapper.readValue(outputRecord.value(), MoveMade::class.java)
+        val actualFirst: MoveMade =
+            jsonMapper.readValue(firstOutputRecord.value(), MoveMade::class.java)
 
-        val expected =
-            jsonMapper.writeValueAsString(mvAccepted)
+        val expectedFirst =
+            jsonMapper.writeValueAsString(firstMove)
 
-        OutputVerifier.compareKeyValue(outputRecord, actual.gameId, expected)
+        OutputVerifier.compareKeyValue(firstOutputRecord, actualFirst.gameId, expectedFirst)
 
 
         val possiblyRepeatedOutput =
@@ -98,6 +80,35 @@ class DuplicatedGameStateSanityTest {
         } catch(e: NullPointerException) {
             assert(true)
         }
+
+        val secondMove = MoveMade(gameId, UUID.randomUUID(),UUID.randomUUID(),Player.WHITE, Coord(10,10))
+
+        testDriver.pipeInput(
+            factory.create(
+                Topics.MOVE_ACCEPTED_EV,
+                gameId,
+                jsonMapper.writeValueAsString(secondMove)
+            )
+        )
+
+
+        val secondOutputRecord =
+            testDriver.readOutput(
+                Topics.MOVE_MADE_EV,
+                UUIDDeserializer(),
+                StringDeserializer()
+            )
+
+
+
+        val actualSecond: MoveMade =
+            jsonMapper.readValue(secondOutputRecord.value(), MoveMade::class.java)
+
+        val expectedSecond =
+            jsonMapper.writeValueAsString(secondMove)
+
+        OutputVerifier.compareKeyValue(secondOutputRecord, actualSecond.gameId, expectedSecond)
+
 
     }
 
