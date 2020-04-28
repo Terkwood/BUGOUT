@@ -9,6 +9,7 @@ import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
+import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
 import serdes.*
@@ -21,6 +22,18 @@ fun main() {
 
 class Aggregator(private val brokers: String) {
     fun process() {
+        val props = Properties()
+        props["bootstrap.servers"] = brokers
+        props["application.id"] = "bugout-gamestates-aggregator"
+        props["processing.guarantee"] = "exactly_once"
+
+        waitForTopics(Topics.all, props)
+
+        val streams = KafkaStreams(build(), props)
+        streams.start()
+    }
+
+    fun build(): Topology {
 
         val streamsBuilder = StreamsBuilder()
         val moveAccepted: KStream<UUID, MoveMade> =
@@ -33,8 +46,8 @@ class Aggregator(private val brokers: String) {
 
         val boardSize: KStream<UUID, Int> =
             streamsBuilder.stream<UUID, String>(
-                    GAME_READY,
-                    Consumed.with(Serdes.UUID(), Serdes.String())
+                GAME_READY,
+                Consumed.with(Serdes.UUID(), Serdes.String())
             ).mapValues { v ->
                 jsonMapper.readValue(v, GameReady::class.java).boardSize
             }
@@ -42,8 +55,8 @@ class Aggregator(private val brokers: String) {
 
         val pair: KStream<UUID, MoveMadeBoardSize> = moveAccepted
             .join(boardSize,
-            { left: MoveMade, right: Int -> MoveMadeBoardSize(left,right)},
-            JoinWindows.of(ChronoUnit.DAYS.duration),
+                { left: MoveMade, right: Int -> MoveMadeBoardSize(left,right)},
+                JoinWindows.of(ChronoUnit.DAYS.duration),
                 Joined.with(Serdes.UUID(),
                     Serdes.serdeFrom(MoveMadeSer(), MoveMadeDes()),
                     Serdes.Integer()))
@@ -54,28 +67,28 @@ class Aggregator(private val brokers: String) {
             pair
                 .groupByKey()
                 .aggregate(
-                { GameState() },
-                { _, v, gameState ->
-                    gameState.add(
-                       v.moveMade
-                    )
-                    // Make sure board size isn't lost from
-                    // turn to turn
-                    gameState.board.size = v.boardSize
-                    gameState
-                },
-                Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
-                        ByteArray>>(
-                    GAME_STATES_STORE_NAME
-                )
-                    .withKeySerde(Serdes.UUID())
-                    .withValueSerde(
-                        Serdes.serdeFrom(
-                            GameStateSer(),
-                            GameStateDes()
+                    { GameState() },
+                    { _, v, gameState ->
+                        gameState.add(
+                            v.moveMade
                         )
+                        // Make sure board size isn't lost from
+                        // turn to turn
+                        gameState.board.size = v.boardSize
+                        gameState
+                    },
+                    Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
+                            ByteArray>>(
+                        GAME_STATES_STORE_NAME
                     )
-            )
+                        .withKeySerde(Serdes.UUID())
+                        .withValueSerde(
+                            Serdes.serdeFrom(
+                                GameStateSer(),
+                                GameStateDes()
+                            )
+                        )
+                )
 
         gameStatesOut
             .toStream()
@@ -98,22 +111,12 @@ class Aggregator(private val brokers: String) {
         gameStatesIn.filter { _, v ->
             v.moves.isNotEmpty()
         }
-        .mapValues { v -> v.moves.last() }
-        .mapValues { v -> jsonMapper.writeValueAsString(v) }
-        .to(MOVE_MADE_EV,
-            Produced.with(Serdes.UUID(), Serdes.String()))
+            .mapValues { v -> v.moves.last() }
+            .mapValues { v -> jsonMapper.writeValueAsString(v) }
+            .to(MOVE_MADE_EV,
+                Produced.with(Serdes.UUID(), Serdes.String()))
 
-        val topology = streamsBuilder.build()
-
-        val props = Properties()
-        props["bootstrap.servers"] = brokers
-        props["application.id"] = "bugout-gamestates-aggregator"
-        props["processing.guarantee"] = "exactly_once"
-
-        waitForTopics(Topics.all, props)
-
-        val streams = KafkaStreams(topology, props)
-        streams.start()
+        return streamsBuilder.build()
     }
     
     private fun waitForTopics(topics: Array<String>, props:
