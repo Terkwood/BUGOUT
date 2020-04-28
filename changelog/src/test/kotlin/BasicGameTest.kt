@@ -13,7 +13,7 @@ import java.util.*
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class DuplicatedGameStateSanityTest {
+class BasicGameTest {
     private val testDriver: TopologyTestDriver = setup()
 
     @Test
