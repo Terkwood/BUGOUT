@@ -1,8 +1,8 @@
-import org.apache.kafka.common.serialization.*
+import org.apache.kafka.common.serialization.StringSerializer
+import org.apache.kafka.common.serialization.UUIDSerializer
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.TopologyTestDriver
 import org.apache.kafka.streams.test.ConsumerRecordFactory
-import org.apache.kafka.streams.test.OutputVerifier
 import org.junit.jupiter.api.*
 import serdes.jsonMapper
 import java.util.*
@@ -13,8 +13,47 @@ class DuplicatedGameStateSanityTest {
     private val testDriver: TopologyTestDriver = setup()
 
     @Test
-    fun bogus() {
-        assert(false)
+    fun duplicateGameStatesCannotTriggerDuplicateMoveMadeEvents() {
+
+        val gameId = UUID.randomUUID()
+        val replyTo = UUID.randomUUID()
+        val eventId = UUID.randomUUID()
+        val player = Player.BLACK
+        val coord = Coord(4,4)
+
+        val mvAccepted = MoveMade(  gameId, replyTo, eventId, player, coord, listOf())
+
+        val beginningState = GameState()
+
+        val factory =
+            ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
+
+        testDriver.pipeInput(
+            factory.create(
+                Topics.GAME_STATES_CHANGELOG,
+                gameId,
+                jsonMapper.writeValueAsString(beginningState)
+            )
+        )
+
+        testDriver.pipeInput(
+            factory.create(
+                Topics.MOVE_ACCEPTED_EV,
+                gameId,
+                jsonMapper.writeValueAsString(mvAccepted)
+            )
+        )
+
+        // Dangerously repeat!
+        testDriver.pipeInput(
+            factory.create(
+                Topics.GAME_STATES_CHANGELOG,
+                gameId,
+                jsonMapper.writeValueAsString(beginningState)
+            )
+        )
+
+
     }
 
     @AfterAll
