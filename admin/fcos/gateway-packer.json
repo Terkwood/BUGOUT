@@ -1,0 +1,47 @@
+{
+    "variables": {
+        "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+        "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+        "vpc_id":         "{{env `VPC_ID`}}",
+        "subnet_id":      "{{env `SUBNET_ID`}}",
+	"user_data_file", "{{env `USER_DATA_FILE`}}",
+        "region":         "us-east-1"
+    },
+    "builders": [
+        {
+            "access_key": "{{user `aws_access_key`}}",
+            "ami_name": "fcos-bugout-{{timestamp}}",
+            "instance_type": "t3.medium",
+            "region": "{{user `region`}}",
+            "vpc_id": "{{user `vpc_id`}}",
+            "subnet_id": "{{user `subnet_id`}}",
+            "secret_key": "{{user `aws_secret_key`}}",
+            "user_data_file": "{{user `user_data_file`}}",
+            "source_ami_filter": {
+              "filters": {
+                "virtualization-type": "hvm",
+                "name": "fedora-coreos-31.20200420.2.0",
+                "root-device-type": "ebs"
+              },
+              "owners": ["125523088429"],
+              "most_recent": true
+            },
+            "ssh_username": "core",
+            "type": "amazon-ebs"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "sudo rpm-ostree install htop"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline":[
+                "git clone https://github.com/Terkwood/BUGOUT.git"
+            ]
+        }
+    ]
+}
