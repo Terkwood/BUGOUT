@@ -1,4 +1,5 @@
 use super::stream::StreamData;
+use super::{AllEntryIds, RedisPool};
 use crate::topics::{BOT_ATTACHED_TOPIC, MOVE_MADE_TOPIC};
 use redis_streams::XReadEntryId;
 
@@ -6,6 +7,7 @@ use log::{error, warn};
 use r2d2_redis::redis;
 use std::collections::HashMap;
 use std::str::FromStr;
+use std::sync::Arc;
 use uuid::Uuid;
 
 /// performs a redis xread then sorts the results
@@ -23,12 +25,12 @@ const BLOCK_MSEC: u32 = 5000;
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 
 pub struct RedisXReader {
-    pub pool: super::RedisPool,
+    pub pool: Arc<RedisPool>,
 }
 impl XReader for RedisXReader {
     fn xread_sorted(
         &self,
-        entry_ids: super::AllEntryIds,
+        entry_ids: AllEntryIds,
     ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
         let mut conn = self.pool.get().unwrap();
         let xrr = redis::cmd("XREAD")

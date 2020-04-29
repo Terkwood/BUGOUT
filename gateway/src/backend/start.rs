@@ -1,9 +1,11 @@
 use crate::backend_commands::BackendCommands;
 use crate::kafka_io;
 use crate::redis_io;
+use redis_io::RedisPool;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use futures::executor::block_on;
+use std::sync::Arc;
 use std::thread;
 
 use super::*;
@@ -19,22 +21,24 @@ pub fn start_all(opts: BackendInitOptions) {
         Receiver<BackendCommands>,
     ) = unbounded();
 
+    let pool_c = opts.redis_pool.clone();
     thread::spawn(move || {
         redis_io::start(
             redis_commands_out,
-            &redis_io::xadd::RedisXAddCommands::create(),
+            &redis_io::xadd::RedisXAddCommands::create(pool_c),
         )
     });
 
     let bei = opts.backend_events_in.clone();
+    let pool_d = opts.redis_pool.clone();
     thread::spawn(move || {
         redis_io::stream::process(
             bei,
             redis_io::stream::StreamOpts {
-                entry_id_repo: redis_io::entry_id_repo::RedisEntryIdRepo::create_boxed(),
-                xreader: Box::new(redis_io::xread::RedisXReader {
-                    pool: redis_io::create_pool(),
-                }),
+                entry_id_repo: redis_io::entry_id_repo::RedisEntryIdRepo::create_boxed(
+                    pool_d.clone(),
+                ),
+                xreader: Box::new(redis_io::xread::RedisXReader { pool: pool_d }),
             },
         )
     });
@@ -61,4 +65,5 @@ pub struct BackendInitOptions {
     pub shutdown_in: Sender<KafkaShutdownEvent>,
     pub kafka_activity_in: Sender<KafkaActivityObserved>,
     pub session_commands_out: Receiver<BackendCommands>,
+    pub redis_pool: Arc<RedisPool>,
 }

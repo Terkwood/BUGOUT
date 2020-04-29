@@ -86,7 +86,7 @@ impl TryFrom<KataGoResponse> for MoveComputed {
             let left: char = ans[0];
             Some(AlphaNumCoord(
                 left,
-                alpha_num_or_pass[1..2].parse::<u16>().expect("alphanum "),
+                alpha_num_or_pass[1..].parse::<u16>().expect("alphanum"),
             ))
         };
 
@@ -132,6 +132,25 @@ mod tests {
         let expected = MoveComputed {
             game_id: GameId(Uuid::nil()),
             alphanum_coord: Some(AlphaNumCoord('B', 3)),
+            player: Player::WHITE,
+        };
+        assert_eq!(actual, expected)
+    }
+
+    #[test]
+    fn y_coord_not_truncated() {
+        let actual = MoveComputed::try_from(KataGoResponse {
+            id: Id(format!("{}_1_WHITE", Uuid::nil().to_string())),
+            turn_number: 1,
+            move_infos: vec![MoveInfo {
+                r#move: "D10".to_string(),
+                order: 0,
+            }],
+        })
+        .expect("fail");
+        let expected = MoveComputed {
+            game_id: GameId(Uuid::nil()),
+            alphanum_coord: Some(AlphaNumCoord('D', 10)),
             player: Player::WHITE,
         };
         assert_eq!(actual, expected)

@@ -45,5 +45,6 @@ fn main() {
         kafka_activity_in: mc.kafka_activity_in,
         session_commands_out: mc.session_commands_out,
         shutdown_in: mc.shutdown_in,
+        redis_pool: pool,
     })
 }

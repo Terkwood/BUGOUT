@@ -5,6 +5,7 @@ use redis_streams::XReadEntryId;
 use r2d2_redis::redis;
 use redis::Commands;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 pub trait EntryIdRepo {
     fn fetch_all(&self) -> Result<AllEntryIds, EidRepoErr>;
@@ -36,7 +37,7 @@ impl From<redis::RedisError> for EidRepoErr {
 }
 
 pub struct RedisEntryIdRepo {
-    pool: RedisPool,
+    pool: Arc<RedisPool>,
 
     pub key_provider: super::KeyProvider,
 }
@@ -80,9 +81,9 @@ impl EntryIdRepo for RedisEntryIdRepo {
 }
 
 impl RedisEntryIdRepo {
-    pub fn create_boxed() -> Box<dyn EntryIdRepo> {
+    pub fn create_boxed(pool: Arc<RedisPool>) -> Box<dyn EntryIdRepo> {
         Box::new(RedisEntryIdRepo {
-            pool: super::create_pool(),
+            pool,
             key_provider: super::KeyProvider::default(),
         })
     }

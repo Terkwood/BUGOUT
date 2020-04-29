@@ -1,6 +1,6 @@
 # File Formats
 
-The `fileformats` module is responsible for parsing files into [game trees](gametree.md). Currently, it supports `sgf`, `ngf`, and `gib` files. To access this module, use:
+The `fileformats` module is responsible for parsing files into [game trees](gametree.md). Currently, it supports `sgf`. To access this module, use:
 
 ~~~js
 const {fileformats} = sabaki.modules
@@ -12,7 +12,7 @@ const {fileformats} = sabaki.modules
 
 ## Submodules
 
-The `fileformats` module has submodules, one for each file format. Currently, it has the submodules `fileformats.sgf`, `fileformats.ngf`, and `fileformats.gib`. Each submodule has the following common members:
+The `fileformats` module has submodules, one for each file format. Currently, it has the submodules `fileformats.sgf`.. Each submodule has the following common members:
 
 ### submodule.meta
 
