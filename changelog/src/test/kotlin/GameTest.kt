@@ -13,11 +13,11 @@ import java.util.*
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BasicGameTest {
+class GameTest {
     private val testDriver: TopologyTestDriver = setup()
 
     @Test
-    fun gameTest() {
+    fun basicTest() {
 
         val gameId = UUID.randomUUID()
         val replyTo = UUID.randomUUID()
@@ -109,7 +109,11 @@ class BasicGameTest {
 
         OutputVerifier.compareKeyValue(secondOutputRecord, actualSecond.gameId, expectedSecond)
 
-
+        testDriver.readOutput(
+            Topics.GAME_STATES_CHANGELOG,
+            UUIDDeserializer(),
+            StringDeserializer()
+        )
     }
 
     @AfterAll
@@ -117,6 +121,7 @@ class BasicGameTest {
         testDriver.close()
     }
 }
+
 
 fun setup(): TopologyTestDriver {
     // setup test driver
