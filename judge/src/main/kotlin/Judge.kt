@@ -100,7 +100,7 @@ class Judge(private val brokers: String) {
                 })
 
         val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
-            guardNoNullGameState.join(
+            makeMoveCommandStream.join(
                 gameStates, keyJoiner,
                 valueJoiner
             )
