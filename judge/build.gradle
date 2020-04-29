@@ -39,7 +39,6 @@ dependencies {
             'org.assertj:assertj-core:3.12.2',
             "org.junit.jupiter:junit-jupiter-api:$junitVersion"
     )
-    testImplementation 'org.apache.kafka:kafka-streams-test-utils:2.5.0'
 }
 
 compileKotlin {
