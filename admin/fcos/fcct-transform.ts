@@ -1,4 +1,8 @@
 #!/usr/bin/env deno
-let command = "docker run  -i --rm quay.io/coreos/fcct:release --pretty --strict <  $1 > $1.ign";
 
-console.log("Wrote whatever");
+const fileName = Deno.args[0];
+const fileBase = fileName.split('.')[0];
+
+let command = `docker run  -i --rm quay.io/coreos/fcct:release --pretty --strict <  ${fileName} > ${fileBase}.ign`;
+
+console.log(`Wrote ${fileBase}.ign`);
