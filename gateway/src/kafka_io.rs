@@ -73,11 +73,17 @@ fn start_producer(kafka_out: crossbeam::Receiver<BackendCommands>) {
                     Ok(BackendCommands::QuitGame(q)) =>
                         write(&producer, QUIT_GAME_TOPIC, &serde_json::to_string(&q), &q.game_id.to_string())
                     ,
+                    Ok(BackendCommands::ReqSync(rs)) =>
+                        write(
+                            &producer,
+                            REQ_SYNC_TOPIC,
+                            &serde_json::to_string(&rs),
+                            &rs.session_id.to_string())
+                    ,
                     Ok(BackendCommands::AttachBot(_)) =>
                         trace!("Ignoring attach bot")
                     ,
                     Err(e) => error!("💩 Unable to receive command via kafka channel: {:?}", e)
-                    ,
                 }
         }
     }
@@ -209,6 +215,17 @@ async fn start_consumer(
                                 Err(e) => error!("failed to deserialize wait for opponent {}", e),
                                 Ok(c) => {
                                     flail_on_fail(events_in.send(BackendEvents::ColorsChosen(c)))
+                                }
+                            }
+                        }
+                        SYNC_REPLY_TOPIC => {
+                            let deserialized: Result<SyncReplyBackendEvent, _> =
+                                serde_json::from_str(payload);
+
+                            match deserialized {
+                                Err(e) => error!("failed to deserialize sync reply {:?}", e),
+                                Ok(sr) => {
+                                    flail_on_fail(events_in.send(BackendEvents::SyncReply(sr)))
                                 }
                             }
                         }

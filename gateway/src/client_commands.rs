@@ -36,6 +36,31 @@ pub struct AttachBotClientCommand {
     pub board_size: Option<u8>,
 }
 
+/// This command requests synchronization with the backend
+/// view of the game.  
+///
+/// The request ID should be remembered by the browser client.
+/// Any future sync replies should include a reply_to
+/// which ties to the most recent ReqSync sent by that 
+/// client.  This helps clients avoid reacting to
+/// stale updates.
+///
+/// last_move represents the last move observed by the originating
+/// browser client. Backend should respond to this data in case
+/// a move which was presumed sent by the client hasn't actually
+/// been received by gateway.  When that happens, backend should
+/// trigger a MakeMove event.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ReqSyncClientCommand {
+    pub req_id: ReqId,
+    pub player_up: Player,
+    pub turn: u32,
+    pub last_move: Option<Move>,
+}
+
+/// Events originating from the browser and
+/// being sent to gateway
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(tag = "type")]
 pub enum ClientCommands {
@@ -51,6 +76,7 @@ pub enum ClientCommands {
     Identify(Identity),
     QuitGame,
     AttachBot(AttachBotClientCommand),
+    ReqSync(ReqSyncClientCommand),
 }
 
 #[cfg(test)]

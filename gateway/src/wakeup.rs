@@ -3,7 +3,6 @@ use log::info;
 use r2d2_redis::redis;
 use redis::Commands;
 use serde_derive::{Deserialize, Serialize};
-use serde_json;
 
 use crate::model::ClientId;
 use crate::{short_uuid, EMPTY_SHORT_UUID};
