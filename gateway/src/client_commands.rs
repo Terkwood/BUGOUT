@@ -36,6 +36,18 @@ pub struct AttachBotClientCommand {
     pub board_size: Option<u8>,
 }
 
+/// This event requests synchronization with the backend
+/// view of the game.  This event includes a request ID
+/// which should be remembered by the browser client.
+/// Any future sync replies should include a reply_to
+/// which ties to the most recent ReqSync sent by a
+/// client.  This helps clients avoid reacting to
+/// stale updates.
+///
+/// This event includes the last known move to happen
+/// from the client's point of view, which can help
+/// prevent the situation where a client sends a move
+/// via websocket, which is never processed by the backend.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ReqSyncClientCommand {
