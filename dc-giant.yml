@@ -18,7 +18,7 @@ services:
       KAFKA_CREATE_TOPICS: "bugout-move-accepted-ev:1:1,bugout-move-made-ev:1:1,bugout-move-rejected-ev:1:1,bugout-make-move-cmd:1:1,bugout-game-states:1:1,bugout-provide-history-cmd:1:1,bugout-history-provided-ev:1:1,bugout-find-public-game-cmd:1:1,bugout-create-game-cmd:1:1,bugout-wait-for-opponent-ev:1:1,bugout-game-ready-ev:1:1,bugout-private-game-rejected-ev:1:1,bugout-join-private-game-cmd:1:1,bugout-game-lobby-commands:1:1,bugout-game-lobby:1:1,bugout-choose-color-pref-cmd:1:1,bugout-session-game-ready-ev:1:1,bugout-game-color-pref-ev:1:1,bugout-colors-chosen-ev:1:1,bugout-client-heartbeat-ev:1:1,bugout-shutdown-ev:1:1,bugout-session-disconnected-ev:1:1,bugout-quit-game-cmd:1:1,bugout-public-game-aggregate-store:1:1,bugout-game-participation-ev:1:1,bugout-client-participation-ev:1:1,bugout-consecutive-pass-store:1:1,bugout-req-sync-cmd:1:1,bugout-sync-reply-ev:1:1"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:z
   judge:
     build: judge/.
     links:
@@ -68,7 +68,7 @@ services:
     depends_on:
       - "kafka"
     volumes:
-      - "./reaper/.env:/var/BUGOUT/reaper/.env"
+      - "./reaper/.env:/var/BUGOUT/reaper/.env:z"
     environment:
       - ALLOWED_IDLE_SECS
       - AWS_REGION
