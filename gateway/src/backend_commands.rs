@@ -81,6 +81,7 @@ pub struct ReqSyncBackendCommand {
     pub player_up: Player,
     pub turn: u32,
     pub last_move: Option<Move>,
+    pub game_id: GameId,
 }
 
 /// Inputs to one of the backends

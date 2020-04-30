@@ -73,12 +73,13 @@ fn start_producer(kafka_out: crossbeam::Receiver<BackendCommands>) {
                     Ok(BackendCommands::QuitGame(q)) =>
                         write(&producer, QUIT_GAME_TOPIC, &serde_json::to_string(&q), &q.game_id.to_string())
                     ,
+                    Ok(BackendCommands::ReqSync(rs)) =>
+                        write(&producer, REQ_SYNC_TOPIC, &serde_json::to_string(&rs), &rs.game_id.to_string())
+                    ,
                     Ok(BackendCommands::AttachBot(_)) =>
                         trace!("Ignoring attach bot")
                     ,
-                    Ok(BackendCommands::ReqSync(_)) => todo!(),
                     Err(e) => error!("💩 Unable to receive command via kafka channel: {:?}", e)
-                    ,
                 }
         }
     }

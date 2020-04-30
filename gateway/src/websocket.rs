@@ -404,18 +404,21 @@ impl Handler for WsSession {
                 player_up,
                 last_move,
             })) => {
-                info!("📥 {} {:<8}", session_code(self), "REQSYNC");
-                if let Err(e) = self
-                    .send_to_backend(BackendCommands::ReqSync(ReqSyncBackendCommand {
-                        req_id,
-                        session_id: self.session_id,
-                        turn,
-                        player_up,
-                        last_move,
-                    }))
-                    .map_err(|e| ws::Error::from(Box::new(e)))
-                {
-                    error!("💥 Req sync {:?}", e)
+                if let Some(game_id) = self.current_game {
+                    info!("📥 {} {:<8}", session_code(self), "REQSYNC");
+                    if let Err(e) = self
+                        .send_to_backend(BackendCommands::ReqSync(ReqSyncBackendCommand {
+                            req_id,
+                            session_id: self.session_id,
+                            turn,
+                            player_up,
+                            last_move,
+                            game_id,
+                        }))
+                        .map_err(|e| ws::Error::from(Box::new(e)))
+                    {
+                        error!("💥 Req sync {:?}", e)
+                    }
                 }
 
                 Ok(())
