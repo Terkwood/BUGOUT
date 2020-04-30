@@ -76,6 +76,7 @@ fn start_producer(kafka_out: crossbeam::Receiver<BackendCommands>) {
                     Ok(BackendCommands::AttachBot(_)) =>
                         trace!("Ignoring attach bot")
                     ,
+                    Ok(BackendCommands::ReqSync(_)) => todo!(),
                     Err(e) => error!("💩 Unable to receive command via kafka channel: {:?}", e)
                     ,
                 }
