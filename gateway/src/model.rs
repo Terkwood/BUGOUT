@@ -55,6 +55,8 @@ pub struct ColorsChosenEvent {
     pub white: SessionId,
 }
 
+/// A request for a move to be made in a given game.
+/// These moves are subsequently judged for correctness.
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct MakeMoveCommand {
     #[serde(rename = "gameId")]
@@ -149,6 +151,8 @@ impl Default for Captures {
     }
 }
 
+/// The basic components of a move, used by several
+/// other data structures
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 pub struct Move {
     player: Player,
