@@ -4,6 +4,7 @@ import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
+import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
 import serdes.GameStateDeserializer
@@ -17,6 +18,25 @@ fun main() {
 
 class Judge(private val brokers: String) {
     fun process() {
+
+        val topology = build()
+
+        println(topology.describe())
+
+        val props = Properties()
+        props["bootstrap.servers"] = brokers
+        props["application.id"] = "bugout-judge"
+        props["processing.guarantee"] = "exactly_once"
+
+        waitForTopics(ALL_TOPICS, props)
+
+        val streams = KafkaStreams(topology, props)
+        streams.start()
+
+        println("Judge started")
+    }
+
+    fun build(): Topology {
 
         val streamsBuilder = StreamsBuilder()
 
@@ -70,9 +90,17 @@ class Judge(private val brokers: String) {
                 MoveCommandGameState(leftValue, rightValue)
             }
 
-        // see https://kafka.apache.org/20/documentation/streams/developer-guide/dsl-api.html#kstream-globalktable-join
+        // Distasteful workaround for https://github.com/Terkwood/BUGOUT/issues/228
+        val guardNoNullGameState: KStream<GameId, MakeMoveCmd> =
+            makeMoveCommandStream.join(gameStates,
+                KeyValueMapper { _: GameId, leftValue: MakeMoveCmd ->
+                    leftValue.gameId
+                },ValueJoiner { leftValue: MakeMoveCmd,
+                                _: GameState ->  leftValue
+                })
+
         val makeMoveCommandGameStates: KStream<GameId, MoveCommandGameState> =
-            makeMoveCommandStream.leftJoin(
+            guardNoNullGameState.join(
                 gameStates, keyJoiner,
                 valueJoiner
             )
@@ -115,21 +143,7 @@ class Judge(private val brokers: String) {
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
-        val topology = streamsBuilder.build()
-
-        println(topology.describe())
-
-        val props = Properties()
-        props["bootstrap.servers"] = brokers
-        props["application.id"] = "bugout-judge"
-        props["processing.guarantee"] = "exactly_once"
-
-        waitForTopics(ALL_TOPICS, props)
-
-        val streams = KafkaStreams(topology, props)
-        streams.start()
-
-        println("Judge started")
+        return streamsBuilder.build()
     }
 
     private fun waitForTopics(topics: Array<String>, props: java.util

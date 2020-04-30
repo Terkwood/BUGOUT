@@ -1,0 +1,34 @@
+variant: fcos
+version: 1.0.0
+passwd:
+  users:
+    - name: core
+      groups: [ docker ]
+      ssh_authorized_keys:
+        - ssh-rsa AAAA...
+storage:
+  files:
+    - path: /opt/bin/docker-compose
+      overwrite: true
+      mode: 0755
+      contents:
+        source: https://github.com/docker/compose/releases/download/1.13.0/docker-compose-Linux-x86_64
+        verification:
+          hash: sha512-9d2c4317784999064ba1b71dbcb6830dba38174b63b1b0fa922a94a7ef3479f675f0569b49e0c3361011e222df41be4f1168590f7ea871bcb0f2109f5848b897
+systemd:
+  units:
+    - name: bugout.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=BUGOUT
+        After=docker.service
+        Wants=docker.service
+
+        [Service]
+        ExecStart=/usr/bin/sh /home/core/BUGOUT/admin/fcos/start-kafka-host.sh
+
+        [Install]
+        WantedBy=multi-user.target
+
+          
