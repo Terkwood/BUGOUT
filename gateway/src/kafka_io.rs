@@ -78,7 +78,7 @@ fn start_producer(kafka_out: crossbeam::Receiver<BackendCommands>) {
                             &producer,
                             REQ_SYNC_TOPIC,
                             &serde_json::to_string(&rs),
-                            &rs.req_id.to_string())
+                            &rs.session_id.to_string())
                     ,
                     Ok(BackendCommands::AttachBot(_)) =>
                         trace!("Ignoring attach bot")
