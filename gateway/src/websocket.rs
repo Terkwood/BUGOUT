@@ -370,7 +370,7 @@ impl Handler for WsSession {
                 player: lp,
                 board_size,
             })) => {
-                info!("🗳  {} ATACHBOT", session_code(self));
+                info!("📌 {} ATACHBOT", session_code(self));
 
                 let player = match lp {
                     Player::BLACK => micro_model_moves::Player::BLACK,
@@ -398,7 +398,28 @@ impl Handler for WsSession {
                     self.current_game = Some(game_id);
                 })
             }
-            Ok(ClientCommands::ReqSync(_)) => todo!(),
+            Ok(ClientCommands::ReqSync(ReqSyncClientCommand {
+                req_id,
+                turn,
+                player_up,
+                last_move,
+            })) => {
+                info!("📥 {} {:<8}", session_code(self), "REQSYNC");
+                if let Err(e) = self
+                    .send_to_backend(BackendCommands::ReqSync(ReqSyncBackendCommand {
+                        req_id,
+                        session_id: self.session_id,
+                        turn,
+                        player_up,
+                        last_move,
+                    }))
+                    .map_err(|e| ws::Error::from(Box::new(e)))
+                {
+                    error!("💥 Req sync {:?}", e)
+                }
+
+                Ok(())
+            }
             Err(_err) => {
                 error!(
                     "💥 {} {:<8} message deserialization {}",
@@ -518,6 +539,9 @@ impl Handler for WsSession {
                                 m.player,
                                 m.coord
                             ),
+                            ClientEvents::SyncReply(_) => {
+                                info!("📤 {} {:<8}", session_code(self), "SYNCRPLY")
+                            }
                             _ => (),
                         }
 

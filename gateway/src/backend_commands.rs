@@ -75,7 +75,7 @@ pub struct QuitGameCommand {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ReqSyncCommand {
+pub struct ReqSyncBackendCommand {
     pub session_id: SessionId,
     pub req_id: ReqId,
     pub player_up: Player,
@@ -96,5 +96,5 @@ pub enum BackendCommands {
     SessionDisconnected(SessionDisconnected),
     QuitGame(QuitGameCommand),
     AttachBot(micro_model_bot::gateway::AttachBot),
-    ReqSync(ReqSyncCommand),
+    ReqSync(ReqSyncBackendCommand),
 }
