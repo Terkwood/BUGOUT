@@ -20,6 +20,7 @@ pub enum ClientEvents {
     IdentityAcknowledged(Identity),
     OpponentQuit,
     BotAttached(micro_model_bot::gateway::BotAttached),
+    SyncReply(SyncReplyEvent),
 }
 
 impl ClientEvents {
@@ -33,6 +34,7 @@ impl ClientEvents {
             ClientEvents::WaitForOpponent(w) => Some(w.game_id),
             ClientEvents::YourColor(y) => Some(y.game_id),
             ClientEvents::BotAttached(b) => Some(b.game_id.0),
+            ClientEvents::SyncReply(s) => Some(s.game_id),
             _ => None, // priv game rejected, see https://github.com/Terkwood/BUGOUT/issues/90
         }
     }
@@ -85,4 +87,14 @@ pub struct YourColorEvent {
     pub game_id: GameId,
     #[serde(rename = "yourColor")]
     pub your_color: Player,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncReplyEvent {
+    pub reply_to: ReqId,
+    pub player_up: Player,
+    pub turn: u32,
+    pub moves: Vec<Move>,
+    pub game_id: GameId,
 }
