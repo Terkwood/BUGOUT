@@ -22,7 +22,7 @@ pub enum ClientEvents {
     IdentityAcknowledged(Identity),
     OpponentQuit,
     BotAttached(micro_model_bot::gateway::BotAttached),
-    SyncReply(SyncReplyEvent),
+    SyncReply(SyncReplyClientEvent),
 }
 
 impl ClientEvents {
@@ -99,7 +99,7 @@ pub struct YourColorEvent {
 /// not tied to its most recent ReqSync.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct SyncReplyEvent {
+pub struct SyncReplyClientEvent {
     pub reply_to: ReqId,
     pub player_up: Player,
     pub turn: u32,

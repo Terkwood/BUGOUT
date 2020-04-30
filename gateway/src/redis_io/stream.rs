@@ -18,13 +18,11 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
                             (entry_id, StreamData::BotAttached(b)) => {
                                 if let Err(e) = events_in.send(BackendEvents::BotAttached(b)) {
                                     error!("send err bot attached {:?}", e)
-                                } else {
-                                    if let Err(e) = opts
-                                        .entry_id_repo
-                                        .update(EntryIdType::BotAttached, entry_id)
-                                    {
-                                        error!("err tracking EID bot attached {:?}", e)
-                                    }
+                                } else if let Err(e) = opts
+                                    .entry_id_repo
+                                    .update(EntryIdType::BotAttached, entry_id)
+                                {
+                                    error!("err tracking EID bot attached {:?}", e)
                                 }
                             }
                             (

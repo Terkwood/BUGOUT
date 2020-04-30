@@ -1,6 +1,6 @@
 use crossbeam::{Receiver, Sender};
 use crossbeam_channel::select;
-use log::{error, info};
+use log::{error, info, warn};
 use std::collections::HashMap;
 use std::ops::Add;
 use std::thread;
@@ -81,7 +81,7 @@ impl Router {
                     }
                 }
             } else {
-                info!("NO GAME SESSIONS for {:?}", ev); // todo
+                warn!("No match {:?}", ev);
             }
         }
     }

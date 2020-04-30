@@ -70,7 +70,19 @@ impl BackendEvents {
             }
 
             BackendEvents::BotAttached(ba) => ClientEvents::BotAttached(ba),
-            BackendEvents::SyncReply(_) => todo!(),
+            BackendEvents::SyncReply(SyncReplyBackendEvent {
+                session_id: _,
+                game_id: _,
+                player_up,
+                reply_to,
+                turn,
+                moves,
+            }) => ClientEvents::SyncReply(SyncReplyClientEvent {
+                player_up,
+                turn,
+                reply_to,
+                moves,
+            }),
         }
     }
 
