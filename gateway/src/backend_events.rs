@@ -16,6 +16,7 @@ pub enum BackendEvents {
     WaitForOpponent(WaitForOpponentBackendEvent),
     ColorsChosen(ColorsChosenEvent),
     BotAttached(micro_model_bot::gateway::BotAttached),
+    SyncReply(SyncReplyBackendEvent),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -68,6 +69,7 @@ impl BackendEvents {
             }
 
             BackendEvents::BotAttached(ba) => ClientEvents::BotAttached(ba),
+            BackendEvents::SyncReply(_) => todo!(),
         }
     }
 
@@ -81,6 +83,7 @@ impl BackendEvents {
             BackendEvents::WaitForOpponent(e) => e.game_id,
             BackendEvents::ColorsChosen(e) => e.game_id,
             BackendEvents::BotAttached(e) => e.game_id.0,
+            BackendEvents::SyncReply(e) => e.game_id,
         }
     }
 }
@@ -117,4 +120,15 @@ pub struct PrivateGameRejectedBackendEvent {
     pub session_id: SessionId,
     #[serde(rename = "eventId")]
     pub event_id: EventId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncReplyBackendEvent {
+    pub session_id: SessionId,
+    pub reply_to: ReqId,
+    pub player_up: Player,
+    pub turn: u32,
+    pub moves: Vec<Move>,
+    pub game_id: GameId,
 }
