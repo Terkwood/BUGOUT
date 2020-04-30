@@ -34,7 +34,6 @@ impl ClientEvents {
             ClientEvents::WaitForOpponent(w) => Some(w.game_id),
             ClientEvents::YourColor(y) => Some(y.game_id),
             ClientEvents::BotAttached(b) => Some(b.game_id.0),
-            ClientEvents::SyncReply(s) => Some(s.game_id),
             _ => None, // priv game rejected, see https://github.com/Terkwood/BUGOUT/issues/90
         }
     }
