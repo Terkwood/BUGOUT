@@ -73,6 +73,8 @@ pub struct QuitGameCommand {
     pub game_id: GameId,
 }
 
+/// This command is intended to be keyed with ReqId
+/// when it arrives at its kafka stream.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ReqSyncBackendCommand {
