@@ -15,6 +15,7 @@ pub const WAIT_FOR_OPPONENT_TOPIC: &str = "bugout-wait-for-opponent-ev";
 pub const COLORS_CHOSEN_TOPIC: &str = "bugout-colors-chosen-ev";
 pub const CLIENT_HEARTBEAT_TOPIC: &str = "bugout-client-heartbeat-ev";
 pub const SESSION_DISCONNECTED_TOPIC: &str = "bugout-session-disconnected-ev";
+pub const SYNC_REPLY_TOPIC: &str = "bugout-sync-reply-ev";
 
 pub const ATTACH_BOT_TOPIC: &str = "bugout-attach-bot-cmd";
 pub const BOT_ATTACHED_TOPIC: &str = "bugout-bot-attached-ev";
