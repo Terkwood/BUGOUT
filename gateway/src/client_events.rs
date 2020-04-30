@@ -95,5 +95,4 @@ pub struct SyncReplyEvent {
     pub player_up: Player,
     pub turn: u32,
     pub moves: Vec<Move>,
-    pub game_id: GameId,
 }
