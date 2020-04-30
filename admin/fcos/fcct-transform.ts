@@ -1,8 +1,6 @@
-#!/usr/bin/env deno
+#!/usr/bin/env -S deno --allow-run
 
-const fileName = Deno.args[0];
-const fileBase = fileName.split('.')[0];
+let cmd = [`/usr/bin/docker run  -i --rm quay.io/coreos/fcct:release --pretty --strict `];
 
-let command = `docker run  -i --rm quay.io/coreos/fcct:release --pretty --strict <  ${fileName} > ${fileBase}.ign`;
+let ranCmd = await Deno.run({ cmd });
 
-console.log(`Wrote ${fileBase}.ign`);
