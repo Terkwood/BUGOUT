@@ -1,4 +1,4 @@
-const EDITION = 'Super'
+const EDITION = 'Grid'
 
 const EventEmitter = require('events')
 const {ipcRenderer, remote} = require('electron')
