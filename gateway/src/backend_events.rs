@@ -6,6 +6,7 @@ use crate::client_events::*;
 use crate::compact_ids::CompactId;
 use crate::model::*;
 
+/// Events produced by either Kafka or Redis Streams
 #[derive(Debug)]
 pub enum BackendEvents {
     MoveMade(MoveMadeEvent),

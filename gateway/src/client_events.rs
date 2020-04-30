@@ -5,6 +5,8 @@ use crate::env::*;
 use crate::idle_status::IdleStatus;
 use crate::model::*;
 
+/// Events which will be sent to the browser
+/// from gateway
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum ClientEvents {
@@ -88,6 +90,13 @@ pub struct YourColorEvent {
     pub your_color: Player,
 }
 
+/// This event announces the data-layer view
+/// of the game, including player, turn, and
+/// moves made.  The reply_to field is used
+/// to indicate which ReqSync command triggered
+/// this SyncReply.  Browser is advised
+/// to discard any SyncReplies that are
+/// not tied to its most recent ReqSync.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncReplyEvent {

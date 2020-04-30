@@ -83,6 +83,7 @@ pub struct ReqSyncCommand {
     pub last_move: Option<Move>,
 }
 
+/// Inputs to one of the backends
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum BackendCommands {
     MakeMove(MakeMoveCommand),

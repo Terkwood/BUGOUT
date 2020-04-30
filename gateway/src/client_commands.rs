@@ -45,6 +45,8 @@ pub struct ReqSyncClientCommand {
     pub last_move: Option<Move>,
 }
 
+/// Events originating from the browser and
+/// being sent to gateway
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(tag = "type")]
 pub enum ClientCommands {
