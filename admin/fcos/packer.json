@@ -4,7 +4,7 @@
         "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
         "vpc_id":         "{{env `VPC_ID`}}",
         "subnet_id":      "{{env `SUBNET_ID`}}",
-	"user_data_file": "{{env `USER_DATA_FILE`}}",
+	    "user_data_file": "{{env `USER_DATA_FILE`}}",
         "region":         "us-east-1"
     },
     "builders": [
@@ -12,6 +12,7 @@
             "access_key": "{{user `aws_access_key`}}",
             "ami_name": "fcos-bugout-{{timestamp}}",
             "instance_type": "t3.medium",
+            "volume_size": 16,
             "region": "{{user `region`}}",
             "vpc_id": "{{user `vpc_id`}}",
             "subnet_id": "{{user `subnet_id`}}",
