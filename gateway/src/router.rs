@@ -94,7 +94,7 @@ impl Router {
             .clone()
     }
 
-    /// Note that the game state somehow changed, so that
+    /// Note that the game is active, so that
     /// we don't purge it prematurely in cleanup_game_clients()
     pub fn observe_game(&mut self, game_id: GameId) {
         self.game_sessions
@@ -319,8 +319,14 @@ pub fn start(
                         // We want to forward by session ID
                         // so that we don't send TWO yourcolor events
                         // to each client
-                        router.forward_by_session_id(black,ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
-                        router.forward_by_session_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
+                        router.forward_by_session_id(black, ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK }));
+                        router.forward_by_session_id(white, ClientEvents::YourColor(YourColorEvent{ game_id, your_color: Player::WHITE }));
+                    },
+                    Ok(BackendEvents::SyncReply(sr)) => {
+                        let sess = sr.session_id.clone();
+                        let e = BackendEvents::SyncReply(sr);
+                        router.observe_game(e.game_id());
+                        router.forward_by_session_id(sess, e.to_client_event());
                     },
                     Ok(e) => {
                         router.observe_game(e.game_id());
