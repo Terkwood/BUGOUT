@@ -398,6 +398,7 @@ impl Handler for WsSession {
                     self.current_game = Some(game_id);
                 })
             }
+            Ok(ClientCommands::ReqSync(_)) => todo!(),
             Err(_err) => {
                 error!(
                     "💥 {} {:<8} message deserialization {}",

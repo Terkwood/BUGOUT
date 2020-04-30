@@ -149,7 +149,7 @@ impl Default for Captures {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 pub struct Move {
     player: Player,
     coord: Option<Coord>,

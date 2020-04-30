@@ -36,6 +36,15 @@ pub struct AttachBotClientCommand {
     pub board_size: Option<u8>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ReqSyncClientCommand {
+    pub req_id: ReqId,
+    pub player_up: Player,
+    pub turn: u32,
+    pub last_move: Option<Move>,
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(tag = "type")]
 pub enum ClientCommands {
@@ -51,6 +60,7 @@ pub enum ClientCommands {
     Identify(Identity),
     QuitGame,
     AttachBot(AttachBotClientCommand),
+    ReqSync(ReqSyncClientCommand),
 }
 
 #[cfg(test)]
