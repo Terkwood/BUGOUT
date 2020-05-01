@@ -53,6 +53,12 @@
         },
         {
             "type": "shell",
+            "inline": [
+                "sudo rpm-ostree install tmux"
+            ]
+        },
+        {
+            "type": "shell",
             "inline":[
                 "git clone https://github.com/Terkwood/BUGOUT.git"
             ]
