@@ -50,6 +50,13 @@
             "inline":[
                 "git clone https://github.com/Terkwood/BUGOUT.git"
             ]
+        },
+        {
+            "type": "shell",
+            "inline":[
+                "cd /home/core/BUGOUT",
+		"sh build-tiny-dc.sh"
+            ]
         }
     ]
 }
