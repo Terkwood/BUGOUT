@@ -4,7 +4,8 @@
         "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
         "vpc_id":         "{{env `VPC_ID`}}",
         "subnet_id":      "{{env `SUBNET_ID`}}",
-	    "user_data_file": "{{env `USER_DATA_FILE`}}",
+	"user_data_file": "{{env `USER_DATA_FILE`}}",
+	"env_src":        "{{env `ENV_SRC`}}",
         "region":         "us-east-1"
     },
     "builders": [
@@ -39,6 +40,11 @@
         }
     ],
     "provisioners": [
+	{
+	    "type": "file",
+	    "destination": "/home/core/BUGOUT/gateway/",
+	    "source": "{{user `env_src`}}/gateway/.env"
+	},
         {
             "type": "shell",
             "inline": [
