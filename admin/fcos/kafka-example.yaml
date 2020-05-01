@@ -3,7 +3,7 @@ version: 1.0.0
 passwd:
   users:
     - name: core
-      groups: [ docker ]
+      groups: [docker]
       ssh_authorized_keys:
         - ssh-rsa AAAA...
 storage:
@@ -30,5 +30,3 @@ systemd:
 
         [Install]
         WantedBy=multi-user.target
-
-          
