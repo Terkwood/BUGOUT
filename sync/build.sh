@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROJ_NAME="bugout.participation"
+PROJ_NAME="bugout.sync"
 
 rm -f ./build/libs/$PROJ_NAME*.jar
 gradle $* build
