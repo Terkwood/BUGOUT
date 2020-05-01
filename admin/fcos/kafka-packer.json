@@ -4,7 +4,7 @@
         "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
         "vpc_id":         "{{env `VPC_ID`}}",
         "subnet_id":      "{{env `SUBNET_ID`}}",
-	    "user_data_file": "{{env `USER_DATA_FILE`}}",
+        "user_data_file": "{{env `USER_DATA_FILE`}}",
         "region":         "us-east-1"
     },
     "builders": [
@@ -55,7 +55,7 @@
             "type": "shell",
             "inline":[
                 "cd /home/core/BUGOUT",
-		"sh build-tiny-dc.sh"
+		"sh build-giant-dc.sh"
             ]
         }
     ]
