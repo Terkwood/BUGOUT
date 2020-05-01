@@ -69,7 +69,7 @@
     },
     {
       "type": "shell",
-      "inline": ["cd /home/core/BUGOUT", "sh build-tiny-dc.sh"]
+      "inline": ["cd /home/core/BUGOUT", "sh build-tiny-dc-fcos.sh"]
     }
   ]
 }

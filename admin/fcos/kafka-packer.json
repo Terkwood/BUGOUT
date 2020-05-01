@@ -59,7 +59,7 @@
     },
     {
       "type": "shell",
-      "inline": ["cd /home/core/BUGOUT", "sh build-giant-dc.sh"]
+      "inline": ["cd /home/core/BUGOUT", "sh build-giant-dc-fcos.sh"]
     }
   ]
 }
