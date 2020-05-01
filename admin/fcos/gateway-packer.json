@@ -5,7 +5,7 @@
         "vpc_id":         "{{env `VPC_ID`}}",
         "subnet_id":      "{{env `SUBNET_ID`}}",
 	"user_data_file": "{{env `USER_DATA_FILE`}}",
-	"env_src":        "{{env `ENV_SRC`}}",
+	"dotenv_src":     "{{env `DOTENV_SRC`}}",
         "region":         "us-east-1"
     },
     "builders": [
@@ -43,7 +43,17 @@
 	{
 	    "type": "file",
 	    "destination": "/home/core/BUGOUT/gateway/",
-	    "source": "{{user `env_src`}}/gateway/.env"
+	    "source": "{{user `dotenv_src`}}/gateway/.env"
+	},
+	{
+	    "type": "file",
+	    "destination": "/home/core/BUGOUT/bugle/",
+	    "source": "{{user `dotenv_src`}}/bugle/.env"
+	},
+	{
+	    "type": "file",
+	    "destination": "/home/core/BUGOUT/botlink/",
+	    "source": "{{user `dotenv_src`}}/botlink/.env"
 	},
         {
             "type": "shell",

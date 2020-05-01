@@ -5,6 +5,7 @@
         "vpc_id":         "{{env `VPC_ID`}}",
         "subnet_id":      "{{env `SUBNET_ID`}}",
         "user_data_file": "{{env `USER_DATA_FILE`}}",
+        "dotenv_src":     "{{env `DOTENV_SRC`}}",
         "region":         "us-east-1"
     },
     "builders": [
@@ -39,6 +40,11 @@
         }
     ],
     "provisioners": [
+        {
+	    "type": "file",
+	    "destination": "/home/core/BUGOUT/reaper/",
+	    "source": "{{user `dotenv_src`}}/reaper/.env"
+	},
         {
             "type": "shell",
             "inline": [
