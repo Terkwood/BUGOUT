@@ -41,6 +41,10 @@
   ],
   "provisioners": [
     {
+      "type": "shell",
+      "inline": ["git clone https://github.com/Terkwood/BUGOUT.git"]
+    },
+    {
       "type": "file",
       "destination": "/home/core/BUGOUT/gateway/",
       "source": "{{user `dotenv_src`}}/gateway/.env"
@@ -62,10 +66,6 @@
     {
       "type": "shell",
       "inline": ["sudo rpm-ostree install tmux"]
-    },
-    {
-      "type": "shell",
-      "inline": ["git clone https://github.com/Terkwood/BUGOUT.git"]
     },
     {
       "type": "shell",
