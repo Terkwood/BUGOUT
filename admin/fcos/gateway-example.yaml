@@ -35,3 +35,25 @@ systemd:
 
         [Install]
         WantedBy=multi-user.target
+    - name: config-redis.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Configure kernel for redis
+
+        [Service]
+        ExecStart=/usr/bin/sh /home/core/BUGOUT/admin/config-redis.sh
+
+        [Install]
+        WantedBy=multi-user.target
+    - name: config-ulimit.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Configures ulimit (useful for reverse-proxy)
+
+        [Service]
+        ExecStart=ulimit -n 8192
+
+        [Install]
+        WantedBy=multi-user.target
