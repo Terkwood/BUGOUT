@@ -1,8 +1,9 @@
+import java.util.Properties
+import java.util.TimeZone
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.Topology
-import java.util.*
 
 const val BROKERS = "kafka:9092"
 
@@ -29,17 +30,20 @@ class Application(private val brokers: String) {
         streams.start()
     }
 
-    fun build() : Topology {
+    fun build(): Topology {
         TODO()
     }
 
-    private fun waitForTopics(topics: Array<String>, props:
-    Properties) {
+    private fun waitForTopics(
+        topics: Array<String>,
+        props:
+            Properties
+    ) {
         print("⏲ Waiting for topics ")
         val client = AdminClient.create(props)
 
         var topicsReady = false
-        while(!topicsReady) {
+        while (!topicsReady) {
             val found = client.listTopics().names().get()
 
             val diff = topics.subtract(found.filterNotNull())
