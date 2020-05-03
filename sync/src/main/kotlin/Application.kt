@@ -1,10 +1,15 @@
 
-import java.util.Properties
-import java.util.TimeZone
 import org.apache.kafka.clients.admin.AdminClient
+import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.KafkaStreams
+import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.Topology
+import org.apache.kafka.streams.kstream.Consumed
+import org.apache.kafka.streams.kstream.KStream
+import serdes.jsonMapper
+import java.util.Properties
+import java.util.TimeZone
 
 const val BROKERS = "kafka:9092"
 
@@ -32,13 +37,30 @@ class Application(private val brokers: String) {
     }
 
     fun build(): Topology {
-        TODO("write something. please.")
+        val streamsBuilder = StreamsBuilder()
+        val reqSyncIn: KStream<SessionId, ReqSyncCmd> = streamsBuilder
+            .stream(
+                Topics.REQ_SYNC_CMD,
+                Consumed.with(Serdes.UUID(), Serdes.String()))
+            .mapValues { v -> jsonMapper.readValue(v,
+                            ReqSyncCmd::class.java) }
 
-        TODO("in the event that the service layer needs to catch up with the " +
-                "client's last move, we _must not_ emit the sync reply until " +
-                "we hear the move confirmed on bugout-move-made-ev")
+        TODO("write Provide History Cmd")
 
-        TODO("make sure everything is done")
+        TODO("join reqSyncIn to History Provided Event")
+
+        TODO("BRANCHES:")
+
+        TODO("branch 1. client is ahead of server.")
+        TODO("branch 1. write to make move cmd")
+        TODO("branch 1. in the event that the service layer needs " +
+            "to catch up with  the  client's last move, we _must not_ emit " +
+            "the  sync reply until   we hear the move confirmed on  " +
+            "bugout-move-made-ev")
+
+        TODO("branch 2. no - op: send server view")
+
+        TODO("branch 3 - client is behind server: send server view")
     }
 
     private fun waitForTopics(
