@@ -10,6 +10,7 @@ data class MakeMoveCmd(
 
 /**
  * An event signalling the acceptance of a move.
+ * This is emitted by changelog service.
  */
 data class MoveMadeEv(
     val gameId: GameId,
