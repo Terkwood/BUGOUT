@@ -1,12 +1,11 @@
-import java.util.Properties
-import java.util.UUID
 import org.apache.kafka.common.serialization.Serdes
-import org.apache.kafka.streams.StreamsConfig
-import org.apache.kafka.streams.TestInputTopic
-import org.apache.kafka.streams.TopologyTestDriver
+import org.apache.kafka.streams.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import serdes.jsonMapper
+import java.util.*
+
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TopologyTest {
@@ -28,6 +27,8 @@ class TopologyTest {
         val lastMove = moves[moves.size - 1]
         val reqSync = ReqSyncCmd(sessionId, reqId, gameId, playerUp, turn, lastMove)
 
+        val uuidSerde =  Serdes.UUID()
+        val stringSerde = Serdes.String()
         val reqSyncIn: TestInputTopic<UUID, String> =
                 testDriver.createInputTopic(
                         Topics.REQ_SYNC_CMD,
@@ -45,12 +46,28 @@ class TopologyTest {
 
         val historyProvidedIn: TestInputTopic<UUID, String> =
                 testDriver.createInputTopic(Topics.HISTORY_PROVIDED_EV,
-                        Serdes.UUID().serializer(), Serdes.String().serializer())
-        historyProvidedIn.pipeInput(gameId, jsonMapper.writeValueAsString(historyProvided))
+                       uuidSerde.serializer(),
+                        stringSerde.serializer())
+        historyProvidedIn.pipeInput(gameId,
+                jsonMapper.writeValueAsString(historyProvided))
 
         // check to make sure that sync service outputs
         // a reply that won't require the client to do anything
-        TODO()
+        val syncReplyOut: TestOutputTopic<UUID, String> =
+                testDriver.createOutputTopic(Topics.SYNC_REPLY_EV,
+                        uuidSerde.deserializer(), stringSerde.deserializer())
+
+        val expected = SyncReplyEv(
+                sessionId=sessionId,
+                replyTo = reqId,
+                moves = moves,
+                gameId = gameId,
+                playerUp = playerUp,
+                turn = turn
+        )
+
+        assertEquals(syncReplyOut.readKeyValue(),
+                (KeyValue(sessionId, jsonMapper.writeValueAsString(expected))))
     }
 }
 
