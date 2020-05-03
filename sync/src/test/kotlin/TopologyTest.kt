@@ -1,6 +1,4 @@
 
-import java.util.Properties
-import java.util.UUID
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsConfig
@@ -12,6 +10,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import serdes.jsonMapper
+import java.util.Properties
+import java.util.UUID
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TopologyTest {
@@ -54,8 +54,8 @@ class TopologyTest {
         val historyProvidedIn: TestInputTopic<UUID, String> =
                 testDriver.createInputTopic(
                         Topics.HISTORY_PROVIDED_EV,
-                        uuidSerde.serializer(),
-                        stringSerde.serializer())
+                        Serdes.UUID().serializer(),
+                         Serdes.String().serializer())
         historyProvidedIn.pipeInput(gameId,
                 jsonMapper.writeValueAsString(historyProvided))
 
@@ -140,8 +140,9 @@ class TopologyTest {
                 turn = turn
         )
 
-        assertEquals(syncReplyOut.readKeyValue(),
-                (KeyValue(sessionId, jsonMapper.writeValueAsString(expected))))
+        assertEquals(
+                (KeyValue(sessionId, jsonMapper.writeValueAsString(expected))),
+                syncReplyOut.readKeyValue())
     }
 
     @Test
@@ -154,14 +155,17 @@ class TopologyTest {
                 Move(Player.WHITE, Coord(10, 10), 2),
                 Move(Player.BLACK, Coord(4, 5), 3)
         )
-        val serverMoves = clientMoves.subList(0, clientMoves.size - 1)
+        val serverMoves = listOf(
+                Move(Player.BLACK, Coord(4, 4), 1),
+                Move(Player.WHITE, Coord(10, 10), 2)
+        )
         val gameId = UUID.randomUUID()
         val reqId = UUID.randomUUID()
         val sessionId = UUID.randomUUID()
 
         // client sends a request which indicates that
         // server has missed a move
-        val clientLastMove = clientMoves[clientMoves.size - 1]
+        val clientLastMove = clientMoves.last()
         val reqSync = ReqSyncCmd(sessionId = sessionId,
                 reqId = reqId,
                 gameId = gameId,
@@ -188,14 +192,15 @@ class TopologyTest {
 
         val historyProvidedIn: TestInputTopic<UUID, String> =
                 testDriver.createInputTopic(Topics.HISTORY_PROVIDED_EV,
-                        uuidSerde.serializer(),
-                        stringSerde.serializer())
-        historyProvidedIn.pipeInput(gameId,
-                jsonMapper.writeValueAsString(historyProvided))
+                        Serdes.UUID().serializer(),
+                        Serdes.String().serializer())
+        historyProvidedIn.pipeInput(
+            gameId,
+            jsonMapper.writeValueAsString(historyProvided)
+        )
 
-        // check to make sure that we output the client move
-        // to make move cmd
-
+        // check to make sure that the make move command
+        // was emitted
         val makeMoveCmdOut: TestOutputTopic<UUID, String> =
                 testDriver.createOutputTopic(Topics.MAKE_MOVE_CMD,
                         uuidSerde.deserializer(), stringSerde.deserializer())
@@ -203,27 +208,26 @@ class TopologyTest {
         val expectedMakeMove = MakeMoveCmd(
                 gameId = gameId,
                 reqId = reqId,
-                player = clientPlayerUp,
+                player = otherPlayer(clientPlayerUp),
                 coord = clientLastMove.coord
         )
 
-        assertEquals(makeMoveCmdOut.readKeyValue(),
-                (KeyValue(sessionId,
-                        jsonMapper.writeValueAsString(expectedMakeMove))))
+        assertEquals((KeyValue(gameId,
+                jsonMapper.writeValueAsString(expectedMakeMove))),
+                makeMoveCmdOut.readKeyValue())
 
         // artificially introduce a move-made event, so that
         // we can safely state that everyone is on the same page
         val moveMade = MoveMadeEv(gameId = gameId, replyTo = reqId,
-            eventId = UUID.randomUUID(), player = clientPlayerUp,
+            eventId = UUID.randomUUID(), player = clientLastMove.player,
             coord = clientLastMove.coord)
 
         val moveMadeIn: TestInputTopic<UUID, String> =
                 testDriver.createInputTopic(Topics.MOVE_MADE_EV,
-                        uuidSerde.serializer(),
-                        stringSerde.serializer())
+                        Serdes.UUID().serializer(),
+                        Serdes.String().serializer())
 
-        moveMadeIn.pipeInput(gameId,
-                jsonMapper.writeValueAsString(moveMade))
+        moveMadeIn.pipeInput(gameId, jsonMapper.writeValueAsString(moveMade))
 
         // check to make sure that sync service outputs
         // a reply that won't require the client to do anything
@@ -240,9 +244,9 @@ class TopologyTest {
                 turn = clientTurn
         )
 
-        assertEquals(syncReplyOut.readKeyValue(),
-                (KeyValue(sessionId,
-                        jsonMapper.writeValueAsString(expectedSyncReply))))
+        assertEquals((KeyValue(sessionId,
+                jsonMapper.writeValueAsString(expectedSyncReply))),
+                syncReplyOut.readKeyValue())
     }
 
     @AfterAll
@@ -256,5 +260,13 @@ fun setup(): TopologyTestDriver {
     props[StreamsConfig.APPLICATION_ID_CONFIG] = "test-bugout-sync"
     props[StreamsConfig.BOOTSTRAP_SERVERS_CONFIG] = "dummy:1234"
     props[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = "exactly_once"
-    return TopologyTestDriver(Application("dummy-brokers").build(), props)
+    /*props[StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG] =
+            Serdes.UUID()::class.java.name
+    props[StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG]=Serdes.String()::class
+            .java.name
+*/
+    val topology = Application("dummy-brokers").build()
+    println(topology.describe())
+
+    return TopologyTestDriver(topology, props)
 }

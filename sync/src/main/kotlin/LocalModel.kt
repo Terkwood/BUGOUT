@@ -14,7 +14,11 @@ data class Coord(val x: Int, val y: Int)
  */
 data class Move(val player: Player, val coord: Coord?, val turn: Int)
 
-data class ReqSyncHistProv(
+data class HistProvReply(
     val reqSync: ReqSyncCmd,
-    val histProv: HistoryProvidedEv
+    val histProv: HistoryProvidedEv,
+    val systemTurn: Int,
+    val systemPlayerUp: Player
 )
+
+data class SystemMoved(val hist: HistProvReply, val moved: MoveMadeEv)
