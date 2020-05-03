@@ -13,3 +13,8 @@ data class Coord(val x: Int, val y: Int)
  * This matches the shape used by gateway service and the browser client.
  */
 data class Move(val player: Player, val coord: Coord?, val turn: Int)
+
+data class ReqSyncHistProv(
+    val reqSync: ReqSyncCmd,
+    val histProv: HistoryProvidedEv
+)

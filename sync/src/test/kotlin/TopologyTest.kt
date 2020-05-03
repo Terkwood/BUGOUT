@@ -48,7 +48,7 @@ class TopologyTest {
 
         // this is the response we would expect from history provider.
         // sync service will consume this to complete its reply
-        val historyProvided = HistoryProvided(gameId, replyTo = reqId,
+        val historyProvided = HistoryProvidedEv(gameId, replyTo = reqId,
                 eventId = UUID.randomUUID(), moves = moves)
 
         val historyProvidedIn: TestInputTopic<UUID, String> =
@@ -115,7 +115,7 @@ class TopologyTest {
 
         // this is the response we would expect from history provider.
         // sync service will consume this to complete its reply
-        val historyProvided = HistoryProvided(gameId, replyTo = reqId,
+        val historyProvided = HistoryProvidedEv(gameId, replyTo = reqId,
                 eventId = UUID.randomUUID(), moves = moves)
 
         val historyProvidedIn: TestInputTopic<UUID, String> =
@@ -183,7 +183,7 @@ class TopologyTest {
 
         // this is the response we would expect from history provider.
         // sync service will consume this to complete its reply
-        val historyProvided = HistoryProvided(gameId, replyTo = reqId,
+        val historyProvided = HistoryProvidedEv(gameId, replyTo = reqId,
                 eventId = UUID.randomUUID(), moves = serverMoves)
 
         val historyProvidedIn: TestInputTopic<UUID, String> =

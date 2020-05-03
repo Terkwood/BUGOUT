@@ -1,15 +1,23 @@
 
+import java.time.temporal.ChronoUnit
+import java.util.Properties
+import java.util.TimeZone
+import java.util.UUID
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.KafkaStreams
+import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.kstream.Consumed
+import org.apache.kafka.streams.kstream.JoinWindows
+import org.apache.kafka.streams.kstream.Joined
 import org.apache.kafka.streams.kstream.KStream
+import org.apache.kafka.streams.kstream.KeyValueMapper
+import org.apache.kafka.streams.kstream.Produced
+import org.apache.kafka.streams.kstream.ValueJoiner
 import serdes.jsonMapper
-import java.util.Properties
-import java.util.TimeZone
 
 const val BROKERS = "kafka:9092"
 
@@ -38,16 +46,46 @@ class Application(private val brokers: String) {
 
     fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
-        val reqSyncIn: KStream<SessionId, ReqSyncCmd> = streamsBuilder
+        val reqSyncStream: KStream<SessionId, ReqSyncCmd> = streamsBuilder
             .stream(
                 Topics.REQ_SYNC_CMD,
                 Consumed.with(Serdes.UUID(), Serdes.String()))
             .mapValues { v -> jsonMapper.readValue(v,
                             ReqSyncCmd::class.java) }
 
-        TODO("write Provide History Cmd")
+        reqSyncStream
+            .map { k, v ->
+                KeyValue(v.gameId,
+                    ProvideHistoryCmd(gameId = v.gameId, reqId = v.reqId))
+            }
+            .mapValues { v -> jsonMapper.writeValueAsString(v) }
+            .to(Topics.PROVIDE_HISTORY_CMD,
+                Produced.with(Serdes.UUID(), Serdes.String()))
 
-        TODO("join reqSyncIn to History Provided Event")
+        val histProvStream: KStream<GameId, HistoryProvidedEv> = streamsBuilder
+            .stream(
+                Topics.HISTORY_PROVIDED_EV,
+                Consumed.with(Serdes.UUID(), Serdes.String()))
+            .mapValues { v -> jsonMapper.readValue(v, HistoryProvidedEv::class.java) }
+
+        val reqSyncHistProvStream: KStream<SessionId, ReqSyncHistProv> =
+            reqSyncStream.join(
+                    histProvStream,
+                    KeyValueMapper { _: SessionId, // left key
+                                     leftValue: ReqSyncCmd ->
+                        leftValue.gameId
+                    },
+                    ValueJoiner { left: ReqSyncCmd, right: HistoryProvidedEv ->
+                        ReqSyncHistProv(left, right)
+                    },
+                    JoinWindows.of(ChronoUnit.MINUTES.duration),
+                    Joined.with(
+                        Serdes.UUIDSerde(),
+                        Serdes.StringSerde(),
+                        Serdes.StringSerde()))
+                .map { _: UUID, v: ReqSyncHistProv ->
+                    KeyValue(v.reqSync.sessionId, v)
+                }
 
         TODO("BRANCHES:")
 

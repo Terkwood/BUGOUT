@@ -1,6 +1,6 @@
 import java.time.Instant
 
-data class ProvideHistoryCommand(val gameId: GameId, val reqId: ReqId)
+data class ProvideHistoryCmd(val gameId: GameId, val reqId: ReqId)
 
 /**
  * An ordered list of moves (FIFO).
@@ -13,7 +13,7 @@ data class ProvideHistoryCommand(val gameId: GameId, val reqId: ReqId)
  *                          first move is head of the list
  * @property epochMillis a timestamp for this event
  */
-data class HistoryProvided(
+data class HistoryProvidedEv(
     val gameId: GameId,
     val replyTo: ReqId,
     val eventId: EventId,
