@@ -1,7 +1,8 @@
 import java.util.UUID
 
 typealias GameId = UUID
-typealias RequestId = UUID
+typealias ReqId = UUID
+typealias SessionId = UUID
 
 enum class Player { BLACK, WHITE }
 data class Coord(val x: Int, val y: Int)
