@@ -32,11 +32,13 @@ class Application(private val brokers: String) {
     }
 
     fun build(): Topology {
+        TODO("write something. please.")
+
         TODO("in the event that the service layer needs to catch up with the " +
                 "client's last move, we _must not_ emit the sync reply until " +
                 "we hear the move confirmed on bugout-move-made-ev")
 
-        TODO()
+        TODO("make sure everything is done")
     }
 
     private fun waitForTopics(

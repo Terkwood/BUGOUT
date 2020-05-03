@@ -193,6 +193,38 @@ class TopologyTest {
         historyProvidedIn.pipeInput(gameId,
                 jsonMapper.writeValueAsString(historyProvided))
 
+        // check to make sure that we output the client move
+        // to make move cmd
+
+        val makeMoveCmdOut: TestOutputTopic<UUID, String> =
+                testDriver.createOutputTopic(Topics.MAKE_MOVE_CMD,
+                        uuidSerde.deserializer(), stringSerde.deserializer())
+
+        val expectedMakeMove = MakeMoveCmd(
+                gameId = gameId,
+                reqId = reqId,
+                player = clientPlayerUp,
+                coord = clientLastMove.coord
+        )
+
+        assertEquals(makeMoveCmdOut.readKeyValue(),
+                (KeyValue(sessionId,
+                        jsonMapper.writeValueAsString(expectedMakeMove))))
+
+        // artificially introduce a move-made event, so that
+        // we can safely state that everyone is on the same page
+        val moveMade = MoveMadeEv(gameId = gameId, replyTo = reqId,
+            eventId = UUID.randomUUID(), player = clientPlayerUp,
+            coord = clientLastMove.coord)
+
+        val moveMadeIn: TestInputTopic<UUID, String> =
+                testDriver.createInputTopic(Topics.MOVE_MADE_EV,
+                        uuidSerde.serializer(),
+                        stringSerde.serializer())
+
+        moveMadeIn.pipeInput(gameId,
+                jsonMapper.writeValueAsString(moveMade))
+
         // check to make sure that sync service outputs
         // a reply that won't require the client to do anything
         val syncReplyOut: TestOutputTopic<UUID, String> =
@@ -211,23 +243,6 @@ class TopologyTest {
         assertEquals(syncReplyOut.readKeyValue(),
                 (KeyValue(sessionId,
                         jsonMapper.writeValueAsString(expectedSyncReply))))
-
-        // check to make sure that we output the client move
-        // to make move cmd
-        val makeMoveCmdOut: TestOutputTopic<UUID, String> =
-                testDriver.createOutputTopic(Topics.MAKE_MOVE_CMD,
-                        uuidSerde.deserializer(), stringSerde.deserializer())
-
-        val expectedMakeMove = MakeMoveCmd(
-                gameId = gameId,
-                reqId = reqId,
-                player = clientPlayerUp,
-                coord = clientLastMove.coord
-        )
-
-        assertEquals(makeMoveCmdOut.readKeyValue(),
-                (KeyValue(sessionId,
-                        jsonMapper.writeValueAsString(expectedMakeMove))))
     }
 
     @AfterAll
