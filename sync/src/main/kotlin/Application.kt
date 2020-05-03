@@ -1,3 +1,4 @@
+
 import java.util.Properties
 import java.util.TimeZone
 import org.apache.kafka.clients.admin.AdminClient
@@ -31,6 +32,10 @@ class Application(private val brokers: String) {
     }
 
     fun build(): Topology {
+        TODO("in the event that the service layer needs to catch up with the " +
+                "client's last move, we _must not_ emit the sync reply until " +
+                "we hear the move confirmed on bugout-move-made-ev")
+
         TODO()
     }
 
