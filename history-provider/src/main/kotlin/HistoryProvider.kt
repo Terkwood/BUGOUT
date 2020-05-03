@@ -109,6 +109,9 @@ class HistoryProvider(private val brokers: String) {
         props["processing.guarantee"] = "exactly_once"
 
         val streams = KafkaStreams(topology, props)
+        
+        waitForTopics(Topics.all, props)
+
         streams.start()
     }
 

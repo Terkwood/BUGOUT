@@ -11,11 +11,13 @@ import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.kstream.Consumed
+import org.apache.kafka.streams.kstream.GlobalKTable
 import org.apache.kafka.streams.kstream.JoinWindows
 import org.apache.kafka.streams.kstream.Joined
 import org.apache.kafka.streams.kstream.KStream
 import org.apache.kafka.streams.kstream.KeyValueMapper
 import org.apache.kafka.streams.kstream.Produced
+import org.apache.kafka.streams.kstream.StreamJoined
 import org.apache.kafka.streams.kstream.ValueJoiner
 import serdes.jsonMapper
 
@@ -53,6 +55,19 @@ class Application(private val brokers: String) {
             .mapValues { v -> jsonMapper.readValue(v,
                             ReqSyncCmd::class.java) }
 
+        val histProvStream = streamsBuilder.stream(
+            Topics.HISTORY_PROVIDED_EV,
+            Consumed.with(Serdes.UUID(), Serdes.String()))
+            .mapValues { v -> jsonMapper.readValue(v,
+                HistoryProvidedEv::class.java) })
+        // track history provided as a global ktable
+        // for flexibility in joins
+        // see https://stackoverflow.com/a/52372015/9935916
+        val historyProvidedTable: GlobalKTable<GameId, HistoryProvidedEv> =
+            histProvStream.groupByKey().aggregate(TODO(),TODO(),TODO())
+
+
+
         reqSyncStream
             .map { k, v ->
                 KeyValue(v.gameId,
@@ -68,21 +83,23 @@ class Application(private val brokers: String) {
                 Consumed.with(Serdes.UUID(), Serdes.String()))
             .mapValues { v -> jsonMapper.readValue(v, HistoryProvidedEv::class.java) }
 
+        val kvm = KeyValueMapper { _: SessionId, // left key
+                                   leftValue: ReqSyncCmd ->
+            leftValue.gameId
+        }
+        val vj = ValueJoiner { left: ReqSyncCmd, right: HistoryProvidedEv ->
+            ReqSyncHistProv(left, right)
+        }
+        val jWin = JoinWindows.of(ChronoUnit.MINUTES.duration)
+
         val reqSyncHistProvStream: KStream<SessionId, ReqSyncHistProv> =
-            reqSyncStream.join(
-                    histProvStream,
-                    KeyValueMapper { _: SessionId, // left key
-                                     leftValue: ReqSyncCmd ->
-                        leftValue.gameId
-                    },
-                    ValueJoiner { left: ReqSyncCmd, right: HistoryProvidedEv ->
-                        ReqSyncHistProv(left, right)
-                    },
-                    JoinWindows.of(ChronoUnit.MINUTES.duration),
-                    Joined.with(
-                        Serdes.UUIDSerde(),
-                        Serdes.StringSerde(),
-                        Serdes.StringSerde()))
+            reqSyncStream.join(histProvStream,
+                kvm, { left, right: HistoryProvidedEv ->
+                    ReqSyncHistProv(left,right) },
+                jWin,
+                StreamJoined.with(Serdes.UUIDSerde(),
+                    Serdes.StringSerde(),
+                    Serdes.StringSerde()))
                 .map { _: UUID, v: ReqSyncHistProv ->
                     KeyValue(v.reqSync.sessionId, v)
                 }
