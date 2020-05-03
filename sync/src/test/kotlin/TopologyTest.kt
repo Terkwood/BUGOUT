@@ -1,5 +1,6 @@
 import java.util.Properties
 import java.util.UUID
+import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.TestInputTopic
 import org.apache.kafka.streams.TopologyTestDriver
@@ -28,17 +29,23 @@ class TopologyTest {
         val reqSync = ReqSyncCmd(sessionId, reqId, gameId, playerUp, turn, lastMove)
 
         val reqSyncIn: TestInputTopic<UUID, String> =
-                testDriver.createInputTopic(Topics.REQ_SYNC_CMD,
-                        TODO("uuidSerde"), TODO("stringSerde"))
-        reqSyncIn.pipeInput(sessionId, jsonMapper.writeValueAsString(reqSync))
+                testDriver.createInputTopic(
+                        Topics.REQ_SYNC_CMD,
+                        Serdes.UUID().serializer(),
+                        Serdes.String().serializer())
+        reqSyncIn.pipeInput(
+                sessionId,
+                jsonMapper.writeValueAsString(reqSync)
+        )
 
         // this is the response we would expect from history provider.
         // sync service will consume this to complete its reply
-        val historyProvided = HistoryProvided(gameId, reqId, UUID.randomUUID(), moves)
+        val historyProvided = HistoryProvided(gameId, replyTo = reqId,
+                eventId = UUID.randomUUID(), moves = moves)
 
         val historyProvidedIn: TestInputTopic<UUID, String> =
                 testDriver.createInputTopic(Topics.HISTORY_PROVIDED_EV,
-                        TODO("uuidSerde"), TODO("stringSerde"))
+                        Serdes.UUID().serializer(), Serdes.String().serializer())
         historyProvidedIn.pipeInput(gameId, jsonMapper.writeValueAsString(historyProvided))
 
         // check to make sure that sync service outputs
