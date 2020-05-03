@@ -1,10 +1,10 @@
+import java.util.Properties
+import java.util.UUID
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.TestInputTopic
 import org.apache.kafka.streams.TopologyTestDriver
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import java.util.*
-
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TopologyTest {
