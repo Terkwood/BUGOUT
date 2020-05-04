@@ -865,8 +865,8 @@ class GatewayConn {
 }
 
 
-const SYNC_TIMEOUT_MS = 15000/3 // TODO
-const SYNC_DELAY_MS = 22500/3   // TODO
+const SYNC_TIMEOUT_MS = 5000
+const SYNC_DELAY_MS = 7500
 
 class BugoutSync {
     constructor(webSocket) {
