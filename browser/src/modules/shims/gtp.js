@@ -897,16 +897,19 @@ class BugoutSync {
         var bottom = false
 
         console.log(`Tree    : ${JSON.stringify(tree)}`)
-        console.log(`Treekids: ${JSON.stringify(tree.children)}`)
+        console.log(typeof tree)
+        console.log(Object.keys(tree))
+        console.log(`Treekids: ${JSON.stringify(tree.root.children)}`)
 
         if (tree === undefined ||
-            tree.children === undefined ||
-            tree.children.length === 0) {
+            tree.root === undefined ||
+            tree.root.children === undefined ||
+            tree.root.children.length === 0) {
             return null
         }
 
         // skip the top level game node
-        var subtree = tree.children[0]
+        var subtree = tree.root.children[0]
         var turn = 1
         var lastMove = null
         while(!bottom) {
