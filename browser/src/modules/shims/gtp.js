@@ -169,12 +169,14 @@ class WebSocketController extends EventEmitter {
         this.bugoutSync = new BugoutSync(this.webSocket)
 
         sabaki.events.on('sync-server-ahead', ({ type, replyTo, playerUp, turn, moves }) => {
-
+            sabaki.generateMove()
+            
             let syncLastMove = moves[moves.length - 1]
             let sabakiCoord = syncLastMove.coord ? this.board.vertex2coord([syncLastMove.coord.x, syncLastMove.coord.y]) : 'pass'
 
             console.log('eh')
             if (this.resolveMoveMade) {
+                console.log('yas')
                 this.resolveMoveMade({'id':null, 'content': sabakiCoord, 'error':false})
             }
 
@@ -392,14 +394,7 @@ class WebSocketController extends EventEmitter {
                     this.handleOpponentQuit(resolve)
                     this.genMoveInProgress = false
                     sabaki.events.emit('gen-move-completed', { done: true })
-                } /*else if (isSyncReply(msg)) {
-                    // TODO delete, doesn't work
-                    let { genMoveCompleted } = this.handleSyncReply(msg, resolve)
-                    if (genMoveCompleted) {
-                        this.genMoveInProgress = false
-                        sabaki.events.emit('gen-move-completed', { done: true })
-                    }
-                }*/
+                }
 
                 // discard any other messages until we receive confirmation
                 // from BUGOUT that the move was made
