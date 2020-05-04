@@ -111,8 +111,6 @@ const opponentMoved = (msg, opponent) => msg.type === 'MoveMade' && msg.player =
 
 const opponentQuit = msg => msg.type === 'OpponentQuit'
 
-const isSyncReply = msg => msg.type === 'SyncReply'
-
 class WebSocketController extends EventEmitter {
     constructor(webSocketAddress, spawnOptions) {
         super()
@@ -169,6 +167,29 @@ class WebSocketController extends EventEmitter {
         // result is returned via findPublicGame() and createPrivateGame() funcs
         this.gatewayConn = new GatewayConn(this.webSocket, handleWaitForOpponent, handleYourColor)
         this.bugoutSync = new BugoutSync(this.webSocket)
+
+        sabaki.events.on('sync-server-ahead', ({ type, replyTo, playerUp, turn, moves }) => {
+
+            let syncLastMove = moves[moves.length - 1]
+            let sabakiCoord = syncLastMove.coord ? this.board.vertex2coord([syncLastMove.coord.x, syncLastMove.coord.y]) : 'pass'
+
+            console.log('eh')
+            if (this.resolveMoveMade) {
+                this.resolveMoveMade({'id':null, 'content': sabakiCoord, 'error':false})
+            }
+
+            let newPlayerUp = otherPlayer(playerUp) 
+
+            // In case white needs to dismiss its initial screen
+            sabaki.events.emit('they-moved', { 'playerUp': newPlayerUp })
+
+            // - In case we need to show that the opponent passed
+            // - Used by BugoutSync to delay sync requests after move
+            sabaki.events.emit('bugout-move-made', { 'coord': syncLastMove.coord })
+            console.log('oh')
+            this.genMoveInProgress = false   
+            sabaki.events.emit('gen-move-completed', { done: true })  
+        })
 
         sabaki.events.on('bugout-turn', ({ turn }) => this.turn = turn )
 
@@ -371,13 +392,14 @@ class WebSocketController extends EventEmitter {
                     this.handleOpponentQuit(resolve)
                     this.genMoveInProgress = false
                     sabaki.events.emit('gen-move-completed', { done: true })
-                } else if (isSyncReply(msg)) {
+                } /*else if (isSyncReply(msg)) {
+                    // TODO delete, doesn't work
                     let { genMoveCompleted } = this.handleSyncReply(msg, resolve)
                     if (genMoveCompleted) {
                         this.genMoveInProgress = false
                         sabaki.events.emit('gen-move-completed', { done: true })
                     }
-                }
+                }*/
 
                 // discard any other messages until we receive confirmation
                 // from BUGOUT that the move was made
@@ -404,7 +426,7 @@ class WebSocketController extends EventEmitter {
         sabaki.events.emit('they-moved', { playerUp })
 
         // - In case we need to show that the opponent passed
-        // - Used by BugoutSync to delay sync requests after move
+        // - Also used by BugoutSync to delay sync requests after move
         sabaki.events.emit('bugout-move-made', msg)
     }
 
@@ -416,10 +438,6 @@ class WebSocketController extends EventEmitter {
         resolve({'id':null, 'error':false})
     }
 
-    handleSyncReply(syncReply, resolve) {
-        console.log('& hi')
-        return { genMoveCompleted: false } // TODO
-    }
 
     async sendCommand(command, subscriber = () => {}) {
         let isPassing = v => v[0] == 14 && isNaN(v[1])
@@ -465,7 +483,7 @@ class WebSocketController extends EventEmitter {
                 let payload = JSON.stringify(makeMove)
 
                 // TODO HACK
-                if (Math.random() < 0.5) {
+                if (Math.random() < 0.25) {
                     console.log(' HACK!')
                 } else {
                     this.webSocket.send(payload)
@@ -879,6 +897,7 @@ class BugoutSync {
             const payload = this.makePayload(this.reqId)
             this.webSocket.send(JSON.stringify(payload))
             this.updateMessageListener(event => {
+                console.log(`teh event ${event}`)
                 try {
                     let msg = JSON.parse(event.data)
                     
@@ -900,9 +919,9 @@ class BugoutSync {
             console.log('!  NOTHING TO DO')
         } else if (syncReply.turn - 1 === turn && otherPlayer(syncReply.playerUp) === playerUp) {
             console.log('!  SERVER IS AHEAD')
+            sabaki.events.emit('sync-server-ahead', syncReply)
         } else if (syncReply.turn + 1 === turn && syncReply.playerUp === otherPlayer(playerUp)) {
             console.log('!  SERVER IS BEHIND')
-            
         } else {
             console.log('!  CRITICAL FAILURE')
             console.log(`   - syncReply: ${JSON.stringify(syncReply)}`)
