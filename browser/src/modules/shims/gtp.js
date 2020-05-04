@@ -448,9 +448,14 @@ class WebSocketController extends EventEmitter {
                         resolve({ok: false})
                     }
                 })
-
+                
                 let payload = JSON.stringify(makeMove)
-                this.webSocket.send(payload)
+                // TODO HACK
+                if (Math.random() < 0.5) {
+                    console.log(' HACK!')
+                } else {
+                    this.webSocket.send(payload)
+                }
                 // Sync will be delayed as a result
                 sabaki.events.emit('bugout-make-move')
             } else if (command.name === 'genmove') {
@@ -887,6 +892,7 @@ class BugoutSync {
             console.log('!  SERVER IS AHEAD')
         } else if (syncReply.turn + 1 === turn && syncReply.playerUp === otherPlayer(playerUp)) {
             console.log('!  SERVER IS BEHIND')
+            
         } else {
             console.log('!  CRITICAL FAILURE')
             console.log(`   - syncReply: ${JSON.stringify(syncReply)}`)
