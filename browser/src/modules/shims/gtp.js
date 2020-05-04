@@ -484,13 +484,7 @@ class WebSocketController extends EventEmitter {
                 
                 let payload = JSON.stringify(makeMove)
 
-                // TODO HACK
-                if (Math.random() < 0.25) {
-                    console.log('     << HACK! >>')
-                } else {
-                    console.log('...Normal Make Move...')
-                    this.webSocket.send(payload)
-                }
+                this.webSocket.send(payload)
                 
                 // Sync will be delayed as a result
                 sabaki.events.emit('bugout-make-move')
