@@ -899,11 +899,10 @@ class BugoutSync {
                     let msg = JSON.parse(event.data)
                     
                     if (msg.type === "SyncReply" && this.reqId === msg.replyTo) {
-                        console.log(`recv reply: ${event.data}`)
                         this.processReply(msg)
                     }
                 } catch (e) {
-                    console.log('errrrrr' + JSON.stringify(e))
+                    console.log('sync err ' + JSON.stringify(e))
                 }
             })
         }
