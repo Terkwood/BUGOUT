@@ -450,12 +450,14 @@ class WebSocketController extends EventEmitter {
                 })
                 
                 let payload = JSON.stringify(makeMove)
+
                 // TODO HACK
                 if (Math.random() < 0.5) {
                     console.log(' HACK!')
                 } else {
                     this.webSocket.send(payload)
                 }
+                
                 // Sync will be delayed as a result
                 sabaki.events.emit('bugout-make-move')
             } else if (command.name === 'genmove') {
@@ -839,6 +841,7 @@ class BugoutSync {
         this.gameId = undefined
         this.delayUntil = undefined
         this.reqId = undefined
+
         sabaki.events.on('bugout-move-made', () => this.delay() )
         sabaki.events.on('bugout-make-move', () => this.delay() )
     }
