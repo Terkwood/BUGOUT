@@ -852,18 +852,10 @@ class BugoutSync {
 
     reqSync() {
         if ( this.activated && (Date.now() > (this.delayUntil||0)) ) {
-            this.inspectGameView()
-
             this.reqId = uuidv4()
-            let playerUp = 'BLACK'
-            let turn = 1
-            const pingMsg = {
-                'type': 'ReqSync',
-                playerUp,
-                'reqId': this.reqId,
-                turn
-            }
-            this.webSocket.send(JSON.stringify(pingMsg))
+            
+            const payload = this.makePayload(this.reqId)
+            this.webSocket.send(JSON.stringify(payload))
             this.updateMessageListener(event => {
                 try {
                     let msg = JSON.parse(event.data)
@@ -878,26 +870,80 @@ class BugoutSync {
         }
     }
 
-    inspectGameView() {
-        let { gameTrees, gameIndex } = sabaki.state
-        let { currentPlayer } = sabaki.inferredState
-
-        let tree = gameTrees[gameIndex]
-
-        console.log(`Tree : ${JSON.stringify(tree)}`)
-        console.log(`Playr: ${JSON.stringify(this.interpretPlayerNum(currentPlayer))}`)
-    }
-
     interpretPlayerNum(n) {
         return n === 1 ? "BLACK" : "WHITE"
     }
 
-    makePayload(playerUp, tree) {
-        const pingMsg = {
+    makePayload(reqId) {
+        let { gameTrees, gameIndex } = sabaki.state
+        let { currentPlayer } = sabaki.inferredState
+
+        let playerUp = this.interpretPlayerNum(currentPlayer)
+        let tree = gameTrees[gameIndex]
+        let payload = {
             'type': 'ReqSync',
             playerUp,
-            'reqId': this.reqId,
-            turn
+            reqId,
+            'turn': 1,
+            'lastMove': this.findLastMove(tree)
+        }
+
+        console.log(`Tree   : ${JSON.stringify(tree)}`)
+        console.log(`PlayrUp: ${playerUp}`)
+        console.log(`PAYLOAD: ${JSON.stringify(payload)}`)
+        return payload
+    }
+
+    findLastMove(tree) {
+        var bottom = false
+        if (tree === undefined || tree.children === undefined) {
+            return null
+        }
+
+        // skip the top level game node
+        var subtree = tree.children
+        var turn = 1
+        var playerUp = "BLACK"
+        var lastMove = null
+        while(!bottom) {
+            if (subtree && subtree.children && 
+                subtree.children.data && 
+                (subtree.children.data.B || subtree.children.data.W)) {
+                
+                    let blackTreeCoord = subtree.children.data.B
+                let whiteTreeCoord = subtree.children.data.W
+                
+                if (blackTreeCoord) {
+                    playerUp = "WHITE"
+                    let coord = this.convertTreeCoord(blackTreeCoord)
+                    let player = "BLACK"
+                    lastMove = { turn, player, coord }
+                } else {
+                    playerUp = "BLACK"
+                    let coord = this.convertTreeCoord(whiteTreeCoord)
+                    let player = "WHITE"
+                    lastMove = { turn, player, coord }
+                }
+
+                turn = turn + 1
+                subtree = subtree.children.children
+
+            } else {
+                bottom = true
+            }
+        }
+        return lastMove
+    }
+
+    convertTreeCoord(treeCoord) {
+        const offset = 97
+        if (treeCoord == undefined || treeCoord == '' || treeCoord.length < 2) {
+            return null
+        } else {
+            return {
+                'x': treeCoord.charCodeAt(0) - offset,
+                'y': treeCoord.charCodeAt(1) - offset
+            }
         }
     }
 
