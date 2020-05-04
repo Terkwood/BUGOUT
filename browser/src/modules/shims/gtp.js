@@ -896,44 +896,40 @@ class BugoutSync {
     findLastMove(tree) {
         var bottom = false
 
-        console.log(`Tree   : ${JSON.stringify(tree)}`)
-
-        console.log(`Tree1   : ${JSON.stringify(tree['children'])}`)
+        console.log(`Tree    : ${JSON.stringify(tree)}`)
+        console.log(`Treekids: ${JSON.stringify(tree.children)}`)
 
         if (tree === undefined ||
-            tree['children'] === undefined ||
-            tree['children'].length === 0) {
+            tree.children === undefined ||
+            tree.children.length === 0) {
             return null
         }
 
         // skip the top level game node
-        var subtree = tree['children'][0]
+        var subtree = tree.children[0]
         var turn = 1
-        var playerUp = "BLACK"
         var lastMove = null
         while(!bottom) {
             console.log(`SUBTREE ${JSON.stringify(subtree)}`)
-            if (subtree && subtree['data'] && 
-                (subtree['data']['B'] || subtree['data']['W'])) {
+            if (subtree && subtree.data && 
+                (subtree.data.B || subtree.data.W)) {
                 
-                let blackTreeCoord = subtree['data']['B']
-                let whiteTreeCoord = subtree['data']['W']
+                let blackTreeCoord = subtree.data.B
+                let whiteTreeCoord = subtree.data.W
                 
                 if (blackTreeCoord) {
-                    playerUp = "WHITE"
                     let coord = this.convertTreeCoord(blackTreeCoord)
                     let player = "BLACK"
                     lastMove = { turn, player, coord }
                 } else {
-                    playerUp = "BLACK"
                     let coord = this.convertTreeCoord(whiteTreeCoord)
                     let player = "WHITE"
                     lastMove = { turn, player, coord }
                 }
 
                 turn = turn + 1
-                if (subtree['children'] && subtree['children'].length > 0) {
-                    subtree = subtree['children'][0]
+                if (subtree.children && subtree.children.length > 0) {
+                    subtree = subtree.children[0]
                 } else {
                     subtree = undefined
                 }
