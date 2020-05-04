@@ -880,12 +880,14 @@ class BugoutSync {
 
         let playerUp = this.interpretPlayerNum(currentPlayer)
         let tree = gameTrees[gameIndex]
+        let lastMove = this.findLastMove(tree)
+        let turn = lastMove === undefined ? 1 : (lastMove.turn + 1)
         let payload = {
             'type': 'ReqSync',
             playerUp,
             reqId,
-            'turn': 1,
-            'lastMove': this.findLastMove(tree)
+            turn,
+            lastMove
         }
 
         console.log(`PlayrUp: ${playerUp}`)
@@ -905,9 +907,11 @@ class BugoutSync {
 
         // skip the top level game node
         var subtree = tree.root.children[0]
-        var turn = 1
+        var turn = 0
         var lastMove = null
         while(!bottom) {
+            turn = turn + 1
+
             console.log(`SUBTREE ${JSON.stringify(subtree)}`)
             if (subtree && subtree.data) {
                 
@@ -929,7 +933,6 @@ class BugoutSync {
 
                 if (proceed) {
                     console.log('PROCEED, lastMove = ' + JSON.stringify(lastMove))
-                    turn = turn + 1
                     if (subtree.children && subtree.children.length > 0) {
                         subtree = subtree.children[0]
                     } else {
