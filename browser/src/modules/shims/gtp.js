@@ -882,17 +882,13 @@ class BugoutSync {
         let tree = gameTrees[gameIndex]
         let lastMove = this.findLastMove(tree)
         let turn = lastMove === undefined ? 1 : (lastMove.turn + 1)
-        let payload = {
+        return {
             'type': 'ReqSync',
             playerUp,
             reqId,
             turn,
             lastMove
         }
-
-        console.log(`PlayrUp: ${playerUp}`)
-        console.log(`PAYLOAD: ${JSON.stringify(payload)}`)
-        return payload
     }
 
     findLastMove(tree) {
@@ -912,7 +908,6 @@ class BugoutSync {
         while(!bottom) {
             turn = turn + 1
 
-            console.log(`SUBTREE ${JSON.stringify(subtree)}`)
             if (subtree && subtree.data) {
                 
                 let blackTreeCoord = subtree.data.B
@@ -932,7 +927,6 @@ class BugoutSync {
                 }
 
                 if (proceed) {
-                    console.log('PROCEED, lastMove = ' + JSON.stringify(lastMove))
                     if (subtree.children && subtree.children.length > 0) {
                         subtree = subtree.children[0]
                     } else {
@@ -949,12 +943,10 @@ class BugoutSync {
     }
 
     convertTreeCoord(treeCoords) {
-        console.log(`CALLED CONVERT ${treeCoords}`)
         const offset = 97
         if (treeCoords === undefined || 
             treeCoords[0] === undefined ||
             treeCoords[0].length !== 2) {
-            console.log(`WAT?`)
             return null
         } else {
             return {
