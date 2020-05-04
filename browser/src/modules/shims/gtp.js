@@ -232,10 +232,10 @@ class WebSocketController extends EventEmitter {
                 .then((reply, err) => {
                     if (!err && reply.type === 'GameReady') {
                         this.gameId = reply.gameId
-                        this.bugoutSync.activate()
+                        this.bugoutSync.activate(reply.gameId)
                     } else if (!err && reply.type == 'WaitForOpponent') {
                         this.gameId = reply.gameId
-                        this.bugoutSync.activate()
+                        this.bugoutSync.activate(reply.gameId)
                     } else {
                         throwFatal()
                     }
@@ -246,10 +246,10 @@ class WebSocketController extends EventEmitter {
                 .then((reply, err) => {
                     if (!err && reply.type == 'WaitForOpponent') {
                         this.gameId = reply.gameId
-                        this.bugoutSync.activate()
+                        this.bugoutSync.activate(reply.gameId)
                     } else if (!err && reply.type === 'GameReady') {
                         this.gameId = reply.gameId
-                        this.bugoutSync.activate()
+                        this.bugoutSync.activate(reply.gameId)
                     } else {
                         throwFatal()
                     }
@@ -260,7 +260,7 @@ class WebSocketController extends EventEmitter {
                 .then((reply, err) => {
                     if (!err && reply.type === 'GameReady') {
                         this.gameId = reply.gameId
-                        this.bugoutSync.activate()
+                        this.bugoutSync.activate(reply.gameId)
                     } else if (!err && reply.type == 'PrivateGameRejected') {
                         alert('Invalid game')
                     } else {
@@ -822,15 +822,53 @@ class GatewayConn {
 
 
 const SYNC_TIMEOUT_MS = 5000
+const SYNC_DELAY_MS = 5000
+
 class BugoutSync {
     constructor(webSocket) {
         this.webSocket = webSocket
         this.activated = false
+        this.gameId = undefined
+        this.delayUntil = undefined
+        this.reqId = undefined
     }
 
-    activate() {
-        console.log('Sync Activated')
+    activate(gameId) {
+        this.gameId = gameId
         this.activated = true
+        console.log('Sync Activated')
+        this.reqSync()
+    }
+
+    delay() {
+        this.delayUntil = Date.now() + SYNC_DELAY_MS
+    }
+
+    reqSync() {
+        if ( this.activated && (Date.now() > (this.delayUntil||0)) ) {
+            this.reqId = uuidv4()
+            let playerUp = 'BLACK'
+            let turn = 1
+            const pingMsg = {
+                'type': 'ReqSync',
+                playerUp,
+                'reqId': this.reqId,
+                turn
+            }
+            this.webSocket.send(JSON.stringify(pingMsg))
+            this.updateMessageListener(event => {
+                try {
+                    let msg = JSON.parse(event.data)
+                    
+                    if (msg.type === "SyncReply" && this.reqId === msg.replyTo) {
+                        console.log(`replied ${event.data}`)
+                    }
+                } catch (e) {
+                    console.log('errrrrr')
+                }
+            })
+            setTimeout(() => this.reqSync(), SYNC_TIMEOUT_MS)
+        }
     }
 
     removeMessageListener() {
