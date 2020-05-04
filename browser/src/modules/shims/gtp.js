@@ -896,11 +896,6 @@ class BugoutSync {
     findLastMove(tree) {
         var bottom = false
 
-        console.log(`Tree    : ${JSON.stringify(tree)}`)
-        console.log(typeof tree)
-        console.log(Object.keys(tree))
-        console.log(`Treekids: ${JSON.stringify(tree.root.children)}`)
-
         if (tree === undefined ||
             tree.root === undefined ||
             tree.root.children === undefined ||
@@ -914,27 +909,34 @@ class BugoutSync {
         var lastMove = null
         while(!bottom) {
             console.log(`SUBTREE ${JSON.stringify(subtree)}`)
-            if (subtree && subtree.data && 
-                (subtree.data.B || subtree.data.W)) {
+            if (subtree && subtree.data) {
                 
                 let blackTreeCoord = subtree.data.B
                 let whiteTreeCoord = subtree.data.W
                 
+                var proceed = false
                 if (blackTreeCoord) {
                     let coord = this.convertTreeCoord(blackTreeCoord)
                     let player = "BLACK"
                     lastMove = { turn, player, coord }
-                } else {
+                    proceed = true
+                } else if (whiteTreeCoord) {
                     let coord = this.convertTreeCoord(whiteTreeCoord)
                     let player = "WHITE"
                     lastMove = { turn, player, coord }
+                    proceed = true
                 }
 
-                turn = turn + 1
-                if (subtree.children && subtree.children.length > 0) {
-                    subtree = subtree.children[0]
+                if (proceed) {
+                    console.log('PROCEED')
+                    turn = turn + 1
+                    if (subtree.children && subtree.children.length > 0) {
+                        subtree = subtree.children[0]
+                    } else {
+                        bottom = true
+                    }
                 } else {
-                    subtree = undefined
+                    bottom = true
                 }
             } else {
                 bottom = true
@@ -945,7 +947,9 @@ class BugoutSync {
 
     convertTreeCoord(treeCoord) {
         const offset = 97
-        if (treeCoord == undefined || treeCoord == '' || treeCoord.length < 2) {
+        if (treeCoord === undefined || 
+            treeCoord === '' || 
+            treeCoord.length < 2) {
             return null
         } else {
             return {
