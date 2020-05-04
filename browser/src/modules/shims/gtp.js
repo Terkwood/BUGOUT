@@ -395,7 +395,8 @@ class WebSocketController extends EventEmitter {
         // In case white needs to dismiss its initial screen
         sabaki.events.emit('they-moved', { playerUp })
 
-        // In case we need to show that the opponent passed
+        // - In case we need to show that the opponent passed
+        // - Used by BugoutSync to delay sync requests after move
         sabaki.events.emit('bugout-move-made', msg)
     }
 
@@ -450,6 +451,8 @@ class WebSocketController extends EventEmitter {
 
                 let payload = JSON.stringify(makeMove)
                 this.webSocket.send(payload)
+                // Sync will be delayed as a result
+                sabaki.events.emit('bugout-make-move')
             } else if (command.name === 'genmove') {
                 let opponent = letterToPlayer(command.args[0])
                 this.opponent = opponent
@@ -821,8 +824,8 @@ class GatewayConn {
 }
 
 
-const SYNC_TIMEOUT_MS = 5000
-const SYNC_DELAY_MS = 15000
+const SYNC_TIMEOUT_MS = 15000
+const SYNC_DELAY_MS = 22500
 
 class BugoutSync {
     constructor(webSocket) {
@@ -831,6 +834,8 @@ class BugoutSync {
         this.gameId = undefined
         this.delayUntil = undefined
         this.reqId = undefined
+        sabaki.events.on('bugout-move-made', () => this.delay() )
+        sabaki.events.on('bugout-make-move', () => this.delay() )
     }
 
     activate(gameId) {
@@ -880,12 +885,20 @@ class BugoutSync {
         let tree = gameTrees[gameIndex]
 
         console.log(`Tree : ${JSON.stringify(tree)}`)
-        console.log(`Index: ${JSON.stringify(gameIndex)}`)
         console.log(`Playr: ${JSON.stringify(this.interpretPlayerNum(currentPlayer))}`)
     }
 
     interpretPlayerNum(n) {
         return n === 1 ? "BLACK" : "WHITE"
+    }
+
+    makePayload(playerUp, tree) {
+        const pingMsg = {
+            'type': 'ReqSync',
+            playerUp,
+            'reqId': this.reqId,
+            turn
+        }
     }
 
     removeMessageListener() {
