@@ -928,7 +928,7 @@ class BugoutSync {
                 }
 
                 if (proceed) {
-                    console.log('PROCEED')
+                    console.log('PROCEED, lastMove = ' + JSON.stringify(lastMove))
                     turn = turn + 1
                     if (subtree.children && subtree.children.length > 0) {
                         subtree = subtree.children[0]
@@ -945,16 +945,18 @@ class BugoutSync {
         return lastMove
     }
 
-    convertTreeCoord(treeCoord) {
+    convertTreeCoord(treeCoords) {
+        console.log(`CALLED CONVERT ${treeCoords}`)
         const offset = 97
-        if (treeCoord === undefined || 
-            treeCoord === '' || 
-            treeCoord.length < 2) {
+        if (treeCoords === undefined || 
+            treeCoords[0] === undefined ||
+            treeCoords[0].length !== 2) {
+            console.log(`WAT?`)
             return null
         } else {
             return {
-                'x': treeCoord.charCodeAt(0) - offset,
-                'y': treeCoord.charCodeAt(1) - offset
+                'x': treeCoords[0].charCodeAt(0) - offset,
+                'y': treeCoords[0].charCodeAt(1) - offset
             }
         }
     }
