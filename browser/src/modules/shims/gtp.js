@@ -824,8 +824,8 @@ class GatewayConn {
 }
 
 
-const SYNC_TIMEOUT_MS = 15000/3
-const SYNC_DELAY_MS = 22500/3
+const SYNC_TIMEOUT_MS = 15000/3 // TODO
+const SYNC_DELAY_MS = 22500/3   // TODO
 
 class BugoutSync {
     constructor(webSocket) {
@@ -847,6 +847,7 @@ class BugoutSync {
     }
 
     delay() {
+        this.reqId = undefined
         this.delayUntil = Date.now() + SYNC_DELAY_MS
     }
 
@@ -861,12 +862,29 @@ class BugoutSync {
                     let msg = JSON.parse(event.data)
                     
                     if (msg.type === "SyncReply" && this.reqId === msg.replyTo) {
-                        console.log(`replied ${event.data}`)
+                        console.log(`recv reply: ${event.data}`)
+                        this.processReply(msg)
                     }
                 } catch (e) {
-                    console.log('errrrrr')
+                    console.log('errrrrr' + JSON.stringify(e))
                 }
             })
+        }
+    }
+
+    processReply(syncReply) {
+        let { gameTrees, gameIndex } = sabaki.state
+        let { currentPlayer } = sabaki.inferredState
+
+        let playerUp = this.interpretPlayerNum(currentPlayer)
+        let tree = gameTrees[gameIndex]
+        let lastMove = this.findLastMove(tree)
+        let turn = lastMove == undefined ? 1 : (lastMove.turn + 1)
+
+        if (syncReply.turn === turn && syncReply.playerUp === playerUp) {
+            console.log('!  NOTHING TO DO')
+        } else {
+            console.log('!  NEED TO SYNC')
         }
     }
 
@@ -881,7 +899,7 @@ class BugoutSync {
         let playerUp = this.interpretPlayerNum(currentPlayer)
         let tree = gameTrees[gameIndex]
         let lastMove = this.findLastMove(tree)
-        let turn = lastMove === undefined ? 1 : (lastMove.turn + 1)
+        let turn = lastMove == undefined ? 1 : (lastMove.turn + 1)
         return {
             'type': 'ReqSync',
             playerUp,
@@ -890,6 +908,8 @@ class BugoutSync {
             lastMove
         }
     }
+
+
 
     findLastMove(tree) {
         var bottom = false
