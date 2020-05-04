@@ -54,8 +54,6 @@ class Application(private val brokers: String) {
             .mapValues { v -> jsonMapper.readValue(v,
                             ReqSyncCmd::class.java) }
 
-        // track history provided as a global
-
         reqSyncStream
             .map { _, v ->
                 KeyValue(v.gameId,
@@ -196,27 +194,6 @@ class Application(private val brokers: String) {
                     v.moved.coord,
                     theTurn))
 
-                /*
-                    org.opentest4j.AssertionFailedError:
-                expected: <KeyValue(a7ffc746-7c94-4427-80e1-f0cff7bcb759,
-                {"sessionId":"a7ffc746-7c94-4427-80e1-f0cff7bcb759",
-                "replyTo":"4e09c0cf-18e0-436b-81c8-94a96565ec4e",
-                "gameId":"b23cc52f-0847-4dec-a554-f729b68e344c",
-                "playerUp":"WHITE","turn":4,
-                "moves":[{"player":"BLACK","coord":{"x":4,"y":4},"turn":1},
-                {"player":"WHITE","coord":{"x":10,"y":10},"turn":2},
-                {"player":"BLACK","coord":{"x":4,"y":5},"turn":3}]})>
-
-
-                but was: <KeyValue(a7ffc746-7c94-4427-80e1-f0cff7bcb759,
-                {"sessionId":"a7ffc746-7c94-4427-80e1-f0cff7bcb759",
-                "replyTo":"4e09c0cf-18e0-436b-81c8-94a96565ec4e",
-                "gameId":"b23cc52f-0847-4dec-a554-f729b68e344c",
-                "playerUp":"BLACK","turn":4,
-                "moves":[{"player":"BLACK","coord":{"x":4,"y":4},"turn":1},
-                {"player":"WHITE","coord":{"x":10,"y":10},"turn":2},
-                {"player":"WHITE","coord":{"x":4,"y":5},"turn":3}]})>
-                 */
                 KeyValue(
                     v.hist.reqSync.sessionId,
                     SyncReplyEv(
