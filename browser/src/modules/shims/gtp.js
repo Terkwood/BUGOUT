@@ -111,6 +111,8 @@ const opponentMoved = (msg, opponent) => msg.type === 'MoveMade' && msg.player =
 
 const opponentQuit = msg => msg.type === 'OpponentQuit'
 
+const isSyncReply = msg => msg.type === 'SyncReply'
+
 class WebSocketController extends EventEmitter {
     constructor(webSocketAddress, spawnOptions) {
         super()
@@ -369,6 +371,12 @@ class WebSocketController extends EventEmitter {
                     this.handleOpponentQuit(resolve)
                     this.genMoveInProgress = false
                     sabaki.events.emit('gen-move-completed', { done: true })
+                } else if (isSyncReply(msg)) {
+                    let { genMoveCompleted } = this.handleSyncReply(msg, resolve)
+                    if (genMoveCompleted) {
+                        this.genMoveInProgress = false
+                        sabaki.events.emit('gen-move-completed', { done: true })
+                    }
                 }
 
                 // discard any other messages until we receive confirmation
@@ -406,6 +414,11 @@ class WebSocketController extends EventEmitter {
         sabaki.makeResign()
         sabaki.setMode('scoring')
         resolve({'id':null, 'error':false})
+    }
+
+    handleSyncReply(syncReply, resolve) {
+        console.log('& hi')
+        return { genMoveCompleted: false } // TODO
     }
 
     async sendCommand(command, subscriber = () => {}) {
@@ -881,13 +894,7 @@ class BugoutSync {
     }
 
     processReply(syncReply) {
-        let { gameTrees, gameIndex } = sabaki.state
-        let { currentPlayer } = sabaki.inferredState
-
-        let playerUp = this.interpretPlayerNum(currentPlayer)
-        let tree = gameTrees[gameIndex]
-        let lastMove = this.findLastMove(tree)
-        let turn = lastMove == undefined ? 1 : (lastMove.turn + 1)
+        let { playerUp, lastMove, turn } = deriveLocalState()
 
         if (syncReply.turn === turn && syncReply.playerUp === playerUp) {
             console.log('!  NOTHING TO DO')
@@ -903,91 +910,15 @@ class BugoutSync {
         }
     }
 
-    interpretPlayerNum(n) {
-        return n === 1 ? "BLACK" : "WHITE"
-    }
-
     makePayload(reqId) {
-        let { gameTrees, gameIndex } = sabaki.state
-        let { currentPlayer } = sabaki.inferredState
+        let { playerUp, lastMove, turn } = deriveLocalState()
 
-        let playerUp = this.interpretPlayerNum(currentPlayer)
-        let tree = gameTrees[gameIndex]
-        let lastMove = this.findLastMove(tree)
-        let turn = lastMove == undefined ? 1 : (lastMove.turn + 1)
         return {
             'type': 'ReqSync',
             playerUp,
             reqId,
             turn,
             lastMove
-        }
-    }
-
-
-
-    findLastMove(tree) {
-        var bottom = false
-
-        if (tree === undefined ||
-            tree.root === undefined ||
-            tree.root.children === undefined ||
-            tree.root.children.length === 0) {
-            return null
-        }
-
-        // skip the top level game node
-        var subtree = tree.root.children[0]
-        var turn = 0
-        var lastMove = null
-        while(!bottom) {
-            turn = turn + 1
-
-            if (subtree && subtree.data) {
-                
-                let blackTreeCoord = subtree.data.B
-                let whiteTreeCoord = subtree.data.W
-                
-                var proceed = false
-                if (blackTreeCoord) {
-                    let coord = this.convertTreeCoord(blackTreeCoord)
-                    let player = "BLACK"
-                    lastMove = { turn, player, coord }
-                    proceed = true
-                } else if (whiteTreeCoord) {
-                    let coord = this.convertTreeCoord(whiteTreeCoord)
-                    let player = "WHITE"
-                    lastMove = { turn, player, coord }
-                    proceed = true
-                }
-
-                if (proceed) {
-                    if (subtree.children && subtree.children.length > 0) {
-                        subtree = subtree.children[0]
-                    } else {
-                        bottom = true
-                    }
-                } else {
-                    bottom = true
-                }
-            } else {
-                bottom = true
-            }
-        }
-        return lastMove
-    }
-
-    convertTreeCoord(treeCoords) {
-        const offset = 97
-        if (treeCoords === undefined || 
-            treeCoords[0] === undefined ||
-            treeCoords[0].length !== 2) {
-            return null
-        } else {
-            return {
-                'x': treeCoords[0].charCodeAt(0) - offset,
-                'y': treeCoords[0].charCodeAt(1) - offset
-            }
         }
     }
 
@@ -1001,6 +932,86 @@ class BugoutSync {
             this.removeMessageListener()
             this.messageListener = listener
             this.webSocket.addEventListener('message', listener)
+        }
+    }
+}
+
+const deriveLocalState = () => {
+    let { gameTrees, gameIndex } = sabaki.state
+    let { currentPlayer } = sabaki.inferredState
+
+    let playerUp = interpretPlayerNum(currentPlayer)
+    let tree = gameTrees[gameIndex]
+    let lastMove = findLastMove(tree)
+    let turn = lastMove == undefined ? 1 : (lastMove.turn + 1)
+
+    return { playerUp, lastMove, turn }
+}
+
+
+const interpretPlayerNum = n => n === 1 ? "BLACK" : "WHITE"
+
+const findLastMove = tree => {
+    var bottom = false
+
+    if (tree === undefined ||
+        tree.root === undefined ||
+        tree.root.children === undefined ||
+        tree.root.children.length === 0) {
+        return null
+    }
+
+    // skip the top level game node
+    var subtree = tree.root.children[0]
+    var turn = 0
+    var lastMove = null
+    while(!bottom) {
+        turn = turn + 1
+
+        if (subtree && subtree.data) {
+            
+            let blackTreeCoords = subtree.data.B
+            let whiteTreeCoords = subtree.data.W
+            
+            var proceed = false
+            if (blackTreeCoords) {
+                let coord = convertTreeCoord(blackTreeCoords)
+                let player = "BLACK"
+                lastMove = { turn, player, coord }
+                proceed = true
+            } else if (whiteTreeCoords) {
+                let coord = convertTreeCoord(whiteTreeCoords)
+                let player = "WHITE"
+                lastMove = { turn, player, coord }
+                proceed = true
+            }
+
+            if (proceed) {
+                if (subtree.children && subtree.children.length > 0) {
+                    subtree = subtree.children[0]
+                } else {
+                    bottom = true
+                }
+            } else {
+                bottom = true
+            }
+        } else {
+            bottom = true
+        }
+    }
+    return lastMove
+}
+
+const convertTreeCoord = (treeCoords) => {
+    const offset = 97
+    if (treeCoords === undefined || 
+        treeCoords[0] === undefined ||
+        treeCoords[0].length !== 2) {
+        return null
+    } else {
+        return {
+            'x': treeCoords[0].charCodeAt(0) - offset,
+            'y': treeCoords[0].charCodeAt(1) - offset
         }
     }
 }
