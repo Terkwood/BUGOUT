@@ -883,8 +883,14 @@ class BugoutSync {
 
         if (syncReply.turn === turn && syncReply.playerUp === playerUp) {
             console.log('!  NOTHING TO DO')
+        } else if (syncReply.turn - 1 === turn && otherPlayer(syncReply.playerUp) === playerUp) {
+            console.log('!  SERVER IS AHEAD')
+        } else if (syncReply.turn + 1 === turn && syncReply.playerUp === otherPlayer(playerUp)) {
+            console.log('!  SERVER IS BEHIND')
         } else {
-            console.log('!  NEED TO SYNC')
+            console.log('!  CRITICAL FAILURE')
+            console.log(`   - syncReply: ${JSON.stringify(syncReply)}`)
+            console.log(`   - local    : \n\t\t\tplayerUp ${JSON.stringify(playerUp)}\n\t\t\tturn ${JSON.stringify(turn)}\n\t\t\tlastMove ${JSON.stringify(lastMove)}\n\t\t\ttree ${JSON.stringify(tree)}`)
         }
     }
 
