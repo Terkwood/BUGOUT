@@ -822,7 +822,7 @@ class GatewayConn {
 
 
 const SYNC_TIMEOUT_MS = 5000
-const SYNC_DELAY_MS = 5000
+const SYNC_DELAY_MS = 15000
 
 class BugoutSync {
     constructor(webSocket) {
@@ -835,9 +835,10 @@ class BugoutSync {
 
     activate(gameId) {
         this.gameId = gameId
+        this.delay()
+        this.interval = setInterval(() => this.reqSync(), SYNC_TIMEOUT_MS)
         this.activated = true
         console.log('Sync Activated')
-        this.reqSync()
     }
 
     delay() {
@@ -846,6 +847,8 @@ class BugoutSync {
 
     reqSync() {
         if ( this.activated && (Date.now() > (this.delayUntil||0)) ) {
+            this.inspectGameView()
+
             this.reqId = uuidv4()
             let playerUp = 'BLACK'
             let turn = 1
@@ -867,8 +870,22 @@ class BugoutSync {
                     console.log('errrrrr')
                 }
             })
-            setTimeout(() => this.reqSync(), SYNC_TIMEOUT_MS)
         }
+    }
+
+    inspectGameView() {
+        let { gameTrees, gameIndex } = sabaki.state
+        let { currentPlayer } = sabaki.inferredState
+
+        let tree = gameTrees[gameIndex]
+
+        console.log(`Tree : ${JSON.stringify(tree)}`)
+        console.log(`Index: ${JSON.stringify(gameIndex)}`)
+        console.log(`Playr: ${JSON.stringify(this.interpretPlayerNum(currentPlayer))}`)
+    }
+
+    interpretPlayerNum(n) {
+        return n === 1 ? "BLACK" : "WHITE"
     }
 
     removeMessageListener() {
