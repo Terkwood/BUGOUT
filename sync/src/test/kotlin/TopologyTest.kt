@@ -76,8 +76,9 @@ class TopologyTest {
                 turn = turn
         )
 
-        assertEquals(syncReplyOut.readKeyValue(),
-                (KeyValue(sessionId, jsonMapper.writeValueAsString(expected))))
+        assertEquals(
+                KeyValue(sessionId, jsonMapper.writeValueAsString(expected)),
+        syncReplyOut.readKeyValue())
     }
 
     @Test
@@ -141,7 +142,7 @@ class TopologyTest {
         )
 
         assertEquals(
-                (KeyValue(sessionId, jsonMapper.writeValueAsString(expected))),
+                KeyValue(sessionId, jsonMapper.writeValueAsString(expected)),
                 syncReplyOut.readKeyValue())
     }
 
@@ -212,8 +213,8 @@ class TopologyTest {
                 coord = clientLastMove.coord
         )
 
-        assertEquals((KeyValue(gameId,
-                jsonMapper.writeValueAsString(expectedMakeMove))),
+        assertEquals(KeyValue(gameId,
+                jsonMapper.writeValueAsString(expectedMakeMove)),
                 makeMoveCmdOut.readKeyValue())
 
         // artificially introduce a move-made event, so that
@@ -244,8 +245,8 @@ class TopologyTest {
                 turn = clientTurn
         )
 
-        assertEquals((KeyValue(sessionId,
-                jsonMapper.writeValueAsString(expectedSyncReply))),
+        assertEquals(KeyValue(sessionId,
+                jsonMapper.writeValueAsString(expectedSyncReply)),
                 syncReplyOut.readKeyValue())
     }
 
