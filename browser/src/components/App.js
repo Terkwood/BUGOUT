@@ -670,7 +670,6 @@ class App extends Component {
             // Send command to engine
 
             let passPlayer = pass ? player : null
-            console.log('$ genmove 2 (wait)')
             setTimeout(() => this.generateMove({passPlayer}), setting.get('gtp.move_delay'))
         }
     }
@@ -1135,7 +1134,6 @@ class App extends Component {
 
         if (followUp && otherSyncer != null && !doublePass) {
             await helper.wait(setting.get('gtp.move_delay'))
-            console.log('$ genmove 1')
             this.generateMove({passPlayer: pass ? sign : null, firstMove: false, followUp})
         } else {
             this.stopGeneratingMoves()
