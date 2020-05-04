@@ -166,6 +166,7 @@ class WebSocketController extends EventEmitter {
         // to the incoming websocket message, even after an initial WFP
         // result is returned via findPublicGame() and createPrivateGame() funcs
         this.gatewayConn = new GatewayConn(this.webSocket, handleWaitForOpponent, handleYourColor)
+        this.bugoutSync = new BugoutSync(this.webSocket)
 
         sabaki.events.on('bugout-turn', ({ turn }) => this.turn = turn )
 
@@ -231,8 +232,10 @@ class WebSocketController extends EventEmitter {
                 .then((reply, err) => {
                     if (!err && reply.type === 'GameReady') {
                         this.gameId = reply.gameId
+                        this.bugoutSync.activate()
                     } else if (!err && reply.type == 'WaitForOpponent') {
                         this.gameId = reply.gameId
+                        this.bugoutSync.activate()
                     } else {
                         throwFatal()
                     }
@@ -243,8 +246,10 @@ class WebSocketController extends EventEmitter {
                 .then((reply, err) => {
                     if (!err && reply.type == 'WaitForOpponent') {
                         this.gameId = reply.gameId
+                        this.bugoutSync.activate()
                     } else if (!err && reply.type === 'GameReady') {
                         this.gameId = reply.gameId
+                        this.bugoutSync.activate()
                     } else {
                         throwFatal()
                     }
@@ -255,6 +260,7 @@ class WebSocketController extends EventEmitter {
                 .then((reply, err) => {
                     if (!err && reply.type === 'GameReady') {
                         this.gameId = reply.gameId
+                        this.bugoutSync.activate()
                     } else if (!err && reply.type == 'PrivateGameRejected') {
                         alert('Invalid game')
                     } else {
@@ -811,6 +817,33 @@ class GatewayConn {
 
     async quitGame() {
         this.webSocket.send('{"type": "QuitGame"}')
+    }
+}
+
+
+const SYNC_TIMEOUT_MS = 5000
+class BugoutSync {
+    constructor(webSocket) {
+        this.webSocket = webSocket
+        this.activated = false
+    }
+
+    activate() {
+        console.log('Sync Activated')
+        this.activated = true
+    }
+
+    removeMessageListener() {
+        this.messageListener &&
+        this.webSocket.removeEventListener('message', this.messageListener)
+    }
+
+    updateMessageListener(listener) {
+        if (listener) {
+            this.removeMessageListener()
+            this.messageListener = listener
+            this.webSocket.addEventListener('message', listener)
+        }
     }
 }
 

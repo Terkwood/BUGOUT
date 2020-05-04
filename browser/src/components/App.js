@@ -1,4 +1,4 @@
-const EDITION = 'TINKERay'
+const EDITION = 'Kitchen'
 
 const EventEmitter = require('events')
 const {ipcRenderer, remote} = require('electron')
