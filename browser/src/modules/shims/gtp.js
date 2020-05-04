@@ -181,9 +181,8 @@ class WebSocketController extends EventEmitter {
             let syncLastMove = moves[moves.length - 1]
             let sabakiCoord = syncLastMove.coord ? this.board.vertex2coord([syncLastMove.coord.x, syncLastMove.coord.y]) : 'pass'
 
-            console.log('eh')
             if (this.resolveMoveMade) {
-                console.log('yas')
+                console.log('Resolving outstanding move...')
                 this.resolveMoveMade({'id':null, 'content': sabakiCoord, 'error':false})
             }
 
@@ -195,7 +194,7 @@ class WebSocketController extends EventEmitter {
             // - In case we need to show that the opponent passed
             // - Used by BugoutSync to delay sync requests after move
             sabaki.events.emit('bugout-move-made', { 'coord': syncLastMove.coord })
-            console.log('oh')
+
             this.genMoveInProgress = false   
             sabaki.events.emit('gen-move-completed', { done: true })  
         })
