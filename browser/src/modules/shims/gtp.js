@@ -168,9 +168,16 @@ class WebSocketController extends EventEmitter {
         this.gatewayConn = new GatewayConn(this.webSocket, handleWaitForOpponent, handleYourColor)
         this.bugoutSync = new BugoutSync(this.webSocket)
 
+        sabaki.events.on('sync-no-op', () => {
+            // in case App.js is waiting for our play to resolve
+            if (this.resolveMakeMove) {
+                this.resolveMakeMove({id: null, error: false})
+                this.resolveMakeMove = undefined
+            }
+        })
         sabaki.events.on('sync-server-ahead', ({ type, replyTo, playerUp, turn, moves }) => {
             sabaki.generateMove()
-            
+
             let syncLastMove = moves[moves.length - 1]
             let sabakiCoord = syncLastMove.coord ? this.board.vertex2coord([syncLastMove.coord.x, syncLastMove.coord.y]) : 'pass'
 
@@ -459,6 +466,7 @@ class WebSocketController extends EventEmitter {
                     'coord': coord
                 }
 
+                this.resolveMakeMove = resolve
                 // We only want this listener online so we don't double-count turns
                 this.updateMessageListener(event => {
                     try {
@@ -479,8 +487,9 @@ class WebSocketController extends EventEmitter {
 
                 // TODO HACK
                 if (Math.random() < 0.25) {
-                    console.log(' HACK!')
+                    console.log('     << HACK! >>')
                 } else {
+                    console.log('...Normal Make Move...')
                     this.webSocket.send(payload)
                 }
                 
@@ -912,6 +921,7 @@ class BugoutSync {
 
         if (syncReply.turn === turn && syncReply.playerUp === playerUp) {
             console.log('!  NOTHING TO DO')
+            sabaki.events.emit('sync-no-op')
         } else if (syncReply.turn - 1 === turn && otherPlayer(syncReply.playerUp) === playerUp) {
             console.log('!  SERVER IS AHEAD')
             sabaki.events.emit('sync-server-ahead', syncReply)
