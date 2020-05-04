@@ -824,8 +824,8 @@ class GatewayConn {
 }
 
 
-const SYNC_TIMEOUT_MS = 15000
-const SYNC_DELAY_MS = 22500
+const SYNC_TIMEOUT_MS = 15000/3
+const SYNC_DELAY_MS = 22500/3
 
 class BugoutSync {
     constructor(webSocket) {
@@ -888,7 +888,6 @@ class BugoutSync {
             'lastMove': this.findLastMove(tree)
         }
 
-        console.log(`Tree   : ${JSON.stringify(tree)}`)
         console.log(`PlayrUp: ${playerUp}`)
         console.log(`PAYLOAD: ${JSON.stringify(payload)}`)
         return payload
@@ -896,22 +895,29 @@ class BugoutSync {
 
     findLastMove(tree) {
         var bottom = false
-        if (tree === undefined || tree.children === undefined) {
+
+        console.log(`Tree   : ${JSON.stringify(tree)}`)
+
+        console.log(`Tree1   : ${JSON.stringify(tree['children'])}`)
+
+        if (tree === undefined ||
+            tree['children'] === undefined ||
+            tree['children'].length === 0) {
             return null
         }
 
         // skip the top level game node
-        var subtree = tree.children
+        var subtree = tree['children'][0]
         var turn = 1
         var playerUp = "BLACK"
         var lastMove = null
         while(!bottom) {
-            if (subtree && subtree.children && 
-                subtree.children.data && 
-                (subtree.children.data.B || subtree.children.data.W)) {
+            console.log(`SUBTREE ${JSON.stringify(subtree)}`)
+            if (subtree && subtree['data'] && 
+                (subtree['data']['B'] || subtree['data']['W'])) {
                 
-                    let blackTreeCoord = subtree.children.data.B
-                let whiteTreeCoord = subtree.children.data.W
+                let blackTreeCoord = subtree['data']['B']
+                let whiteTreeCoord = subtree['data']['W']
                 
                 if (blackTreeCoord) {
                     playerUp = "WHITE"
@@ -926,8 +932,11 @@ class BugoutSync {
                 }
 
                 turn = turn + 1
-                subtree = subtree.children.children
-
+                if (subtree['children'] && subtree['children'].length > 0) {
+                    subtree = subtree['children'][0]
+                } else {
+                    subtree = undefined
+                }
             } else {
                 bottom = true
             }
