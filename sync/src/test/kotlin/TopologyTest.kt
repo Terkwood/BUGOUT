@@ -1,4 +1,6 @@
 
+import java.util.Properties
+import java.util.UUID
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsConfig
@@ -10,8 +12,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import serdes.jsonMapper
-import java.util.Properties
-import java.util.UUID
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TopologyTest {
@@ -55,7 +55,7 @@ class TopologyTest {
                 testDriver.createInputTopic(
                         Topics.HISTORY_PROVIDED_EV,
                         Serdes.UUID().serializer(),
-                         Serdes.String().serializer())
+                        Serdes.String().serializer())
         historyProvidedIn.pipeInput(gameId,
                 jsonMapper.writeValueAsString(historyProvided))
 

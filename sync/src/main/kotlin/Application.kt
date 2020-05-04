@@ -1,5 +1,8 @@
 
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
+import java.time.temporal.ChronoUnit
+import java.util.Properties
+import java.util.TimeZone
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.KafkaStreams
@@ -15,9 +18,6 @@ import org.apache.kafka.streams.kstream.StreamJoined
 import serdes.KafkaDeserializer
 import serdes.KafkaSerializer
 import serdes.jsonMapper
-import java.time.temporal.ChronoUnit
-import java.util.Properties
-import java.util.TimeZone
 
 const val BROKERS = "kafka:9092"
 
@@ -75,7 +75,6 @@ class Application(private val brokers: String) {
 
         val reqSyncByGameId = reqSyncStream
             .map { _, v -> KeyValue(v.gameId, v) }
-
 
         val histJoined: KStream<GameId, HistProvReply> = reqSyncByGameId.join(
                 histProvStream,
