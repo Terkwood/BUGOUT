@@ -17,6 +17,10 @@ import serdes.jsonMapper
 class TopologyTest {
     private val testDriver: TopologyTestDriver = setup()
 
+    /**
+     * Simple case.  Client is in sync with the server and
+     * will simply receive the server view.
+     */
     @Test
     fun testNoOpReq() {
         val turn = 3
@@ -81,6 +85,10 @@ class TopologyTest {
         syncReplyOut.readKeyValue())
     }
 
+    /**
+     * Simple case.  Client is behind by one move and needs to catch up
+     * to the server.
+     */
     @Test
     fun testClientCatchUp() {
         val turn = 3
@@ -146,6 +154,82 @@ class TopologyTest {
                 syncReplyOut.readKeyValue())
     }
 
+    /**
+     * Simple case.  Client sends a turn / lastMove
+     * combination that seems completely bogus.  Server
+     * simply responds with the correct view of the game
+     * (same as no-op, or client being behind).  If
+     * the client is able to fix their local state, that's
+     * great.  If not, sync has still done its job.
+     */
+    @Test
+    fun testResponseToBogusClientState() {
+        val turn = 3
+        val playerUp = Player.BLACK
+        val moves = listOf(
+                Move(Player.BLACK, Coord(4, 4), 1),
+                Move(Player.WHITE, Coord(10, 10), 2)
+        )
+        val gameId = UUID.randomUUID()
+        val reqId = UUID.randomUUID()
+        val sessionId = UUID.randomUUID()
+
+        // client is behind by one move
+        val bogusClientMove = Move(Player.BLACK, Coord(13, 5), turn = 7)
+        val reqSync = ReqSyncCmd(sessionId = sessionId,
+                reqId = reqId,
+                gameId = gameId,
+                playerUp = Player.WHITE,
+                turn = turn - 1,
+                lastMove = bogusClientMove)
+
+        val uuidSerde = Serdes.UUID()
+        val stringSerde = Serdes.String()
+        val reqSyncIn: TestInputTopic<UUID, String> =
+                testDriver.createInputTopic(
+                        Topics.REQ_SYNC_CMD,
+                        Serdes.UUID().serializer(),
+                        Serdes.String().serializer())
+        reqSyncIn.pipeInput(
+                sessionId,
+                jsonMapper.writeValueAsString(reqSync)
+        )
+
+        val historyProvided = HistoryProvidedEv(gameId, replyTo = reqId,
+                eventId = UUID.randomUUID(), moves = moves)
+
+        val historyProvidedIn: TestInputTopic<UUID, String> =
+                testDriver.createInputTopic(Topics.HISTORY_PROVIDED_EV,
+                        uuidSerde.serializer(),
+                        stringSerde.serializer())
+
+        historyProvidedIn.pipeInput(gameId,
+                jsonMapper.writeValueAsString(historyProvided))
+
+        val syncReplyOut: TestOutputTopic<UUID, String> =
+                testDriver.createOutputTopic(Topics.SYNC_REPLY_EV,
+                        uuidSerde.deserializer(), stringSerde.deserializer())
+
+        val expected = SyncReplyEv(
+                sessionId = sessionId,
+                replyTo = reqId,
+                moves = moves,
+                gameId = gameId,
+                playerUp = playerUp,
+                turn = turn
+        )
+
+        assertEquals(
+                KeyValue(sessionId, jsonMapper.writeValueAsString(expected)),
+                syncReplyOut.readKeyValue())
+    }
+
+    /** This is the case which requires the most effort on behalf
+     * of sync service.  If the client is ahead by one move (perhaps
+     * due to their connectivity dropping out), then we need to
+     * issue a make move command on their behalf when we receive
+     * their REQSYNC.  We don't respond with SYNCREPLY until judge
+     * and changelog have correctly processed the move. */
     @Test
     fun testServerCatchUp() {
         val clientTurn = 4
