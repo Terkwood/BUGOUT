@@ -110,29 +110,15 @@ class Application(private val brokers: String) {
             // client is ahead of server by a single turn
             // and their move needs to be processed
             { _: SessionId, hpr: HistProvReply ->
-                hpr.reqSync.turn == hpr.systemTurn + 1 &&
-                    hpr.reqSync.playerUp == otherPlayer(hpr.systemPlayerUp) &&
-                    hpr.reqSync.lastMove != null
+                isClientAheadByOneTurn(hpr)
             },
-            // no op: client is caught up. send the server's view
+            // in every other case, we should send the server's view:
+            // - no op: client is caught up
+            // - client is behind by one move
+            // - client has a state which we cannot reconcile
+            //            ...(but maybe they can fix themselves)
             { _: SessionId, hpr: HistProvReply ->
-                hpr.reqSync.turn == hpr.systemTurn &&
-                    hpr.reqSync.playerUp == hpr.systemPlayerUp },
-            // client is behind by one move and needs to
-            // be caught up.  send the server's view
-            { _: SessionId, hpr: HistProvReply ->
-                hpr.reqSync.turn < hpr.systemTurn
-            },
-            // UNDEFINED/ERR: client is too far ahead to reconcile
-            { _: SessionId, hpr: HistProvReply ->
-                hpr.reqSync.turn > hpr.systemTurn + 1
-            },
-            // UNDEFINED/ERR: client is ahead by a turn, but thinks
-            // it's the wrong player's move
-            { _: SessionId, hpr: HistProvReply ->
-                hpr.reqSync.turn == hpr.systemTurn + 1 &&
-                    hpr.reqSync.playerUp == hpr.systemPlayerUp
-            }
+                !isClientAheadByOneTurn(hpr) }
         )
 
         val clientAheadByOneTurnBranch = branches[0]
@@ -207,11 +193,9 @@ class Application(private val brokers: String) {
                 )
             }
 
-        val noOpBranch = branches[1]
+        val sendServerViewBranch = branches[1]
 
-        val clientBehindServerBranch = branches[2]
-
-        val sendSystemView = noOpBranch.merge(clientBehindServerBranch)
+        val serverViewSyncReply = sendServerViewBranch
             .mapValues { histProvReply ->
                 SyncReplyEv(
                     sessionId = histProvReply.reqSync.sessionId,
@@ -222,20 +206,10 @@ class Application(private val brokers: String) {
                     turn = histProvReply.systemTurn)
             }
 
-        sendSystemView.merge(clientMoveComputed)
+        serverViewSyncReply.merge(clientMoveComputed)
             .mapValues { v -> jsonMapper.writeValueAsString(v) }
             .to(Topics.SYNC_REPLY_EV,
                 Produced.with(Serdes.UUID(), Serdes.String()))
-
-        val clientTooFarAheadBranch = branches[3]
-        clientTooFarAheadBranch.foreach { k, v ->
-            println("client too far ahead to reconcile $k $v")
-        }
-
-        val clientOutOfWhackBranch = branches[4]
-        clientOutOfWhackBranch.foreach { k, v ->
-            println("client thinks wrong player is moving $k $v")
-        }
 
         return streamsBuilder.build()
     }
@@ -263,3 +237,8 @@ class Application(private val brokers: String) {
         println(" done! 🏁")
     }
 }
+
+private fun isClientAheadByOneTurn(hpr: HistProvReply): Boolean =
+    hpr.reqSync.turn == hpr.systemTurn + 1 &&
+            hpr.reqSync.playerUp == otherPlayer(hpr.systemPlayerUp) &&
+            hpr.reqSync.lastMove != null
