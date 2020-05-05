@@ -391,7 +391,7 @@ class WebSocketController extends EventEmitter {
         this.updateMessageListener(event => {
             try {
                 let msg = JSON.parse(event.data)
-               
+
                 if (opponentMoved(msg, opponent)) {
                     this.handleMoveMade(msg, opponent, resolve)
                     this.genMoveInProgress = false
@@ -894,7 +894,6 @@ class BugoutSync {
             const payload = this.makePayload(this.reqId)
             this.webSocket.send(JSON.stringify(payload))
             this.updateMessageListener(event => {
-                console.log(`teh event ${event}`)
                 try {
                     let msg = JSON.parse(event.data)
                     
