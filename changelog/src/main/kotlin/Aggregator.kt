@@ -26,6 +26,7 @@ import org.apache.kafka.streams.state.KeyValueStore
 import serdes.*
 
 fun main() {
+    println("Welcome")
     Aggregator("kafka:9092").process()
 }
 
@@ -57,10 +58,15 @@ class Aggregator(private val brokers: String) {
             .mapValues { v -> Pair(DoublePlay.No, v) }
             .groupByKey()
             .reduce({ oldMove: Pair<DoublePlay, MoveMade>, newMove: Pair<DoublePlay, MoveMade> ->
+                val theDouble = if (newMove.second.player == oldMove.second.player)
+                    DoublePlay.Yes
+                else DoublePlay.No
+
+                println("THE DOUBLE $theDouble")
+                println("THE old MOVE $oldMove")
+                println("THE new MOVE $newMove")
                 Pair(
-                    if (newMove.second.player == oldMove.second.player)
-                        DoublePlay.Yes
-                    else DoublePlay.No, newMove.second
+                    theDouble, newMove.second
                 )
             }, Materialized.`as`<GameId, Pair<DoublePlay, MoveMade>, KeyValueStore<Bytes,
                     ByteArray>>(
@@ -106,6 +112,8 @@ class Aggregator(private val brokers: String) {
                         // Make sure board size isn't lost from
                         // turn to turn
                         gameState.board.size = v.boardSize
+
+                        println("game state update $gameState")
                         gameState
                     },
                     Materialized.`as`<GameId, GameState, KeyValueStore<Bytes,
