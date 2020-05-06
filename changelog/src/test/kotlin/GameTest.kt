@@ -116,6 +116,82 @@ class GameTest {
         )
     }
 
+    @Test
+    fun enforcePlayerChange() {
+
+        val gameId = UUID.randomUUID()
+        val replyTo = UUID.randomUUID()
+        val eventId = UUID.randomUUID()
+        val player = Player.BLACK
+        val coord = Coord(4,4)
+
+        val gameReady = GameReady()
+
+        val firstMove = MoveMade(  gameId, replyTo, eventId, player, coord, listOf())
+
+        val factory =
+            ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
+
+        testDriver.pipeInput(
+            factory.create(Topics.GAME_READY,
+                gameId,
+                jsonMapper.writeValueAsString(gameReady)))
+
+
+        testDriver.pipeInput(
+            factory.create(
+                Topics.MOVE_ACCEPTED_EV,
+                gameId,
+                jsonMapper.writeValueAsString(firstMove)
+            )
+        )
+
+
+
+        val firstOutputRecord =
+            testDriver.readOutput(
+                Topics.MOVE_MADE_EV,
+                UUIDDeserializer(),
+                StringDeserializer()
+            )
+
+
+
+        val actualFirst: MoveMade =
+            jsonMapper.readValue(firstOutputRecord.value(), MoveMade::class.java)
+
+        val expectedFirst =
+            jsonMapper.writeValueAsString(firstMove)
+
+        OutputVerifier.compareKeyValue(firstOutputRecord, actualFirst.gameId, expectedFirst)
+
+
+        testDriver.pipeInput(
+            factory.create(
+                Topics.MOVE_ACCEPTED_EV,
+                gameId,
+                jsonMapper.writeValueAsString(firstMove)
+            )
+        )
+
+
+        val notAllowedOutputRecord =
+            testDriver.readOutput(
+                Topics.MOVE_MADE_EV,
+                UUIDDeserializer(),
+                StringDeserializer()
+            )
+
+
+
+        val actualSecond: MoveMade =
+            jsonMapper.readValue(notAllowedOutputRecord.value(), MoveMade::class.java)
+
+        val expectedSecond = null
+
+        OutputVerifier.compareKeyValue(notAllowedOutputRecord, actualSecond.gameId, expectedSecond)
+    }
+
     @AfterAll
     fun tearDown() {
         testDriver.close()
