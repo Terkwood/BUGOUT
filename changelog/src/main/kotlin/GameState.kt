@@ -46,5 +46,3 @@ class GameState(boardSize: Int = FULL_BOARD_SIZE) {
         return jsonMapper.writeValueAsBytes(this)
     }
 }
-
-data class GameStateUpdate(val changed: Boolean, val gameState: GameState)

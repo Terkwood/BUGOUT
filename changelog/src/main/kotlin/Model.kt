@@ -1,7 +1,7 @@
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import serdes.jsonMapper
 import java.util.*
 import kotlin.collections.HashMap
+import serdes.jsonMapper
 
 enum class Player { BLACK, WHITE }
 data class Coord(val x: Int, val y: Int)
@@ -31,7 +31,7 @@ data class MoveMade(
     val player: Player,
     val coord: Coord?,
     val captured: List<Coord> = ArrayList()
-){
+) {
     fun asByteArray(): ByteArray {
         return jsonMapper.writeValueAsBytes(this)
     }
@@ -41,13 +41,13 @@ data class MoveMade(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class GameReady(
     val boardSize: Int = FULL_BOARD_SIZE
-){
+) {
     fun asByteArray(): ByteArray {
         return jsonMapper.writeValueAsBytes(this)
     }
 }
 
-data class MoveMadeBoardSize (
+data class MoveMadeBoardSize(
     val moveMade: MoveMade,
     val boardSize: Int
 )

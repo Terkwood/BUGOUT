@@ -20,7 +20,5 @@ class GameStateSer : Serializer<GameState> {
         } catch (e: RuntimeException) {
             throw SerializationException("Error serializing value", e)
         }
-
     }
-
 }

@@ -1,3 +1,5 @@
+import java.lang.NullPointerException
+import java.util.*
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
@@ -8,9 +10,6 @@ import org.apache.kafka.streams.test.ConsumerRecordFactory
 import org.apache.kafka.streams.test.OutputVerifier
 import org.junit.jupiter.api.*
 import serdes.jsonMapper
-import java.lang.NullPointerException
-import java.util.*
-
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GameTest {
@@ -23,11 +22,11 @@ class GameTest {
         val replyTo = UUID.randomUUID()
         val eventId = UUID.randomUUID()
         val player = Player.BLACK
-        val coord = Coord(4,4)
+        val coord = Coord(4, 4)
 
         val gameReady = GameReady()
 
-        val firstMove = MoveMade(  gameId, replyTo, eventId, player, coord, listOf())
+        val firstMove = MoveMade(gameId, replyTo, eventId, player, coord, listOf())
 
         val factory =
             ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
@@ -37,7 +36,6 @@ class GameTest {
                 gameId,
                 jsonMapper.writeValueAsString(gameReady)))
 
-
         testDriver.pipeInput(
             factory.create(
                 Topics.MOVE_ACCEPTED_EV,
@@ -46,16 +44,12 @@ class GameTest {
             )
         )
 
-
-
         val firstOutputRecord =
             testDriver.readOutput(
                 Topics.MOVE_MADE_EV,
                 UUIDDeserializer(),
                 StringDeserializer()
             )
-
-
 
         val actualFirst: MoveMade =
             jsonMapper.readValue(firstOutputRecord.value(), MoveMade::class.java)
@@ -64,7 +58,6 @@ class GameTest {
             jsonMapper.writeValueAsString(firstMove)
 
         OutputVerifier.compareKeyValue(firstOutputRecord, actualFirst.gameId, expectedFirst)
-
 
         val possiblyRepeatedOutput =
             testDriver.readOutput(
@@ -77,11 +70,11 @@ class GameTest {
             jsonMapper.readValue(possiblyRepeatedOutput.value(), MoveMade::class.java)
 
             assert(false)
-        } catch(e: NullPointerException) {
+        } catch (e: NullPointerException) {
             assert(true)
         }
 
-        val secondMove = MoveMade(gameId, UUID.randomUUID(),UUID.randomUUID(),Player.WHITE, Coord(10,10))
+        val secondMove = MoveMade(gameId, UUID.randomUUID(), UUID.randomUUID(), Player.WHITE, Coord(10, 10))
 
         testDriver.pipeInput(
             factory.create(
@@ -91,15 +84,12 @@ class GameTest {
             )
         )
 
-
         val secondOutputRecord =
             testDriver.readOutput(
                 Topics.MOVE_MADE_EV,
                 UUIDDeserializer(),
                 StringDeserializer()
             )
-
-
 
         val actualSecond: MoveMade =
             jsonMapper.readValue(secondOutputRecord.value(), MoveMade::class.java)
@@ -123,11 +113,11 @@ class GameTest {
         val replyTo = UUID.randomUUID()
         val eventId = UUID.randomUUID()
         val player = Player.BLACK
-        val coord = Coord(4,4)
+        val coord = Coord(4, 4)
 
         val gameReady = GameReady()
 
-        val firstMove = MoveMade(  gameId, replyTo, eventId, player, coord, listOf())
+        val firstMove = MoveMade(gameId, replyTo, eventId, player, coord, listOf())
 
         val factory =
             ConsumerRecordFactory(UUIDSerializer(), StringSerializer())
@@ -137,7 +127,6 @@ class GameTest {
                 gameId,
                 jsonMapper.writeValueAsString(gameReady)))
 
-
         testDriver.pipeInput(
             factory.create(
                 Topics.MOVE_ACCEPTED_EV,
@@ -146,16 +135,12 @@ class GameTest {
             )
         )
 
-
-
         val firstOutputRecord =
             testDriver.readOutput(
                 Topics.MOVE_MADE_EV,
                 UUIDDeserializer(),
                 StringDeserializer()
             )
-
-
 
         val actualFirst: MoveMade =
             jsonMapper.readValue(firstOutputRecord.value(), MoveMade::class.java)
@@ -165,7 +150,6 @@ class GameTest {
 
         OutputVerifier.compareKeyValue(firstOutputRecord, actualFirst.gameId, expectedFirst)
 
-
         testDriver.pipeInput(
             factory.create(
                 Topics.MOVE_ACCEPTED_EV,
@@ -174,14 +158,12 @@ class GameTest {
             )
         )
 
-
         val notAllowedOutputRecord =
             testDriver.readOutput(
                 Topics.MOVE_MADE_EV,
                 UUIDDeserializer(),
                 StringDeserializer()
             )
-
 
         assert(notAllowedOutputRecord == null)
     }
@@ -191,7 +173,6 @@ class GameTest {
         testDriver.close()
     }
 }
-
 
 fun setup(): TopologyTestDriver {
     // setup test driver

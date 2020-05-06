@@ -4,7 +4,6 @@ object Topics {
     const val GAME_STATES_CHANGELOG = "bugout-game-states"
     const val GAME_READY = "bugout-game-ready-ev"
 
-
     const val GAME_STATES_STORE_NAME = "bugout-game-states-store"
     const val MOVE_ACCEPTED_DEDUP_STORE = "bugout-changelog-move-accepted-dedup"
 

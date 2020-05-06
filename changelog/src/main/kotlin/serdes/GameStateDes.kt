@@ -20,7 +20,5 @@ class GameStateDes : Deserializer<GameState> {
         } catch (e: RuntimeException) {
             throw SerializationException("Error deserializing value", e)
         }
-
     }
-
 }

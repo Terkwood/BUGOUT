@@ -1,6 +1,5 @@
 package serdes
 
-
 import Coord
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationContext
@@ -24,4 +23,3 @@ internal class CoordKeyDes :
     override fun deserializeKey(key: String, ctxt: DeserializationContext):
             Any? = coordFrom(key)
 }
-

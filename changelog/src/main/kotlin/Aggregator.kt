@@ -5,6 +5,9 @@ import Topics.MOVE_ACCEPTED_DEDUP_STORE
 import Topics.MOVE_ACCEPTED_EV
 import Topics.MOVE_MADE_EV
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
+import java.time.temporal.ChronoUnit
+import java.util.Properties
+import java.util.UUID
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -12,11 +15,15 @@ import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.Topology
-import org.apache.kafka.streams.kstream.*
+import org.apache.kafka.streams.kstream.Consumed
+import org.apache.kafka.streams.kstream.JoinWindows
+import org.apache.kafka.streams.kstream.Joined
+import org.apache.kafka.streams.kstream.KStream
+import org.apache.kafka.streams.kstream.KTable
+import org.apache.kafka.streams.kstream.Materialized
+import org.apache.kafka.streams.kstream.Produced
 import org.apache.kafka.streams.state.KeyValueStore
 import serdes.*
-import java.time.temporal.ChronoUnit
-import java.util.*
 
 fun main() {
     Aggregator("kafka:9092").process()
@@ -49,7 +56,7 @@ class Aggregator(private val brokers: String) {
         val dedupedMoveAccepted = moveAccepted
             .mapValues { v -> Pair(DoublePlay.No, v) }
             .groupByKey()
-            .reduce ({ oldMove: Pair<DoublePlay, MoveMade>, newMove: Pair<DoublePlay, MoveMade> ->
+            .reduce({ oldMove: Pair<DoublePlay, MoveMade>, newMove: Pair<DoublePlay, MoveMade> ->
                 Pair(
                     if (newMove.second.player == oldMove.second.player)
                         DoublePlay.Yes
@@ -67,7 +74,7 @@ class Aggregator(private val brokers: String) {
                     )
                 ))
             .toStream()
-            .filter { _,v -> v.first == DoublePlay.No }
+            .filter { _, v -> v.first == DoublePlay.No }
             .mapValues { v -> v.second }
 
         val boardSize: KStream<UUID, Int> =
@@ -78,15 +85,13 @@ class Aggregator(private val brokers: String) {
                 jsonMapper.readValue(v, GameReady::class.java).boardSize
             }
 
-
         val pair: KStream<UUID, MoveMadeBoardSize> = dedupedMoveAccepted
             .join(boardSize,
-                { left: MoveMade, right: Int -> MoveMadeBoardSize(left,right)},
+                { left: MoveMade, right: Int -> MoveMadeBoardSize(left, right) },
                 JoinWindows.of(ChronoUnit.DAYS.duration),
                 Joined.with(Serdes.UUID(),
                     Serdes.serdeFrom(MoveMadeSer(), MoveMadeDes()),
                     Serdes.Integer()))
-
 
         val gameStatesOut: KTable<UUID, GameState> =
             // insight: // https://stackoverflow.com/questions/51966396/wrong-serializers-used-on-aggregate
@@ -120,7 +125,7 @@ class Aggregator(private val brokers: String) {
             .toStream()
             .map { k, v ->
                 println("\uD83D\uDCBE          ${k?.toString()?.take(8)} AGGRGATE Turn ${v.turn} PlayerUp ${v.playerUp}")
-                KeyValue(k,jsonMapper.writeValueAsString(v))
+                KeyValue(k, jsonMapper.writeValueAsString(v))
             }.to(
                 GAME_STATES_CHANGELOG,
                 Produced.with(Serdes.UUID(), Serdes.String())
@@ -144,14 +149,17 @@ class Aggregator(private val brokers: String) {
 
         return streamsBuilder.build()
     }
-    
-    private fun waitForTopics(topics: Array<String>, props:
-    Properties) {
+
+    private fun waitForTopics(
+        topics: Array<String>,
+        props:
+            Properties
+    ) {
         print("Waiting for topics ")
         val client = AdminClient.create(props)
 
         var topicsReady = false
-        while(!topicsReady) {
+        while (!topicsReady) {
             val found = client.listTopics().names().get()
 
             val diff = topics.subtract(found.filterNotNull())
