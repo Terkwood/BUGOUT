@@ -9,3 +9,4 @@
 /opt/bin/docker-compose -f dc-giant.yml build reaper
 /opt/bin/docker-compose -f dc-giant.yml build kafkacat
 /opt/bin/docker-compose -f dc-giant.yml build startup
+/opt/bin/docker-compose -f dc-giant.yml build sync
