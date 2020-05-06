@@ -312,8 +312,7 @@ pub fn start(
                         router.forward_by_client_id(p.client_id, BackendEvents::PrivateGameRejected(p).to_client_event())
                     }
                     Ok(BackendEvents::WaitForOpponent(w)) => {
-                        router.route_new_game(w.session_id, w.game_id);
-                        router.forward_by_game_id(BackendEvents::WaitForOpponent(w).to_client_event())
+                        router.forward_by_session_id(w.session_id, BackendEvents::WaitForOpponent(w).to_client_event())
                     }
                     Ok(BackendEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
                         // We want to forward by session ID

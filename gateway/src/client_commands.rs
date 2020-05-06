@@ -41,7 +41,7 @@ pub struct AttachBotClientCommand {
 ///
 /// The request ID should be remembered by the browser client.
 /// Any future sync replies should include a reply_to
-/// which ties to the most recent ReqSync sent by that 
+/// which ties to the most recent ReqSync sent by that
 /// client.  This helps clients avoid reacting to
 /// stale updates.
 ///
