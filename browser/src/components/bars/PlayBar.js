@@ -11,13 +11,20 @@ const setting = remote.require('./setting')
 
 let toggleSetting = key => setting.set(key, !setting.get(key))
 
+const isPlayerTurn = colorNum => {
+    let engineOffset = colorNum === -1 ? 1 : 0
+    return sabaki.state.attachedEngines[engineOffset] == undefined
+}
+
 class PlayBar extends Component {
     constructor() {
         super()
 
         this.handlePassClick = () => {
-            let autoGenmove = setting.get('gtp.auto_genmove')
-            sabaki.makeMove([-1, -1], {sendToEngine: autoGenmove})
+            if (isPlayerTurn(sabaki.state.currentPlayer)) {
+                let autoGenmove = setting.get('gtp.auto_genmove')
+                sabaki.makeMove([-1, -1], {sendToEngine: autoGenmove})
+            }
         }
 
         this.handleQuitClick = () => {
