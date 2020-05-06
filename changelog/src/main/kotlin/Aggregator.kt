@@ -1,8 +1,10 @@
 import Topics.GAME_READY
 import Topics.GAME_STATES_CHANGELOG
 import Topics.GAME_STATES_STORE_NAME
+import Topics.MOVE_ACCEPTED_DEDUP_STORE
 import Topics.MOVE_ACCEPTED_EV
 import Topics.MOVE_MADE_EV
+import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -44,6 +46,30 @@ class Aggregator(private val brokers: String) {
                 jsonMapper.readValue(v, MoveMade::class.java)
             }
 
+        val dedupedMoveAccepted = moveAccepted
+            .mapValues { v -> Pair(DoublePlay.No, v) }
+            .groupByKey()
+            .reduce ({ oldMove: Pair<DoublePlay, MoveMade>, newMove: Pair<DoublePlay, MoveMade> ->
+                Pair(
+                    if (newMove.second.player == oldMove.second.player)
+                        DoublePlay.Yes
+                    else DoublePlay.No, newMove.second
+                )
+            }, Materialized.`as`<GameId, Pair<DoublePlay, MoveMade>, KeyValueStore<Bytes,
+                    ByteArray>>(
+                MOVE_ACCEPTED_DEDUP_STORE
+            )
+                .withKeySerde(Serdes.UUID())
+                .withValueSerde(
+                    Serdes.serdeFrom(
+                        KafkaSer(),
+                        KafkaDes(jacksonTypeRef())
+                    )
+                ))
+            .toStream()
+            .filter { _,v -> v.first == DoublePlay.No }
+            .mapValues { v -> v.second }
+
         val boardSize: KStream<UUID, Int> =
             streamsBuilder.stream<UUID, String>(
                 GAME_READY,
@@ -53,7 +79,7 @@ class Aggregator(private val brokers: String) {
             }
 
 
-        val pair: KStream<UUID, MoveMadeBoardSize> = moveAccepted
+        val pair: KStream<UUID, MoveMadeBoardSize> = dedupedMoveAccepted
             .join(boardSize,
                 { left: MoveMade, right: Int -> MoveMadeBoardSize(left,right)},
                 JoinWindows.of(ChronoUnit.DAYS.duration),
@@ -139,3 +165,5 @@ class Aggregator(private val brokers: String) {
         println(" done!")
     }
 }
+
+enum class DoublePlay { No, Yes }

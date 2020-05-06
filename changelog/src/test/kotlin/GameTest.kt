@@ -183,13 +183,7 @@ class GameTest {
             )
 
 
-
-        val actualSecond: MoveMade =
-            jsonMapper.readValue(notAllowedOutputRecord.value(), MoveMade::class.java)
-
-        val expectedSecond = null
-
-        OutputVerifier.compareKeyValue(notAllowedOutputRecord, actualSecond.gameId, expectedSecond)
+        assert(notAllowedOutputRecord == null)
     }
 
     @AfterAll
