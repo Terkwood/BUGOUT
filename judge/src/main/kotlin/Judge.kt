@@ -1,4 +1,3 @@
-import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -7,6 +6,9 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.kstream.*
+import org.apache.kafka.streams.processor.Processor
+import org.apache.kafka.streams.processor.ProcessorContext
+import org.apache.kafka.streams.processor.ProcessorSupplier
 import org.apache.kafka.streams.state.KeyValueStore
 import serdes.*
 import java.util.*
@@ -38,49 +40,22 @@ class Judge(private val brokers: String) {
     private fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
 
-        val makeMoveCommandStream: KStream<GameId, MakeMoveCmd> =
+
+
+        val makeMoveDeduped: KStream<GameId, MakeMoveCmd> =
             streamsBuilder
                 .stream<UUID, String>(
-                    MAKE_MOVE_CMD_TOPIC,
+                    MAKE_MOVE_CMD_DEDUP_TOPIC,
                     Consumed.with(Serdes.UUID(), Serdes.String())
                 ).mapValues { v ->
                     jsonMapper.readValue(v, MakeMoveCmd::class.java)
                 }
 
-        makeMoveCommandStream.foreach { _, v ->
+        makeMoveDeduped.foreach { _, v ->
             println(
                 "\uD83D\uDCE2 game ${v.gameId.short()} MOVE     ${v
                     .player} ${v
                     .coord} (API)"
-            )
-        }
-
-        val dedupMakeMoveCommandStream: KStream<GameId, MakeMoveCmd> =
-            makeMoveCommandStream
-                .mapValues { v -> DedupMakeMoveCmd(DoublePlay.No, v) }
-                .groupByKey()
-                .reduce( { last: DedupMakeMoveCmd, current: DedupMakeMoveCmd ->
-                    val isDoublePlay =
-                        if (current.makeMoveCmd.player == last.makeMoveCmd.player)
-                            DoublePlay.Yes
-                        else
-                            DoublePlay.No
-
-                    println("isDoublePlay $isDoublePlay")
-                    val r = DedupMakeMoveCmd(isDoublePlay, current.makeMoveCmd)
-                    println("dedup result $r")
-
-                    r
-                } , Materialized.`as`<GameId, DedupMakeMoveCmd, KeyValueStore<Bytes,ByteArray>>(MAKE_MOVE_DEDUP_STORE).withKeySerde(Serdes.UUID()).withValueSerde(Serdes.serdeFrom(KafkaSerializer(),KafkaDeserializer(
-                    jacksonTypeRef())))
-        ).toStream().filter { _ , v -> v.doublePlay == DoublePlay.No }
-                .mapValues { v -> v.makeMoveCmd}
-
-        dedupMakeMoveCommandStream.foreach { _, v ->
-            println(
-                "\uD83D\uDCE2 game ${v.gameId.short()} MOVE     ${v
-                    .player} ${v
-                    .coord} (deduped)"
             )
         }
 
@@ -117,7 +92,7 @@ class Judge(private val brokers: String) {
 
         // Distasteful workaround for https://github.com/Terkwood/BUGOUT/issues/228
         val guardNoNullGameState: KStream<GameId, MakeMoveCmd> =
-            dedupMakeMoveCommandStream.join(gameStates,
+            makeMoveDeduped.join(gameStates,
                 KeyValueMapper { _: GameId, leftValue: MakeMoveCmd ->
                     leftValue.gameId
                 },ValueJoiner { leftValue: MakeMoveCmd,
@@ -171,7 +146,17 @@ class Judge(private val brokers: String) {
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
-        return streamsBuilder.build()
+        val topology = streamsBuilder.build()
+
+        val commandSourceName ="Make Move Command API"
+        val processorName = "Process: Deduplicate Make Move Commands"
+        val sinkName = "Make Move Commands Deduplicated"
+
+        topology.addSource(commandSourceName, MAKE_MOVE_CMD_TOPIC)
+            .addProcessor(processorName, ProcessorSupplier {  DedupMakeMoveAPI() } , commandSourceName)
+            .addSink(sinkName, MAKE_MOVE_CMD_DEDUP_TOPIC, processorName)
+
+        return topology
     }
 
     private fun waitForTopics(topics: Array<String>, props: java.util
@@ -195,5 +180,20 @@ class Judge(private val brokers: String) {
     }
 }
 
-enum class DoublePlay { No, Yes }
-data class DedupMakeMoveCmd(val doublePlay: DoublePlay, val makeMoveCmd: MakeMoveCmd)
+class DedupMakeMoveAPI : Processor<String, String> {
+    private var context: ProcessorContext? = null
+    private var lastPlayer: KeyValueStore<GameId, Player?>? = null
+
+    override fun init(context: ProcessorContext?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun process(key: String?, value: String?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun close() {
+        TODO("Not yet implemented")
+    }
+
+}
