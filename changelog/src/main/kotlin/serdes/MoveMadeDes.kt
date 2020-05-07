@@ -20,5 +20,7 @@ class MoveMadeDes : Deserializer<MoveMade> {
         } catch (e: RuntimeException) {
             throw SerializationException("Error deserializing value", e)
         }
+
     }
+
 }

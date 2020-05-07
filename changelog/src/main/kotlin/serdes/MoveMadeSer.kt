@@ -20,5 +20,7 @@ class MoveMadeSer : Serializer<MoveMade> {
         } catch (e: RuntimeException) {
             throw SerializationException("Error serializing value", e)
         }
+
     }
+
 }

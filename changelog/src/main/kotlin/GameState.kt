@@ -15,10 +15,6 @@ class GameState(boardSize: Int = FULL_BOARD_SIZE) {
     val moves: MutableList<MoveMade> = mutableListOf()
 
     fun add(ev: MoveMade): GameState {
-        if (moves.lastOrNull()?.player == ev.player) {
-            return this
-        }
-
         moves.add(ev)
 
         if (ev.coord != null) {

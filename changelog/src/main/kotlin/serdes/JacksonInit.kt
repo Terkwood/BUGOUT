@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.util.StdDateFormat
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 
+
 val jsonMapper = ObjectMapper().apply {
     registerKotlinModule()
     disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
@@ -24,3 +25,4 @@ val jsonMapper = ObjectMapper().apply {
     )
     registerModule(simpleModule)
 }
+
