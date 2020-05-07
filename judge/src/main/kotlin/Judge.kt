@@ -217,12 +217,16 @@ class DedupMakeMoveAPI : Processor<ByteArray, ByteArray> {
             println("${this.context?.timestamp()}: ${String(key)} ${makeMoveCmd.player} ${makeMoveCmd.coord}")
 
             val found = this.kvLastPlayer?.get(key)
-
-                if (found != null && String(found).toPlayer() != makeMoveCmd.player) {
+            if (found != null) {
+                println("... found player ${String(found)}")
+                if (String(found).toPlayer() != makeMoveCmd.player) {
                     context?.forward(key, value)
                     println("... forwarded!")
                 }
-
+            } else {
+                context?.forward(key, value)
+                println("... forwarded!")
+            }
 
             this.kvLastPlayer?.put(key, makeMoveCmd.player.toBytes())
         }
