@@ -11,6 +11,7 @@ import org.apache.kafka.streams.processor.ProcessorContext
 import org.apache.kafka.streams.processor.ProcessorSupplier
 import org.apache.kafka.streams.processor.PunctuationType
 import org.apache.kafka.streams.state.KeyValueStore
+import org.apache.kafka.streams.state.Stores
 import serdes.*
 import java.time.Duration
 import java.util.*
@@ -41,8 +42,6 @@ class Judge(private val brokers: String) {
 
     private fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
-
-
 
         val makeMoveDeduped: KStream<GameId, MakeMoveCmd> =
             streamsBuilder
@@ -155,8 +154,13 @@ class Judge(private val brokers: String) {
         val processorName = "Process: Deduplicate Make Move Commands"
         val sinkName = "Make Move Commands Deduplicated"
 
+        val lastPlayerStoreSupplier = Stores.keyValueStoreBuilder(
+            Stores.inMemoryKeyValueStore(MAKE_MOVE_DEDUP_STORE),
+            Serdes.UUID(), Serdes.String())
+
         topology.addSource(commandSourceName, MAKE_MOVE_CMD_TOPIC)
             .addProcessor(processorName, ProcessorSupplier {  DedupMakeMoveAPI() } , commandSourceName)
+            .addStateStore(lastPlayerStoreSupplier, processorName)
             .addSink(sinkName, MAKE_MOVE_CMD_DEDUP_TOPIC, processorName)
 
         return topology
@@ -183,11 +187,13 @@ class Judge(private val brokers: String) {
     }
 }
 
-class DedupMakeMoveAPI : Processor<GameId, String> {
+class DedupMakeMoveAPI : Processor<ByteArray, ByteArray> {
     private var context: ProcessorContext? = null
     private var kvLastPlayer: KeyValueStore<GameId, Player?>? = null
 
+    @Suppress("UNCHECKED_CAST")
     override fun init(context: ProcessorContext?) {
+        println("CALLED INIT")
         this.context = context
         kvLastPlayer = context?.getStateStore(MAKE_MOVE_DEDUP_STORE) as? KeyValueStore<GameId, Player?>
         this.context?.schedule(Duration.ofMillis(100), PunctuationType.STREAM_TIME) {
@@ -200,18 +206,23 @@ class DedupMakeMoveAPI : Processor<GameId, String> {
             iter?.close()
             context?.commit()
         }
+        println("FINISH INIT")
     }
 
-    override fun process(key: GameId?, value: String?) {
-        val makeMoveCmd = jsonMapper.readValue(value, MakeMoveCmd::class.java)
+    override fun process(key: ByteArray?, value: ByteArray?) {
+        if (key != null) {
+            println("CALLED PROCESS")
+            val makeMoveCmd = jsonMapper.readValue(value, MakeMoveCmd::class.java)
 
-        println("${this.context?.timestamp()}: $key ${makeMoveCmd.player} ${makeMoveCmd.coord}")
-        if (this.kvLastPlayer?.get(key) != makeMoveCmd.player) {
-            context?.forward(key, value)
-            println("... forwarded!")
+            println("${this.context?.timestamp()}: $key ${makeMoveCmd.player} ${makeMoveCmd.coord}")
+            val gameId = UUID.fromString(String(key))
+            if (this.kvLastPlayer?.get(gameId) != makeMoveCmd.player) {
+                context?.forward(key, value)
+                println("... forwarded!")
+            }
+
+            this.kvLastPlayer?.put(gameId, makeMoveCmd.player)
         }
-
-        this.kvLastPlayer?.put(key, makeMoveCmd.player)
     }
 
     override fun close() {}
