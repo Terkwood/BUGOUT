@@ -60,9 +60,17 @@ class Judge(private val brokers: String) {
                 .mapValues { v -> DedupMakeMoveCmd(DoublePlay.No, v) }
                 .groupByKey()
                 .reduce( { last: DedupMakeMoveCmd, current: DedupMakeMoveCmd ->
-                    val isDoublePlay = if (current.makeMoveCmd.player == last.makeMoveCmd.player ) DoublePlay.Yes else DoublePlay.No
+                    val isDoublePlay =
+                        if (current.makeMoveCmd.player == last.makeMoveCmd.player)
+                            DoublePlay.Yes
+                        else
+                            DoublePlay.No
 
-                    DedupMakeMoveCmd(isDoublePlay, current.makeMoveCmd)
+                    println("isDoublePlay $isDoublePlay")
+                    val r = DedupMakeMoveCmd(isDoublePlay, current.makeMoveCmd)
+                    println("dedup result $r")
+
+                    r
                 } , Materialized.`as`<GameId, DedupMakeMoveCmd, KeyValueStore<Bytes,ByteArray>>(MAKE_MOVE_DEDUP_STORE).withKeySerde(Serdes.UUID()).withValueSerde(Serdes.serdeFrom(KafkaSerializer(),KafkaDeserializer(
                     jacksonTypeRef())))
         ).toStream().filter { _ , v -> v.doublePlay == DoublePlay.No }
