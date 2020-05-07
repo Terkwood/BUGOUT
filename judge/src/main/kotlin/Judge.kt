@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -6,11 +7,9 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.kstream.*
-import org.apache.kafka.streams.processor.Processor
-import org.apache.kafka.streams.processor.ProcessorContext
-import org.apache.kafka.streams.processor.ProcessorSupplier
-import org.apache.kafka.streams.processor.PunctuationType
+import org.apache.kafka.streams.processor.*
 import org.apache.kafka.streams.state.KeyValueStore
+import org.apache.kafka.streams.state.StoreBuilder
 import org.apache.kafka.streams.state.Stores
 import serdes.*
 import java.time.Duration
@@ -154,9 +153,10 @@ class Judge(private val brokers: String) {
         val processorName = "Process: Deduplicate Make Move Commands"
         val sinkName = "Make Move Commands Deduplicated"
 
-        val lastPlayerStoreSupplier = Stores.keyValueStoreBuilder(
+        val lastPlayerStoreSupplier: StoreBuilder<KeyValueStore<ByteArray, ByteArray>> = Stores.keyValueStoreBuilder(
             Stores.inMemoryKeyValueStore(MAKE_MOVE_DEDUP_STORE),
-            Serdes.UUID(), Serdes.String())
+                Serdes.ByteArray(),
+                Serdes.ByteArray())
 
         topology.addSource(commandSourceName, MAKE_MOVE_CMD_TOPIC)
             .addProcessor(processorName, ProcessorSupplier {  DedupMakeMoveAPI() } , commandSourceName)
@@ -189,22 +189,22 @@ class Judge(private val brokers: String) {
 
 class DedupMakeMoveAPI : Processor<ByteArray, ByteArray> {
     private var context: ProcessorContext? = null
-    private var kvLastPlayer: KeyValueStore<GameId, Player?>? = null
+    private var kvLastPlayer: KeyValueStore<ByteArray,ByteArray?>? = null
 
     @Suppress("UNCHECKED_CAST")
     override fun init(context: ProcessorContext?) {
         println("CALLED INIT")
         this.context = context
-        kvLastPlayer = context?.getStateStore(MAKE_MOVE_DEDUP_STORE) as? KeyValueStore<GameId, Player?>
+        kvLastPlayer = context?.getStateStore(MAKE_MOVE_DEDUP_STORE) as KeyValueStore<ByteArray,ByteArray?>
         this.context?.schedule(Duration.ofMillis(100), PunctuationType.STREAM_TIME) {
                 _ ->
-            val iter = this.kvLastPlayer?.all()
+            /*val iter = this.kvLastPlayer?.all()
             while (iter?.hasNext() == true) {
                 val entry = iter.next()
-                context?.forward(entry.key, entry.value)
+                context.forward(entry.key, entry.value)
             }
-            iter?.close()
-            context?.commit()
+            iter?.close()*/
+            context.commit()
         }
         println("FINISH INIT")
     }
@@ -214,16 +214,33 @@ class DedupMakeMoveAPI : Processor<ByteArray, ByteArray> {
             println("CALLED PROCESS")
             val makeMoveCmd = jsonMapper.readValue(value, MakeMoveCmd::class.java)
 
-            println("${this.context?.timestamp()}: $key ${makeMoveCmd.player} ${makeMoveCmd.coord}")
-            val gameId = UUID.fromString(String(key))
-            if (this.kvLastPlayer?.get(gameId) != makeMoveCmd.player) {
-                context?.forward(key, value)
-                println("... forwarded!")
-            }
+            println("${this.context?.timestamp()}: ${String(key)} ${makeMoveCmd.player} ${makeMoveCmd.coord}")
 
-            this.kvLastPlayer?.put(gameId, makeMoveCmd.player)
+            val found = this.kvLastPlayer?.get(key)
+
+                if (found != null && String(found).toPlayer() != makeMoveCmd.player) {
+                    context?.forward(key, value)
+                    println("... forwarded!")
+                }
+
+
+            this.kvLastPlayer?.put(key, makeMoveCmd.player.toBytes())
         }
     }
 
     override fun close() {}
+}
+
+fun String.toPlayer() : Player {
+    if (this.isBlank()) return Player.BLACK
+    val norm = this.trim().toUpperCase()
+    if (norm[0] == 'W') return Player.WHITE
+    return Player.BLACK
+}
+
+fun Player.toBytes(): ByteArray {
+    return when (this) {
+        Player.BLACK -> "BLACK".toByteArray()
+        Player.WHITE -> "WHITE".toByteArray()
+    }
 }
