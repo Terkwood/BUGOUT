@@ -35,28 +35,25 @@ class Judge(private val brokers: String) {
         println("Judge started")
     }
 
-    fun build(): Topology {
-
+    private fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
 
-        val makeMoveCommandJsonStream: KStream<GameId, String> =
+        val makeMoveCommandStream: KStream<GameId, MakeMoveCmd> =
             streamsBuilder
                 .stream<UUID, String>(
                     MAKE_MOVE_CMD_TOPIC,
                     Consumed.with(Serdes.UUID(), Serdes.String())
-                )
+                ).mapValues { v ->
+                    jsonMapper.readValue(v, MakeMoveCmd::class.java)
+                }
 
-        val makeMoveCommandStream: KStream<GameId, MakeMoveCmd> =
-            makeMoveCommandJsonStream.mapValues { v ->
-                jsonMapper.readValue(v, MakeMoveCmd::class.java)
-            }.mapValues { v ->
-                println(
-                    "\uD83D\uDCE2          ${v.gameId.short()} MOVE     ${v
-                        .player} ${v
-                        .coord}"
-                )
-                v
-            }
+        makeMoveCommandStream.foreach { _, v ->
+            println(
+                "\uD83D\uDCE2 game ${v.gameId.short()} MOVE     ${v
+                    .player} ${v
+                    .coord} (API)"
+            )
+        }
 
         val dedupMakeMoveCommandStream: KStream<GameId, MakeMoveCmd> =
             makeMoveCommandStream
@@ -70,6 +67,14 @@ class Judge(private val brokers: String) {
                     jacksonTypeRef())))
         ).toStream().filter { _ , v -> v.doublePlay == DoublePlay.No }
                 .mapValues { v -> v.makeMoveCmd}
+
+        dedupMakeMoveCommandStream.foreach { _, v ->
+            println(
+                "\uD83D\uDCE2 game ${v.gameId.short()} MOVE     ${v
+                    .player} ${v
+                    .coord} (deduped)"
+            )
+        }
 
         val gameStates: GlobalKTable<GameId, GameState> =
             streamsBuilder
@@ -143,12 +148,15 @@ class Judge(private val brokers: String) {
                 )
             }
 
+        moveAcceptedStream.foreach {
+            _, v -> println(
+            "⚖️ game ️${v.gameId.short()} ACCEPT   ${v
+                .player} @ ${v
+                .coord} capturing ${v.captured.joinToString(",")}"
+        )
+        }
+
         moveAcceptedStream.mapValues { v ->
-            println(
-                "⚖️           ️${v.gameId.short()} ACCEPT   ${v
-                    .player} @ ${v
-                    .coord} capturing ${v.captured.joinToString(",")}"
-            )
             jsonMapper.writeValueAsString(v)
         }.to(
             MOVE_ACCEPTED_EV_TOPIC,
