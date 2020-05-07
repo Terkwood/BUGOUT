@@ -9,8 +9,10 @@ import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.processor.Processor
 import org.apache.kafka.streams.processor.ProcessorContext
 import org.apache.kafka.streams.processor.ProcessorSupplier
+import org.apache.kafka.streams.processor.PunctuationType
 import org.apache.kafka.streams.state.KeyValueStore
 import serdes.*
+import java.time.Duration
 import java.util.*
 
 fun main() {
@@ -148,6 +150,7 @@ class Judge(private val brokers: String) {
 
         val topology = streamsBuilder.build()
 
+        // Set up deduplication of Make Move Commands
         val commandSourceName ="Make Move Command API"
         val processorName = "Process: Deduplicate Make Move Commands"
         val sinkName = "Make Move Commands Deduplicated"
@@ -180,20 +183,34 @@ class Judge(private val brokers: String) {
     }
 }
 
-class DedupMakeMoveAPI : Processor<String, String> {
+class DedupMakeMoveAPI : Processor<GameId, String> {
     private var context: ProcessorContext? = null
-    private var lastPlayer: KeyValueStore<GameId, Player?>? = null
+    private var kvLastPlayer: KeyValueStore<GameId, Player?>? = null
 
     override fun init(context: ProcessorContext?) {
-        TODO("Not yet implemented")
+        this.context = context
+        kvLastPlayer = context?.getStateStore(MAKE_MOVE_DEDUP_STORE) as? KeyValueStore<GameId, Player?>
+        this.context?.schedule(Duration.ofMillis(100), PunctuationType.STREAM_TIME) {
+                _ ->
+            val iter = this.kvLastPlayer?.all()
+            while (iter?.hasNext() == true) {
+                val entry = iter.next()
+                context?.forward(entry.key, entry.value)
+            }
+            iter?.close()
+            context?.commit()
+        }
     }
 
-    override fun process(key: String?, value: String?) {
-        TODO("Not yet implemented")
+    override fun process(key: GameId?, value: String?) {
+        val makeMoveCmd = jsonMapper.readValue(value, MakeMoveCmd::class.java)
+
+        if (this.kvLastPlayer?.get(key) != makeMoveCmd.player) {
+            context?.forward(key, value)
+        }
+
+        this.kvLastPlayer?.put(key, makeMoveCmd.player)
     }
 
-    override fun close() {
-        TODO("Not yet implemented")
-    }
-
+    override fun close() {}
 }
