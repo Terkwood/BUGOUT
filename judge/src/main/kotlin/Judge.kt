@@ -6,10 +6,12 @@ import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.kstream.*
+import org.apache.kafka.streams.processor.*
 import org.apache.kafka.streams.state.KeyValueStore
-import serdes.GameStateDeserializer
-import serdes.GameStateSerializer
-import serdes.jsonMapper
+import org.apache.kafka.streams.state.StoreBuilder
+import org.apache.kafka.streams.state.Stores
+import serdes.*
+import java.time.Duration
 import java.util.*
 
 fun main() {
@@ -36,28 +38,25 @@ class Judge(private val brokers: String) {
         println("Judge started")
     }
 
-    fun build(): Topology {
-
+    private fun build(): Topology {
         val streamsBuilder = StreamsBuilder()
 
-        val makeMoveCommandJsonStream: KStream<GameId, String> =
+        val makeMoveDeduped: KStream<GameId, MakeMoveCmd> =
             streamsBuilder
                 .stream<UUID, String>(
-                    MAKE_MOVE_CMD_TOPIC,
+                    MAKE_MOVE_CMD_DEDUP_TOPIC,
                     Consumed.with(Serdes.UUID(), Serdes.String())
-                )
+                ).mapValues { v ->
+                    jsonMapper.readValue(v, MakeMoveCmd::class.java)
+                }
 
-        val makeMoveCommandStream: KStream<GameId, MakeMoveCmd> =
-            makeMoveCommandJsonStream.mapValues { v ->
-                jsonMapper.readValue(v, MakeMoveCmd::class.java)
-            }.mapValues { v ->
-                println(
-                    "\uD83D\uDCE2          ${v.gameId.short()} MOVE     ${v
-                        .player} ${v
-                        .coord}"
-                )
-                v
-            }
+        makeMoveDeduped.foreach { _, v ->
+            println(
+                "\uD83D\uDCE2 game ${v.gameId.short()} MOVE     ${v
+                    .player} ${v
+                    .coord} (API)"
+            )
+        }
 
         val gameStates: GlobalKTable<GameId, GameState> =
             streamsBuilder
@@ -92,7 +91,7 @@ class Judge(private val brokers: String) {
 
         // Distasteful workaround for https://github.com/Terkwood/BUGOUT/issues/228
         val guardNoNullGameState: KStream<GameId, MakeMoveCmd> =
-            makeMoveCommandStream.join(gameStates,
+            makeMoveDeduped.join(gameStates,
                 KeyValueMapper { _: GameId, leftValue: MakeMoveCmd ->
                     leftValue.gameId
                 },ValueJoiner { leftValue: MakeMoveCmd,
@@ -131,19 +130,39 @@ class Judge(private val brokers: String) {
                 )
             }
 
+        moveAcceptedStream.foreach {
+            _, v -> println(
+            "⚖️ game ️${v.gameId.short()} ACCEPT   ${v
+                .player} @ ${v
+                .coord} capturing ${v.captured.joinToString(",")}"
+        )
+        }
+
         moveAcceptedStream.mapValues { v ->
-            println(
-                "⚖️           ️${v.gameId.short()} ACCEPT   ${v
-                    .player} @ ${v
-                    .coord} capturing ${v.captured.joinToString(",")}"
-            )
             jsonMapper.writeValueAsString(v)
         }.to(
             MOVE_ACCEPTED_EV_TOPIC,
             Produced.with(Serdes.UUID(), Serdes.String())
         )
 
-        return streamsBuilder.build()
+        val topology = streamsBuilder.build()
+
+        // Set up deduplication of Make Move Commands
+        val commandSourceName ="Make Move Command API"
+        val processorName = "Process: Deduplicate Make Move Commands"
+        val sinkName = "Make Move Commands Deduplicated"
+
+        val lastPlayerStoreSupplier: StoreBuilder<KeyValueStore<ByteArray, ByteArray>> = Stores.keyValueStoreBuilder(
+            Stores.inMemoryKeyValueStore(MAKE_MOVE_DEDUP_STORE),
+                Serdes.ByteArray(),
+                Serdes.ByteArray())
+
+        topology.addSource(commandSourceName, MAKE_MOVE_CMD_TOPIC)
+            .addProcessor(processorName, ProcessorSupplier {  DedupMakeMoveAPI() } , commandSourceName)
+            .addStateStore(lastPlayerStoreSupplier, processorName)
+            .addSink(sinkName, MAKE_MOVE_CMD_DEDUP_TOPIC, processorName)
+
+        return topology
     }
 
     private fun waitForTopics(topics: Array<String>, props: java.util
@@ -164,5 +183,50 @@ class Judge(private val brokers: String) {
         }
 
         println(" done!")
+    }
+}
+
+class DedupMakeMoveAPI : Processor<ByteArray, ByteArray> {
+    private var context: ProcessorContext? = null
+    private var kvLastPlayer: KeyValueStore<ByteArray,ByteArray?>? = null
+
+    @Suppress("UNCHECKED_CAST")
+    override fun init(context: ProcessorContext?) {
+        this.context = context
+        kvLastPlayer = context?.getStateStore(MAKE_MOVE_DEDUP_STORE) as KeyValueStore<ByteArray,ByteArray?>
+        this.context?.schedule(Duration.ofMillis(100), PunctuationType.STREAM_TIME) {
+                _ ->
+            context.commit()
+        }
+    }
+
+    override fun process(key: ByteArray?, value: ByteArray?) {
+        if (key != null) {
+            val makeMoveCmd = jsonMapper.readValue(value, MakeMoveCmd::class.java)
+
+            val lastPlayerBytes = this.kvLastPlayer?.get(key)
+
+            this.kvLastPlayer?.put(key, makeMoveCmd.player.toBytes())
+
+            if (lastPlayerBytes == null || String(lastPlayerBytes).toPlayer() != makeMoveCmd.player){
+                context?.forward(key, value)
+            }
+        }
+    }
+
+    override fun close() {}
+}
+
+fun String.toPlayer() : Player {
+    if (this.isBlank()) return Player.BLACK
+    val norm = this.trim().toUpperCase()
+    if (norm[0] == 'W') return Player.WHITE
+    return Player.BLACK
+}
+
+fun Player.toBytes(): ByteArray {
+    return when (this) {
+        Player.BLACK -> "BLACK".toByteArray()
+        Player.WHITE -> "WHITE".toByteArray()
     }
 }
