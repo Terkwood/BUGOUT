@@ -1,4 +1,3 @@
-import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -193,42 +192,25 @@ class DedupMakeMoveAPI : Processor<ByteArray, ByteArray> {
 
     @Suppress("UNCHECKED_CAST")
     override fun init(context: ProcessorContext?) {
-        println("CALLED INIT")
         this.context = context
         kvLastPlayer = context?.getStateStore(MAKE_MOVE_DEDUP_STORE) as KeyValueStore<ByteArray,ByteArray?>
         this.context?.schedule(Duration.ofMillis(100), PunctuationType.STREAM_TIME) {
                 _ ->
-            /*val iter = this.kvLastPlayer?.all()
-            while (iter?.hasNext() == true) {
-                val entry = iter.next()
-                context.forward(entry.key, entry.value)
-            }
-            iter?.close()*/
             context.commit()
         }
-        println("FINISH INIT")
     }
 
     override fun process(key: ByteArray?, value: ByteArray?) {
         if (key != null) {
-            println("CALLED PROCESS")
             val makeMoveCmd = jsonMapper.readValue(value, MakeMoveCmd::class.java)
 
-            println("${this.context?.timestamp()}: ${String(key)} ${makeMoveCmd.player} ${makeMoveCmd.coord}")
-
-            val found = this.kvLastPlayer?.get(key)
-            if (found != null) {
-                println("... found player ${String(found)}")
-                if (String(found).toPlayer() != makeMoveCmd.player) {
-                    context?.forward(key, value)
-                    println("... forwarded!")
-                }
-            } else {
-                context?.forward(key, value)
-                println("... forwarded!")
-            }
+            val lastPlayerBytes = this.kvLastPlayer?.get(key)
 
             this.kvLastPlayer?.put(key, makeMoveCmd.player.toBytes())
+
+            if (lastPlayerBytes == null || String(lastPlayerBytes).toPlayer() != makeMoveCmd.player){
+                context?.forward(key, value)
+            }
         }
     }
 
