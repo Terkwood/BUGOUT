@@ -205,8 +205,10 @@ class DedupMakeMoveAPI : Processor<GameId, String> {
     override fun process(key: GameId?, value: String?) {
         val makeMoveCmd = jsonMapper.readValue(value, MakeMoveCmd::class.java)
 
+        println("${this.context?.timestamp()}: $key ${makeMoveCmd.player} ${makeMoveCmd.coord}")
         if (this.kvLastPlayer?.get(key) != makeMoveCmd.player) {
             context?.forward(key, value)
+            println("... forwarded!")
         }
 
         this.kvLastPlayer?.put(key, makeMoveCmd.player)
