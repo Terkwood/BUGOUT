@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -7,9 +8,7 @@ import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.kstream.*
 import org.apache.kafka.streams.state.KeyValueStore
-import serdes.GameStateDeserializer
-import serdes.GameStateSerializer
-import serdes.jsonMapper
+import serdes.*
 import java.util.*
 
 fun main() {
@@ -59,6 +58,19 @@ class Judge(private val brokers: String) {
                 v
             }
 
+        val dedupMakeMoveCommandStream: KStream<GameId, MakeMoveCmd> =
+            makeMoveCommandStream
+                .mapValues { v -> DedupMakeMoveCmd(DoublePlay.No, v) }
+                .groupByKey()
+                .reduce( { last: DedupMakeMoveCmd, current: DedupMakeMoveCmd ->
+                    val isDoublePlay = if (current.makeMoveCmd.player == last.makeMoveCmd.player ) DoublePlay.Yes else DoublePlay.No
+
+                    DedupMakeMoveCmd(isDoublePlay, current.makeMoveCmd)
+                } , Materialized.`as`<GameId, DedupMakeMoveCmd, KeyValueStore<Bytes,ByteArray>>(MAKE_MOVE_DEDUP_STORE).withKeySerde(Serdes.UUID()).withValueSerde(Serdes.serdeFrom(KafkaSerializer(),KafkaDeserializer(
+                    jacksonTypeRef())))
+        ).toStream().filter { _ , v -> v.doublePlay == DoublePlay.No }
+                .mapValues { v -> v.makeMoveCmd}
+
         val gameStates: GlobalKTable<GameId, GameState> =
             streamsBuilder
                 .globalTable(
@@ -92,7 +104,7 @@ class Judge(private val brokers: String) {
 
         // Distasteful workaround for https://github.com/Terkwood/BUGOUT/issues/228
         val guardNoNullGameState: KStream<GameId, MakeMoveCmd> =
-            makeMoveCommandStream.join(gameStates,
+            dedupMakeMoveCommandStream.join(gameStates,
                 KeyValueMapper { _: GameId, leftValue: MakeMoveCmd ->
                     leftValue.gameId
                 },ValueJoiner { leftValue: MakeMoveCmd,
@@ -166,3 +178,6 @@ class Judge(private val brokers: String) {
         println(" done!")
     }
 }
+
+enum class DoublePlay { No, Yes }
+data class DedupMakeMoveCmd(val doublePlay: DoublePlay, val makeMoveCmd: MakeMoveCmd)
