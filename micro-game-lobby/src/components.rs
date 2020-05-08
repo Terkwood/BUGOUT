@@ -1,4 +1,4 @@
-use crate::repo::{EntryIdRepo, GameLobbyRepo, RedisRepo};
+use crate::repo::{EntryIdRepo, GameLobbyRepo, KeyProvider, RedisRepo};
 use crate::stream::{RedisXReader, XReader};
 
 use redis_conn_pool::RedisHostUrl;
@@ -17,11 +17,11 @@ impl Default for Components {
         Components {
             entry_id_repo: Box::new(RedisRepo {
                 pool: arc_pool.clone(),
-                key_provider: (),
+                key_provider: KeyProvider::default(),
             }),
             game_lobby_repo: Box::new(RedisRepo {
                 pool: arc_pool.clone(),
-                key_provider: (),
+                key_provider: KeyProvider::default(),
             }),
             xreader: Box::new(RedisXReader { pool: arc_pool }),
         }

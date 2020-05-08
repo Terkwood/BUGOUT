@@ -9,6 +9,7 @@ pub trait GameLobbyRepo {
 
 impl GameLobbyRepo for super::RedisRepo {
     fn get(&self) -> Result<GameLobby, FetchErr> {
+        let _redis_key = self.key_provider.game_lobby();
         todo!()
     }
     fn put(&self, _game_lobby: GameLobby) -> Result<(), WriteErr> {

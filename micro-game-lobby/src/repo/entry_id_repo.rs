@@ -15,6 +15,7 @@ pub struct AllEntryIds {
 
 impl EntryIdRepo for RedisRepo {
     fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
+        let _redis_key = self.key_provider.entry_ids();
         let _conn = self.pool.get().unwrap();
         todo!()
     }
