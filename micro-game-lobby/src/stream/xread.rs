@@ -1,4 +1,3 @@
-use super::topics;
 use super::topics::StreamTopics;
 use crate::api::*;
 use crate::repo::AllEntryIds;
@@ -47,7 +46,7 @@ impl XReader for RedisXReader {
             .arg(entry_ids.create_game.to_string())
             .arg(entry_ids.join_private_game.to_string())
             .query::<XReadResult>(&mut *conn)?;
-        let unsorted: HashMap<XReadEntryId, StreamData> = todo!("deser");
+        let unsorted: HashMap<XReadEntryId, StreamData> = deser(xrr);
         let sorted_keys: Vec<XReadEntryId> = {
             let mut ks: Vec<XReadEntryId> = unsorted.keys().copied().collect();
             ks.sort();
