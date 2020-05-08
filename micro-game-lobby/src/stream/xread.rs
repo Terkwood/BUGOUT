@@ -1,4 +1,5 @@
 use super::topics;
+use super::topics::StreamTopics;
 use crate::api::*;
 use crate::repo::AllEntryIds;
 use log::{trace, warn};
@@ -21,6 +22,7 @@ pub trait XReader: Send + Sync {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
+        topics: &StreamTopics,
     ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError>;
 }
 
@@ -31,16 +33,19 @@ impl XReader for RedisXReader {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
+        topics: &StreamTopics,
     ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
         let mut conn = self.pool.get().unwrap();
         let xrr = redis::cmd("XREAD")
             .arg("BLOCK")
             .arg(&BLOCK_MSEC.to_string())
             .arg("STREAMS")
-            /*.arg(todo!())
-            .arg(todo!("topic str 1"))
-            .arg(todo!("eid 0 to string"))
-            .arg(todo!("eid 1 to string"))*/
+            .arg(&topics.find_public_game)
+            .arg(&topics.create_game)
+            .arg(&topics.join_private_game)
+            .arg(entry_ids.find_public_game.to_string())
+            .arg(entry_ids.create_game.to_string())
+            .arg(entry_ids.join_private_game.to_string())
             .query::<XReadResult>(&mut *conn)?;
         let unsorted: HashMap<XReadEntryId, StreamData> = todo!("deser");
         let sorted_keys: Vec<XReadEntryId> = {
