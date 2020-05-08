@@ -1,3 +1,5 @@
+use crate::*;
+
 #[derive(Debug, Clone)]
 pub struct FindPublicGame {
     pub client_id: ClientId,

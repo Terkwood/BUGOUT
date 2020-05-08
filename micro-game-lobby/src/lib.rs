@@ -1,7 +1,9 @@
 extern crate bincode;
+extern crate log;
 extern crate serde;
 extern crate serde_derive;
 
+pub mod api;
 mod components;
 mod game_lobby;
 mod repo;
