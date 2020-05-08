@@ -1,3 +1,5 @@
+mod xread;
+
 use crate::components::*;
 use crate::*;
 pub fn process(_topics: &StreamTopics, components: &Components) {
@@ -11,7 +13,7 @@ pub fn process(_topics: &StreamTopics, components: &Components) {
 #[cfg(test)]
 mod test {
     use crate::components::Components;
-    use crate::entry_id_repo::*;
+    use crate::repo::*;
     struct FakePool;
     impl EntryIdRepo for FakePool {
         fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
