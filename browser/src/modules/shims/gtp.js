@@ -166,6 +166,38 @@ class WebSocketController extends EventEmitter {
         // to the incoming websocket message, even after an initial WFP
         // result is returned via findPublicGame() and createPrivateGame() funcs
         this.gatewayConn = new GatewayConn(this.webSocket, handleWaitForOpponent, handleYourColor)
+        this.bugoutSync = new BugoutSync(this.webSocket)
+
+        sabaki.events.on('sync-no-op', () => {
+            // in case App.js is waiting for our play to resolve
+            if (this.resolveMakeMove) {
+                this.resolveMakeMove({id: null, error: false})
+                this.resolveMakeMove = undefined
+            }
+        })
+        sabaki.events.on('sync-server-ahead', ({ type, replyTo, playerUp, turn, moves }) => {
+            sabaki.generateMove()
+
+            let syncLastMove = moves[moves.length - 1]
+            let sabakiCoord = syncLastMove.coord ? this.board.vertex2coord([syncLastMove.coord.x, syncLastMove.coord.y]) : 'pass'
+
+            if (this.resolveMoveMade) {
+                console.log('Resolving outstanding move...')
+                this.resolveMoveMade({'id':null, 'content': sabakiCoord, 'error':false})
+            }
+
+            let newPlayerUp = otherPlayer(playerUp) 
+
+            // In case white needs to dismiss its initial screen
+            sabaki.events.emit('they-moved', { 'playerUp': newPlayerUp })
+
+            // - In case we need to show that the opponent passed
+            // - Used by BugoutSync to delay sync requests after move
+            sabaki.events.emit('bugout-move-made', { 'coord': syncLastMove.coord })
+
+            this.genMoveInProgress = false   
+            sabaki.events.emit('gen-move-completed', { done: true })  
+        })
 
         sabaki.events.on('bugout-turn', ({ turn }) => this.turn = turn )
 
@@ -231,8 +263,10 @@ class WebSocketController extends EventEmitter {
                 .then((reply, err) => {
                     if (!err && reply.type === 'GameReady') {
                         this.gameId = reply.gameId
+                        this.bugoutSync.activate(reply.gameId)
                     } else if (!err && reply.type == 'WaitForOpponent') {
                         this.gameId = reply.gameId
+                        this.bugoutSync.activate(reply.gameId)
                     } else {
                         throwFatal()
                     }
@@ -243,8 +277,10 @@ class WebSocketController extends EventEmitter {
                 .then((reply, err) => {
                     if (!err && reply.type == 'WaitForOpponent') {
                         this.gameId = reply.gameId
+                        this.bugoutSync.activate(reply.gameId)
                     } else if (!err && reply.type === 'GameReady') {
                         this.gameId = reply.gameId
+                        this.bugoutSync.activate(reply.gameId)
                     } else {
                         throwFatal()
                     }
@@ -255,6 +291,7 @@ class WebSocketController extends EventEmitter {
                 .then((reply, err) => {
                     if (!err && reply.type === 'GameReady') {
                         this.gameId = reply.gameId
+                        this.bugoutSync.activate(reply.gameId)
                     } else if (!err && reply.type == 'PrivateGameRejected') {
                         alert('Invalid game')
                     } else {
@@ -354,7 +391,7 @@ class WebSocketController extends EventEmitter {
         this.updateMessageListener(event => {
             try {
                 let msg = JSON.parse(event.data)
-               
+
                 if (opponentMoved(msg, opponent)) {
                     this.handleMoveMade(msg, opponent, resolve)
                     this.genMoveInProgress = false
@@ -389,7 +426,8 @@ class WebSocketController extends EventEmitter {
         // In case white needs to dismiss its initial screen
         sabaki.events.emit('they-moved', { playerUp })
 
-        // In case we need to show that the opponent passed
+        // - In case we need to show that the opponent passed
+        // - Also used by BugoutSync to delay sync requests after move
         sabaki.events.emit('bugout-move-made', msg)
     }
 
@@ -400,6 +438,7 @@ class WebSocketController extends EventEmitter {
         sabaki.setMode('scoring')
         resolve({'id':null, 'error':false})
     }
+
 
     async sendCommand(command, subscriber = () => {}) {
         let isPassing = v => v[0] == 14 && isNaN(v[1])
@@ -426,6 +465,7 @@ class WebSocketController extends EventEmitter {
                     'coord': coord
                 }
 
+                this.resolveMakeMove = resolve
                 // We only want this listener online so we don't double-count turns
                 this.updateMessageListener(event => {
                     try {
@@ -441,9 +481,13 @@ class WebSocketController extends EventEmitter {
                         resolve({ok: false})
                     }
                 })
-
+                
                 let payload = JSON.stringify(makeMove)
+
                 this.webSocket.send(payload)
+                
+                // Sync will be delayed as a result
+                sabaki.events.emit('bugout-make-move')
             } else if (command.name === 'genmove') {
                 let opponent = letterToPlayer(command.args[0])
                 this.opponent = opponent
@@ -811,6 +855,178 @@ class GatewayConn {
 
     async quitGame() {
         this.webSocket.send('{"type": "QuitGame"}')
+    }
+}
+
+
+const SYNC_TIMEOUT_MS = 5000
+const SYNC_DELAY_MS = 7500
+
+class BugoutSync {
+    constructor(webSocket) {
+        this.webSocket = webSocket
+        this.activated = false
+        this.gameId = undefined
+        this.delayUntil = undefined
+        this.reqId = undefined
+
+        sabaki.events.on('bugout-move-made', () => this.delay() )
+        sabaki.events.on('bugout-make-move', () => this.delay() )
+    }
+
+    activate(gameId) {
+        this.gameId = gameId
+        this.delay()
+        this.interval = setInterval(() => this.reqSync(), SYNC_TIMEOUT_MS)
+        this.activated = true
+        console.log('Sync Activated')
+    }
+
+    delay() {
+        this.reqId = undefined
+        this.delayUntil = Date.now() + SYNC_DELAY_MS
+    }
+
+    reqSync() {
+        if ( this.activated && (Date.now() > (this.delayUntil||0)) ) {
+            this.reqId = uuidv4()
+            
+            const payload = this.makePayload(this.reqId)
+            this.webSocket.send(JSON.stringify(payload))
+            this.updateMessageListener(event => {
+                try {
+                    let msg = JSON.parse(event.data)
+                    
+                    if (msg.type === "SyncReply" && this.reqId === msg.replyTo) {
+                        this.processReply(msg)
+                    }
+                } catch (e) {
+                    console.log('sync err ' + JSON.stringify(e))
+                }
+            })
+        }
+    }
+
+    processReply(syncReply) {
+        let { playerUp, lastMove, turn } = deriveLocalState()
+
+        if (syncReply.turn === turn && syncReply.playerUp === playerUp) {
+            sabaki.events.emit('sync-no-op')
+        } else if (syncReply.turn - 1 === turn && otherPlayer(syncReply.playerUp) === playerUp) {
+            console.log('!  SERVER IS AHEAD')
+            sabaki.events.emit('sync-server-ahead', syncReply)
+        } else if (syncReply.turn + 1 === turn && syncReply.playerUp === otherPlayer(playerUp)) {
+            console.log('!  SERVER IS BEHIND (and will catch up on next sync request)')
+        } else {
+            console.log('!  SYNC: CRITICAL FAILURE')
+            console.log(`   - syncReply: ${JSON.stringify(syncReply)}`)
+            console.log(`   - local    : \n\t\t\tplayerUp ${JSON.stringify(playerUp)}\n\t\t\tturn ${JSON.stringify(turn)}\n\t\t\tlastMove ${JSON.stringify(lastMove)}\n\t\t\ttree ${JSON.stringify(tree)}`)
+        }
+    }
+
+    makePayload(reqId) {
+        let { playerUp, lastMove, turn } = deriveLocalState()
+
+        return {
+            'type': 'ReqSync',
+            playerUp,
+            reqId,
+            turn,
+            lastMove
+        }
+    }
+
+    removeMessageListener() {
+        this.messageListener &&
+        this.webSocket.removeEventListener('message', this.messageListener)
+    }
+
+    updateMessageListener(listener) {
+        if (listener) {
+            this.removeMessageListener()
+            this.messageListener = listener
+            this.webSocket.addEventListener('message', listener)
+        }
+    }
+}
+
+const deriveLocalState = () => {
+    let { gameTrees, gameIndex } = sabaki.state
+    let { currentPlayer } = sabaki.inferredState
+
+    let playerUp = interpretPlayerNum(currentPlayer)
+    let tree = gameTrees[gameIndex]
+    let lastMove = findLastMove(tree)
+    let turn = lastMove == undefined ? 1 : (lastMove.turn + 1)
+
+    return { playerUp, lastMove, turn }
+}
+
+
+const interpretPlayerNum = n => n === 1 ? "BLACK" : "WHITE"
+
+const findLastMove = tree => {
+    var bottom = false
+
+    if (tree === undefined ||
+        tree.root === undefined ||
+        tree.root.children === undefined ||
+        tree.root.children.length === 0) {
+        return null
+    }
+
+    // skip the top level game node
+    var subtree = tree.root.children[0]
+    var turn = 0
+    var lastMove = null
+    while(!bottom) {
+        turn = turn + 1
+
+        if (subtree && subtree.data) {
+            
+            let blackTreeCoords = subtree.data.B
+            let whiteTreeCoords = subtree.data.W
+            
+            var proceed = false
+            if (blackTreeCoords) {
+                let coord = convertTreeCoord(blackTreeCoords)
+                let player = "BLACK"
+                lastMove = { turn, player, coord }
+                proceed = true
+            } else if (whiteTreeCoords) {
+                let coord = convertTreeCoord(whiteTreeCoords)
+                let player = "WHITE"
+                lastMove = { turn, player, coord }
+                proceed = true
+            }
+
+            if (proceed) {
+                if (subtree.children && subtree.children.length > 0) {
+                    subtree = subtree.children[0]
+                } else {
+                    bottom = true
+                }
+            } else {
+                bottom = true
+            }
+        } else {
+            bottom = true
+        }
+    }
+    return lastMove
+}
+
+const convertTreeCoord = (treeCoords) => {
+    const offset = 97
+    if (treeCoords === undefined || 
+        treeCoords[0] === undefined ||
+        treeCoords[0].length !== 2) {
+        return null
+    } else {
+        return {
+            'x': treeCoords[0].charCodeAt(0) - offset,
+            'y': treeCoords[0].charCodeAt(1) - offset
+        }
     }
 }
 

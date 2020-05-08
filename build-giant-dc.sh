@@ -16,3 +16,4 @@ docker-compose -f dc-giant.yml build participation
 docker-compose -f dc-giant.yml build reaper
 docker-compose -f dc-giant.yml build kafkacat
 docker-compose -f dc-giant.yml build startup
+docker-compose -f dc-giant.yml build sync

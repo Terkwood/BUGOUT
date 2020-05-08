@@ -39,7 +39,11 @@ mod model;
 mod topics;
 mod wakeup;
 use uuid::Uuid;
+
+/// A spacer used for formatting
 pub const EMPTY_SHORT_UUID: &str = "        ";
+
+/// The first 8 digits of a UUID
 pub fn short_uuid(uuid: Uuid) -> String {
     uuid.to_string()[..8].to_string()
 }

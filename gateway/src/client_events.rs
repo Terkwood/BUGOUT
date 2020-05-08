@@ -5,6 +5,8 @@ use crate::env::*;
 use crate::idle_status::IdleStatus;
 use crate::model::*;
 
+/// Events which will be sent to the browser
+/// from gateway
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum ClientEvents {
@@ -20,6 +22,7 @@ pub enum ClientEvents {
     IdentityAcknowledged(Identity),
     OpponentQuit,
     BotAttached(micro_model_bot::gateway::BotAttached),
+    SyncReply(SyncReplyClientEvent),
 }
 
 impl ClientEvents {
@@ -85,4 +88,20 @@ pub struct YourColorEvent {
     pub game_id: GameId,
     #[serde(rename = "yourColor")]
     pub your_color: Player,
+}
+
+/// This event announces the data-layer view
+/// of the game, including player, turn, and
+/// moves made.  The reply_to field is used
+/// to indicate which ReqSync command triggered
+/// this SyncReply.  Browser is advised
+/// to discard any SyncReplies that are
+/// not tied to its most recent ReqSync.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncReplyClientEvent {
+    pub reply_to: ReqId,
+    pub player_up: Player,
+    pub turn: u32,
+    pub moves: Vec<Move>,
 }

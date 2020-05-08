@@ -5,7 +5,7 @@ use crate::topics::{ATTACH_BOT_TOPIC, MAKE_MOVE_TOPIC};
 use micro_model_bot::gateway::AttachBot;
 
 use crossbeam_channel::{select, Receiver};
-use log::{error, info};
+use log::error;
 use r2d2_redis::redis;
 use std::sync::Arc;
 
@@ -43,7 +43,6 @@ impl XAddCommands for RedisXAddCommands {
         match attach_bot.serialize() {
             Err(e) => error!("attach bot ser error {:?}", e),
             Ok(bin) => {
-                info!("xadd to {}", ATTACH_BOT_TOPIC); // TODO trim
                 let mut redis_cmd = redis::cmd("XADD");
                 redis_cmd
                     .arg(ATTACH_BOT_TOPIC)

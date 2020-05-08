@@ -1,6 +1,6 @@
 use crossbeam::{Receiver, Sender};
 use crossbeam_channel::select;
-use log::{error, info};
+use log::{error, info, warn};
 use std::collections::HashMap;
 use std::ops::Add;
 use std::thread;
@@ -81,7 +81,7 @@ impl Router {
                     }
                 }
             } else {
-                info!("NO GAME SESSIONS for {:?}", ev); // todo
+                warn!("No match {:?}", ev);
             }
         }
     }
@@ -94,7 +94,7 @@ impl Router {
             .clone()
     }
 
-    /// Note that the game state somehow changed, so that
+    /// Note that the game is active, so that
     /// we don't purge it prematurely in cleanup_game_clients()
     pub fn observe_game(&mut self, game_id: GameId) {
         self.game_sessions
@@ -312,15 +312,20 @@ pub fn start(
                         router.forward_by_client_id(p.client_id, BackendEvents::PrivateGameRejected(p).to_client_event())
                     }
                     Ok(BackendEvents::WaitForOpponent(w)) => {
-                        router.route_new_game(w.session_id, w.game_id);
-                        router.forward_by_game_id(BackendEvents::WaitForOpponent(w).to_client_event())
+                        router.forward_by_session_id(w.session_id, BackendEvents::WaitForOpponent(w).to_client_event())
                     }
                     Ok(BackendEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
                         // We want to forward by session ID
                         // so that we don't send TWO yourcolor events
                         // to each client
-                        router.forward_by_session_id(black,ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK}));
-                        router.forward_by_session_id(white, ClientEvents::YourColor(YourColorEvent{game_id, your_color: Player::WHITE}));
+                        router.forward_by_session_id(black, ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK }));
+                        router.forward_by_session_id(white, ClientEvents::YourColor(YourColorEvent{ game_id, your_color: Player::WHITE }));
+                    },
+                    Ok(BackendEvents::SyncReply(sr)) => {
+                        let sess = sr.session_id.clone();
+                        let e = BackendEvents::SyncReply(sr);
+                        router.observe_game(e.game_id());
+                        router.forward_by_session_id(sess, e.to_client_event());
                     },
                     Ok(e) => {
                         router.observe_game(e.game_id());
