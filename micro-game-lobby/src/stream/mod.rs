@@ -28,12 +28,23 @@ pub fn process(topics: &topics::StreamTopics, components: &Components) {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use crate::components::Components;
     use crate::repo::*;
+    use crate::topics::StreamTopics;
+    use crossbeam_channel::{select, Receiver, Sender};
+    use std::thread;
     struct FakeRedis;
     impl EntryIdRepo for FakeRedis {
         fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
             unimplemented!()
+        }
+        fn update(
+            &self,
+            _eid_type: EntryIdType,
+            _eid: redis_streams::XReadEntryId,
+        ) -> Result<(), WriteErr> {
+            todo!()
         }
     }
     impl GameLobbyRepo for FakeRedis {
@@ -44,13 +55,27 @@ mod test {
             todo!()
         }
     }
+    impl XReader for FakeRedis {
+        fn xread_sorted(
+            &self,
+            _entry_ids: AllEntryIds,
+            _topics: &crate::topics::StreamTopics,
+        ) -> Result<
+            Vec<(redis_streams::XReadEntryId, super::StreamData)>,
+            redis_conn_pool::redis::RedisError,
+        > {
+            todo!()
+        }
+    }
     #[test]
     fn test_process() {
-        let components = Components {
-            entry_id_repo: Box::new(FakeRedis),
-            game_lobby_repo: Box::new(FakeRedis),
-            xreader: todo!(),
-        };
-        todo!("write a unit test")
+        thread::spawn(|| {
+            let components = Components {
+                entry_id_repo: Box::new(FakeRedis),
+                game_lobby_repo: Box::new(FakeRedis),
+                xreader: Box::new(FakeRedis),
+            };
+            process(&StreamTopics::default(), &components);
+        });
     }
 }

@@ -1,4 +1,5 @@
 extern crate bincode;
+extern crate crossbeam_channel;
 extern crate log;
 extern crate serde;
 extern crate serde_derive;

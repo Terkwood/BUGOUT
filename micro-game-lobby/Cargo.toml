@@ -4,7 +4,6 @@ version = "0.1.0"
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 
-
 [dependencies]
 redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
@@ -14,3 +13,5 @@ bincode = "1.2.1"
 serde_derive = "1.0.106"
 log = "0.4.8"
 env_logger = "0.7.1"
+crossbeam = "0.7.3"
+crossbeam-channel = "0.4.2"
