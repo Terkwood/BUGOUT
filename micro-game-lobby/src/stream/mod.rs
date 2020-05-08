@@ -30,16 +30,25 @@ pub fn process(topics: &topics::StreamTopics, components: &Components) {
 mod test {
     use crate::components::Components;
     use crate::repo::*;
-    struct FakePool;
-    impl EntryIdRepo for FakePool {
+    struct FakeRedis;
+    impl EntryIdRepo for FakeRedis {
         fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
             unimplemented!()
+        }
+    }
+    impl GameLobbyRepo for FakeRedis {
+        fn get(&self) -> Result<crate::game_lobby::GameLobby, FetchErr> {
+            todo!()
+        }
+        fn put(&self, game_lobby: crate::game_lobby::GameLobby) -> Result<(), WriteErr> {
+            todo!()
         }
     }
     #[test]
     fn test_process() {
         let components = Components {
-            entry_id_repo: Box::new(FakePool),
+            entry_id_repo: Box::new(FakeRedis),
+            game_lobby_repo: Box::new(FakeRedis),
             xreader: todo!(),
         };
         todo!("write a unit test")

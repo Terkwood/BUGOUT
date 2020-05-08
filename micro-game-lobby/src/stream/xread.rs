@@ -1,14 +1,11 @@
 use super::topics::StreamTopics;
 use crate::api::*;
 use crate::repo::AllEntryIds;
-use log::{trace, warn};
-use redis_conn_pool::redis;
-use redis_conn_pool::Pool;
+use redis_conn_pool::{redis, Pool};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
-use std::str::FromStr;
+
 use std::sync::Arc;
-use uuid::Uuid;
 
 const BLOCK_MSEC: u32 = 5000;
 
@@ -62,7 +59,7 @@ impl XReader for RedisXReader {
     }
 }
 
-fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
+fn deser(_xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
     todo!()
 }
 
