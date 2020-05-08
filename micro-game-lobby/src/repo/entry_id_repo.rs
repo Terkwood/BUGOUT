@@ -3,6 +3,8 @@ use redis_streams::*;
 
 use std::sync::Arc;
 
+use super::FetchErr;
+
 pub trait EntryIdRepo {
     fn fetch_all(&self) -> Result<AllEntryIds, FetchErr>;
 }
@@ -14,11 +16,9 @@ pub struct AllEntryIds {
     pub join_private_game: XReadEntryId,
 }
 
-pub enum FetchErr {}
-
-struct RedisEntryIdRepo {
-    pool: Arc<Pool>,
-    key_provider: (), // TODO
+pub struct RedisEntryIdRepo {
+    pub pool: Arc<Pool>,
+    pub key_provider: (), // TODO
 }
 
 impl EntryIdRepo for RedisEntryIdRepo {

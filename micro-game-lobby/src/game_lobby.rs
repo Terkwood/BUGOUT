@@ -4,7 +4,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::collections::HashSet;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct GameLobby {
+pub struct GameLobby {
     games: HashSet<Game>,
 }
 

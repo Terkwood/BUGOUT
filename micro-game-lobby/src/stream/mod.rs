@@ -9,15 +9,19 @@ use log::error;
 pub fn process(topics: &topics::StreamTopics, components: &Components) {
     loop {
         match components.entry_id_repo.fetch_all() {
-            Ok(xrr) => match components.xreader.xread_sorted(todo!(), topics) {
+            Ok(all_eids) => match components.xreader.xread_sorted(all_eids, topics) {
                 Ok(xrr) => {
                     for time_ordered_event in xrr {
-                        todo!()
+                        match time_ordered_event {
+                            (_eid, StreamData::FPG(_)) => todo!(),
+                            (_eid, StreamData::CG(_)) => todo!(),
+                            (_eid, StreamData::JPG(_)) => todo!(),
+                        }
                     }
                 }
                 Err(e) => error!("Stream err {}", e),
             },
-            Err(e) => error!("Failed to fetch EIDs"),
+            Err(e) => error!("Failed to fetch EIDs {:?}", e),
         }
     }
 }
