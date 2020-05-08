@@ -1,4 +1,4 @@
-use crate::entry_id_repo::EntryIdRepo;
+use crate::repo::EntryIdRepo;
 pub struct Components {
     pub entry_id_repo: Box<dyn EntryIdRepo>,
 }

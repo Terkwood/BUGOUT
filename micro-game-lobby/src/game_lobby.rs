@@ -14,7 +14,10 @@ impl GameLobby {
             LobbyCommand::Open => {
                 self.games.insert(command.game);
             }
-            _ => {
+            LobbyCommand::Abandon => {
+                self.games.remove(&command.game);
+            }
+            LobbyCommand::Ready => {
                 self.games.remove(&command.game);
             }
         }

@@ -3,8 +3,8 @@ extern crate serde;
 extern crate serde_derive;
 
 mod components;
-mod entry_id_repo;
 mod game_lobby;
+mod repo;
 pub mod stream;
 mod topics;
 
