@@ -3,15 +3,6 @@ use redis_conn_pool::redis::Commands;
 use redis_conn_pool::Pool;
 use std::collections::HashMap;
 
-pub const EMPTY_EID: &str = "0-0";
-pub trait EntryIdRepo<A, B>: Send + Sync
-where
-    A: Default,
-{
-    fn fetch_all(&self, key_provider: dyn Fn() -> String) -> Result<A, EntryIdRepoErr>;
-    fn update(&self, entry_id_type: B, entry_id: XReadEntryId) -> Result<(), EntryIdRepoErr>;
-}
-
 pub fn fetch_all<A: Default, B>(
     pool: &Pool,
     provide_key: Box<dyn Fn() -> String>,
