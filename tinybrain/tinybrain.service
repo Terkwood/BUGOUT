@@ -2,7 +2,8 @@
 Description=BUGOUT tinybrain
 
 [Service]
-ExecStart=/home/youruser/.cargo/bin/tinybrain
+Environment="TINYBRAIN_HOME=/home/youruser/BUGOUT/tinybrain"
+ExecStart=sh /home/youruser/BUGOUT/tinybrain/start-tinybrain.sh
 
 [Install]
 WantedBy=multi-user.target
