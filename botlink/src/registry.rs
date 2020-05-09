@@ -27,20 +27,10 @@ impl Default for Components {
             unbounded();
 
         let pool = Arc::new(redis_conn_pool::create(RedisHostUrl::default()));
-        let key_provider = crate::repo::redis_keys::KeyProvider::default();
         Components {
-            ab_repo: Box::new(RedisAttachedBotsRepo {
-                pool: pool.clone(),
-                key_provider: key_provider.clone(),
-            }),
-            entry_id_repo: Box::new(RedisEntryIdRepo {
-                pool: pool.clone(),
-                key_provider: key_provider.clone(),
-            }),
-            board_size_repo: Arc::new(RedisBoardSizeRepo {
-                pool: pool.clone(),
-                key_provider,
-            }),
+            ab_repo: Box::new(pool.clone()),
+            entry_id_repo: Box::new(pool.clone()),
+            board_size_repo: Arc::new(pool.clone()),
             xreader: Box::new(RedisXReader { pool: pool.clone() }),
             xadder: Arc::new(RedisXAdder { pool }),
             compute_move_in,

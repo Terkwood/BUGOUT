@@ -1,3 +1,4 @@
+use super::redis_keys::ENTRY_IDS;
 use redis_conn_pool::redis::Commands;
 use redis_conn_pool::{redis, Pool};
 use redis_streams::repo::fetch_all as fetchy;
@@ -15,12 +16,8 @@ pub trait EntryIdRepo: Send + Sync {
     ) -> Result<(), redis::RedisError>;
 }
 
-pub struct RedisEntryIdRepo {
-    pub pool: Arc<Pool>,
-    pub key_provider: super::redis_keys::KeyProvider,
-}
 const EMPTY_EID: &str = "0-0";
-impl EntryIdRepo for RedisEntryIdRepo {
+impl EntryIdRepo for Arc<Pool> {
     fn fetch_all(&self) -> Result<AllEntryIds, super::RepoErr> {
         let deser_hash: Box<dyn Fn(HashMap<String, String>) -> AllEntryIds> = Box::new(|hash| {
             let attach_bot_eid = XReadEntryId::from_str(
@@ -42,18 +39,14 @@ impl EntryIdRepo for RedisEntryIdRepo {
                 attach_bot_eid,
             }
         });
-        let provide_key = Box::new(|| self.key_provider.entry_ids());
-        let fetched = fetchy(&self.pool, provide_key, deser_hash);
+        let provide_key: Box<dyn Fn() -> String + 'static> = Box::new(|| ENTRY_IDS.to_string());
+        let fetched = fetchy(&self, provide_key, deser_hash);
 
         fetched.map_err(|_| super::RepoErr::SomeErr)
     }
     fn update(&self, eid_type: EntryIdType, eid: XReadEntryId) -> Result<(), redis::RedisError> {
-        let mut conn = self.pool.get().expect("redis pool");
-        conn.hset(
-            self.key_provider.entry_ids(),
-            eid_type.hash_field(),
-            eid.to_string(),
-        )
+        let mut conn = self.get().expect("redis pool");
+        conn.hset(ENTRY_IDS, eid_type.hash_field(), eid.to_string())
     }
 }
 
