@@ -22,15 +22,17 @@ pub struct RedisEntryIdRepo {
 const EMPTY_EID: &str = "0-0";
 impl EntryIdRepo for RedisEntryIdRepo {
     fn fetch_all(&self) -> Result<AllEntryIds, super::RepoErr> {
-        let deser_hash = Box::new(|hash| {
+        let deser_hash: Box<dyn Fn(HashMap<String, String>) -> AllEntryIds> = Box::new(|hash| {
             let attach_bot_eid = XReadEntryId::from_str(
-                hash.get(ATTACH_BOT_EID)
+                &hash
+                    .get(ATTACH_BOT_EID)
                     .unwrap_or(&EMPTY_EID.to_string())
                     .to_string(),
             )
             .unwrap_or(XReadEntryId::default());
             let game_states_eid = XReadEntryId::from_str(
-                hash.get(GAME_STATES_EID)
+                &hash
+                    .get(GAME_STATES_EID)
                     .unwrap_or(&EMPTY_EID.to_string())
                     .to_string(),
             )
@@ -41,7 +43,9 @@ impl EntryIdRepo for RedisEntryIdRepo {
             }
         });
         let provide_key = Box::new(|| self.key_provider.entry_ids());
-        fetchy(&self.pool, provide_key, deser_hash).map_err(|_| super::RepoErr::SomeErr)
+        let fetched = fetchy(&self.pool, provide_key, deser_hash);
+
+        fetched.map_err(|_| super::RepoErr::SomeErr)
     }
     fn update(&self, eid_type: EntryIdType, eid: XReadEntryId) -> Result<(), redis::RedisError> {
         let mut conn = self.pool.get().expect("redis pool");

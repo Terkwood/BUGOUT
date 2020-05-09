@@ -3,7 +3,7 @@ use redis_conn_pool::redis::Commands;
 use redis_conn_pool::Pool;
 use std::collections::HashMap;
 
-pub fn fetch_all<A: Default, B>(
+pub fn fetch_all<A: Default>(
     pool: &Pool,
     provide_key: Box<dyn Fn() -> String>,
     deser: Box<dyn Fn(HashMap<String, String>) -> A>,

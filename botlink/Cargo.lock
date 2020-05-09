@@ -920,7 +920,7 @@ dependencies = [
 [[package]]
 name = "redis_streams"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/dedupe-entry-ids#cec82ae34d97f16a00210326d60ec115a8bff2ab"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/dedupe-entry-ids#2e8e0a5362a7961d42b668dac92966e9cd8610b4"
 dependencies = [
  "redis_conn_pool",
  "uuid",
