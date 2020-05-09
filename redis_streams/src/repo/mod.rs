@@ -2,67 +2,46 @@ use super::XReadEntryId;
 use redis_conn_pool::redis::Commands;
 use redis_conn_pool::Pool;
 use std::collections::HashMap;
-use std::sync::Arc;
 
-pub trait AllEntryIds: Send + Sync {
-    fn from_hash(
-        &self,
-        hash: HashMap<String, String>,
-    ) -> Result<Box<dyn AllEntryIds>, EntryIdRepoErr>;
-}
-
-pub trait EntryIdType {}
-
-pub trait EIDRepoKeyProvider: Send + Sync {
-    fn entry_id_repo_key(&self) -> String;
-}
-
-pub trait AllEIDsDeser: Send + Sync {
-    fn from_hash(
-        &self,
-        hash: HashMap<String, String>,
-    ) -> Result<Box<dyn AllEntryIds, EntryIdRepoErr>;
-}
-
-pub trait EntryIdRepo: Send + Sync
+pub const EMPTY_EID: &str = "0-0";
+pub trait EntryIdRepo<A, B>: Send + Sync
 where
+    A: Default,
 {
-    fn fetch_all(&self) -> Result<Box<dyn AllEntryIds>, EntryIdRepoErr>;
-    fn update(
-        &self,
-        entry_id_type: Box<dyn EntryIdType>,
-        entry_id: XReadEntryId,
-    ) -> Result<(), EntryIdRepoErr>;
+    fn fetch_all(&self, key_provider: dyn Fn() -> String) -> Result<A, EntryIdRepoErr>;
+    fn update(&self, entry_id_type: B, entry_id: XReadEntryId) -> Result<(), EntryIdRepoErr>;
 }
 
-pub struct RepoContext {
-    pub pool: Arc<Pool>,
-    pub key_provider: Box<dyn EIDRepoKeyProvider>,
-    pub deser_all_eids: Box<dyn AllEIDsDeser>,
-    pub default_set: Box<dyn AllEntryIds>,
-}
-
-impl EntryIdRepo for RepoContext {
-    fn fetch_all(&self) -> Result<Box<dyn AllEntryIds>, EntryIdRepoErr> {
-        if let Ok(mut conn) = self.pool.get() {
-            let found: Result<HashMap<String, String>, _> =
-                conn.hgetall(self.key_provider.entry_id_repo_key());
-            if let Ok(hash) = found {
-                self.deser_all_eids.from_hash(hash)
-            } else {
-                Ok(self.default_set)
-            }
+fn fetch_all<A: Default, B>(
+    pool: &Pool,
+    key_provider: Box<dyn Fn() -> String>,
+    deser: Box<dyn Fn(HashMap<String, String>) -> Result<A, EntryIdRepoErr>>,
+) -> Result<A, EntryIdRepoErr> {
+    if let Ok(mut conn) = pool.get() {
+        let found: Result<HashMap<String, String>, _> = conn.hgetall(key_provider());
+        if let Ok(hash) = found {
+            deser(hash)
         } else {
-            Err(EntryIdRepoErr)
+            Ok(A::default())
         }
+    } else {
+        Err(EntryIdRepoErr)
     }
-    fn update(
-        &self,
-        entry_id_type: Box<dyn EntryIdType>,
-        entry_id: XReadEntryId,
-    ) -> Result<(), EntryIdRepoErr> {
-        todo!()
-    }
+}
+fn update<B>(
+    entry_id_type: B,
+    entry_id: XReadEntryId,
+    pool: &Pool,
+    provide_key: Box<dyn Fn() -> String>,
+    hash_field: Box<dyn Fn(B) -> String>,
+) -> Result<(), EntryIdRepoErr> {
+    let mut conn = pool.get().expect("redis pool");
+    conn.hset(
+        provide_key(),
+        hash_field(entry_id_type),
+        entry_id.to_string(),
+    )
+    .map_err(|_| EntryIdRepoErr)
 }
 
 pub struct EntryIdRepoErr;
