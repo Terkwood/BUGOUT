@@ -14,8 +14,8 @@ bincode = "1.2.1"
 # TODO TODO TODO
 # TODO TODO TODO
 # TODO TODO TODO
-redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
-redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "fix/dedupe-entry-ids" }
+redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "fix/dedupe-entry-ids" }
+redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.2"
 env_logger = "0.7.1"
@@ -23,7 +23,7 @@ log = "0.4.8"
 lazy_static = "1.4.0"
 dotenv = "0.15.0"
 uuid =  { version = "0.8.1", features = ["v4", "serde"] }
-base64 = "0.12.0"
-futures-util = { version="0.3.4", default-features = false, features = ["async-await", "sink", "std"] }
+base64 = "0.12.1"
+futures-util = { version = "0.3.5", default-features = false, features = ["async-await", "sink", "std"] }
 tokio-tungstenite = "0.10.1"
-tokio = { version="0.2.17", default-features = false, features = ["io-std", "io-util", "macros", "stream", "time"] }
+tokio = { version = "0.2.20", default-features = false, features = ["io-std", "io-util", "macros", "stream", "time"] }

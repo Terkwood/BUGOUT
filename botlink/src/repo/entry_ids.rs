@@ -4,6 +4,8 @@ use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+
+
 pub trait EntryIdRepo: Send + Sync {
     fn fetch_all(&self) -> Result<AllEntryIds, super::RepoErr>;
 

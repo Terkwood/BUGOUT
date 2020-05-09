@@ -9,6 +9,7 @@ extern crate env_logger;
 extern crate log;
 extern crate micro_model_bot;
 extern crate micro_model_moves;
+extern crate redis_streams;
 pub extern crate tokio;
 extern crate tokio_tungstenite;
 extern crate uuid;
