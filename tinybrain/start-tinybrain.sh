@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# systemd can use this script to start tinybrain
+
 if [ -z "$TINYBRAIN_USER" ]
 then
 	echo "Please specify TINYBRAIN_USER in env"
