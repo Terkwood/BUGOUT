@@ -12,7 +12,7 @@ where
     fn update(&self, entry_id_type: B, entry_id: XReadEntryId) -> Result<(), EntryIdRepoErr>;
 }
 
-fn fetch_all<A: Default, B>(
+pub fn fetch_all<A: Default, B>(
     pool: &Pool,
     provide_key: Box<dyn Fn() -> String>,
     deser: Box<dyn Fn(HashMap<String, String>) -> Result<A, EntryIdRepoErr>>,
@@ -28,7 +28,8 @@ fn fetch_all<A: Default, B>(
         Err(EntryIdRepoErr)
     }
 }
-fn update<B>(
+
+pub fn update<B>(
     entry_id_type: B,
     entry_id: XReadEntryId,
     pool: &Pool,
