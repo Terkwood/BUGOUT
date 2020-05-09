@@ -6,15 +6,15 @@ use std::collections::HashMap;
 pub fn fetch_all<A: Default, B>(
     pool: &Pool,
     provide_key: Box<dyn Fn() -> String>,
-    deser: Box<dyn Fn(HashMap<String, String>) -> Result<A, EntryIdRepoErr>>,
+    deser: Box<dyn Fn(HashMap<String, String>) -> A>,
 ) -> Result<A, EntryIdRepoErr> {
     if let Ok(mut conn) = pool.get() {
         let found: Result<HashMap<String, String>, _> = conn.hgetall(provide_key());
-        if let Ok(hash) = found {
+        Ok(if let Ok(hash) = found {
             deser(hash)
         } else {
-            Ok(A::default())
-        }
+            A::default()
+        })
     } else {
         Err(EntryIdRepoErr)
     }
