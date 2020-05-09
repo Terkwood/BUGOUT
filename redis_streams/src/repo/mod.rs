@@ -4,7 +4,7 @@ use redis_conn_pool::Pool;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-pub trait AllEntryIds {
+pub trait AllEntryIds: Send + Sync {
     fn from_hash(
         &self,
         hash: HashMap<String, String>,
@@ -21,10 +21,12 @@ pub trait AllEIDsDeser: Send + Sync {
     fn from_hash(
         &self,
         hash: HashMap<String, String>,
-    ) -> Result<Box<dyn AllEntryIds>, EntryIdRepoErr>;
+    ) -> Result<Box<dyn AllEntryIds, EntryIdRepoErr>;
 }
 
-pub trait EntryIdRepo: Send + Sync {
+pub trait EntryIdRepo: Send + Sync
+where
+{
     fn fetch_all(&self) -> Result<Box<dyn AllEntryIds>, EntryIdRepoErr>;
     fn update(
         &self,
@@ -37,6 +39,7 @@ pub struct RepoContext {
     pub pool: Arc<Pool>,
     pub key_provider: Box<dyn EIDRepoKeyProvider>,
     pub deser_all_eids: Box<dyn AllEIDsDeser>,
+    pub default_set: Box<dyn AllEntryIds>,
 }
 
 impl EntryIdRepo for RepoContext {
@@ -47,7 +50,7 @@ impl EntryIdRepo for RepoContext {
             if let Ok(hash) = found {
                 self.deser_all_eids.from_hash(hash)
             } else {
-                Err(EntryIdRepoErr)
+                Ok(self.default_set)
             }
         } else {
             Err(EntryIdRepoErr)
