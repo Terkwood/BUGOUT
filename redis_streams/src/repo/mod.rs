@@ -14,11 +14,11 @@ where
 
 fn fetch_all<A: Default, B>(
     pool: &Pool,
-    key_provider: Box<dyn Fn() -> String>,
+    provide_key: Box<dyn Fn() -> String>,
     deser: Box<dyn Fn(HashMap<String, String>) -> Result<A, EntryIdRepoErr>>,
 ) -> Result<A, EntryIdRepoErr> {
     if let Ok(mut conn) = pool.get() {
-        let found: Result<HashMap<String, String>, _> = conn.hgetall(key_provider());
+        let found: Result<HashMap<String, String>, _> = conn.hgetall(provide_key());
         if let Ok(hash) = found {
             deser(hash)
         } else {
