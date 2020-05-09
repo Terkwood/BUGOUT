@@ -8,6 +8,10 @@ then
 	exit 1
 fi
 
+# sorry, but we want to give the network additional
+# time to sort itself out.
+sleep 20 
+
 # move to a location where we expect a .env
 # file and a compiled katago executable
 cd $TINYBRAIN_HOME
