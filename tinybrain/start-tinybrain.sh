@@ -10,5 +10,5 @@ fi
 
 # move to a location where we expect a .env
 # file and a compiled katago executable
-cd $TINYBRAIN_HOME/tinybrain
-tinybrain
+cd $TINYBRAIN_HOME
+target/release/tinybrain
