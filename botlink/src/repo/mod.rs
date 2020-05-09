@@ -11,7 +11,7 @@ use redis_conn_pool::redis;
 #[derive(Debug)]
 pub enum RepoErr {
     Redis(redis::RedisError),
-    SomeErr
+    SomeErr,
 }
 impl From<redis::RedisError> for RepoErr {
     fn from(r: redis::RedisError) -> Self {

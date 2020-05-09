@@ -163,7 +163,7 @@ mod tests {
             &self,
             entry_id_type: EntryIdType,
             entry_id: redis_streams::XReadEntryId,
-        ) -> Result<(), redis_conn_pool::redis::RedisError> {
+        ) -> Result<(), RepoErr> {
             self.eid_update_in
                 .send((entry_id_type.clone(), entry_id))
                 .expect("eid update send");
