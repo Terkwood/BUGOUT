@@ -1,4 +1,7 @@
+extern crate redis_conn_pool;
 extern crate uuid;
+
+mod repo;
 #[derive(Debug, Copy, Clone, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct XReadEntryId {
     pub millis_time: u64,
