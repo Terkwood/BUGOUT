@@ -1,0 +1,9 @@
+[Unit]
+Description=BUGOUT tinybrain
+
+[Service]
+ExecStart=/home/youruser/.cargo/bin/tinybrain
+
+[Install]
+WantedBy=multi-user.target
+~
