@@ -32,7 +32,7 @@ pub async fn start(
         let sleep_secs = RETRY_BASE_SECS.pow(retry_exp);
         warn!(
             "Connection failed. Retrying botlink ({}) in {} seconds...",
-            env::BOTLINK_URL,
+            &*env::BOTLINK_URL,
             sleep_secs
         );
         thread::sleep(Duration::from_secs(sleep_secs))
@@ -63,7 +63,7 @@ async fn connect_loop(
     if let Ok((socket, response)) = connect_async(create_http_request()).await {
         info!(
             "Connected to botlink ({}), http status: {}",
-            env::BOTLINK_URL,
+            &*env::BOTLINK_URL,
             response.status()
         );
 
@@ -105,6 +105,9 @@ async fn connect_loop(
     }
 }
 
+/// Iterate through all outstanding move_computed results
+/// that katago has delivered through crossbeam channel,
+/// and send each one to botlink via websocket.
 async fn respond_all_moves_computed(
     write: &mut SplitSink<
         tokio_tungstenite::WebSocketStream<
@@ -129,6 +132,8 @@ async fn respond_all_moves_computed(
     }
 }
 
+/// Deserialize the compute move request received from botlink,
+/// then send it over crossbeam to be handled by the katago thread.
 fn handle_compute_move(data: Vec<u8>, compute_move_in: &Sender<ComputeMove>) {
     let cm: Result<ComputeMove, _> = bincode::deserialize(&data);
     match cm {
@@ -141,6 +146,8 @@ fn handle_compute_move(data: Vec<u8>, compute_move_in: &Sender<ComputeMove>) {
     }
 }
 
+/// Creates an HTTP request, which will be used to connect
+/// to botlink service
 fn create_http_request() -> http::Request<()> {
     let mut request = Request::builder().uri(&*env::BOTLINK_URL);
 
