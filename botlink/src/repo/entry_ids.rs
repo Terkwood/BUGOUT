@@ -12,21 +12,20 @@ pub trait EntryIdRepo: Send + Sync {
     fn update(&self, entry_id_type: EntryIdType, entry_id: XReadEntryId) -> Result<(), RepoErr>;
 }
 
-const EMPTY_EID: &str = "0-0";
 impl EntryIdRepo for Arc<Pool> {
     fn fetch_all(&self) -> Result<AllEntryIds, RepoErr> {
         let deser_hash: Box<dyn Fn(HashMap<String, String>) -> AllEntryIds> = Box::new(|hash| {
             let attach_bot_eid = XReadEntryId::from_str(
                 &hash
                     .get(ATTACH_BOT_EID)
-                    .unwrap_or(&EMPTY_EID.to_string())
+                    .unwrap_or(&XReadEntryId::default().to_string())
                     .to_string(),
             )
             .unwrap_or(XReadEntryId::default());
             let game_states_eid = XReadEntryId::from_str(
                 &hash
                     .get(GAME_STATES_EID)
-                    .unwrap_or(&EMPTY_EID.to_string())
+                    .unwrap_or(&XReadEntryId::default().to_string())
                     .to_string(),
             )
             .unwrap_or(XReadEntryId::default());
@@ -61,6 +60,7 @@ pub struct AllEntryIds {
     pub attach_bot_eid: XReadEntryId,
     pub game_states_eid: XReadEntryId,
 }
+
 impl Default for AllEntryIds {
     fn default() -> Self {
         AllEntryIds {
