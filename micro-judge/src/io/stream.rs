@@ -69,7 +69,7 @@ pub fn process(opts: ProcessOpts) {
             }
             Err(FetchErr::Deser) => error!("Deserialization err in stream processing"),
             Err(FetchErr::Redis(r)) => error!("Redis error in stream processing {:?}", r),
-            Err(FetchErr::EidRepo) => error!("eid repo"),
+            Err(FetchErr::EIDRepo) => error!("eid repo"),
         }
     }
 }

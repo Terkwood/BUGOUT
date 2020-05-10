@@ -34,7 +34,7 @@ impl EntryIdRepo {
                 game_states_eid: XReadEntryId::from_str(&game_states_eid).unwrap_or_default(),
             }
         });
-        fetch_entry_ids(&self.pool, &redis_key, deser).map_err(|_| FetchErr::EidRepo)
+        fetch_entry_ids(&self.pool, &redis_key, deser).map_err(|_| FetchErr::EIDRepo)
     }
     pub fn update(
         &self,
