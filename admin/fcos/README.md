@@ -2,7 +2,7 @@
 
 We have packer files, some example bash scripts, you name it.
 
-## Weird Packer Trivia: Disable rpm-ostreed
+## Weird Trivia: Disable rpm-ostreed
 
 If you take a look [here](https://github.com/Terkwood/BUGOUT/pull/295) and [here](https://github.com/coreos/rpm-ostree/issues/1692#issuecomment-443215317) you'll find that the `systemctl stop rpm-ostreed` command in the packer.json files for gateway and kafka is necessary to prevent a transient error.
 
