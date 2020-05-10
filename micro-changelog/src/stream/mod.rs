@@ -74,6 +74,7 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
             },
             Err(FetchErr::Deser) => error!("Unable to deserialize entry IDs"),
             Err(FetchErr::Redis(r)) => error!("Redis err {:#?}", r),
+            Err(FetchErr::EIDRepo) => error!("Error with EID repo"),
         }
     }
 }

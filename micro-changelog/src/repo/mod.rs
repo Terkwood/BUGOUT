@@ -8,6 +8,7 @@ use crate::redis;
 pub enum WriteErr {
     Redis(redis::RedisError),
     Serialization(std::boxed::Box<bincode::ErrorKind>),
+    EIDRepo,
 }
 impl From<std::boxed::Box<bincode::ErrorKind>> for WriteErr {
     fn from(ek: std::boxed::Box<bincode::ErrorKind>) -> Self {
@@ -37,6 +38,7 @@ impl From<std::num::ParseIntError> for DeserError {
 pub enum FetchErr {
     Redis(redis::RedisError),
     Deser,
+    EIDRepo,
 }
 impl From<DeserError> for FetchErr {
     fn from(_: DeserError) -> Self {

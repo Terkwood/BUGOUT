@@ -1,8 +1,8 @@
 FROM rust
 
-WORKDIR /var/BUGOUT/botlink
-
 RUN rustup default stable  
+
+WORKDIR /var/BUGOUT/botlink
 
 COPY . /var/BUGOUT/botlink/.
 

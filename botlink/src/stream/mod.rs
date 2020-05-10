@@ -115,7 +115,10 @@ fn process_attach_bot(ab: AttachBot, entry_id: XReadEntryId, opts: &mut StreamOp
             error!("Error xadd bot attached {:?}", e)
         }
 
-        if let Err(e) = opts.board_size_repo.set(&ab.game_id, game_state.board.size) {
+        if let Err(e) = opts
+            .board_size_repo
+            .set_board_size(&ab.game_id, game_state.board.size)
+        {
             error!("Failed to write board size {:?}", e)
         }
     }
@@ -160,7 +163,7 @@ mod tests {
             &self,
             entry_id_type: EntryIdType,
             entry_id: redis_streams::XReadEntryId,
-        ) -> Result<(), redis_conn_pool::redis::RedisError> {
+        ) -> Result<(), RepoErr> {
             self.eid_update_in
                 .send((entry_id_type.clone(), entry_id))
                 .expect("eid update send");
@@ -201,10 +204,10 @@ mod tests {
     static FAKE_BOARD_SIZE: AtomicU16 = AtomicU16::new(0);
     struct FakeBoardSizeRepo;
     impl BoardSizeRepo for FakeBoardSizeRepo {
-        fn get(&self, _game_id: &GameId) -> Result<u16, RepoErr> {
+        fn get_board_size(&self, _game_id: &GameId) -> Result<u16, RepoErr> {
             Ok(FAKE_BOARD_SIZE.load(Ordering::SeqCst))
         }
-        fn set(&self, _game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
+        fn set_board_size(&self, _game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
             FAKE_BOARD_SIZE.store(board_size, Ordering::SeqCst);
             Ok(())
         }
