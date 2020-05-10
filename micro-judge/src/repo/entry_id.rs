@@ -1,9 +1,7 @@
 use crate::io;
 use io::conn_pool::Pool;
-use io::r2d2_redis::redis;
-use io::redis::Commands;
 use io::redis_keys::*;
-use io::FetchErr;
+use io::{FetchErr, WriteErr};
 use redis_streams::repo::{fetch_entry_ids, update_entry_id};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
@@ -42,28 +40,20 @@ impl EntryIdRepo {
         &self,
         entry_id_type: EntryIdType,
         entry_id: XReadEntryId,
-    ) -> Result<(), redis::RedisError> {
-        let mut conn = self.pool.get().unwrap();
-
-        conn.hset(
-            entry_ids_hash_key(&self.namespace),
-            entry_id_type.hash_field(),
-            entry_id.to_string(),
-        )
+    ) -> Result<(), WriteErr> {
+        let hf = Box::new(|i| match i {
+            EntryIdType::GameStateChangelog => GAME_STATES_EID.to_string(),
+            EntryIdType::MakeMoveCommand => MAKE_MOVES_EID.to_string(),
+        });
+        let redis_key = entry_ids_hash_key(&self.namespace);
+        update_entry_id(entry_id_type, entry_id, &self.pool, &redis_key, hf)
+            .map_err(|_| WriteErr::EIDRepo)
     }
 }
 
 pub enum EntryIdType {
     MakeMoveCommand,
     GameStateChangelog,
-}
-impl EntryIdType {
-    pub fn hash_field(&self) -> String {
-        match self {
-            EntryIdType::GameStateChangelog => GAME_STATES_EID.to_string(),
-            EntryIdType::MakeMoveCommand => MAKE_MOVES_EID.to_string(),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Eq)]

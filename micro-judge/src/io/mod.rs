@@ -11,6 +11,7 @@ pub use redis_conn_pool::{r2d2_redis, redis};
 pub enum WriteErr {
     Redis(redis::RedisError),
     Serialization(std::boxed::Box<bincode::ErrorKind>),
+    EIDRepo,
 }
 impl From<std::boxed::Box<bincode::ErrorKind>> for WriteErr {
     fn from(ek: std::boxed::Box<bincode::ErrorKind>) -> Self {
@@ -39,7 +40,7 @@ impl From<std::num::ParseIntError> for DeserError {
 pub enum FetchErr {
     Redis(redis::RedisError),
     Deser,
-    EidRepo
+    EidRepo,
 }
 impl From<DeserError> for FetchErr {
     fn from(_: DeserError) -> Self {
