@@ -60,7 +60,7 @@ impl EntryIdRepo for RedisEntryIdRepo {
             }
         });
 
-        fetch_entry_ids(self.pool.as_ref(), &redis_key, deser_hash).map_err(|_| todo!())
+        fetch_entry_ids(self.pool.as_ref(), &redis_key, deser_hash).map_err(|_| EidRepoErr)
     }
 
     fn update(&self, entry_id_type: EntryIdType, entry_id: XReadEntryId) -> Result<(), EidRepoErr> {
