@@ -17,6 +17,7 @@ use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 
 const RETRY_MAX_EXP: u32 = 5;
 const RETRY_BASE_SECS: u64 = 2;
+
 pub async fn start(
     compute_move_in: Sender<ComputeMove>,
     move_computed_out: Receiver<MoveComputed>,
@@ -29,7 +30,11 @@ pub async fn start(
         };
 
         let sleep_secs = RETRY_BASE_SECS.pow(retry_exp);
-        info!("Retrying botlink in {} seconds...", sleep_secs);
+        warn!(
+            "Connection failed. Retrying botlink ({}) in {} seconds...",
+            env::BOTLINK_URL,
+            sleep_secs
+        );
         thread::sleep(Duration::from_secs(sleep_secs))
     }
 }
@@ -56,7 +61,11 @@ async fn connect_loop(
     move_computed_out: Receiver<MoveComputed>,
 ) -> InitialConnection {
     if let Ok((socket, response)) = connect_async(create_http_request()).await {
-        info!("Connected to botlink, http status: {}", response.status());
+        info!(
+            "Connected to botlink ({}), http status: {}",
+            env::BOTLINK_URL,
+            response.status()
+        );
 
         let (mut write, mut read) = socket.split();
 
