@@ -1,8 +1,8 @@
 FROM rust
 
-WORKDIR /var/BUGOUT/micro-changelog
-
 RUN rustup default stable  
+
+WORKDIR /var/BUGOUT/micro-changelog
 
 COPY . /var/BUGOUT/micro-changelog/.
 

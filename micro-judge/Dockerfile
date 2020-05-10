@@ -1,8 +1,8 @@
 FROM rust
 
-WORKDIR /var/BUGOUT/micro-judge
-
 RUN rustup default stable  
+
+WORKDIR /var/BUGOUT/micro-judge
 
 COPY . /var/BUGOUT/micro-judge/.
 
