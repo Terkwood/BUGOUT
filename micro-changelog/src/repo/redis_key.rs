@@ -1,6 +1,7 @@
 use micro_model_moves::GameId;
 
 const DEFAULT_NAMESPACE: &str = "BUGOUT";
+pub const ENTRY_IDS: &str = "/BUGOUT/micro_changelog/entry_ids";
 #[derive(Clone, Debug)]
 pub struct RedisKeyNamespace(pub String);
 impl Default for RedisKeyNamespace {
@@ -19,9 +20,6 @@ impl Default for KeyProvider {
 impl KeyProvider {
     pub fn game_states(&self, game_id: &GameId) -> String {
         format!("/{}/micro_changelog/game_states/{}", (self.0).0, game_id.0)
-    }
-    pub fn entry_ids(&self) -> String {
-        format!("/{}/micro_changelog/entry_ids", (self.0).0)
     }
 }
 #[cfg(test)]
