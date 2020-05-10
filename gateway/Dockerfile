@@ -1,9 +1,9 @@
 FROM rust
 
-RUN apt-get update -y 
-RUN apt-get install -y clang
+RUN rustup default stable  
 
-RUN rustup default stable   
+RUN apt-get update -y 
+RUN apt-get install -y clang 
 
 WORKDIR /var/
 
