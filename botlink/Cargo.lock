@@ -581,7 +581,7 @@ dependencies = [
 [[package]]
 name = "micro_model_bot"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#3c314b9b35b1a1b971960030c3fc0d20f3709a36"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#25b24170fc9d3ef1567ad65330f9ac2ec2158f7e"
 dependencies = [
  "bincode",
  "micro_model_moves",
@@ -592,7 +592,7 @@ dependencies = [
 [[package]]
 name = "micro_model_moves"
 version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#3c314b9b35b1a1b971960030c3fc0d20f3709a36"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#25b24170fc9d3ef1567ad65330f9ac2ec2158f7e"
 dependencies = [
  "bincode",
  "serde",
@@ -911,7 +911,7 @@ dependencies = [
 [[package]]
 name = "redis_conn_pool"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#3c314b9b35b1a1b971960030c3fc0d20f3709a36"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#25b24170fc9d3ef1567ad65330f9ac2ec2158f7e"
 dependencies = [
  "r2d2_redis",
  "redis",
@@ -920,7 +920,7 @@ dependencies = [
 [[package]]
 name = "redis_streams"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/dedupe-entry-ids#77227418a8fd2e1ea9879b82508e12402d3d8e83"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/dedupe-entry-ids#a8f2bdbd8de11fe4cde82787cfa99a7f59e1ce7c"
 dependencies = [
  "redis_conn_pool",
  "uuid",
@@ -1009,18 +1009,18 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.107"
+version = "1.0.108"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eba7550f2cdf88ffc23ab0f1607133486c390a8c0f89b57e589b9654ee15e04d"
+checksum = "98b4e9fadb50ff90c1e758e42f13a8e2ab84e1927abb0aa5b95e5ecdb49ea741"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.107"
+version = "1.0.108"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10be45e22e5597d4b88afcc71f9d7bfadcd604bf0c78a3ab4582b8d2b37f39f3"
+checksum = "6a316eba8a61ba986e87e7e04a74f9feda86298fb454b76232ead4e425976090"
 dependencies = [
  "proc-macro2",
  "quote",

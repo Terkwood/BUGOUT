@@ -1,8 +1,7 @@
 use super::redis_keys::ENTRY_IDS;
 use super::RepoErr;
 use redis_conn_pool::Pool;
-use redis_streams::repo::fetch_all as fetch_friend;
-use redis_streams::repo::update as update_friend;
+use redis_streams::repo::{fetch_entry_ids, update_entry_id};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -34,7 +33,7 @@ impl EntryIdRepo for Arc<Pool> {
                 attach_bot_eid,
             }
         });
-        let fetched = fetch_friend(&self, ENTRY_IDS, deser_hash);
+        let fetched = fetch_entry_ids(&self, ENTRY_IDS, deser_hash);
 
         fetched.map_err(|_| super::RepoErr::SomeErr)
     }
@@ -43,7 +42,7 @@ impl EntryIdRepo for Arc<Pool> {
             EntryIdType::GameStateChangelog => GAME_STATES_EID.to_string(),
             EntryIdType::AttachBotEvent => ATTACH_BOT_EID.to_string(),
         });
-        update_friend(eid_type, eid, self, ENTRY_IDS, hash).map_err(|_| RepoErr::SomeErr)
+        update_entry_id(eid_type, eid, self, ENTRY_IDS, hash).map_err(|_| RepoErr::SomeErr)
     }
 }
 

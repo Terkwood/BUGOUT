@@ -1,8 +1,8 @@
 use super::FetchErr;
 use crate::redis;
 use redis_conn_pool::redis::Commands;
+use redis_streams::repo::{fetch_entry_ids, update_entry_id};
 use redis_streams::*;
-use redis_streams::repo::{fetch_entry_ids, update_entry_ids};
 
 use std::collections::HashMap;
 const GAME_READY_EID: &str = "game_ready_eid";
