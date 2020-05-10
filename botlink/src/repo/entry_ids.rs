@@ -1,7 +1,6 @@
 use super::redis_keys::ENTRY_IDS;
 use super::RepoErr;
-use redis_conn_pool::redis::Commands;
-use redis_conn_pool::{redis, Pool};
+use redis_conn_pool::Pool;
 use redis_streams::repo::fetch_all as fetch_friend;
 use redis_streams::repo::update as update_friend;
 use redis_streams::XReadEntryId;
@@ -36,18 +35,16 @@ impl EntryIdRepo for Arc<Pool> {
                 attach_bot_eid,
             }
         });
-        let provide_key: Box<dyn Fn() -> String + 'static> = Box::new(|| ENTRY_IDS.to_string());
-        let fetched = fetch_friend(&self, provide_key, deser_hash);
+        let fetched = fetch_friend(&self, ENTRY_IDS, deser_hash);
 
         fetched.map_err(|_| super::RepoErr::SomeErr)
     }
     fn update(&self, eid_type: EntryIdType, eid: XReadEntryId) -> Result<(), super::RepoErr> {
-        let provide_key: Box<dyn Fn() -> String + 'static> = Box::new(|| ENTRY_IDS.to_string());
         let hash = Box::new(|eid_type| match eid_type {
             EntryIdType::GameStateChangelog => GAME_STATES_EID.to_string(),
             EntryIdType::AttachBotEvent => ATTACH_BOT_EID.to_string(),
         });
-        update_friend(eid_type, eid, self, provide_key, hash).map_err(|_| RepoErr::SomeErr)
+        update_friend(eid_type, eid, self, ENTRY_IDS, hash).map_err(|_| RepoErr::SomeErr)
     }
 }
 
