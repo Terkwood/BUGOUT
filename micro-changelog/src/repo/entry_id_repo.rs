@@ -2,11 +2,13 @@ use super::FetchErr;
 use crate::redis;
 use redis_conn_pool::redis::Commands;
 use redis_streams::*;
+use redis_streams::repo::{fetch_entry_ids, update_entry_ids};
+
 use std::collections::HashMap;
 const GAME_READY_EID: &str = "game_ready_eid";
 const GAME_STATES_EID: &str = "game_states_eid";
 const MOVE_ACCEPTED_EID: &str = "move_accepted_eid";
-const EMPTY_EID: &str = "0-0";
+
 use crate::Components;
 
 pub fn fetch_all(components: &Components) -> Result<AllEntryIds, FetchErr> {
@@ -16,19 +18,19 @@ pub fn fetch_all(components: &Components) -> Result<AllEntryIds, FetchErr> {
     if let Ok(f) = found {
         let game_ready_eid = XReadEntryId::from_str(
             &f.get(GAME_READY_EID)
-                .unwrap_or(&EMPTY_EID.to_string())
+                .unwrap_or(&XReadEntryId::default().to_string())
                 .to_string(),
         )
         .unwrap_or(XReadEntryId::default());
         let game_states_eid = XReadEntryId::from_str(
             &f.get(GAME_STATES_EID)
-                .unwrap_or(&EMPTY_EID.to_string())
+                .unwrap_or(&XReadEntryId::default().to_string())
                 .to_string(),
         )
         .unwrap_or(XReadEntryId::default());
         let move_accepted_eid = XReadEntryId::from_str(
             &f.get(MOVE_ACCEPTED_EID)
-                .unwrap_or(&EMPTY_EID.to_string())
+                .unwrap_or(&XReadEntryId::default().to_string())
                 .to_string(),
         )
         .unwrap_or(XReadEntryId::default());

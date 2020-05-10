@@ -3,7 +3,7 @@ use redis_conn_pool::redis::Commands;
 use redis_conn_pool::Pool;
 use std::collections::HashMap;
 
-pub fn fetch_all<A: Default>(
+pub fn fetch_entry_ids<A: Default>(
     pool: &Pool,
     redis_key: &str,
     deser: Box<dyn Fn(HashMap<String, String>) -> A>,
@@ -20,7 +20,7 @@ pub fn fetch_all<A: Default>(
     }
 }
 
-pub fn update<B>(
+pub fn update_entry_id<B>(
     entry_id_type: B,
     entry_id: XReadEntryId,
     pool: &Pool,
