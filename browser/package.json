@@ -15,8 +15,8 @@
     "url": "https://github.com/Terkwood/BUGOUT/issues"
   },
   "build": {
-    "appId": "farm.terkwood.notreally",
-    "copyright": "Copyright © 2020 Terkwood (original author Yichuan Shen)",
+    "appId": "notreally",
+    "copyright": "Copyright © 2020 Yichuan Shen (modded by Terkwood)",
     "compression": "normal",
     "fileAssociations": [
       {
