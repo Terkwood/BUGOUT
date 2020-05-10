@@ -51,11 +51,12 @@
     },
     {
       "type": "shell",
-      "inline": ["sudo rpm-ostree install htop"]
-    },
-    {
-      "type": "shell",
-      "inline": ["sudo rpm-ostree install tmux"]
+      "inline": [
+        "sudo systemctl stop rpm-ostreed",
+        "sudo rpm-ostree upgrade",
+        "sudo rpm-ostree install htop",
+        "sudo rpm-ostree install tmux"
+      ]
     },
     {
       "type": "shell",

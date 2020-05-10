@@ -1,4 +1,7 @@
+extern crate redis_conn_pool;
 extern crate uuid;
+
+pub mod repo;
 #[derive(Debug, Copy, Clone, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct XReadEntryId {
     pub millis_time: u64,
@@ -43,5 +46,14 @@ impl From<uuid::Error> for StreamDeserError {
 impl From<std::num::ParseIntError> for StreamDeserError {
     fn from(_: std::num::ParseIntError) -> StreamDeserError {
         StreamDeserError
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn xread_entry_id_default_string() {
+        assert_eq!(XReadEntryId::default().to_string(), "0-0".to_string())
     }
 }
