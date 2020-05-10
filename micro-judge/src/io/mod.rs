@@ -39,6 +39,7 @@ impl From<std::num::ParseIntError> for DeserError {
 pub enum FetchErr {
     Redis(redis::RedisError),
     Deser,
+    EidRepo
 }
 impl From<DeserError> for FetchErr {
     fn from(_: DeserError) -> Self {

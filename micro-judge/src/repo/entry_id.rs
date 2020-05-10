@@ -4,6 +4,7 @@ use io::r2d2_redis::redis;
 use io::redis::Commands;
 use io::redis_keys::*;
 use io::FetchErr;
+use redis_streams::repo::{fetch_entry_ids, update_entry_id};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -20,10 +21,8 @@ pub struct EntryIdRepo {
 
 impl EntryIdRepo {
     pub fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
-        let mut conn = self.pool.get().unwrap();
-        let found: Result<HashMap<String, String>, _> =
-            conn.hgetall(entry_ids_hash_key(&self.namespace));
-        if let Ok(f) = found {
+        let redis_key = entry_ids_hash_key(&self.namespace);
+        let deser = Box::new(|f: HashMap<String, String>| {
             let make_moves_eid = f
                 .get(MAKE_MOVES_EID)
                 .unwrap_or(&EMPTY_EID.to_string())
@@ -32,15 +31,12 @@ impl EntryIdRepo {
                 .get(GAME_STATES_EID)
                 .unwrap_or(&EMPTY_EID.to_string())
                 .to_string();
-            Ok(AllEntryIds {
-                make_moves_eid: XReadEntryId::from_str(&make_moves_eid)
-                    .unwrap_or(XReadEntryId::default()),
-                game_states_eid: XReadEntryId::from_str(&game_states_eid)
-                    .unwrap_or(XReadEntryId::default()),
-            })
-        } else {
-            Ok(AllEntryIds::default())
-        }
+            AllEntryIds {
+                make_moves_eid: XReadEntryId::from_str(&make_moves_eid).unwrap_or_default(),
+                game_states_eid: XReadEntryId::from_str(&game_states_eid).unwrap_or_default(),
+            }
+        });
+        fetch_entry_ids(&self.pool, &redis_key, deser).map_err(|_| FetchErr::EidRepo)
     }
     pub fn update(
         &self,
