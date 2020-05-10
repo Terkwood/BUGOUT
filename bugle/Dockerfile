@@ -1,8 +1,8 @@
 FROM rust
 
-WORKDIR /var/BUGOUT/bugle
-
 RUN rustup default stable  
+
+WORKDIR /var/BUGOUT/bugle
 
 COPY . /var/BUGOUT/bugle/.
 
