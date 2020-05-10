@@ -964,6 +964,7 @@ dependencies = [
  "serde_json",
  "text_io",
  "tokio",
+ "tokio-tls",
  "tokio-tungstenite",
  "tungstenite",
  "uuid",
@@ -1001,9 +1002,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-tls"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bde02a3a5291395f59b06ec6945a3077602fac2b07eeeaf0dee2122f3619828"
+checksum = "9a70f4fcd7b3b24fb194f837560168208f669ca8cb70d0c4b862944452396343"
 dependencies = [
  "native-tls",
  "tokio",

@@ -23,6 +23,7 @@ log = "0.4.8"
 futures-util = { version="0.3.4", default-features = false, features = ["async-await", "sink", "std"] }
 tokio-tungstenite = { version = "0.10.1", features = ["tls"] }
 tokio = { version="0.2.17", default-features = false, features = ["io-std", "io-util", "macros", "stream", "time"] }
+tokio-tls = "0.3.1"
 
 [dev-dependencies]
 text_io = "0.1.8"
