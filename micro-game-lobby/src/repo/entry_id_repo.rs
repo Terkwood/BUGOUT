@@ -9,7 +9,7 @@ pub trait EntryIdRepo {
     fn update(&self, eid_type: EntryIdType, eid: XReadEntryId) -> Result<(), WriteErr>;
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AllEntryIds {
     pub find_public_game: XReadEntryId,
     pub create_game: XReadEntryId,

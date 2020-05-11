@@ -1,4 +1,4 @@
-use super::topics::StreamTopics;
+use super::topics::{CREATE_GAME, FIND_PUBLIC_GAME, JOIN_PRIVATE_GAME};
 use crate::api::*;
 use crate::repo::AllEntryIds;
 use redis_conn_pool::{redis, Pool};
@@ -18,7 +18,6 @@ pub trait XReader: Send + Sync {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
-        topics: &StreamTopics,
     ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError>;
 }
 
@@ -29,16 +28,15 @@ impl XReader for RedisXReader {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
-        topics: &StreamTopics,
     ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
         let mut conn = self.pool.get().unwrap();
         let xrr = redis::cmd("XREAD")
             .arg("BLOCK")
             .arg(&BLOCK_MSEC.to_string())
             .arg("STREAMS")
-            .arg(&topics.find_public_game)
-            .arg(&topics.create_game)
-            .arg(&topics.join_private_game)
+            .arg(FIND_PUBLIC_GAME)
+            .arg(CREATE_GAME)
+            .arg(JOIN_PRIVATE_GAME)
             .arg(entry_ids.find_public_game.to_string())
             .arg(entry_ids.create_game.to_string())
             .arg(entry_ids.join_private_game.to_string())
