@@ -8,10 +8,14 @@ use redis_conn_pool::Pool;
 use std::sync::Arc;
 
 #[derive(Debug)]
-pub enum FetchErr {}
+pub enum FetchErr {
+    EIDRepo,
+}
 
 #[derive(Debug)]
-pub struct WriteErr;
+pub enum WriteErr {
+    EIDRepo,
+}
 
 pub struct RedisRepo {
     pub pool: Arc<Pool>,
