@@ -2,7 +2,6 @@ extern crate bincode;
 extern crate community_redis_streams;
 extern crate crossbeam_channel;
 extern crate log;
-extern crate redis;
 extern crate serde;
 extern crate serde_derive;
 

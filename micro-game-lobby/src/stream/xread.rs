@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 const BLOCK_MSEC: u32 = 5000;
 
-pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
+pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis_conn_pool::redis::Value>>>>;
 
 /// xread_sorted performs a redis xread then sorts the results
 ///
@@ -19,7 +19,7 @@ pub trait XReader: Send + Sync {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
-    ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError>;
+    ) -> Result<Vec<(XReadEntryId, StreamData)>, redis_conn_pool::redis::RedisError>;
 }
 
 pub struct RedisXReader {
@@ -30,8 +30,8 @@ impl XReader for RedisXReader {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
-    ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
-        let mut conn = self.pool.get().expect("Pool").deref();
+    ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis_conn_pool::redis::RedisError> {
+        let mut conn = *self.pool.get().expect("Pool");
 
         conn.xread(todo!(), todo!());
         todo!()

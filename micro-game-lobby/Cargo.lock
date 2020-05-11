@@ -465,7 +465,6 @@ dependencies = [
  "crossbeam-channel",
  "env_logger",
  "log",
- "redis 0.16.0",
  "redis-streams",
  "redis_conn_pool 0.1.1",
  "redis_streams",
@@ -657,6 +656,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "r2d2_redis"
+version = "0.13.1-alpha.1"
+source = "git+https://github.com/Terkwood/r2d2-redis?branch=tinker#35dc9e5743622a05036412526041d89e1929da26"
+dependencies = [
+ "r2d2",
+ "redis 0.16.0",
+]
+
+[[package]]
 name = "rand"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -751,16 +759,16 @@ name = "redis_conn_pool"
 version = "0.1.0"
 source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#e15b279d305412842c8940235862217eb8955db2"
 dependencies = [
- "r2d2_redis",
+ "r2d2_redis 0.13.0",
  "redis 0.15.1",
 ]
 
 [[package]]
 name = "redis_conn_pool"
 version = "0.1.1"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=feature/micro-game-lobby#f5f4d0f16cf937068a761f6d72310a47320d03f2"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=feature/micro-game-lobby#6a44410670a81a06bb51da008f039c660346d0e3"
 dependencies = [
- "r2d2_redis",
+ "r2d2_redis 0.13.1-alpha.1",
  "redis 0.16.0",
 ]
 

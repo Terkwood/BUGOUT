@@ -37,7 +37,7 @@ impl EntryIdRepo for RedisRepo {
         let redis_key = self.key_provider.entry_ids();
         let deser_hash: Box<dyn Fn(HashMap<String, String>) -> AllEntryIds> =
             Box::new(|_f| todo!());
-        fetch_entry_ids(&self.pool, &redis_key, deser_hash).map_err(|_| FetchErr::EIDRepo)
+        fetch_entry_ids(&*self.pool, &redis_key, deser_hash).map_err(|_| FetchErr::EIDRepo)
     }
     fn update(&self, eid_type: EntryIdType, eid: XReadEntryId) -> Result<(), WriteErr> {
         let redis_key = self.key_provider.entry_ids();
@@ -46,7 +46,7 @@ impl EntryIdRepo for RedisRepo {
             EntryIdType::CreateGameCmd => todo!(),
             EntryIdType::JoinPrivateGameCmd => todo!(),
         });
-        update_entry_id(eid_type, eid, &self.pool, &redis_key, hash_field)
+        update_entry_id(eid_type, eid, &*self.pool, &redis_key, hash_field)
             .map_err(|_| WriteErr::EIDRepo)
     }
 }

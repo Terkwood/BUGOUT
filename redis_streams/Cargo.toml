@@ -8,4 +8,5 @@ edition = "2018"
 
 [dependencies]
 uuid = { version = "0.8.1", features = ["serde","v4"] }
-redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch="unstable"}
+### TODO REVERT
+redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch="feature/micro-game-lobby"}
