@@ -19,7 +19,7 @@ pub fn process(components: &Components) {
                         }
                     }
                 }
-                Err(e) => error!("Stream err {}", e),
+                Err(e) => error!("Stream err {:?}", e),
             },
             Err(e) => error!("Failed to fetch EIDs {:?}", e),
         }
@@ -107,10 +107,7 @@ mod test {
         fn xread_sorted(
             &self,
             _entry_ids: AllEntryIds,
-        ) -> Result<
-            Vec<(redis_streams::XReadEntryId, super::StreamData)>,
-            redis_conn_pool::redis::RedisError,
-        > {
+        ) -> Result<Vec<(redis_streams::XReadEntryId, super::StreamData)>, XReadErr> {
             todo!()
         }
     }
