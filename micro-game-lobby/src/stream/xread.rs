@@ -10,8 +10,6 @@ use std::sync::Arc;
 
 const BLOCK_MSEC: usize = 5000;
 
-pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis_conn_pool::redis::Value>>>>;
-
 /// xread_sorted performs a redis xread then sorts the results
 ///
 /// entry_ids: the minimum entry ids from which to read
