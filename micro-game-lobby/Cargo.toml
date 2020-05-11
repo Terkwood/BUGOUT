@@ -18,5 +18,5 @@ log = "0.4.8"
 env_logger = "0.7.1"
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.2"
-community-redis-streams = { git = "https://github.com/Terkwood/redis-streams-rs", branch = "fix/upgrade-deps", package = "redis-streams" }
+community-redis-streams = { git = "https://github.com/Terkwood/redis-streams-rs", branch = "tinker", package = "redis-streams" }
 redis = "0.16.0"

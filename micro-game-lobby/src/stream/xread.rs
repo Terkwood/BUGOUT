@@ -1,10 +1,11 @@
 use super::topics::{CREATE_GAME, FIND_PUBLIC_GAME, JOIN_PRIVATE_GAME};
 use crate::api::*;
-use crate::community_redis_streams::StreamCommands;
 use crate::repo::AllEntryIds;
+use community_redis_streams::StreamCommands;
 use redis_conn_pool::Pool;
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
+use std::ops::Deref;
 use std::sync::Arc;
 
 const BLOCK_MSEC: u32 = 5000;
@@ -30,9 +31,8 @@ impl XReader for RedisXReader {
         &self,
         entry_ids: AllEntryIds,
     ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
-        let mut conn = self.pool.get().unwrap();
+        let mut conn = self.pool.get().expect("Pool").deref();
 
-        let mut conn = self.pool.get().expect("pool");
         conn.xread(todo!(), todo!());
         todo!()
         /*

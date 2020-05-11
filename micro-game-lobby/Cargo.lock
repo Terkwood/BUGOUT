@@ -467,7 +467,7 @@ dependencies = [
  "log",
  "redis 0.16.0",
  "redis-streams",
- "redis_conn_pool 0.1.0 (git+https://github.com/Terkwood/BUGOUT?branch=feature/micro-game-lobby)",
+ "redis_conn_pool 0.1.1",
  "redis_streams",
  "serde",
  "serde_derive",
@@ -740,8 +740,8 @@ dependencies = [
 
 [[package]]
 name = "redis-streams"
-version = "0.1.1"
-source = "git+https://github.com/Terkwood/redis-streams-rs?branch=fix/upgrade-deps#77feacc61f8aa3feeca97dcf00bd8c385593ebd7"
+version = "0.1.2"
+source = "git+https://github.com/Terkwood/redis-streams-rs?branch=tinker#de1a3edec9efbba6199344409f73e430e3291d36"
 dependencies = [
  "redis 0.16.0",
 ]
@@ -749,7 +749,7 @@ dependencies = [
 [[package]]
 name = "redis_conn_pool"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=feature/micro-game-lobby#9c4049aba9d1a81a97eb9f0a46903fea3ca9691b"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#e15b279d305412842c8940235862217eb8955db2"
 dependencies = [
  "r2d2_redis",
  "redis 0.15.1",
@@ -757,11 +757,11 @@ dependencies = [
 
 [[package]]
 name = "redis_conn_pool"
-version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#e15b279d305412842c8940235862217eb8955db2"
+version = "0.1.1"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=feature/micro-game-lobby#f5f4d0f16cf937068a761f6d72310a47320d03f2"
 dependencies = [
  "r2d2_redis",
- "redis 0.15.1",
+ "redis 0.16.0",
 ]
 
 [[package]]
@@ -769,7 +769,7 @@ name = "redis_streams"
 version = "0.2.0"
 source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#e15b279d305412842c8940235862217eb8955db2"
 dependencies = [
- "redis_conn_pool 0.1.0 (git+https://github.com/Terkwood/BUGOUT?branch=unstable)",
+ "redis_conn_pool 0.1.0",
  "uuid",
 ]
 
