@@ -32,6 +32,16 @@ pub enum EntryIdType {
     JoinPrivateGameCmd,
 }
 
+impl From<crate::stream::StreamData> for EntryIdType {
+    fn from(s: crate::stream::StreamData) -> Self {
+        match s {
+            crate::stream::StreamData::FPG(_) => EntryIdType::FindPublicGameCmd,
+            crate::stream::StreamData::CG(_) => EntryIdType::CreateGameCmd,
+            crate::stream::StreamData::JPG(_) => EntryIdType::JoinPrivateGameCmd,
+        }
+    }
+}
+
 impl EntryIdRepo for RedisRepo {
     fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
         let redis_key = self.key_provider.entry_ids();

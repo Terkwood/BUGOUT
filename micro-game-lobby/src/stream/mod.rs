@@ -3,26 +3,35 @@ mod xread;
 pub use xread::*;
 
 use crate::components::Components;
+use crate::repo::EntryIdType;
 use crate::*;
 use log::error;
+use redis_streams::XReadEntryId;
 
 pub fn process(components: &Components) {
     loop {
         match components.entry_id_repo.fetch_all() {
             Ok(all_eids) => match components.xreader.xread_sorted(all_eids) {
                 Ok(xrr) => {
-                    for time_ordered_event in xrr {
-                        match time_ordered_event {
-                            (_eid, StreamData::FPG(_)) => todo!(),
-                            (_eid, StreamData::CG(_)) => todo!(),
-                            (_eid, StreamData::JPG(_)) => todo!(),
-                        }
+                    for (eid, data) in xrr {
+                        consume(eid, &data);
+                        increment(eid, data, components);
                     }
                 }
                 Err(e) => error!("Stream err {:?}", e),
             },
             Err(e) => error!("Failed to fetch EIDs {:?}", e),
         }
+    }
+}
+
+fn consume(eid: XReadEntryId, event: &StreamData) {}
+fn increment(eid: XReadEntryId, event: StreamData, components: &Components) {
+    if let Err(e) = components
+        .entry_id_repo
+        .update(EntryIdType::from(event), eid)
+    {
+        error!("eid write {:?}", e)
     }
 }
 
