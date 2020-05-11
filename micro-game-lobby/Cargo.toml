@@ -5,7 +5,10 @@ authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
+# TODO TODO TODO restore branch
+# TODO TODO TODO restore branch
+# TODO TODO TODO restore branch
+redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "feature/micro-game-lobby" }
 redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 uuid = { version = "0.8.1", "features" = ["v4", "serde"] }
 serde = "1.0.110"
@@ -15,3 +18,5 @@ log = "0.4.8"
 env_logger = "0.7.1"
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.2"
+community-redis-streams = { git = "https://github.com/Terkwood/redis-streams-rs", branch = "fix/upgrade-deps", package = "redis-streams" }
+redis = "0.16.0"
