@@ -27,3 +27,12 @@ pub struct AllEntryIds {
     pub bot_attached_eid: XReadEntryId,
     pub move_made_eid: XReadEntryId,
 }
+
+impl Default for AllEntryIds {
+    fn default() -> Self {
+        AllEntryIds {
+            bot_attached_eid: XReadEntryId::default(),
+            move_made_eid: XReadEntryId::default(),
+        }
+    }
+}
