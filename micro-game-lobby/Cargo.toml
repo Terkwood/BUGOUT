@@ -8,9 +8,9 @@ edition = "2018"
 redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 uuid = { version = "0.8.1", "features" = ["v4", "serde"] }
-serde = "1.0.106"
+serde = "1.0.110"
 bincode = "1.2.1"
-serde_derive = "1.0.106"
+serde_derive = "1.0.110"
 log = "0.4.8"
 env_logger = "0.7.1"
 crossbeam = "0.7.3"
