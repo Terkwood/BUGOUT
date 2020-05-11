@@ -9,7 +9,7 @@ edition = "2018"
 # TODO TODO TODO restore branch
 # TODO TODO TODO restore branch
 redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "feature/micro-game-lobby" }
-redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
+redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "feature/micro-game-lobby" }
 uuid = { version = "0.8.1", "features" = ["v4", "serde"] }
 serde = "1.0.110"
 bincode = "1.2.1"

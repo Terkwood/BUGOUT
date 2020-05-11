@@ -31,9 +31,16 @@ impl XReader for RedisXReader {
         &self,
         entry_ids: AllEntryIds,
     ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis_conn_pool::redis::RedisError> {
-        let mut conn = *self.pool.get().expect("Pool");
+        let mut conn = self.pool.get().expect("Pool");
 
-        conn.xread(todo!(), todo!());
+        let xrr: Result<community_redis_streams::StreamReadReply, _> = conn.xread(
+            &[FIND_PUBLIC_GAME, CREATE_GAME, JOIN_PRIVATE_GAME],
+            &[
+                entry_ids.find_public_game.to_string(),
+                entry_ids.create_game.to_string(),
+                entry_ids.join_private_game.to_string(),
+            ],
+        );
         todo!()
         /*
             let xrr = redis::cmd("XREAD")
