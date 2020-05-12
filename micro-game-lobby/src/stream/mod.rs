@@ -222,7 +222,7 @@ mod test {
                     .collect();
                 if data.is_empty() {
                     // stop the test thread from spinning like crazy
-                    std::thread::sleep(Duration::from_millis(200))
+                    std::thread::sleep(Duration::from_millis(20))
                 }
                 Ok(data)
             }
@@ -273,7 +273,7 @@ mod test {
             process(&components);
         });
 
-        let timeout = Duration::from_millis(444);
+        let timeout = Duration::from_millis(166);
         // assert that fetch_all is being called faithfully
         select! {
             recv(eid_call_out) -> msg => match msg {
