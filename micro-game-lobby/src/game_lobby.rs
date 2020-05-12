@@ -4,7 +4,7 @@ use std::collections::HashSet;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameLobby {
-    games: HashSet<Game>,
+    pub games: HashSet<Game>,
 }
 
 impl GameLobby {
@@ -24,6 +24,13 @@ impl GameLobby {
 
     pub fn as_bytes(&self) -> Result<Vec<u8>, Box<bincode::ErrorKind>> {
         bincode::serialize(self)
+    }
+}
+impl Default for GameLobby {
+    fn default() -> Self {
+        GameLobby {
+            games: HashSet::new(),
+        }
     }
 }
 

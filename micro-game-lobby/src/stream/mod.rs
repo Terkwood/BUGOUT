@@ -25,7 +25,7 @@ pub fn process(components: &Components) {
     }
 }
 
-fn consume(eid: XReadEntryId, event: &StreamData) {}
+fn consume(_eid: XReadEntryId, _event: &StreamData) {}
 fn increment(eid: XReadEntryId, event: StreamData, components: &Components) {
     if let Err(e) = components
         .entry_id_repo
@@ -39,11 +39,13 @@ fn increment(eid: XReadEntryId, event: StreamData, components: &Components) {
 mod test {
     use super::*;
     use crate::components::Components;
+    use crate::game_lobby::*;
     use crate::repo::*;
-    use crossbeam_channel::{select, unbounded, Receiver, Sender};
+    use crossbeam_channel::{select, unbounded, Sender};
     use redis_streams::XReadEntryId;
-    use std::sync::atomic::AtomicU64;
-    use std::sync::atomic::Ordering;
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::sync::{Arc, Mutex};
+
     use std::thread;
     static FAKE_FPG_MILLIS: AtomicU64 = AtomicU64::new(0);
     static FAKE_CG_MILLIS: AtomicU64 = AtomicU64::new(0);
@@ -102,13 +104,17 @@ mod test {
         }
     }
 
-    struct FakeGameLobbyRepo;
+    struct FakeGameLobbyRepo {
+        pub contents: Arc<Mutex<GameLobby>>,
+        pub put_in: Sender<GameLobby>,
+    }
+
     impl GameLobbyRepo for FakeGameLobbyRepo {
-        fn get(&self) -> Result<crate::game_lobby::GameLobby, FetchErr> {
-            todo!()
+        fn get(&self) -> Result<GameLobby, FetchErr> {
+            Ok(self.contents.lock().expect("mutex lock").clone())
         }
-        fn put(&self, _game_lobby: crate::game_lobby::GameLobby) -> Result<(), WriteErr> {
-            todo!()
+        fn put(&self, game_lobby: GameLobby) -> Result<(), WriteErr> {
+            Ok(self.put_in.send(game_lobby).expect("send"))
         }
     }
     struct FakeXReader;
@@ -123,13 +129,29 @@ mod test {
     #[test]
     fn test_process() {
         let (eid_call_in, eid_call_out) = unbounded();
+        let (put_game_lobby_in, put_game_lobby_out) = unbounded();
+
+        // set up a loop to process game lobby requests
+        let fake_game_lobby_contents = Arc::new(Mutex::new(GameLobby::default()));
+        let fgl = fake_game_lobby_contents.clone();
+        std::thread::spawn(move || loop {
+            select! {
+                recv(put_game_lobby_out) -> msg => match msg {
+                    Ok(GameLobby { games }) => *fgl.lock().expect("mutex lock") = GameLobby { games },
+                    Err(_) => panic!("fail")
+                }
+            }
+        });
 
         thread::spawn(move || {
             let components = Components {
                 entry_id_repo: Box::new(FakeEIDRepo {
                     call_in: eid_call_in,
                 }),
-                game_lobby_repo: Box::new(FakeGameLobbyRepo {}),
+                game_lobby_repo: Box::new(FakeGameLobbyRepo {
+                    contents: fake_game_lobby_contents,
+                    put_in: put_game_lobby_in,
+                }),
                 xreader: Box::new(FakeXReader {}),
             };
             process(&components);
