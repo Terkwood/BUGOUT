@@ -10,9 +10,11 @@ pub struct Components {
     pub xadd: Box<dyn XAdd>,
 }
 
+const REDIS_URL: &str = "redis://redis/";
+
 impl Default for Components {
     fn default() -> Self {
-        let client = redis::Client::open("redis://redis/").unwrap();
+        let client = redis::Client::open(REDIS_URL).expect("redis client");
         let rc_client = Rc::new(client);
         Components {
             entry_id_repo: Box::new(RedisRepo {
