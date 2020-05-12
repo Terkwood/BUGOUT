@@ -1,5 +1,7 @@
+mod xadd;
 mod xread;
 
+pub use xadd::*;
 pub use xread::*;
 
 use crate::components::Components;
@@ -11,7 +13,7 @@ use redis_streams::XReadEntryId;
 pub fn process(components: &Components) {
     loop {
         match components.entry_id_repo.fetch_all() {
-            Ok(all_eids) => match components.xreader.xread_sorted(all_eids) {
+            Ok(all_eids) => match components.xread.xread_sorted(all_eids) {
                 Ok(xrr) => {
                     for (eid, data) in xrr {
                         consume(eid, &data);
@@ -126,6 +128,8 @@ mod test {
             todo!()
         }
     }
+    struct FakeXAdd;
+    impl XAdd for FakeXAdd {}
     #[test]
     fn test_process() {
         let (eid_call_in, eid_call_out) = unbounded();
@@ -152,7 +156,8 @@ mod test {
                     contents: fake_game_lobby_contents,
                     put_in: put_game_lobby_in,
                 }),
-                xreader: Box::new(FakeXRead {}),
+                xread: Box::new(FakeXRead {}),
+                xadd: Box::new(FakeXAdd {}),
             };
             process(&components);
         });

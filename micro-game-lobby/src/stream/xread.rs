@@ -20,21 +20,17 @@ pub trait XRead: Send + Sync {
     ) -> Result<Vec<(XReadEntryId, StreamData)>, XReadErr>;
 }
 
-pub struct RedisXRead {
-    pub client: Arc<Client>,
-}
-
 #[derive(Debug)]
 pub enum XReadErr {
     Deser(XReadDeserErr),
     Other,
 }
-impl XRead for RedisXRead {
+impl XRead for Arc<Client> {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
     ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, XReadErr> {
-        if let Ok(mut conn) = self.client.get_connection() {
+        if let Ok(mut conn) = self.get_connection() {
             let opts = StreamReadOptions::default().block(BLOCK_MSEC);
             let xrr: Result<StreamReadReply, _> = conn.xread_options(
                 &[FIND_PUBLIC_GAME, CREATE_GAME, JOIN_PRIVATE_GAME],
