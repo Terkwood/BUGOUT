@@ -117,8 +117,8 @@ mod test {
             Ok(self.put_in.send(game_lobby).expect("send"))
         }
     }
-    struct FakeXReader;
-    impl XReader for FakeXReader {
+    struct FakeXRead;
+    impl XRead for FakeXRead {
         fn xread_sorted(
             &self,
             _entry_ids: AllEntryIds,
@@ -152,7 +152,7 @@ mod test {
                     contents: fake_game_lobby_contents,
                     put_in: put_game_lobby_in,
                 }),
-                xreader: Box::new(FakeXReader {}),
+                xreader: Box::new(FakeXRead {}),
             };
             process(&components);
         });

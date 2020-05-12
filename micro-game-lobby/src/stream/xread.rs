@@ -13,14 +13,14 @@ const BLOCK_MSEC: usize = 5000;
 /// xread_sorted performs a redis xread then sorts the results
 ///
 /// entry_ids: the minimum entry ids from which to read
-pub trait XReader: Send + Sync {
+pub trait XRead: Send + Sync {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
     ) -> Result<Vec<(XReadEntryId, StreamData)>, XReadErr>;
 }
 
-pub struct RedisXReader {
+pub struct RedisXRead {
     pub client: Arc<Client>,
 }
 
@@ -29,7 +29,7 @@ pub enum XReadErr {
     Deser(XReadDeserErr),
     Other,
 }
-impl XReader for RedisXReader {
+impl XRead for RedisXRead {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,

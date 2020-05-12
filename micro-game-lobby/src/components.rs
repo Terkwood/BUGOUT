@@ -1,12 +1,12 @@
 use crate::repo::{EntryIdRepo, GameLobbyRepo, KeyProvider, RedisRepo};
-use crate::stream::{RedisXReader, XReader};
+use crate::stream::{RedisXRead, XRead};
 
 use std::sync::Arc;
 
 pub struct Components {
     pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub game_lobby_repo: Box<dyn GameLobbyRepo>,
-    pub xreader: Box<dyn XReader>,
+    pub xreader: Box<dyn XRead>,
 }
 
 impl Default for Components {
@@ -22,7 +22,7 @@ impl Default for Components {
                 client: arc_client.clone(),
                 key_provider: KeyProvider::default(),
             }),
-            xreader: Box::new(RedisXReader { client: arc_client }),
+            xreader: Box::new(RedisXRead { client: arc_client }),
         }
     }
 }
