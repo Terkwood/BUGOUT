@@ -48,6 +48,7 @@ mod test {
     use redis_streams::XReadEntryId;
     use std::sync::atomic::{AtomicU64, Ordering};
     use std::sync::{Arc, Mutex};
+    use std::time::Duration;
 
     use std::thread;
     static FAKE_FPG_MILLIS: AtomicU64 = AtomicU64::new(0);
@@ -145,17 +146,16 @@ mod test {
                 .collect())
         }
     }
-    struct FakeXAdd {
-        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
-    }
+    struct FakeXAdd(Sender<StreamOutput>);
     impl XAdd for FakeXAdd {
         fn xadd(&self, data: StreamOutput) -> Result<(), XAddErr> {
-            todo!()
+            Ok(self.0.send(data).expect("send"))
         }
     }
     #[test]
     fn test_process() {
         let (eid_call_in, eid_call_out) = unbounded();
+        let (xadd_call_in, xadd_call_out) = unbounded();
         let (put_game_lobby_in, put_game_lobby_out) = unbounded();
 
         let sorted_fake_stream = Arc::new(Mutex::new(vec![]));
@@ -185,43 +185,68 @@ mod test {
                 xread: Box::new(FakeXRead {
                     sorted_data: sfs.clone(),
                 }),
-                xadd: Box::new(FakeXAdd {
-                    sorted_data: sfs.clone(),
-                }),
+                xadd: Box::new(FakeXAdd(xadd_call_in)),
             };
             process(&components);
         });
 
+        let timeout = Duration::from_millis(166);
         // assert that fetch_all is being called faithfully
-        select! { recv(eid_call_out) -> msg => match msg {
-            Ok(EIDRepoCalled::Fetch) => assert!(true),
-            Ok(_) => panic!("out of order"),
-            Err(_) => panic!("eid repo should fetch"),
-        }}
+        select! {
+            recv(eid_call_out) -> msg => match msg {
+                Ok(EIDRepoCalled::Fetch) => assert!(true),
+                Ok(_) => panic!("out of order"),
+                Err(_) => panic!("eid repo should fetch"),
+            },
+            default(timeout) => panic!("EID fetch time out")
+        }
 
         // emit some events in a time-ordered fashion
         // (we need to use time-ordered push since the
         //   FakeXRead impl won't sort its underlying data )
 
-        let mut FAKE_TIME_MS = 100;
-        let INCR_MS = 100;
+        let mut fake_time_ms = 100;
+        let incr_ms = 100;
 
         let session_b = SessionId(Uuid::new_v4());
         let session_w = SessionId(Uuid::new_v4());
         let client_b = ClientId(Uuid::new_v4());
         let client_w = ClientId(Uuid::new_v4());
         sorted_fake_stream.lock().expect("lock").push((
-            quick_eid(FAKE_TIME_MS),
+            quick_eid(fake_time_ms),
             StreamInput::FPG(FindPublicGame {
-                client_id: client_w,
-                session_id: session_w,
+                client_id: client_w.clone(),
+                session_id: session_w.clone(),
             }),
         ));
-        FAKE_TIME_MS += INCR_MS;
 
         // There should be an XADD triggered for a wait-for-opponent
         // message
-        todo!("test XADD to wait for opponent stream")
+        select! {
+            recv(xadd_call_out) -> msg => match msg {
+                Ok(StreamOutput::WFO(_)) => assert!(true),
+                _ => panic!("wrong output")
+            },
+            default(timeout) => panic!("WAIT timeout")
+        }
+
+        fake_time_ms += incr_ms;
+        sorted_fake_stream.lock().expect("lock").push((
+            quick_eid(fake_time_ms),
+            StreamInput::FPG(FindPublicGame {
+                client_id: client_b,
+                session_id: session_b,
+            }),
+        ));
+
+        // There should now be GameReady in stream
+        select! {
+            recv(xadd_call_out) -> msg => match msg {
+                Ok(StreamOutput::GR(_)) => assert!(true),
+                _ => assert!(false)
+            },
+            default(timeout) => panic!("GR time out")
+        }
     }
 
     fn quick_eid(ms: u64) -> XReadEntryId {
