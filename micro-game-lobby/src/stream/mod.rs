@@ -4,9 +4,12 @@ mod xread;
 pub use xadd::*;
 pub use xread::*;
 
+use crate::api::*;
 use crate::components::Components;
+use crate::game_lobby::*;
 use crate::repo::EntryIdType;
 use crate::*;
+
 use log::error;
 use redis_streams::XReadEntryId;
 
@@ -27,9 +30,49 @@ pub fn process(components: &Components) {
     }
 }
 
-fn consume(_eid: XReadEntryId, event: &StreamInput, _components: &Components) {
+fn consume(_eid: XReadEntryId, event: &StreamInput, components: &Components) {
     match event {
-        StreamInput::FPG(_) => todo!(),
+        StreamInput::FPG(FindPublicGame {
+            client_id: _,
+            session_id,
+        }) => {
+            if let Ok(game_lobby) = components.game_lobby_repo.get() {
+                let mut updated_gl = game_lobby.clone();
+                if let Some(queued) = game_lobby
+                    .games
+                    .iter()
+                    .find(|g| g.visibility == Visibility::Public)
+                {
+                    updated_gl.games.remove(&queued);
+                    if let Err(_) = components.game_lobby_repo.put(updated_gl) {
+                        error!("game lobby write F1");
+                    } else {
+                        todo!("XADD to game-ready-ev");
+                    }
+                } else {
+                    let game_id = GameId::new();
+                    updated_gl.games.insert(Game {
+                        board_size: PUBLIC_GAME_BOARD_SIZE,
+                        creator: session_id.clone(),
+                        visibility: Visibility::Public,
+                        game_id: game_id.clone(),
+                    });
+                    if let Err(_) = components.game_lobby_repo.put(updated_gl) {
+                        error!("game lobby write F2");
+                    } else {
+                        if let Err(_) = components.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
+                            event_id: EventId::new(),
+                            game_id,
+                            session_id: session_id.clone(),
+                        })) {
+                            error!("XADD: Wait for oppo")
+                        }
+                    }
+                }
+            } else {
+                error!("Failed to fetch game lobby: FPG")
+            }
+        }
         StreamInput::CG(_) => todo!(),
         StreamInput::JPG(_) => todo!(),
     }
@@ -47,9 +90,7 @@ fn increment(eid: XReadEntryId, event: StreamInput, components: &Components) {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::api::*;
     use crate::components::Components;
-    use crate::game_lobby::*;
     use crate::repo::*;
     use crossbeam_channel::{select, unbounded, Sender};
     use redis_streams::XReadEntryId;

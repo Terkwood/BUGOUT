@@ -2,6 +2,8 @@ use crate::*;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashSet;
 
+/// A structure representing all games which are
+/// waiting for a second player to join
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameLobby {
     pub games: HashSet<Game>,

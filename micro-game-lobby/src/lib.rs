@@ -24,14 +24,22 @@ pub struct ClientId(pub Uuid);
 pub struct SessionId(pub Uuid);
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct EventId(pub Uuid);
-impl EventId {
-    pub fn new() -> Self {
-        EventId(Uuid::new_v4())
-    }
-}
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum Visibility {
     Public,
     Private,
+}
+
+pub const PUBLIC_GAME_BOARD_SIZE: u16 = 19;
+
+impl GameId {
+    pub fn new() -> Self {
+        GameId(Uuid::new_v4())
+    }
+}
+impl EventId {
+    pub fn new() -> Self {
+        EventId(Uuid::new_v4())
+    }
 }
