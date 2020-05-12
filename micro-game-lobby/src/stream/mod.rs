@@ -40,6 +40,7 @@ fn increment(eid: XReadEntryId, event: StreamData, components: &Components) {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::api::*;
     use crate::components::Components;
     use crate::game_lobby::*;
     use crate::repo::*;
@@ -167,6 +168,7 @@ mod test {
             }
         });
 
+        let sfs = sorted_fake_stream.clone();
         thread::spawn(move || {
             let components = Components {
                 entry_id_repo: Box::new(FakeEIDRepo {
@@ -177,19 +179,51 @@ mod test {
                     put_in: put_game_lobby_in,
                 }),
                 xread: Box::new(FakeXRead {
-                    sorted_data: sorted_fake_stream.clone(),
+                    sorted_data: sfs.clone(),
                 }),
                 xadd: Box::new(FakeXAdd {
-                    sorted_data: sorted_fake_stream.clone(),
+                    sorted_data: sfs.clone(),
                 }),
             };
             process(&components);
         });
 
+        // assert that fetch_all is being called faithfully
         select! { recv(eid_call_out) -> msg => match msg {
             Ok(EIDRepoCalled::Fetch) => assert!(true),
             Ok(_) => panic!("out of order"),
             Err(_) => panic!("eid repo should fetch"),
         }}
+
+        // emit some events in a time-ordered fashion
+        // (we need to use time-ordered push since the
+        //   FakeXRead impl won't sort its underlying data )
+
+        let mut FAKE_TIME_MS = 100;
+        let INCR_MS = 100;
+
+        let session_b = SessionId(Uuid::new_v4());
+        let session_w = SessionId(Uuid::new_v4());
+        let client_b = ClientId(Uuid::new_v4());
+        let client_w = ClientId(Uuid::new_v4());
+        sorted_fake_stream.lock().expect("lock").push((
+            quick_eid(FAKE_TIME_MS),
+            StreamData::FPG(FindPublicGame {
+                client_id: client_w,
+                session_id: session_w,
+            }),
+        ));
+        FAKE_TIME_MS += INCR_MS;
+
+        // There should be an XADD triggered for a wait-for-opponent
+        // message
+        todo!("test XADD to wait for opponent stream")
+    }
+
+    fn quick_eid(ms: u64) -> XReadEntryId {
+        XReadEntryId {
+            millis_time: ms,
+            seq_no: 0,
+        }
     }
 }
