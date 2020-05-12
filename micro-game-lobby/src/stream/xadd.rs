@@ -13,7 +13,7 @@ pub enum XAddErr {
 }
 
 impl XAdd for Arc<Client> {
-    fn xadd(&self, data: StreamOutput) -> Result<(), XAddErr> {
+    fn xadd(&self, _data: StreamOutput) -> Result<(), XAddErr> {
         todo!()
     }
 }

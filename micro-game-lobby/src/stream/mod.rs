@@ -16,7 +16,7 @@ pub fn process(components: &Components) {
             Ok(all_eids) => match components.xread.xread_sorted(all_eids) {
                 Ok(xrr) => {
                     for (eid, data) in xrr {
-                        consume(eid, &data);
+                        consume(eid, &data, &components);
                         increment(eid, data, components);
                     }
                 }
@@ -27,7 +27,14 @@ pub fn process(components: &Components) {
     }
 }
 
-fn consume(_eid: XReadEntryId, _event: &StreamInput) {}
+fn consume(_eid: XReadEntryId, event: &StreamInput, _components: &Components) {
+    match event {
+        StreamInput::FPG(_) => todo!(),
+        StreamInput::CG(_) => todo!(),
+        StreamInput::JPG(_) => todo!(),
+    }
+}
+
 fn increment(eid: XReadEntryId, event: StreamInput, components: &Components) {
     if let Err(e) = components
         .entry_id_repo
@@ -60,6 +67,7 @@ mod test {
     struct FakeEIDRepo {
         call_in: Sender<EIDRepoCalled>,
     }
+    #[derive(Debug)]
     enum EIDRepoCalled {
         Fetch,
         Update(EntryIdType, XReadEntryId),
@@ -132,18 +140,25 @@ mod test {
             &self,
             entry_ids: AllEntryIds,
         ) -> Result<Vec<(redis_streams::XReadEntryId, super::StreamInput)>, XReadErr> {
-            Ok(self
-                .sorted_data
-                .lock()
-                .expect("lock")
-                .iter()
-                .filter(|(eid, stream_data)| match stream_data {
-                    StreamInput::CG(_) => entry_ids.create_game > *eid,
-                    StreamInput::FPG(_) => entry_ids.find_public_game > *eid,
-                    StreamInput::JPG(_) => entry_ids.join_private_game > *eid,
-                })
-                .cloned()
-                .collect())
+            {
+                let data: Vec<_> = self
+                    .sorted_data
+                    .lock()
+                    .expect("lock")
+                    .iter()
+                    .filter(|(eid, stream_data)| match stream_data {
+                        StreamInput::CG(_) => entry_ids.create_game > *eid,
+                        StreamInput::FPG(_) => entry_ids.find_public_game > *eid,
+                        StreamInput::JPG(_) => entry_ids.join_private_game > *eid,
+                    })
+                    .cloned()
+                    .collect();
+                if data.is_empty() {
+                    // stop the test thread from spinning like crazy
+                    std::thread::sleep(Duration::from_millis(200))
+                }
+                Ok(data)
+            }
         }
     }
     struct FakeXAdd(Sender<StreamOutput>);
@@ -228,6 +243,22 @@ mod test {
                 _ => panic!("wrong output")
             },
             default(timeout) => panic!("WAIT timeout")
+        }
+
+        loop {
+            // The EID repo record for Find Public Game
+            // should have been advanced
+            select! {
+                recv(eid_call_out) -> msg => match msg {
+                    Ok(EIDRepoCalled::Update(EntryIdType::FindPublicGameCmd, eid)) => {
+                        assert_eq!(eid.millis_time, fake_time_ms+1);
+                        break
+                    },
+                    Ok(_) => continue,
+                    Err(_) => panic!("eid repo should update"),
+                },
+                default(timeout) => panic!("EID time out")
+            }
         }
 
         fake_time_ms += incr_ms;
