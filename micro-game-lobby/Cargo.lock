@@ -430,7 +430,6 @@ dependencies = [
  "env_logger",
  "log",
  "redis-streams",
- "redis_conn_pool",
  "redis_streams",
  "serde",
  "serde_derive",

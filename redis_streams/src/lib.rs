@@ -1,4 +1,4 @@
-extern crate redis_conn_pool;
+extern crate redis;
 extern crate uuid;
 
 pub mod repo;

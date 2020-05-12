@@ -488,15 +488,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "r2d2_redis"
-version = "0.13.1-alpha.1"
-source = "git+https://github.com/Terkwood/r2d2-redis?branch=tinker#35dc9e5743622a05036412526041d89e1929da26"
-dependencies = [
- "r2d2",
- "redis",
-]
-
-[[package]]
 name = "redis"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -511,6 +502,7 @@ dependencies = [
  "itoa",
  "percent-encoding",
  "pin-project-lite",
+ "r2d2",
  "sha1",
  "tokio",
  "tokio-util",
@@ -521,7 +513,6 @@ dependencies = [
 name = "redis_conn_pool"
 version = "0.1.1"
 dependencies = [
- "r2d2_redis",
  "redis",
 ]
 
