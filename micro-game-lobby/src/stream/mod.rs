@@ -120,23 +120,40 @@ mod test {
         }
     }
 
-    struct FakeXRead(Arc<Mutex<Vec<(XReadEntryId, StreamData)>>>);
+    struct FakeXRead {
+        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamData)>>>,
+    }
     impl XRead for FakeXRead {
+        /// Be careful, this implementation assumes
+        /// that the underlying data is pre-sorted
         fn xread_sorted(
             &self,
-            _entry_ids: AllEntryIds,
+            entry_ids: AllEntryIds,
         ) -> Result<Vec<(redis_streams::XReadEntryId, super::StreamData)>, XReadErr> {
-            todo!()
+            Ok(self
+                .sorted_data
+                .lock()
+                .expect("lock")
+                .iter()
+                .filter(|(eid, stream_data)| match stream_data {
+                    StreamData::CG(_) => entry_ids.create_game > *eid,
+                    StreamData::FPG(_) => entry_ids.find_public_game > *eid,
+                    StreamData::JPG(_) => entry_ids.join_private_game > *eid,
+                })
+                .cloned()
+                .collect())
         }
     }
-    struct FakeXAdd(Arc<Mutex<Vec<(XReadEntryId, StreamData)>>>);
+    struct FakeXAdd {
+        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamData)>>>,
+    }
     impl XAdd for FakeXAdd {}
     #[test]
     fn test_process() {
         let (eid_call_in, eid_call_out) = unbounded();
         let (put_game_lobby_in, put_game_lobby_out) = unbounded();
 
-        let fake_stream = Arc::new(Mutex::new(vec![]));
+        let sorted_fake_stream = Arc::new(Mutex::new(vec![]));
 
         // set up a loop to process game lobby requests
         let fake_game_lobby_contents = Arc::new(Mutex::new(GameLobby::default()));
@@ -159,8 +176,12 @@ mod test {
                     contents: fake_game_lobby_contents,
                     put_in: put_game_lobby_in,
                 }),
-                xread: Box::new(FakeXRead(fake_stream.clone())),
-                xadd: Box::new(FakeXAdd(fake_stream.clone())),
+                xread: Box::new(FakeXRead {
+                    sorted_data: sorted_fake_stream.clone(),
+                }),
+                xadd: Box::new(FakeXAdd {
+                    sorted_data: sorted_fake_stream.clone(),
+                }),
             };
             process(&components);
         });
