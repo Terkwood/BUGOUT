@@ -1,6 +1,6 @@
 use crate::api::*;
 use redis::Client;
-use std::sync::Arc;
+use std::rc::Rc;
 
 pub trait XAdd {
     fn xadd(&self, data: StreamOutput) -> Result<(), XAddErr>;
@@ -12,7 +12,7 @@ pub enum XAddErr {
     Other,
 }
 
-impl XAdd for Arc<Client> {
+impl XAdd for Rc<Client> {
     fn xadd(&self, _data: StreamOutput) -> Result<(), XAddErr> {
         todo!()
     }

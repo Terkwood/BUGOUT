@@ -7,14 +7,14 @@ use log::{error, warn};
 use redis::Client;
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::rc::Rc;
 
 const BLOCK_MSEC: usize = 5000;
 
 /// xread_sorted performs a redis xread then sorts the results
 ///
 /// entry_ids: the minimum entry ids from which to read
-pub trait XRead: Send + Sync {
+pub trait XRead {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
@@ -26,7 +26,7 @@ pub enum XReadErr {
     Deser(XReadDeserErr),
     Other,
 }
-impl XRead for Arc<Client> {
+impl XRead for Rc<Client> {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
