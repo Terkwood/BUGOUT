@@ -18,11 +18,11 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GameId(pub Uuid);
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Hash)]
 pub struct ClientId(pub Uuid);
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SessionId(pub Uuid);
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct EventId(pub Uuid);
 impl EventId {
     pub fn new() -> Self {

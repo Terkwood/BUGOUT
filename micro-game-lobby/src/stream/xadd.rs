@@ -18,6 +18,7 @@ impl XAdd for Arc<Client> {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum StreamOutput {
     WFO(WaitForOpponent),
     GR(GameReady),

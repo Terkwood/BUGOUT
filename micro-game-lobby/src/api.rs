@@ -25,13 +25,13 @@ pub struct JoinPrivateGame {
 
 /// This event is issued when someone has created
 /// a game and is waiting for their opponent to join.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct WaitForOpponent {
     pub game_id: GameId,
     pub session_id: SessionId,
     pub event_id: EventId,
 }
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct GameReady {
     pub game_id: GameId,
     pub sessions: (SessionId, SessionId),
@@ -39,7 +39,7 @@ pub struct GameReady {
     pub board_size: u16,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct PrivateGameRejected {
     pub game_id: GameId,
     pub client_id: ClientId,
