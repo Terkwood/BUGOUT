@@ -22,9 +22,11 @@ impl GameLobby {
         r
     }
 
-    pub fn abandon(&self, game: &Game) -> Self {
+    pub fn abandon(&self, session_id: &SessionId) -> Self {
         let mut r = self.clone();
-        r.games.remove(game);
+        if let Some(game) = r.games.clone().iter().find(|g| &g.creator == session_id) {
+            r.games.remove(game);
+        }
         r
     }
 

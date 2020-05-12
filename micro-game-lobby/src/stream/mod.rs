@@ -41,28 +41,16 @@ fn consume(_eid: XReadEntryId, event: &StreamInput, reg: &Components) {
 
 fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
     let session_id = &fpg.session_id;
-    if let Ok(game_lobby) = reg.game_lobby_repo.get() {
-        if let Some(queued) = game_lobby
+    if let Ok(lobby) = reg.game_lobby_repo.get() {
+        if let Some(queued) = lobby
             .games
             .iter()
             .find(|g| g.visibility == Visibility::Public)
         {
-            let updated_gl = game_lobby.ready(queued);
-            if let Err(_) = reg.game_lobby_repo.put(updated_gl) {
-                error!("game lobby write F1");
-            } else {
-                if let Err(_) = reg.xadd.xadd(StreamOutput::GR(GameReady {
-                    game_id: queued.game_id.clone(),
-                    event_id: EventId::new(),
-                    board_size: queued.board_size,
-                    sessions: (queued.creator.clone(), session_id.clone()),
-                })) {
-                    error!("XADD Game ready")
-                }
-            }
+            ready_xadd(session_id, &lobby, queued, reg)
         } else {
             let game_id = GameId::new();
-            if let Err(_) = reg.game_lobby_repo.put(game_lobby.open(Game {
+            if let Err(_) = reg.game_lobby_repo.put(lobby.open(Game {
                 board_size: PUBLIC_GAME_BOARD_SIZE,
                 creator: session_id.clone(),
                 visibility: Visibility::Public,
@@ -87,8 +75,8 @@ fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
 fn consume_cg(cg: &CreateGame, reg: &Components) {
     let session_id = &cg.session_id;
     let game_id = cg.game_id.clone().unwrap_or(GameId::new());
-    if let Ok(game_lobby) = reg.game_lobby_repo.get() {
-        let updated_gl = game_lobby.open(Game {
+    if let Ok(lobby) = reg.game_lobby_repo.get() {
+        let updated_gl = lobby.open(Game {
             game_id: game_id.clone(),
             board_size: cg.board_size,
             creator: session_id.clone(),
@@ -110,11 +98,47 @@ fn consume_cg(cg: &CreateGame, reg: &Components) {
     }
 }
 
-fn consume_jpg(_jpg: &JoinPrivateGame, _reg: &Components) {
-    todo!()
+fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
+    if let Ok(lobby) = reg.game_lobby_repo.get() {
+        if let Some(queued) = lobby
+            .games
+            .iter()
+            .find(|g| g.visibility == Visibility::Private && g.game_id == jpg.game_id)
+        {
+            ready_xadd(&jpg.session_id, &lobby, queued, reg)
+        } else {
+            todo!("REJECTION !!!!!!!!!")
+        }
+    } else {
+        error!("game lobby JPG get")
+    }
 }
-fn consume_sd(_jpg: &SessionDisconnected, _reg: &Components) {
-    todo!()
+
+fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
+    if let Ok(game_lobby) = reg.game_lobby_repo.get() {
+        let u = game_lobby.abandon(&sd.session_id);
+        if let Err(_) = reg.game_lobby_repo.put(u) {
+            error!("game lobby write F1");
+        }
+    } else {
+        error!("SD GAME REPO GET")
+    }
+}
+
+fn ready_xadd(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Components) {
+    let updated_gl = lobby.ready(queued);
+    if let Err(_) = reg.game_lobby_repo.put(updated_gl) {
+        error!("game lobby write F1");
+    } else {
+        if let Err(_) = reg.xadd.xadd(StreamOutput::GR(GameReady {
+            game_id: queued.game_id.clone(),
+            event_id: EventId::new(),
+            board_size: queued.board_size,
+            sessions: (queued.creator.clone(), session_id.clone()),
+        })) {
+            error!("XADD Game ready")
+        }
+    }
 }
 
 fn increment(eid: XReadEntryId, event: StreamInput, reg: &Components) {
