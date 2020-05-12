@@ -167,6 +167,8 @@ mod test {
             Ok(self.contents.lock().expect("mutex lock").clone())
         }
         fn put(&self, game_lobby: GameLobby) -> Result<(), WriteErr> {
+            let mut data = self.contents.lock().expect("lock");
+            *data = game_lobby.clone();
             Ok(self.put_in.send(game_lobby).expect("send"))
         }
     }
@@ -188,9 +190,9 @@ mod test {
                     .expect("lock")
                     .iter()
                     .filter(|(eid, stream_data)| match stream_data {
-                        StreamInput::CG(_) => entry_ids.create_game > *eid,
-                        StreamInput::FPG(_) => entry_ids.find_public_game > *eid,
-                        StreamInput::JPG(_) => entry_ids.join_private_game > *eid,
+                        StreamInput::CG(_) => entry_ids.create_game < *eid,
+                        StreamInput::FPG(_) => entry_ids.find_public_game < *eid,
+                        StreamInput::JPG(_) => entry_ids.join_private_game < *eid,
                     })
                     .cloned()
                     .collect();
@@ -229,13 +231,14 @@ mod test {
         });
 
         let sfs = sorted_fake_stream.clone();
+        let fgl = fake_game_lobby_contents.clone();
         thread::spawn(move || {
             let components = Components {
                 entry_id_repo: Box::new(FakeEIDRepo {
                     call_in: eid_call_in,
                 }),
                 game_lobby_repo: Box::new(FakeGameLobbyRepo {
-                    contents: fake_game_lobby_contents,
+                    contents: fgl,
                     put_in: put_game_lobby_in,
                 }),
                 xread: Box::new(FakeXRead {
@@ -246,7 +249,7 @@ mod test {
             process(&components);
         });
 
-        let timeout = Duration::from_millis(166);
+        let timeout = Duration::from_millis(444);
         // assert that fetch_all is being called faithfully
         select! {
             recv(eid_call_out) -> msg => match msg {
@@ -276,6 +279,20 @@ mod test {
             }),
         ));
 
+        thread::sleep(timeout);
+        // The game lobby repo should now contain one game
+        assert_eq!(
+            fake_game_lobby_contents
+                .clone()
+                .lock()
+                .expect("gl")
+                .games
+                .iter()
+                .collect::<Vec<_>>()
+                .len(),
+            1
+        );
+
         // There should be an XADD triggered for a wait-for-opponent
         // message
         select! {
@@ -292,7 +309,7 @@ mod test {
             select! {
                 recv(eid_call_out) -> msg => match msg {
                     Ok(EIDRepoCalled::Update(EntryIdType::FindPublicGameCmd, eid)) => {
-                        assert_eq!(eid.millis_time, fake_time_ms+1);
+                        assert_eq!(eid.millis_time, fake_time_ms);
                         break
                     },
                     Ok(_) => continue,
