@@ -3,8 +3,7 @@ mod game_lobby_repo;
 
 pub use entry_id_repo::*;
 pub use game_lobby_repo::*;
-
-use redis_conn_pool::Pool;
+use redis::Client;
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -18,7 +17,7 @@ pub enum WriteErr {
 }
 
 pub struct RedisRepo {
-    pub pool: Arc<Pool>,
+    pub client: Arc<Client>,
     pub key_provider: KeyProvider,
 }
 

@@ -1,7 +1,6 @@
 use crate::repo::{EntryIdRepo, GameLobbyRepo, KeyProvider, RedisRepo};
 use crate::stream::{RedisXReader, XReader};
 
-use redis_conn_pool::RedisHostUrl;
 use std::sync::Arc;
 
 pub struct Components {
@@ -12,18 +11,18 @@ pub struct Components {
 
 impl Default for Components {
     fn default() -> Self {
-        let pool = redis_conn_pool::create(RedisHostUrl::default());
-        let arc_pool = Arc::new(pool);
+        let client = redis::Client::open("redis://redis/").unwrap();
+        let arc_client = Arc::new(client);
         Components {
             entry_id_repo: Box::new(RedisRepo {
-                pool: arc_pool.clone(),
+                client: arc_client.clone(),
                 key_provider: KeyProvider::default(),
             }),
             game_lobby_repo: Box::new(RedisRepo {
-                pool: arc_pool.clone(),
+                client: arc_client.clone(),
                 key_provider: KeyProvider::default(),
             }),
-            xreader: Box::new(RedisXReader { pool: arc_pool }),
+            xreader: Box::new(RedisXReader { client: arc_client }),
         }
     }
 }

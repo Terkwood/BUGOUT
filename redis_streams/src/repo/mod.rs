@@ -3,6 +3,11 @@ use redis::Client;
 use redis::Commands;
 use std::collections::HashMap;
 
+// TODO this is a breaking change
+// TODO which will wreak havoc
+// TODO on all the rust service
+// TODO when they pull from unstable
+
 pub fn fetch_entry_ids<A: Default>(
     client: &Client,
     redis_key: &str,

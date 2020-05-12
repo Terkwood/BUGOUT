@@ -3,7 +3,7 @@ use crate::api::*;
 use crate::repo::AllEntryIds;
 use community_redis_streams::{StreamCommands, StreamReadOptions, StreamReadReply};
 use log::{error, warn};
-use redis_conn_pool::Pool;
+use redis::Client;
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -21,7 +21,7 @@ pub trait XReader: Send + Sync {
 }
 
 pub struct RedisXReader {
-    pub pool: Arc<Pool>,
+    pub client: Arc<Client>,
 }
 
 #[derive(Debug)]
@@ -34,32 +34,36 @@ impl XReader for RedisXReader {
         &self,
         entry_ids: AllEntryIds,
     ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, XReadErr> {
-        let mut conn = self.pool.get().expect("Pool");
-        let opts = StreamReadOptions::default().block(BLOCK_MSEC);
-        let xrr: Result<StreamReadReply, _> = conn.xread_options(
-            &[FIND_PUBLIC_GAME, CREATE_GAME, JOIN_PRIVATE_GAME],
-            &[
-                entry_ids.find_public_game.to_string(),
-                entry_ids.create_game.to_string(),
-                entry_ids.join_private_game.to_string(),
-            ],
-            opts,
-        );
-        if let Ok(x) = xrr {
-            match deser(x) {
-                Ok(unsorted) => {
-                    let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
-                    sorted_keys.sort();
+        if let Ok(mut conn) = self.client.get_connection() {
+            let opts = StreamReadOptions::default().block(BLOCK_MSEC);
+            let xrr: Result<StreamReadReply, _> = conn.xread_options(
+                &[FIND_PUBLIC_GAME, CREATE_GAME, JOIN_PRIVATE_GAME],
+                &[
+                    entry_ids.find_public_game.to_string(),
+                    entry_ids.create_game.to_string(),
+                    entry_ids.join_private_game.to_string(),
+                ],
+                opts,
+            );
+            if let Ok(x) = xrr {
+                match deser(x) {
+                    Ok(unsorted) => {
+                        let mut sorted_keys: Vec<XReadEntryId> =
+                            unsorted.keys().map(|k| *k).collect();
+                        sorted_keys.sort();
 
-                    let mut answer = vec![];
-                    for sk in sorted_keys {
-                        if let Some(data) = unsorted.get(&sk) {
-                            answer.push((sk, data.clone()))
+                        let mut answer = vec![];
+                        for sk in sorted_keys {
+                            if let Some(data) = unsorted.get(&sk) {
+                                answer.push((sk, data.clone()))
+                            }
                         }
+                        Ok(answer)
                     }
-                    Ok(answer)
+                    Err(e) => Err(XReadErr::Deser(e)),
                 }
-                Err(e) => Err(XReadErr::Deser(e)),
+            } else {
+                Err(XReadErr::Other)
             }
         } else {
             Err(XReadErr::Other)
