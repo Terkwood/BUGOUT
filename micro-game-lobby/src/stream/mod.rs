@@ -119,7 +119,8 @@ mod test {
             Ok(self.put_in.send(game_lobby).expect("send"))
         }
     }
-    struct FakeXRead;
+
+    struct FakeXRead(Arc<Mutex<Vec<(XReadEntryId, StreamData)>>>);
     impl XRead for FakeXRead {
         fn xread_sorted(
             &self,
@@ -128,12 +129,14 @@ mod test {
             todo!()
         }
     }
-    struct FakeXAdd;
+    struct FakeXAdd(Arc<Mutex<Vec<(XReadEntryId, StreamData)>>>);
     impl XAdd for FakeXAdd {}
     #[test]
     fn test_process() {
         let (eid_call_in, eid_call_out) = unbounded();
         let (put_game_lobby_in, put_game_lobby_out) = unbounded();
+
+        let fake_stream = Arc::new(Mutex::new(vec![]));
 
         // set up a loop to process game lobby requests
         let fake_game_lobby_contents = Arc::new(Mutex::new(GameLobby::default()));
@@ -156,8 +159,8 @@ mod test {
                     contents: fake_game_lobby_contents,
                     put_in: put_game_lobby_in,
                 }),
-                xread: Box::new(FakeXRead {}),
-                xadd: Box::new(FakeXAdd {}),
+                xread: Box::new(FakeXRead(fake_stream.clone())),
+                xadd: Box::new(FakeXAdd(fake_stream.clone())),
             };
             process(&components);
         });

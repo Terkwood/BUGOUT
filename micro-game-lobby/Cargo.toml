@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 # TODO TODO TODO breaking change in this lib 
 ## TODO  maybe just release it to a branch ??
-redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "feature/micro-game-lobby" }
+redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "fix/redis-streams-r2d2" }
 uuid = { version = "0.8.1", "features" = ["v4", "serde"] }
 serde = "1.0.110"
 bincode = "1.2.1"

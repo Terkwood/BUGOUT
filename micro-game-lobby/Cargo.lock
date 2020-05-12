@@ -683,7 +683,7 @@ dependencies = [
 [[package]]
 name = "redis_streams"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=feature/micro-game-lobby#7382355c24bc379fe54e0d217a89731f11aee0d8"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/redis-streams-r2d2#58bd7ad0c80bb237822a00766ff4513a9eea0f5d"
 dependencies = [
  "redis",
  "uuid",

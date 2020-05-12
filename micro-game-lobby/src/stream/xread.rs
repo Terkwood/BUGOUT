@@ -74,7 +74,7 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, XRea
         for e in k.ids {
             if let Ok(eid) = XReadEntryId::from_str(&e.id) {
                 let maybe_data: Option<Vec<u8>> = e.get("data");
-                for data in maybe_data {
+                if let Some(data) = maybe_data {
                     let sd: Option<StreamData> = if key == FIND_PUBLIC_GAME {
                         bincode::deserialize(&data)
                             .map(|fpg| StreamData::FPG(fpg))
