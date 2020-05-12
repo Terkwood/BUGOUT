@@ -84,9 +84,32 @@ fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
     }
 }
 
-fn consume_cg(_cg: &CreateGame, _reg: &Components) {
-    todo!()
+fn consume_cg(cg: &CreateGame, reg: &Components) {
+    let session_id = &cg.session_id;
+    let game_id = cg.game_id.clone().unwrap_or(GameId::new());
+    if let Ok(game_lobby) = reg.game_lobby_repo.get() {
+        let updated_gl = game_lobby.open(Game {
+            game_id: game_id.clone(),
+            board_size: cg.board_size,
+            creator: session_id.clone(),
+            visibility: cg.visibility,
+        });
+        if let Err(_) = reg.game_lobby_repo.put(updated_gl) {
+            error!("game lobby write F1");
+        } else {
+            if let Err(_) = reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
+                game_id: game_id.clone(),
+                session_id: session_id.clone(),
+                event_id: EventId::new(),
+            })) {
+                error!("XADD Game ready")
+            }
+        }
+    } else {
+        error!("CG GAME REPO GET")
+    }
 }
+
 fn consume_jpg(_jpg: &JoinPrivateGame, _reg: &Components) {
     todo!()
 }
