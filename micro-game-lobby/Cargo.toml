@@ -16,7 +16,5 @@ log = "0.4.8"
 env_logger = "0.7.1"
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.2"
-# TODO TODO TODO unstable branch ??
-community-redis-streams = { git = "https://github.com/Terkwood/redis-streams-rs", branch = "tinker", package = "redis-streams" }
+community-redis-streams = { version = "0.1.1", package = "redis-streams" }
 redis = { version = "0.16.0", features = ["r2d2"] }
-

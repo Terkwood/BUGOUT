@@ -17,7 +17,7 @@ pub trait XRead: Send + Sync {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
-    ) -> Result<Vec<(XReadEntryId, StreamData)>, XReadErr>;
+    ) -> Result<Vec<(XReadEntryId, StreamInput)>, XReadErr>;
 }
 
 #[derive(Debug)]
@@ -29,7 +29,7 @@ impl XRead for Arc<Client> {
     fn xread_sorted(
         &self,
         entry_ids: AllEntryIds,
-    ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, XReadErr> {
+    ) -> Result<std::vec::Vec<(XReadEntryId, StreamInput)>, XReadErr> {
         if let Ok(mut conn) = self.get_connection() {
             let opts = StreamReadOptions::default().block(BLOCK_MSEC);
             let xrr: Result<StreamReadReply, _> = conn.xread_options(
@@ -67,7 +67,7 @@ impl XRead for Arc<Client> {
     }
 }
 
-fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, XReadDeserErr> {
+fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, XReadDeserErr> {
     let mut out = HashMap::new();
     for k in srr.keys {
         let key = k.key;
@@ -75,17 +75,17 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, XRea
             if let Ok(eid) = XReadEntryId::from_str(&e.id) {
                 let maybe_data: Option<Vec<u8>> = e.get("data");
                 if let Some(data) = maybe_data {
-                    let sd: Option<StreamData> = if key == FIND_PUBLIC_GAME {
+                    let sd: Option<StreamInput> = if key == FIND_PUBLIC_GAME {
                         bincode::deserialize(&data)
-                            .map(|fpg| StreamData::FPG(fpg))
+                            .map(|fpg| StreamInput::FPG(fpg))
                             .ok()
                     } else if key == CREATE_GAME {
                         bincode::deserialize(&data)
-                            .map(|cg| StreamData::CG(cg))
+                            .map(|cg| StreamInput::CG(cg))
                             .ok()
                     } else if key == JOIN_PRIVATE_GAME {
                         bincode::deserialize(&data)
-                            .map(|jpg| StreamData::JPG(jpg))
+                            .map(|jpg| StreamInput::JPG(jpg))
                             .ok()
                     } else {
                         warn!("Unknown key {}", key);
@@ -113,8 +113,18 @@ pub enum XReadDeserErr {
 }
 
 #[derive(Clone, Debug)]
-pub enum StreamData {
+pub enum StreamInput {
     FPG(FindPublicGame),
     CG(CreateGame),
     JPG(JoinPrivateGame),
+}
+
+impl From<crate::stream::StreamInput> for crate::repo::EntryIdType {
+    fn from(s: crate::stream::StreamInput) -> Self {
+        match s {
+            crate::stream::StreamInput::FPG(_) => crate::repo::EntryIdType::FindPublicGameCmd,
+            crate::stream::StreamInput::CG(_) => crate::repo::EntryIdType::CreateGameCmd,
+            crate::stream::StreamInput::JPG(_) => crate::repo::EntryIdType::JoinPrivateGameCmd,
+        }
+    }
 }

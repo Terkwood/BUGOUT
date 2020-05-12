@@ -674,8 +674,9 @@ dependencies = [
 
 [[package]]
 name = "redis-streams"
-version = "0.1.2"
-source = "git+https://github.com/Terkwood/redis-streams-rs?branch=tinker#de1a3edec9efbba6199344409f73e430e3291d36"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1bf9a0dcc9fdc411774d9f2c535da132081810aae6570514889c74c2ca0145c1"
 dependencies = [
  "redis",
 ]

@@ -27,8 +27,8 @@ pub fn process(components: &Components) {
     }
 }
 
-fn consume(_eid: XReadEntryId, _event: &StreamData) {}
-fn increment(eid: XReadEntryId, event: StreamData, components: &Components) {
+fn consume(_eid: XReadEntryId, _event: &StreamInput) {}
+fn increment(eid: XReadEntryId, event: StreamInput, components: &Components) {
     if let Err(e) = components
         .entry_id_repo
         .update(EntryIdType::from(event), eid)
@@ -122,7 +122,7 @@ mod test {
     }
 
     struct FakeXRead {
-        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamData)>>>,
+        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
     }
     impl XRead for FakeXRead {
         /// Be careful, this implementation assumes
@@ -130,25 +130,29 @@ mod test {
         fn xread_sorted(
             &self,
             entry_ids: AllEntryIds,
-        ) -> Result<Vec<(redis_streams::XReadEntryId, super::StreamData)>, XReadErr> {
+        ) -> Result<Vec<(redis_streams::XReadEntryId, super::StreamInput)>, XReadErr> {
             Ok(self
                 .sorted_data
                 .lock()
                 .expect("lock")
                 .iter()
                 .filter(|(eid, stream_data)| match stream_data {
-                    StreamData::CG(_) => entry_ids.create_game > *eid,
-                    StreamData::FPG(_) => entry_ids.find_public_game > *eid,
-                    StreamData::JPG(_) => entry_ids.join_private_game > *eid,
+                    StreamInput::CG(_) => entry_ids.create_game > *eid,
+                    StreamInput::FPG(_) => entry_ids.find_public_game > *eid,
+                    StreamInput::JPG(_) => entry_ids.join_private_game > *eid,
                 })
                 .cloned()
                 .collect())
         }
     }
     struct FakeXAdd {
-        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamData)>>>,
+        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
     }
-    impl XAdd for FakeXAdd {}
+    impl XAdd for FakeXAdd {
+        fn xadd(&self, data: StreamOutput) -> Result<(), XAddErr> {
+            todo!()
+        }
+    }
     #[test]
     fn test_process() {
         let (eid_call_in, eid_call_out) = unbounded();
@@ -208,7 +212,7 @@ mod test {
         let client_w = ClientId(Uuid::new_v4());
         sorted_fake_stream.lock().expect("lock").push((
             quick_eid(FAKE_TIME_MS),
-            StreamData::FPG(FindPublicGame {
+            StreamInput::FPG(FindPublicGame {
                 client_id: client_w,
                 session_id: session_w,
             }),
