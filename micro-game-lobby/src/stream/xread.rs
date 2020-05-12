@@ -1,6 +1,7 @@
-use super::topics::{CREATE_GAME, FIND_PUBLIC_GAME, JOIN_PRIVATE_GAME};
+use super::topics::*;
 use crate::api::*;
 use crate::repo::AllEntryIds;
+use crate::repo::EntryIdType;
 use community_redis_streams::{StreamCommands, StreamReadOptions, StreamReadReply};
 use log::{error, warn};
 use redis::Client;
@@ -38,6 +39,7 @@ impl XRead for Arc<Client> {
                     entry_ids.find_public_game.to_string(),
                     entry_ids.create_game.to_string(),
                     entry_ids.join_private_game.to_string(),
+                    entry_ids.session_disconnected.to_string(),
                 ],
                 opts,
             );
@@ -87,6 +89,10 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, XRe
                         bincode::deserialize(&data)
                             .map(|jpg| StreamInput::JPG(jpg))
                             .ok()
+                    } else if key == SESSION_DISCONNECTED {
+                        bincode::deserialize(&data)
+                            .map(|sd| StreamInput::SD(sd))
+                            .ok()
                     } else {
                         warn!("Unknown key {}", key);
                         None
@@ -117,14 +123,16 @@ pub enum StreamInput {
     FPG(FindPublicGame),
     CG(CreateGame),
     JPG(JoinPrivateGame),
+    SD(SessionDisconnected),
 }
 
-impl From<crate::stream::StreamInput> for crate::repo::EntryIdType {
+impl From<crate::stream::StreamInput> for EntryIdType {
     fn from(s: crate::stream::StreamInput) -> Self {
         match s {
-            crate::stream::StreamInput::FPG(_) => crate::repo::EntryIdType::FindPublicGameCmd,
-            crate::stream::StreamInput::CG(_) => crate::repo::EntryIdType::CreateGameCmd,
-            crate::stream::StreamInput::JPG(_) => crate::repo::EntryIdType::JoinPrivateGameCmd,
+            StreamInput::FPG(_) => EntryIdType::FindPublicGameCmd,
+            StreamInput::CG(_) => EntryIdType::CreateGameCmd,
+            StreamInput::JPG(_) => EntryIdType::JoinPrivateGameCmd,
+            StreamInput::SD(_) => EntryIdType::SessionDisconnectedEv,
         }
     }
 }

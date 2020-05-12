@@ -14,6 +14,7 @@ pub struct AllEntryIds {
     pub find_public_game: XReadEntryId,
     pub create_game: XReadEntryId,
     pub join_private_game: XReadEntryId,
+    pub session_disconnected: XReadEntryId,
 }
 impl Default for AllEntryIds {
     fn default() -> Self {
@@ -21,6 +22,7 @@ impl Default for AllEntryIds {
             find_public_game: XReadEntryId::default(),
             create_game: XReadEntryId::default(),
             join_private_game: XReadEntryId::default(),
+            session_disconnected: XReadEntryId::default(),
         }
     }
 }
@@ -30,9 +32,8 @@ pub enum EntryIdType {
     FindPublicGameCmd,
     CreateGameCmd,
     JoinPrivateGameCmd,
+    SessionDisconnectedEv,
 }
-
-
 
 impl EntryIdRepo for RedisRepo {
     fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
@@ -47,6 +48,7 @@ impl EntryIdRepo for RedisRepo {
             EntryIdType::FindPublicGameCmd => todo!(),
             EntryIdType::CreateGameCmd => todo!(),
             EntryIdType::JoinPrivateGameCmd => todo!(),
+            EntryIdType::SessionDisconnectedEv => todo!(),
         });
         update_entry_id(eid_type, eid, &*self.client, &redis_key, hash_field)
             .map_err(|_| WriteErr::EIDRepo)

@@ -13,14 +13,14 @@ use crate::*;
 use log::error;
 use redis_streams::XReadEntryId;
 
-pub fn process(components: &Components) {
+pub fn process(reg: &Components) {
     loop {
-        match components.entry_id_repo.fetch_all() {
-            Ok(all_eids) => match components.xread.xread_sorted(all_eids) {
+        match reg.entry_id_repo.fetch_all() {
+            Ok(all_eids) => match reg.xread.xread_sorted(all_eids) {
                 Ok(xrr) => {
                     for (eid, data) in xrr {
-                        consume(eid, &data, &components);
-                        increment(eid, data, components);
+                        consume(eid, &data, &reg);
+                        increment(eid, data, reg);
                     }
                 }
                 Err(e) => error!("Stream err {:?}", e),
@@ -30,59 +30,72 @@ pub fn process(components: &Components) {
     }
 }
 
-fn consume(_eid: XReadEntryId, event: &StreamInput, components: &Components) {
+fn consume(_eid: XReadEntryId, event: &StreamInput, reg: &Components) {
     match event {
-        StreamInput::FPG(FindPublicGame {
-            client_id: _,
-            session_id,
-        }) => {
-            if let Ok(game_lobby) = components.game_lobby_repo.get() {
-                let mut updated_gl = game_lobby.clone();
-                if let Some(queued) = game_lobby
-                    .games
-                    .iter()
-                    .find(|g| g.visibility == Visibility::Public)
-                {
-                    updated_gl.games.remove(&queued);
-                    if let Err(_) = components.game_lobby_repo.put(updated_gl) {
-                        error!("game lobby write F1");
-                    } else {
-                        todo!("XADD to game-ready-ev");
-                    }
-                } else {
-                    let game_id = GameId::new();
-                    updated_gl.games.insert(Game {
-                        board_size: PUBLIC_GAME_BOARD_SIZE,
-                        creator: session_id.clone(),
-                        visibility: Visibility::Public,
-                        game_id: game_id.clone(),
-                    });
-                    if let Err(_) = components.game_lobby_repo.put(updated_gl) {
-                        error!("game lobby write F2");
-                    } else {
-                        if let Err(_) = components.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
-                            event_id: EventId::new(),
-                            game_id,
-                            session_id: session_id.clone(),
-                        })) {
-                            error!("XADD: Wait for oppo")
-                        }
-                    }
-                }
-            } else {
-                error!("Failed to fetch game lobby: FPG")
-            }
-        }
-        StreamInput::CG(_) => todo!(),
-        StreamInput::JPG(_) => todo!(),
+        StreamInput::FPG(fpg) => consume_fpg(fpg, reg),
+        StreamInput::CG(cg) => consume_cg(cg, reg),
+        StreamInput::JPG(jpg) => consume_jpg(jpg, reg),
+        StreamInput::SD(sd) => consume_sd(sd, reg),
     }
 }
 
-fn increment(eid: XReadEntryId, event: StreamInput, components: &Components) {
-    if let Err(e) = components
-        .entry_id_repo
-        .update(EntryIdType::from(event), eid)
-    {
+fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
+    let session_id = &fpg.session_id;
+    if let Ok(game_lobby) = reg.game_lobby_repo.get() {
+        if let Some(queued) = game_lobby
+            .games
+            .iter()
+            .find(|g| g.visibility == Visibility::Public)
+        {
+            let updated_gl = game_lobby.ready(queued);
+            if let Err(_) = reg.game_lobby_repo.put(updated_gl) {
+                error!("game lobby write F1");
+            } else {
+                if let Err(_) = reg.xadd.xadd(StreamOutput::GR(GameReady {
+                    game_id: queued.game_id.clone(),
+                    event_id: EventId::new(),
+                    board_size: queued.board_size,
+                    sessions: (queued.creator.clone(), session_id.clone()),
+                })) {
+                    error!("XADD Game ready")
+                }
+            }
+        } else {
+            let game_id = GameId::new();
+            if let Err(_) = reg.game_lobby_repo.put(game_lobby.open(Game {
+                board_size: PUBLIC_GAME_BOARD_SIZE,
+                creator: session_id.clone(),
+                visibility: Visibility::Public,
+                game_id: game_id.clone(),
+            })) {
+                error!("game lobby write F2");
+            } else {
+                if let Err(_) = reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
+                    event_id: EventId::new(),
+                    game_id,
+                    session_id: session_id.clone(),
+                })) {
+                    error!("XADD: Wait for oppo")
+                }
+            }
+        }
+    } else {
+        error!("Failed to fetch game lobby: FPG")
+    }
+}
+
+fn consume_cg(_cg: &CreateGame, _reg: &Components) {
+    todo!()
+}
+fn consume_jpg(_jpg: &JoinPrivateGame, _reg: &Components) {
+    todo!()
+}
+fn consume_sd(_jpg: &SessionDisconnected, _reg: &Components) {
+    todo!()
+}
+
+fn increment(eid: XReadEntryId, event: StreamInput, reg: &Components) {
+    if let Err(e) = reg.entry_id_repo.update(EntryIdType::from(event), eid) {
         error!("eid write {:?}", e)
     }
 }
@@ -102,9 +115,11 @@ mod test {
     static FAKE_FPG_MILLIS: AtomicU64 = AtomicU64::new(0);
     static FAKE_CG_MILLIS: AtomicU64 = AtomicU64::new(0);
     static FAKE_JPG_MILLIS: AtomicU64 = AtomicU64::new(0);
+    static FAKE_SD_MILLIS: AtomicU64 = AtomicU64::new(0);
     static FAKE_FPG_SEQ: AtomicU64 = AtomicU64::new(0);
     static FAKE_CG_SEQ: AtomicU64 = AtomicU64::new(0);
     static FAKE_JPG_SEQ: AtomicU64 = AtomicU64::new(0);
+    static FAKE_SD_SEQ: AtomicU64 = AtomicU64::new(0);
     struct FakeEIDRepo {
         call_in: Sender<EIDRepoCalled>,
     }
@@ -129,6 +144,10 @@ mod test {
                     millis_time: FAKE_JPG_MILLIS.load(Ordering::Relaxed),
                     seq_no: FAKE_JPG_SEQ.load(Ordering::Relaxed),
                 },
+                session_disconnected: XReadEntryId {
+                    millis_time: FAKE_SD_MILLIS.load(Ordering::Relaxed),
+                    seq_no: FAKE_SD_SEQ.load(Ordering::Relaxed),
+                },
             })
         }
         fn update(
@@ -151,6 +170,10 @@ mod test {
                 EntryIdType::JoinPrivateGameCmd => {
                     FAKE_JPG_MILLIS.swap(eid.millis_time, Ordering::Relaxed);
                     FAKE_JPG_SEQ.swap(eid.seq_no, Ordering::Relaxed);
+                }
+                EntryIdType::SessionDisconnectedEv => {
+                    FAKE_SD_MILLIS.swap(eid.millis_time, Ordering::Relaxed);
+                    FAKE_SD_SEQ.swap(eid.seq_no, Ordering::Relaxed);
                 }
             }
             Ok(())
@@ -193,6 +216,7 @@ mod test {
                         StreamInput::CG(_) => entry_ids.create_game < *eid,
                         StreamInput::FPG(_) => entry_ids.find_public_game < *eid,
                         StreamInput::JPG(_) => entry_ids.join_private_game < *eid,
+                        StreamInput::SD(_) => entry_ids.session_disconnected < *eid,
                     })
                     .cloned()
                     .collect();

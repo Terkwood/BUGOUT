@@ -10,18 +10,22 @@ pub struct GameLobby {
 }
 
 impl GameLobby {
-    pub fn execute(&mut self, command: GameLobbyCommand) {
-        match command.lobby_command {
-            LobbyCommand::Open => {
-                self.games.insert(command.game);
-            }
-            LobbyCommand::Abandon => {
-                self.games.remove(&command.game);
-            }
-            LobbyCommand::Ready => {
-                self.games.remove(&command.game);
-            }
-        }
+    pub fn open(&self, game: Game) -> Self {
+        let mut r = self.clone();
+        r.games.insert(game);
+        r
+    }
+
+    pub fn ready(&self, game: &Game) -> Self {
+        let mut r = self.clone();
+        r.games.remove(&game);
+        r
+    }
+
+    pub fn abandon(&self, game: &Game) -> Self {
+        let mut r = self.clone();
+        r.games.remove(game);
+        r
     }
 
     pub fn as_bytes(&self) -> Result<Vec<u8>, Box<bincode::ErrorKind>> {
@@ -43,39 +47,23 @@ pub struct Game {
     pub creator: SessionId,
     pub board_size: u16,
 }
-
-#[derive(Debug, Clone)]
-pub struct GameLobbyCommand {
-    pub game: Game,
-    pub lobby_command: LobbyCommand,
-}
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum LobbyCommand {
-    Open,
-    Ready,
-    Abandon,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use uuid::Uuid;
     #[test]
     fn lobby_execute_bytes() {
-        let mut lobby = GameLobby {
+        let lobby = GameLobby {
             games: HashSet::new(),
         };
         assert!(lobby.as_bytes().is_ok());
-        lobby.execute(GameLobbyCommand {
-            game: Game {
-                game_id: GameId(Uuid::new_v4()),
-                board_size: 3,
-                creator: SessionId(Uuid::new_v4()),
-                visibility: Visibility::Private,
-            },
-            lobby_command: LobbyCommand::Open,
+        let next = lobby.open(Game {
+            game_id: GameId(Uuid::new_v4()),
+            board_size: 3,
+            creator: SessionId(Uuid::new_v4()),
+            visibility: Visibility::Private,
         });
-        assert!(!lobby.games.is_empty());
-        assert!(lobby.as_bytes().is_ok());
+        assert!(!next.games.is_empty());
+        assert!(next.as_bytes().is_ok());
     }
 }
