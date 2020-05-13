@@ -38,20 +38,47 @@ pub enum EntryIdType {
     SessionDisconnectedEv,
 }
 
+const FIND_PUBLIC_EID: &str = "find_public";
+const CREATE_GAME_EID: &str = "create";
+const JOIN_PRIVATE_EID: &str = "join_private";
+const SESSION_DISCONN_EID: &str = "session_disconn";
+
 impl EntryIdRepo for Rc<Client> {
     fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
         let deser_hash: Box<dyn Fn(HashMap<String, String>) -> AllEntryIds> =
-            Box::new(|_f| todo!());
+            Box::new(|f| AllEntryIds {
+                find_public_game: lookup(&f, FIND_PUBLIC_EID),
+                create_game: lookup(&f, CREATE_GAME_EID),
+                join_private_game: lookup(&f, JOIN_PRIVATE_EID),
+                session_disconnected: lookup(&f, SESSION_DISCONN_EID),
+            });
         fetch_entry_ids(&*self, ENTRY_ID_KEY, deser_hash).map_err(|_| FetchErr::EIDRepo)
     }
     fn update(&self, eid_type: EntryIdType, eid: XReadEntryId) -> Result<(), WriteErr> {
-        let hash_field = Box::new(|eid_type| match eid_type {
-            EntryIdType::FindPublicGameCmd => todo!(),
-            EntryIdType::CreateGameCmd => todo!(),
-            EntryIdType::JoinPrivateGameCmd => todo!(),
-            EntryIdType::SessionDisconnectedEv => todo!(),
+        let hash_field = Box::new(|eid_type| {
+            match eid_type {
+                EntryIdType::FindPublicGameCmd => FIND_PUBLIC_EID,
+                EntryIdType::CreateGameCmd => CREATE_GAME_EID,
+                EntryIdType::JoinPrivateGameCmd => JOIN_PRIVATE_EID,
+                EntryIdType::SessionDisconnectedEv => SESSION_DISCONN_EID,
+            }
+            .to_string()
         });
         update_entry_id(eid_type, eid, &*self, ENTRY_ID_KEY, hash_field)
             .map_err(|_| WriteErr::EIDRepo)
     }
+}
+
+/// Looks up the EID corresponding to a given field in a hash
+/// return by redis.
+/// for example, you might look up an entry ID of "1000-0"
+/// for the create games stream.
+fn lookup(hash: &HashMap<String, String>, eid_field: &str) -> XReadEntryId {
+    XReadEntryId::from_str(
+        &hash
+            .get(eid_field)
+            .unwrap_or(&XReadEntryId::default().to_string())
+            .to_string(),
+    )
+    .unwrap_or(XReadEntryId::default())
 }
