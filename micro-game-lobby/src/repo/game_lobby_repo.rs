@@ -2,6 +2,7 @@ use super::{FetchErr, WriteErr};
 use crate::game_lobby::GameLobby;
 
 use redis::Client;
+use redis::Commands;
 use std::rc::Rc;
 
 pub trait GameLobbyRepo {
@@ -11,9 +12,20 @@ pub trait GameLobbyRepo {
 
 impl GameLobbyRepo for Rc<Client> {
     fn get(&self) -> Result<GameLobby, FetchErr> {
-        todo!(" KEY IS CONST STRING IN mod.rs")
+        if let Ok(mut conn) = self.get_connection() {
+            let data: Result<Vec<u8>, _> = conn.get(super::GAME_LOBBY_KEY).map_err(|_| FetchErr);
+
+            data.and_then(|bytes| bincode::deserialize(&bytes).map_err(|_| FetchErr))
+        } else {
+            Err(FetchErr)
+        }
     }
-    fn put(&self, _game_lobby: GameLobby) -> Result<(), WriteErr> {
-        todo!()
+    fn put(&self, game_lobby: GameLobby) -> Result<(), WriteErr> {
+        if let (Ok(mut conn), Ok(bytes)) = (self.get_connection(), bincode::serialize(&game_lobby))
+        {
+            conn.set(super::GAME_LOBBY_KEY, bytes).map_err(|_| WriteErr)
+        } else {
+            Err(WriteErr)
+        }
     }
 }

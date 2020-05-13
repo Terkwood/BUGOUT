@@ -52,7 +52,7 @@ impl EntryIdRepo for Rc<Client> {
                 join_private_game: lookup(&f, JOIN_PRIVATE_EID),
                 session_disconnected: lookup(&f, SESSION_DISCONN_EID),
             });
-        fetch_entry_ids(&*self, ENTRY_ID_KEY, deser_hash).map_err(|_| FetchErr::EIDRepo)
+        fetch_entry_ids(&*self, ENTRY_ID_KEY, deser_hash).map_err(|_| FetchErr)
     }
     fn update(&self, eid_type: EntryIdType, eid: XReadEntryId) -> Result<(), WriteErr> {
         let hash_field = Box::new(|eid_type| {
@@ -64,8 +64,7 @@ impl EntryIdRepo for Rc<Client> {
             }
             .to_string()
         });
-        update_entry_id(eid_type, eid, &*self, ENTRY_ID_KEY, hash_field)
-            .map_err(|_| WriteErr::EIDRepo)
+        update_entry_id(eid_type, eid, &*self, ENTRY_ID_KEY, hash_field).map_err(|_| WriteErr)
     }
 }
 
