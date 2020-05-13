@@ -1,4 +1,4 @@
-use crate::repo::{EntryIdRepo, GameLobbyRepo, KeyProvider, RedisRepo};
+use crate::repo::{EntryIdRepo, GameLobbyRepo};
 use crate::stream::{XAdd, XRead};
 
 use std::rc::Rc;
@@ -14,19 +14,12 @@ const REDIS_URL: &str = "redis://redis/";
 
 impl Default for Components {
     fn default() -> Self {
-        let client = redis::Client::open(REDIS_URL).expect("redis client");
-        let rc_client = Rc::new(client);
+        let client = Rc::new(redis::Client::open(REDIS_URL).expect("redis client"));
         Components {
-            entry_id_repo: Box::new(RedisRepo {
-                client: rc_client.clone(),
-                key_provider: KeyProvider::default(),
-            }),
-            game_lobby_repo: Box::new(RedisRepo {
-                client: rc_client.clone(),
-                key_provider: KeyProvider::default(),
-            }),
-            xread: Box::new(rc_client.clone()),
-            xadd: Box::new(rc_client),
+            entry_id_repo: Box::new(client.clone()),
+            game_lobby_repo: Box::new(client.clone()),
+            xread: Box::new(client.clone()),
+            xadd: Box::new(client),
         }
     }
 }

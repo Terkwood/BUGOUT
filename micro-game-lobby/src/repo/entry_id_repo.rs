@@ -1,8 +1,11 @@
+use redis::Client;
 use redis_streams::repo::{fetch_entry_ids, update_entry_id};
 use redis_streams::*;
 use std::collections::HashMap;
+use std::rc::Rc;
 
-use super::{FetchErr, RedisRepo, WriteErr};
+use super::ENTRY_ID_KEY;
+use super::{FetchErr, WriteErr};
 
 pub trait EntryIdRepo {
     fn fetch_all(&self) -> Result<AllEntryIds, FetchErr>;
@@ -35,22 +38,20 @@ pub enum EntryIdType {
     SessionDisconnectedEv,
 }
 
-impl EntryIdRepo for RedisRepo {
+impl EntryIdRepo for Rc<Client> {
     fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
-        let redis_key = self.key_provider.entry_ids();
         let deser_hash: Box<dyn Fn(HashMap<String, String>) -> AllEntryIds> =
             Box::new(|_f| todo!());
-        fetch_entry_ids(&*self.client, &redis_key, deser_hash).map_err(|_| FetchErr::EIDRepo)
+        fetch_entry_ids(&*self, ENTRY_ID_KEY, deser_hash).map_err(|_| FetchErr::EIDRepo)
     }
     fn update(&self, eid_type: EntryIdType, eid: XReadEntryId) -> Result<(), WriteErr> {
-        let redis_key = self.key_provider.entry_ids();
         let hash_field = Box::new(|eid_type| match eid_type {
             EntryIdType::FindPublicGameCmd => todo!(),
             EntryIdType::CreateGameCmd => todo!(),
             EntryIdType::JoinPrivateGameCmd => todo!(),
             EntryIdType::SessionDisconnectedEv => todo!(),
         });
-        update_entry_id(eid_type, eid, &*self.client, &redis_key, hash_field)
+        update_entry_id(eid_type, eid, &*self, ENTRY_ID_KEY, hash_field)
             .map_err(|_| WriteErr::EIDRepo)
     }
 }
