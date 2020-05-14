@@ -32,8 +32,12 @@ if (idpCode !== 0) {
 }
 
 const { Images } = JSON.parse(new TextDecoder().decode(await idp.output()));
+
+let imgIds = [];
 for (let { ImageId } of Images) {
-  console.log(ImageId);
+  imgIds.push(ImageId);
 }
+
+console.log(imgIds);
 
 Deno.exit(0);
