@@ -1,4 +1,4 @@
-#!/usr/bin/env deno
+#!/usr/bin/env -S deno run --allow-run
 
 // Per https://terkwood.farm/tech/aws_cli.html#destroy-your-amis-and-their-snapshots,
 // we want to provide auto-cleanup for all images and snapshots.
@@ -31,6 +31,9 @@ if (idpCode !== 0) {
   Deno.exit(idpCode);
 }
 
-const imagesDescribed = new TextDecoder().decode(await idp.output());
-console.log(imagesDescribed);
+const { Images } = JSON.parse(new TextDecoder().decode(await idp.output()));
+for (let { ImageId } of Images) {
+  console.log(ImageId);
+}
+
 Deno.exit(0);
