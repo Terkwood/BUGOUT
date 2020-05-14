@@ -10,7 +10,7 @@ use crate::game_lobby::*;
 use crate::repo::EntryIdType;
 use crate::*;
 
-use log::error;
+use log::{error, warn};
 use redis_streams::XReadEntryId;
 
 pub fn process(reg: &Components) {
@@ -107,7 +107,7 @@ fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
         {
             ready_xadd(&jpg.session_id, &lobby, queued, reg)
         } else {
-            todo!("REJECTION !!!!!!!!!")
+            warn!("Ignoring game rejection event")
         }
     } else {
         error!("game lobby JPG get")
