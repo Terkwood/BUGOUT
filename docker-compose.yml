@@ -130,6 +130,12 @@ services:
       - "redis"
     depends_on:
       - "redis"
+  micro-game-lobby:
+    build: micro-game-lobby/.
+    links:
+      - "redis"
+    depends_on:
+      - "redis"
   botlink:
     build: botlink/.
     depends_on:
