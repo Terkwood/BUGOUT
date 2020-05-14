@@ -17,27 +17,59 @@
 ~ $ aws ec2 delete-snapshot --snapshot-id snap-01dcf9767a040352e
 */
 
-const idp = Deno.run({
-  cmd: ["/usr/bin/aws", "ec2", "describe-images", "--owners", "self"],
-  stdout: "piped",
-});
+/** This SIDE-EFFECTING procedure will cause the program to quit 
+ * if the subprocess returns a non-zero code.
+ */
+const runOrExit = async (
+  cmd: string[],
+  stdout: number | "piped" | "inherit" | "null" | undefined,
+) => {
+  const p = Deno.run({
+    cmd,
+    stdout,
+  });
 
-const { code: idpCode } = await idp.status();
+  const { code } = await p.status();
 
-if (idpCode !== 0) {
-  const rawError = await idp.stderrOutput();
-  const errorString = new TextDecoder().decode(rawError);
-  console.log(errorString);
-  Deno.exit(idpCode);
-}
+  if (code !== 0) {
+    const rawError = await p.stderrOutput();
+    const errorString = new TextDecoder().decode(rawError);
+    console.log(errorString);
+    Deno.exit(code);
+  }
 
-const { Images } = JSON.parse(new TextDecoder().decode(await idp.output()));
+  return p;
+};
 
-let imgIds = [];
+const parseProcessOutput = async (p: Deno.Process) =>
+  JSON.parse(new TextDecoder().decode(await p.output()));
+
+const idp = await runOrExit(
+  ["/usr/bin/aws", "ec2", "describe-images", "--owners", "self"],
+  "piped",
+);
+
+const { Images } = await parseProcessOutput(idp);
+
 for (let { ImageId } of Images) {
-  imgIds.push(ImageId);
+  await runOrExit(
+    ["echo", "aws ec2 deregister-image --image-id " + ImageId],
+    undefined,
+  );
 }
 
-console.log(imgIds);
+const dsp = await runOrExit(
+  ["/usr/bin/aws", "ec2", "describe-snapshots", "--owner", "self"],
+  "piped",
+);
+
+const { Snapshots } = await parseProcessOutput(dsp);
+
+for (let { SnapshotId } of Snapshots) {
+  await runOrExit(
+    ["echo", "aws ec2 delete-snapshot --snapshot-id " + SnapshotId],
+    undefined,
+  );
+}
 
 Deno.exit(0);
