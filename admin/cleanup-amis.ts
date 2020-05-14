@@ -53,7 +53,7 @@ const { Images } = await parseProcessOutput(idp);
 
 for (let { ImageId } of Images) {
   await runOrExit(
-    ["echo", "aws ec2 deregister-image --image-id " + ImageId],
+    ["/usr/bin/aws", "ec2", "deregister-image", "--image-id", ImageId],
     undefined,
   );
 }
@@ -67,7 +67,7 @@ const { Snapshots } = await parseProcessOutput(dsp);
 
 for (let { SnapshotId } of Snapshots) {
   await runOrExit(
-    ["echo", "aws ec2 delete-snapshot --snapshot-id " + SnapshotId],
+    ["/usr/bin/aws", "ec2", "delete-snapshot", "--snapshot-id", SnapshotId],
     undefined,
   );
 }
