@@ -98,6 +98,11 @@ fn consume_cg(cg: &CreateGame, reg: &Components) {
     }
 }
 
+/// Consumes the command to join a private game.
+/// In the event that the game is invalid,
+/// we will simply log a warning.
+/// Consider implementing logic related to handling
+/// private game rejection: https://github.com/Terkwood/BUGOUT/issues/304
 fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
     if let Ok(lobby) = reg.game_lobby_repo.get() {
         if let Some(queued) = lobby
