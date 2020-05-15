@@ -1,6 +1,6 @@
 [package]
 name = "micro_judge"
-version = "0.1.9"
+version = "0.1.10"
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 
@@ -9,6 +9,6 @@ uuid = { version = "0.8.1", features = ["serde", "v4"] }
 bincode = "1.2.1"
 micro_model_moves = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
-redis_streams = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
+redis_streams = { git = "https://github.com/Terkwood/BUGOUT", version = "0.2.0", branch = "unstable" }
 env_logger = "0.7.1"
 log = "0.4.8"
