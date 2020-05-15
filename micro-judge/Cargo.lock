@@ -551,7 +551,7 @@ dependencies = [
 [[package]]
 name = "redis_streams"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#89b6755a4e30f2f28521217eee4e72ebe9aadafc"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=fdad420#fdad420a54f7c130c18954e4ce6b11be1ed9b486"
 dependencies = [
  "redis_conn_pool",
  "uuid",
