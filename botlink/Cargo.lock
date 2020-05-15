@@ -83,7 +83,7 @@ dependencies = [
 
 [[package]]
 name = "botlink"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "base64 0.12.1",
  "bincode",
@@ -919,9 +919,10 @@ dependencies = [
 
 [[package]]
 name = "redis_streams"
-version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#25b24170fc9d3ef1567ad65330f9ac2ec2158f7e"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=fdad420#fdad420a54f7c130c18954e4ce6b11be1ed9b486"
 dependencies = [
+ "redis_conn_pool",
  "uuid",
 ]
 
