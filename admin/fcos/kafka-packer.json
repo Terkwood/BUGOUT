@@ -22,7 +22,7 @@
       "source_ami_filter": {
         "filters": {
           "virtualization-type": "hvm",
-          "name": "fedora-coreos-31.20200420.2.0",
+          "name": "fedora-coreos-31.20200420.3.0",
           "root-device-type": "ebs"
         },
         "owners": ["125523088429"],
