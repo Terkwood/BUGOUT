@@ -683,8 +683,8 @@ dependencies = [
 
 [[package]]
 name = "redis_streams"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/redis-streams-r2d2#58bd7ad0c80bb237822a00766ff4513a9eea0f5d"
+version = "0.3.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=fix/redis-streams-r2d2#8780a98b249ebe64cfd8a41f31f663066f50de20"
 dependencies = [
  "redis",
  "uuid",
