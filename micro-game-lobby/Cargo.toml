@@ -5,7 +5,7 @@ authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-redis_streams = { git = "https://github.com/Terkwood/BUGOUT", version = "0.3.0", rev = "aaa" }
+redis_streams = { git = "https://github.com/Terkwood/BUGOUT", version = "0.3.0", rev = "92b8d91abba494737caca525ecb2a4f0d7044dbd" }
 uuid = { version = "0.8.1", "features" = ["v4", "serde"] }
 serde = "1.0.110"
 bincode = "1.2.1"
