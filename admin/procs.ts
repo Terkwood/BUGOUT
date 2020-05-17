@@ -4,7 +4,7 @@
 
 interface Runner {
   cmd: string[];
-  stdout: number | "piped" | "inherit" | "null" | undefined;
+  stdout?: number | "piped" | "inherit" | "null" | undefined;
 }
 
 /** This side-effecting procedure will cause the program to quit 
@@ -15,7 +15,6 @@ const runOrExit = async ({ cmd, stdout }: Runner) => {
     cmd,
     stdout,
   });
-
   const { code } = await p.status();
 
   if (code !== 0) {
@@ -31,4 +30,15 @@ const runOrExit = async ({ cmd, stdout }: Runner) => {
 const parseProcessOutput = async (p: Deno.Process) =>
   JSON.parse(new TextDecoder().decode(await p.output()));
 
-export { runOrExit, parseProcessOutput };
+const awsEc2Cmd = (argStr: string) => {
+  let o = [];
+  o.push("/usr/bin/aws");
+  o.push("ec2");
+  for (let s of argStr.split(" ")) {
+    o.push(s);
+  }
+
+  return o;
+};
+
+export { runOrExit, parseProcessOutput, awsEc2Cmd };
