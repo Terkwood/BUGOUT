@@ -9,11 +9,11 @@
 // Per https://terkwood.farm/tech/aws_cli.html#destroy-your-amis-and-their-snapshots,
 // we want to provide auto-cleanup for all images and snapshots.
 
-import { runOrExit, parseProcessOutput } from "./procs.ts";
+import { runOrExit, parseProcessOutput, awsEc2Cmd } from "./procs.ts";
 
 const idp = await runOrExit(
   {
-    cmd: ["/usr/bin/aws", "ec2", "describe-images", "--owners", "self"],
+    cmd: awsEc2Cmd("describe-images --owners self"),
     stdout: "piped",
   },
 );
@@ -23,7 +23,7 @@ const { Images } = await parseProcessOutput(idp);
 for (let { ImageId } of Images) {
   await runOrExit(
     {
-      cmd: ["/usr/bin/aws", "ec2", "deregister-image", "--image-id", ImageId],
+      cmd: awsEc2Cmd(`deregister-image --image-id ${ImageId}`),
       stdout: undefined,
     },
   );
@@ -31,7 +31,7 @@ for (let { ImageId } of Images) {
 
 const dsp = await runOrExit(
   {
-    cmd: ["/usr/bin/aws", "ec2", "describe-snapshots", "--owner", "self"],
+    cmd: awsEc2Cmd("describe-snapshots --owner self"),
     stdout: "piped",
   },
 );
@@ -41,13 +41,7 @@ const { Snapshots } = await parseProcessOutput(dsp);
 for (let { SnapshotId } of Snapshots) {
   await runOrExit(
     {
-      cmd: [
-        "/usr/bin/aws",
-        "ec2",
-        "delete-snapshot",
-        "--snapshot-id",
-        SnapshotId,
-      ],
+      cmd: awsEc2Cmd(`delete-snapshot --snapshot-id ${SnapshotId}`),
       stdout: undefined,
     },
   );

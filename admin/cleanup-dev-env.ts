@@ -12,7 +12,7 @@ let described = await runOrExit(
 const { Reservations } = await parseProcessOutput(described);
 
 for (let { Instances } of Reservations) {
-  for (let { InstanceId } of Instances) {
-    console.log(`Hello ${InstanceId}`);
+  for (let { InstanceId, KeyName } of Instances) {
+    console.log(`Hello ${InstanceId} ${KeyName}`);
   }
 }

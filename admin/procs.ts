@@ -1,6 +1,6 @@
-//
+// SPDX-License-Identifier: M
+
 // Process Helper Functions
-//
 
 interface Runner {
   cmd: string[];
