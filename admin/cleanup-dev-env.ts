@@ -7,7 +7,7 @@ console.log(loadEnv({ safe: true, export: true }));
 
 const KEY_NAME = Deno.env.get("KEY_NAME");
 
-console.log(`Acting on ${KEY_NAME}`);
+console.log(`Acting on key ${KEY_NAME}`);
 
 let instsDescd = runOrExit(
   { cmd: awsEc2Cmd("describe-instances"), stdout: "piped" },
@@ -19,14 +19,10 @@ let addrsDescd = runOrExit(
 
 const { Reservations } = await parseProcessOutput(await instsDescd);
 
-console.log("Instances:");
-
 let instancesToTerminate = [];
 for (let { Instances } of Reservations) {
   for (let { InstanceId, KeyName } of Instances) {
-    console.log(`\t${InstanceId} ${KeyName}`);
     if (KEY_NAME === KeyName) {
-      console.log(`\t...Clean up on ${KeyName}`);
       instancesToTerminate.push(InstanceId);
     }
   }
@@ -34,17 +30,19 @@ for (let { Instances } of Reservations) {
 
 const { Addresses } = await parseProcessOutput(await addrsDescd);
 
-console.log("Addresses:");
 let addressesToRelease = [];
 for (let { InstanceId, AllocationId, AssociationId } of Addresses) {
-  console.log(
-    `\t${InstanceId} has alloc ${AllocationId} and assoc ${AssociationId}`,
-  );
   if (instancesToTerminate.includes(InstanceId)) {
     addressesToRelease.push({ AllocationId, AssociationId });
   }
 }
 
-console.log("\n");
-console.log(`Instances to terminate: ${JSON.stringify(instancesToTerminate)}`);
-console.log(`Addresses to release  : ${JSON.stringify(addressesToRelease)}`);
+if (instancesToTerminate.length > 0) {
+  console.log(
+    `Instances to terminate: ${JSON.stringify(instancesToTerminate)}`,
+  );
+}
+
+if (addressesToRelease.length > 0) {
+  console.log(`Addresses to release  : ${JSON.stringify(addressesToRelease)}`);
+}
