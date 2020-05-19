@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: M
+// SPDX-License-Identifier: MIT
 
 // Process Helper Functions
 
