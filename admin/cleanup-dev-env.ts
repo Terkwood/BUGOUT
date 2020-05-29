@@ -9,13 +9,15 @@ const KEY_NAME = Deno.env.get("KEY_NAME");
 
 console.log(`Acting on key ${KEY_NAME}`);
 
-let instsDescd = runOrExit(
-  { cmd: awsEc2Cmd("describe-instances"), stdout: "piped" },
-);
+let instsDescd = runOrExit({
+  cmd: awsEc2Cmd("describe-instances"),
+  stdout: "piped",
+});
 
-let addrsDescd = runOrExit(
-  { cmd: awsEc2Cmd("describe-addresses"), stdout: "piped" },
-);
+let addrsDescd = runOrExit({
+  cmd: awsEc2Cmd("describe-addresses"),
+  stdout: "piped",
+});
 
 const { Reservations } = await parseProcessOutput(await instsDescd);
 
@@ -37,12 +39,28 @@ for (let { InstanceId, AllocationId, AssociationId } of Addresses) {
   }
 }
 
-if (instancesToTerminate.length > 0) {
-  console.log(
-    `Instances to terminate: ${JSON.stringify(instancesToTerminate)}`,
-  );
-}
-
 if (addressesToRelease.length > 0) {
   console.log(`Addresses to release  : ${JSON.stringify(addressesToRelease)}`);
+
+  for (let { AssociationId, AllocationId } of addressesToRelease) {
+    runOrExit({
+      cmd: awsEc2Cmd(`disassociate-address --association-id ${AssociationId}`),
+    });
+
+    runOrExit({
+      cmd: awsEc2Cmd(`release-address --allocation-id ${AllocationId}`),
+    });
+  }
+}
+
+if (instancesToTerminate.length > 0) {
+  console.log(
+    `Instances to terminate: ${JSON.stringify(instancesToTerminate)}`
+  );
+
+  runOrExit({
+    cmd: awsEc2Cmd(
+      `terminate-instances --instance-ids ${instancesToTerminate.join(" ")}`
+    ),
+  });
 }

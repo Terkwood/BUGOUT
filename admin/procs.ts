@@ -7,7 +7,7 @@ interface Runner {
   stdout?: number | "piped" | "inherit" | "null" | undefined;
 }
 
-/** This side-effecting procedure will cause the program to quit 
+/** This side-effecting procedure will cause the program to quit
  * if the subprocess returns a non-zero code.
  */
 const runOrExit = async ({ cmd, stdout }: Runner) => {
