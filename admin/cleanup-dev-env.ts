@@ -64,3 +64,5 @@ if (instancesToTerminate.length > 0) {
     ),
   });
 }
+
+Deno.exit(0);
