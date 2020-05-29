@@ -20,4 +20,4 @@ e.g. in [gateway-packer.json](gateway-packer.json):
     },
 ```
 
-What's more `rpm-ostreed` controls [automatic updates](https://docs.fedoraproject.org/en-US/iot/applying-updates-UG/#_automatic_updates) and needs to be disabled to prevent havoc during the `packer build` step.  You don't want the machine rebooting during your 79-hour `cargo install` step!
+What's more `rpm-ostreed` controls [automatic updates](https://docs.fedoraproject.org/en-US/iot/applying-updates-UG/#_automatic_updates) and needs to be disabled to prevent havoc during the `packer build` step. You don't want the machine rebooting during your 79-hour `cargo install` step!
