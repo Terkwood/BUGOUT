@@ -43,15 +43,13 @@ if (addressesToRelease.length > 0) {
   console.log(`Addresses to release  : ${JSON.stringify(addressesToRelease)}`);
 
   for (let { AssociationId, AllocationId } of addressesToRelease) {
-    let p = runOrExit({
+    await runOrExit({
       cmd: awsEc2Cmd(`disassociate-address --association-id ${AssociationId}`),
     });
 
-    let r = runOrExit({
+    await runOrExit({
       cmd: awsEc2Cmd(`release-address --allocation-id ${AllocationId}`),
     });
-
-    await Promise.all([p, r]);
   }
 }
 
