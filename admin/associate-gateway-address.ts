@@ -22,13 +22,32 @@ for (let { Instances } of Reservations) {
   for (let { InstanceId, Tags } of Instances) {
     for (let { Key, Value } of Tags) {
       if (Key === "Name" && TAG_NAME === Value) {
-	      console.log(`hello ${InstanceId} ${Value}`);
-	      instanceFound = InstanceId;
+        instanceFound = InstanceId;
       }
     }
   }
 }
 
 if (!instanceFound) {
-	Deno.exit(1);
+  console.log(`No instances matching that tag (NAME=${TAG_NAME}). Exiting.`);
+  Deno.exit(1);
 }
+
+let addrAllocated = runOrExit({
+  cmd: awsEc2Cmd("allocate-address --domain vpc"),
+  stdout: "piped",
+});
+
+const { AllocationId, PublicIp } = await parseProcessOutput(
+  await addrAllocated
+);
+
+await runOrExit({
+  cmd: awsEc2Cmd(
+    `associate-address --instance-id ${instanceFound} --allocation-id ${AllocationId}`
+  ),
+});
+
+console.log(
+  `Associated ${PublicIp} with instance ${instanceFound} (${TAG_NAME})`
+);
