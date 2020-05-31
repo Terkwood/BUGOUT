@@ -51,7 +51,7 @@ if (addressesToRelease.length > 0) {
       cmd: awsEc2Cmd(`release-address --allocation-id ${AllocationId}`),
     });
 
-    await Promise.all([p,r]);
+    await Promise.all([p, r]);
   }
 }
 
