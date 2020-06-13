@@ -9,7 +9,7 @@ uuid = { version = "0.8.1", features = ["serde", "v4"] }
 bincode = "1.2.1"
 micro_model_moves = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
-redis_streams = { git = "https://github.com/Terkwood/BUGOUT", version = "0.3.1", rev = "fdad420" }
+redis_streams = { git = "https://github.com/Terkwood/BUGOUT", version = "0.3.1", rev = "c9f9350" }
 env_logger = "0.7.1"
 log = "0.4.8"
 
