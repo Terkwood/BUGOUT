@@ -9,6 +9,26 @@ uuid = { version = "0.8.1", features = ["serde", "v4"] }
 bincode = "1.2.1"
 micro_model_moves = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
-redis_streams = { git = "https://github.com/Terkwood/BUGOUT", version = "0.2.0", rev = "fdad420" }
+redis_streams = { git = "https://github.com/Terkwood/BUGOUT", version = "0.3.1", rev = "fdad420" }
 env_logger = "0.7.1"
 log = "0.4.8"
+
+# tips https://www.philipdaniels.com/blog/2019/rust-release-mode-builds/
+[profile.release]
+# Enable link-time optimization, eliminates more code and inlines across crate boundaries.
+# Default: false
+lto = true
+
+# codegen-units of 1 gives best optimization, but disables parallel building.
+# Default: 16
+codegen-units = 1
+
+# Includes debug information in release builds. Necessary for profiling. Does not
+# slow down the executable.
+debug = true
+
+# The default optimization level is 3 for release mode builds.
+# 0 means disable optimization and is the default for debug mode buids.
+# (Setting opt-level=1 for debug builds is a good way of speeding them up a bit.)
+# "s" means optimize for size, "z" reduces size even more.
+opt-level = 3
