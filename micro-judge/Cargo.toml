@@ -1,6 +1,6 @@
 [package]
 name = "micro_judge"
-version = "0.1.10"
+version = "0.1.11"
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 
