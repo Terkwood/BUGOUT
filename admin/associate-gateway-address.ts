@@ -39,15 +39,15 @@ let addrAllocated = runOrExit({
 });
 
 const { AllocationId, PublicIp } = await parseProcessOutput(
-  await addrAllocated
+  await addrAllocated,
 );
 
 await runOrExit({
   cmd: awsEc2Cmd(
-    `associate-address --instance-id ${instanceFound} --allocation-id ${AllocationId}`
+    `associate-address --instance-id ${instanceFound} --allocation-id ${AllocationId}`,
   ),
 });
 
 console.log(
-  `Associated ${PublicIp} with instance ${instanceFound} (${TAG_NAME})`
+  `Associated ${PublicIp} with instance ${instanceFound} (${TAG_NAME})`,
 );

@@ -1,11 +1,13 @@
 #!/usr/bin/env -S deno run --allow-run --allow-net --allow-read --allow-env
 // SPDX-License-Identifier: MIT
 import { runOrExit, parseProcessOutput, awsEc2Cmd } from "./procs.ts";
-import { config as loadEnv } from "https://deno.land/x/dotenv@v0.3.0/mod.ts";
-
-console.log(loadEnv({ safe: true, export: true }));
 
 const KEY_NAME = Deno.env.get("KEY_NAME");
+
+if (!KEY_NAME) {
+  console.log("Must set KEY_NAME in env");
+  Deno.exit(1);
+}
 
 console.log(`Acting on key ${KEY_NAME}`);
 
@@ -55,12 +57,12 @@ if (addressesToRelease.length > 0) {
 
 if (instancesToTerminate.length > 0) {
   console.log(
-    `Instances to terminate: ${JSON.stringify(instancesToTerminate)}`
+    `Instances to terminate: ${JSON.stringify(instancesToTerminate)}`,
   );
 
   await runOrExit({
     cmd: awsEc2Cmd(
-      `terminate-instances --instance-ids ${instancesToTerminate.join(" ")}`
+      `terminate-instances --instance-ids ${instancesToTerminate.join(" ")}`,
     ),
   });
 }
