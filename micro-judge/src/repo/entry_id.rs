@@ -34,7 +34,7 @@ impl EntryIdRepo {
                 game_states_eid: XReadEntryId::from_str(&game_states_eid).unwrap_or_default(),
             }
         });
-        fetch_entry_ids(&self.pool, &redis_key, deser).map_err(|_| FetchErr::EIDRepo)
+        fetch_entry_ids(todo!(), &redis_key, deser).map_err(|_| FetchErr::EIDRepo)
     }
     pub fn update(
         &self,
@@ -46,7 +46,7 @@ impl EntryIdRepo {
             EntryIdType::MakeMoveCommand => MAKE_MOVES_EID.to_string(),
         });
         let redis_key = entry_ids_hash_key(&self.namespace);
-        update_entry_id(entry_id_type, entry_id, &self.pool, &redis_key, hf)
+        update_entry_id(entry_id_type, entry_id, todo!(), &redis_key, hf)
             .map_err(|_| WriteErr::EIDRepo)
     }
 }
