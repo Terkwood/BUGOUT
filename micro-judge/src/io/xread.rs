@@ -2,7 +2,6 @@ use super::conn_pool::Pool;
 use super::redis;
 use super::topics::*;
 use crate::model::*;
-use crate::repo::entry_id::AllEntryIds;
 use log::error;
 use redis_streams::*;
 use std::collections::HashMap;
@@ -13,7 +12,6 @@ const BLOCK_MSEC: u32 = 5000;
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, HashMap<String, Vec<u8>>>>>>;
 
 pub fn xread_sort(
-    entry_ids: &AllEntryIds,
     topics: &StreamTopics,
     pool: &Pool,
 ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
@@ -24,8 +22,8 @@ pub fn xread_sort(
         .arg("STREAMS")
         .arg(&topics.make_move_cmd)
         .arg(&topics.game_states_changelog)
-        .arg(entry_ids.make_moves_eid.to_string())
-        .arg(entry_ids.game_states_eid.to_string())
+        .arg(">")
+        .arg(">")
         .query::<XReadResult>(&mut *conn)?;
 
     let unsorted = deser(ser, &topics);

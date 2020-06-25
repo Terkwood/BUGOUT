@@ -5,7 +5,6 @@ use super::xread::*;
 use super::{FetchErr, WriteErr};
 use crate::game::*;
 use crate::model::*;
-use crate::repo::entry_id::{EntryIdRepo, EntryIdType};
 use crate::repo::game_states::GameStatesRepo;
 use std::rc::Rc;
 
@@ -13,63 +12,42 @@ use log::{error, info, warn};
 
 /// Spins too much.  See https://github.com/Terkwood/BUGOUT/issues/217
 pub fn process(opts: ProcessOpts) {
-    let eid_repo = opts.entry_id_repo;
-
     loop {
-        match eid_repo.fetch_all() {
-            Ok(entry_ids) => {
-                if let Ok(xread_result) = xread_sort(&entry_ids, &opts.topics, &opts.pool) {
-                    for time_ordered_event in xread_result {
-                        match time_ordered_event {
-                            (entry_id, StreamData::MM(mm)) => {
-                                let fetched_gs = opts.game_states_repo.fetch(&mm.game_id);
-                                match fetched_gs {
-                                    Ok(Some(game_state)) => match judge(&mm, &game_state) {
-                                        Judgement::Accepted(move_made) => {
-                                            if let Err(e) = xadd_move_accepted(
-                                                &move_made,
-                                                &opts.pool,
-                                                &opts.topics.move_accepted_ev,
-                                            ) {
-                                                error!("Error XADD to move_accepted {:?}", e)
-                                            }
-                                        }
-                                        Judgement::Rejected => error!("MOVE REJECTED: {:#?}", mm),
-                                    },
-                                    Ok(None) => warn!("No game state for game {}", mm.game_id.0),
-                                    Err(e) => error!("Deser error ({:?})!", e),
+        if let Ok(xread_result) = xread_sort(&opts.topics, &opts.pool) {
+            for time_ordered_event in xread_result {
+                match time_ordered_event {
+                    (entry_id, StreamData::MM(mm)) => {
+                        let fetched_gs = opts.game_states_repo.fetch(&mm.game_id);
+                        match fetched_gs {
+                            Ok(Some(game_state)) => match judge(&mm, &game_state) {
+                                Judgement::Accepted(move_made) => {
+                                    if let Err(e) = xadd_move_accepted(
+                                        &move_made,
+                                        &opts.pool,
+                                        &opts.topics.move_accepted_ev,
+                                    ) {
+                                        error!("Error XADD to move_accepted {:?}", e)
+                                    }
                                 }
-
-                                if let Err(e) =
-                                    eid_repo.update(EntryIdType::MakeMoveCommand, entry_id)
-                                {
-                                    error!("error updating make_move_cmd eid: {:?}", e)
-                                }
-                            }
-                            (entry_id, StreamData::GS(game_id, game_state)) => {
-                                if let Err(e) = &opts.game_states_repo.write(&game_id, &game_state)
-                                {
-                                    error!(
-                                        "error writing game state {:?}  -- advancing eid pointer",
-                                        e
-                                    )
-                                }
-
-                                if let Err(e) =
-                                    eid_repo.update(EntryIdType::GameStateChangelog, entry_id)
-                                {
-                                    error!("error updating changelog eid: {:?}", e);
-                                }
-
-                                info!("Tracking {:?} {:?}", game_id, game_state);
-                            }
+                                Judgement::Rejected => error!("MOVE REJECTED: {:#?}", mm),
+                            },
+                            Ok(None) => warn!("No game state for game {}", mm.game_id.0),
+                            Err(e) => error!("Deser error ({:?})!", e),
                         }
+
+                        todo!("XACK")
+                    }
+                    (entry_id, StreamData::GS(game_id, game_state)) => {
+                        if let Err(e) = &opts.game_states_repo.write(&game_id, &game_state) {
+                            error!("error writing game state {:?}  -- advancing eid pointer", e)
+                        }
+
+                        todo!("XACK");
+
+                        info!("Tracking {:?} {:?}", game_id, game_state);
                     }
                 }
             }
-            Err(FetchErr::Deser) => error!("Deserialization err in stream processing"),
-            Err(FetchErr::Redis(r)) => error!("Redis error in stream processing {:?}", r),
-            Err(FetchErr::EIDRepo) => error!("eid repo"),
         }
     }
 }
@@ -77,7 +55,6 @@ pub fn process(opts: ProcessOpts) {
 #[derive(Clone)]
 pub struct ProcessOpts {
     pub topics: StreamTopics,
-    pub entry_id_repo: EntryIdRepo,
     pub game_states_repo: GameStatesRepo,
     pub pool: Rc<Pool>,
 }
@@ -89,10 +66,6 @@ impl Default for ProcessOpts {
         ));
         ProcessOpts {
             topics: StreamTopics::default(),
-            entry_id_repo: EntryIdRepo {
-                namespace: namespace.clone(),
-                pool: pool.clone(),
-            },
             game_states_repo: GameStatesRepo {
                 namespace,
                 pool: pool.clone(),

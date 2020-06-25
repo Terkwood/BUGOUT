@@ -15,14 +15,11 @@ use conn_pool::Pool;
 use conn_pool::RedisHostUrl;
 use micro_judge::io::{conn_pool, redis_keys, stream, topics};
 use micro_judge::model::*;
-use micro_judge::repo::entry_id::{EntryIdRepo, EntryIdType};
 use micro_judge::repo::game_states::GameStatesRepo;
 use r2d2_redis::{r2d2, redis};
 use redis::Commands;
 use redis_keys::RedisKeyNamespace;
-use redis_streams::XReadEntryId;
 use std::panic;
-use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
 use std::thread;
 use std::time::Duration;
@@ -57,10 +54,6 @@ fn test_opts() -> stream::ProcessOpts {
             make_move_cmd: TEST_MAKE_MOVE_CMD_TOPIC.to_string(),
             game_states_changelog: TEST_GAME_STATES_TOPIC.to_string(),
             move_accepted_ev: TEST_MOVE_ACCEPTED_EV_TOPIC.to_string(),
-        },
-        entry_id_repo: EntryIdRepo {
-            namespace: test_namespace(),
-            pool: pool.clone(),
         },
         game_states_repo: GameStatesRepo {
             namespace: test_namespace(),
@@ -97,16 +90,9 @@ fn test_emitted_game_states() {
         test_pool.clone(),
     );
 
-    let eid_repo = EntryIdRepo {
-        namespace: test_namespace(),
-        pool: Rc::new(test_pool.clone()),
-    };
     thread::spawn(move || stream::process(test_opts()));
 
     let mut conn = test_pool.get().unwrap();
-
-    // Check precondition
-    assert_eq!(eid_repo.fetch_all().unwrap().game_states_eid.millis_time, 0);
 
     let expected_game_state = GameState::default();
     redis::cmd("XADD")
@@ -142,18 +128,6 @@ fn test_emitted_game_states() {
     let actual_game_state = GameState::from(&f);
     assert_eq!(expected_game_state, actual_game_state.unwrap());
     retries = INIT_RETRIES;
-    let mut time_updated = false;
-    while retries > 0 {
-        if let Ok(entry_ids) = eid_repo.fetch_all() {
-            time_updated = entry_ids.game_states_eid.millis_time > 0;
-            if time_updated {
-                break;
-            }
-        }
-        thread::sleep(Duration::from_millis(WAIT_MS));
-        retries -= 1;
-    }
-    assert!(time_updated);
 
     clean_streams(streams_to_clean, &test_pool);
     clean_keys(keys_to_clean, &test_pool);
@@ -185,21 +159,9 @@ fn test_moves_processed() {
         test_pool.clone(),
     );
 
-    let eid_repo = EntryIdRepo {
-        namespace: test_namespace(),
-        pool: Rc::new(test_pool.clone()),
-    };
     thread::spawn(move || stream::process(test_opts()));
 
     let mut conn = test_pool.get().unwrap();
-
-    // Clear entry ids in redis
-    eid_repo
-        .update(EntryIdType::GameStateChangelog, XReadEntryId::default())
-        .unwrap();
-    eid_repo
-        .update(EntryIdType::MakeMoveCommand, XReadEntryId::default())
-        .unwrap();
 
     let initial_game_state = GameState::default();
     redis::cmd("XADD")

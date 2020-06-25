@@ -794,7 +794,7 @@ dependencies = [
 [[package]]
 name = "redis"
 version = "0.16.1-alpha.0"
-source = "git+https://github.com/Terkwood/redis-rs?rev=0d126f54d6970b931594bf677b09a368af70617d#0d126f54d6970b931594bf677b09a368af70617d"
+source = "git+https://github.com/mitsuhiko/redis-rs?rev=aaecd6734a4c1f0bc59c96429d0e2102348e23ef#aaecd6734a4c1f0bc59c96429d0e2102348e23ef"
 dependencies = [
  "async-std",
  "async-trait",
@@ -822,8 +822,8 @@ dependencies = [
 
 [[package]]
 name = "redis_streams"
-version = "0.3.1"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=c9f9350#c9f9350057b87fb59539c6004717cba0f8e628e6"
+version = "0.3.2"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=tinker/streams#f1e7e0624bff97b7c35b7ffe87b8772cb734a0ba"
 dependencies = [
  "redis 0.16.1-alpha.0",
  "uuid",
