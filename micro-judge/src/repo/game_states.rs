@@ -1,21 +1,20 @@
-use crate::io::conn_pool::Pool;
 use crate::io::redis_keys::{game_states_key, RedisKeyNamespace};
 use crate::io::{FetchErr, WriteErr};
 
-use crate::io::redis::Commands;
 use crate::model::{GameId, GameState};
+use redis::{Client, Commands};
 
 const EXPIRY_SECS: usize = 86400;
 
 #[derive(Clone, Debug)]
 pub struct GameStatesRepo {
     pub namespace: RedisKeyNamespace,
-    pub pool: std::rc::Rc<Pool>,
+    pub client: std::rc::Rc<Client>,
 }
 
 impl GameStatesRepo {
     pub fn fetch(&self, game_id: &GameId) -> Result<Option<GameState>, FetchErr> {
-        let mut conn = self.pool.get().unwrap();
+        let mut conn = self.client.get_connection().unwrap();
         let key = game_states_key(&self.namespace, &game_id);
         let bin_data: Option<Vec<u8>> = conn.get(&key)?;
         let r = if let Some(b) = bin_data {
@@ -30,7 +29,7 @@ impl GameStatesRepo {
     }
 
     pub fn write(&self, game_id: &GameId, game_state: &GameState) -> Result<String, WriteErr> {
-        let mut conn = self.pool.get().unwrap();
+        let mut conn = self.client.get_connection().unwrap();
 
         let key = game_states_key(&self.namespace, &game_id);
         let done = conn.set(&key, game_state.serialize()?)?;

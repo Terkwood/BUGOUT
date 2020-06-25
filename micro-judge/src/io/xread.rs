@@ -1,8 +1,7 @@
-use super::conn_pool::Pool;
-use super::redis;
 use super::topics::*;
 use crate::model::*;
 use log::error;
+use redis::{Client, Commands};
 use redis_streams::*;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -17,9 +16,9 @@ pub fn create_consumer_group(_topics: &StreamTopics) {
 
 pub fn xread_sort(
     topics: &StreamTopics,
-    pool: &Pool,
+    client: &Client,
 ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
-    let mut conn = pool.get().unwrap();
+    let mut conn = client.get_connection().expect("redis conn");
     let ser = redis::cmd("XREAD")
         .arg("BLOCK")
         .arg(&BLOCK_MSEC.to_string())
@@ -28,7 +27,7 @@ pub fn xread_sort(
         .arg(&topics.game_states_changelog)
         .arg(">")
         .arg(">")
-        .query::<XReadResult>(&mut *conn)?;
+        .query::<XReadResult>(&mut conn)?;
 
     let unsorted = deser(ser, &topics);
     let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();

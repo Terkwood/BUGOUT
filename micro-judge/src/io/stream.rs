@@ -1,4 +1,3 @@
-use super::conn_pool::Pool;
 use super::redis_keys::RedisKeyNamespace;
 use super::topics::*;
 use super::xread::*;
@@ -6,6 +5,7 @@ use super::WriteErr;
 use crate::game::*;
 use crate::model::*;
 use crate::repo::game_states::GameStatesRepo;
+use redis::Client;
 use std::rc::Rc;
 
 use log::{error, info, warn};
@@ -14,7 +14,7 @@ use log::{error, info, warn};
 pub fn process(opts: ProcessOpts) {
     create_consumer_group(&opts.topics);
     loop {
-        if let Ok(xread_result) = xread_sort(&opts.topics, &opts.pool) {
+        if let Ok(xread_result) = xread_sort(&opts.topics, &opts.client) {
             for time_ordered_event in xread_result {
                 match time_ordered_event {
                     (_entry_id, StreamData::MM(mm)) => {
@@ -24,7 +24,7 @@ pub fn process(opts: ProcessOpts) {
                                 Judgement::Accepted(move_made) => {
                                     if let Err(e) = xadd_move_accepted(
                                         &move_made,
-                                        &opts.pool,
+                                        &opts.client,
                                         &opts.topics.move_accepted_ev,
                                     ) {
                                         error!("Error XADD to move_accepted {:?}", e)
@@ -57,32 +57,30 @@ pub fn process(opts: ProcessOpts) {
 pub struct ProcessOpts {
     pub topics: StreamTopics,
     pub game_states_repo: GameStatesRepo,
-    pub pool: Rc<Pool>,
+    pub client: Rc<Client>,
 }
 impl Default for ProcessOpts {
     fn default() -> Self {
         let namespace = RedisKeyNamespace::default();
-        let pool = Rc::new(super::conn_pool::create(
-            super::conn_pool::RedisHostUrl::default(),
-        ));
+        let client = Rc::new(redis::Client::open("redis://redis").expect("client"));
         ProcessOpts {
             topics: StreamTopics::default(),
             game_states_repo: GameStatesRepo {
                 namespace,
-                pool: pool.clone(),
+                client: client.clone(),
             },
-            pool,
+            client,
         }
     }
 }
 
 fn xadd_move_accepted(
     move_made: &MoveMade,
-    pool: &Pool,
+    client: &Client,
     stream_name: &str,
 ) -> Result<String, WriteErr> {
-    let mut conn = pool.get().unwrap();
-    Ok(super::redis::cmd("XADD")
+    let mut conn = client.get_connection().unwrap();
+    Ok(redis::cmd("XADD")
         .arg(stream_name)
         .arg("MAXLEN")
         .arg("~")
@@ -92,5 +90,5 @@ fn xadd_move_accepted(
         .arg(move_made.game_id.0.to_string())
         .arg("data")
         .arg(move_made.serialize()?)
-        .query::<String>(&mut *conn)?)
+        .query::<String>(&mut conn)?)
 }
