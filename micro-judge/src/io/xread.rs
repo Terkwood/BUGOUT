@@ -11,6 +11,10 @@ use uuid::Uuid;
 const BLOCK_MSEC: u32 = 5000;
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, HashMap<String, Vec<u8>>>>>>;
 
+pub fn create_consumer_group(_topics: &StreamTopics) {
+    todo!()
+}
+
 pub fn xread_sort(
     topics: &StreamTopics,
     pool: &Pool,

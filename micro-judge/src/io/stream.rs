@@ -2,7 +2,7 @@ use super::conn_pool::Pool;
 use super::redis_keys::RedisKeyNamespace;
 use super::topics::*;
 use super::xread::*;
-use super::{FetchErr, WriteErr};
+use super::WriteErr;
 use crate::game::*;
 use crate::model::*;
 use crate::repo::game_states::GameStatesRepo;
@@ -12,11 +12,12 @@ use log::{error, info, warn};
 
 /// Spins too much.  See https://github.com/Terkwood/BUGOUT/issues/217
 pub fn process(opts: ProcessOpts) {
+    create_consumer_group(&opts.topics);
     loop {
         if let Ok(xread_result) = xread_sort(&opts.topics, &opts.pool) {
             for time_ordered_event in xread_result {
                 match time_ordered_event {
-                    (entry_id, StreamData::MM(mm)) => {
+                    (_entry_id, StreamData::MM(mm)) => {
                         let fetched_gs = opts.game_states_repo.fetch(&mm.game_id);
                         match fetched_gs {
                             Ok(Some(game_state)) => match judge(&mm, &game_state) {
@@ -37,7 +38,7 @@ pub fn process(opts: ProcessOpts) {
 
                         todo!("XACK")
                     }
-                    (entry_id, StreamData::GS(game_id, game_state)) => {
+                    (_entry_id, StreamData::GS(game_id, game_state)) => {
                         if let Err(e) = &opts.game_states_repo.write(&game_id, &game_state) {
                             error!("error writing game state {:?}  -- advancing eid pointer", e)
                         }

@@ -127,7 +127,6 @@ fn test_emitted_game_states() {
     assert!(f.len() > 0);
     let actual_game_state = GameState::from(&f);
     assert_eq!(expected_game_state, actual_game_state.unwrap());
-    retries = INIT_RETRIES;
 
     clean_streams(streams_to_clean, &test_pool);
     clean_keys(keys_to_clean, &test_pool);
