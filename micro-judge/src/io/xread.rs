@@ -1,13 +1,13 @@
 use super::topics::*;
 use crate::model::*;
 use log::error;
+use redis::streams::StreamReadOptions;
 use redis::{Client, Commands};
 use redis_streams::*;
 use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
-
-const BLOCK_MSEC: u32 = 5000;
+const BLOCK_MS: usize = 5000;
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, HashMap<String, Vec<u8>>>>>>;
 
 pub fn create_consumer_group(_topics: &StreamTopics) {
@@ -19,15 +19,14 @@ pub fn xread_sort(
     client: &Client,
 ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
     let mut conn = client.get_connection().expect("redis conn");
-    let ser = redis::cmd("XREAD")
-        .arg("BLOCK")
-        .arg(&BLOCK_MSEC.to_string())
-        .arg("STREAMS")
-        .arg(&topics.make_move_cmd)
-        .arg(&topics.game_states_changelog)
-        .arg(">")
-        .arg(">")
-        .query::<XReadResult>(&mut conn)?;
+    let opts = StreamReadOptions::default()
+        .block(BLOCK_MS)
+        .group("micro-judge", "singleton");
+    let ser = conn.xread_options(
+        &[&topics.make_move_cmd, &topics.game_states_changelog],
+        &[">", ">"],
+        opts,
+    )?;
 
     let unsorted = deser(ser, &topics);
     let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
