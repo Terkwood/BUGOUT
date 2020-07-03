@@ -36,14 +36,14 @@ pub fn process(opts: ProcessOpts) {
                             Err(e) => error!("Deser error ({:?})!", e),
                         }
 
-                        todo!("XACK")
+                        ack(&opts.client);
                     }
                     (_entry_id, StreamData::GS(game_id, game_state)) => {
                         if let Err(e) = &opts.game_states_repo.write(&game_id, &game_state) {
                             error!("error writing game state {:?}  -- advancing eid pointer", e)
                         }
 
-                        todo!("XACK");
+                        ack(&opts.client);
 
                         info!("Tracking {:?} {:?}", game_id, game_state);
                     }

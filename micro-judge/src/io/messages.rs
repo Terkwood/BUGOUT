@@ -7,14 +7,16 @@ use redis_streams::*;
 use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
+
 const BLOCK_MS: usize = 5000;
+
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, HashMap<String, Vec<u8>>>>>>;
 
-pub fn create_consumer_group(_topics: &StreamTopics) {
-    todo!()
+#[derive(Clone)]
+pub enum StreamData {
+    MM(MakeMoveCommand),
+    GS(GameId, GameState),
 }
-
-pub fn ack() {}
 
 pub fn read_sorted(
     topics: &StreamTopics,
@@ -44,11 +46,14 @@ pub fn read_sorted(
     Ok(answer)
 }
 
-#[derive(Clone)]
-pub enum StreamData {
-    MM(MakeMoveCommand),
-    GS(GameId, GameState),
+pub fn create_consumer_group(_topics: &StreamTopics) {
+    todo!()
 }
+
+pub fn ack(_client: &Client) {
+    todo!("fix args")
+}
+
 fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntryId, StreamData> {
     let mut stream_data = HashMap::new();
     let make_move_topic = &topics.make_move_cmd;
