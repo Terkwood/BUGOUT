@@ -9,14 +9,10 @@
 /// cargo watch -x "test -- --test-threads=1"
 /// ```
 extern crate micro_judge;
-use micro_judge::io::r2d2_redis;
 
-use conn_pool::Pool;
-use conn_pool::RedisHostUrl;
-use micro_judge::io::{conn_pool, redis_keys, stream, topics};
+use micro_judge::io::{redis_keys, stream, topics};
 use micro_judge::model::*;
 use micro_judge::repo::game_states::GameStatesRepo;
-use r2d2_redis::{r2d2, redis};
 use redis::Commands;
 use redis_keys::RedisKeyNamespace;
 use std::panic;
@@ -39,9 +35,10 @@ const TEST_MOVE_ACCEPTED_EV_TOPIC: &str = "bugtest-move-accepted-ev";
 
 static FIRST_TEST_COMPLETE: AtomicBool = AtomicBool::new(false);
 
+/*
 fn redis_pool() -> r2d2::Pool<r2d2_redis::RedisConnectionManager> {
     conn_pool::create(RedisHostUrl("redis://localhost".to_string()))
-}
+}*/
 
 fn test_namespace() -> RedisKeyNamespace {
     RedisKeyNamespace("BUGTEST".to_string())

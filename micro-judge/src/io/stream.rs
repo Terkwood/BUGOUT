@@ -1,6 +1,6 @@
+use super::messages::*;
 use super::redis_keys::RedisKeyNamespace;
 use super::topics::*;
-use super::xread::*;
 use super::WriteErr;
 use crate::game::*;
 use crate::model::*;
@@ -14,7 +14,7 @@ use log::{error, info, warn};
 pub fn process(opts: ProcessOpts) {
     create_consumer_group(&opts.topics);
     loop {
-        if let Ok(xread_result) = xread_sort(&opts.topics, &opts.client) {
+        if let Ok(xread_result) = read_sorted(&opts.topics, &opts.client) {
             for time_ordered_event in xread_result {
                 match time_ordered_event {
                     (_entry_id, StreamData::MM(mm)) => {

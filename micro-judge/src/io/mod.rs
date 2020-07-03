@@ -1,9 +1,8 @@
 pub mod redis_keys;
 
-mod ack;
+pub mod messages;
 pub mod stream;
 pub mod topics;
-pub mod xread;
 
 #[derive(Debug)]
 pub enum WriteErr {

@@ -14,7 +14,9 @@ pub fn create_consumer_group(_topics: &StreamTopics) {
     todo!()
 }
 
-pub fn xread_sort(
+pub fn ack() {}
+
+pub fn read_sorted(
     topics: &StreamTopics,
     client: &Client,
 ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
