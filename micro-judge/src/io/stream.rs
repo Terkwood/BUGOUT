@@ -15,9 +15,11 @@ pub fn process(opts: ProcessOpts) {
     create_consumer_group(&opts.topics);
     loop {
         if let Ok(xread_result) = read_sorted(&opts.topics, &opts.client) {
+            let mut mm_processed = vec![];
+            let mut gs_processed = vec![];
             for time_ordered_event in xread_result {
                 match time_ordered_event {
-                    (_entry_id, StreamData::MM(mm)) => {
+                    (entry_id, StreamData::MM(mm)) => {
                         let fetched_gs = opts.game_states_repo.fetch(&mm.game_id);
                         match fetched_gs {
                             Ok(Some(game_state)) => match judge(&mm, &game_state) {
@@ -36,18 +38,29 @@ pub fn process(opts: ProcessOpts) {
                             Err(e) => error!("Deser error ({:?})!", e),
                         }
 
-                        ack(&opts.client);
+                        mm_processed.push(entry_id);
                     }
-                    (_entry_id, StreamData::GS(game_id, game_state)) => {
+                    (entry_id, StreamData::GS(game_id, game_state)) => {
                         if let Err(e) = &opts.game_states_repo.write(&game_id, &game_state) {
                             error!("error writing game state {:?}  -- advancing eid pointer", e)
                         }
 
-                        ack(&opts.client);
+                        gs_processed.push(entry_id);
 
                         info!("Tracking {:?} {:?}", game_id, game_state);
                     }
                 }
+            }
+
+            if !mm_processed.is_empty() {
+                ack(&opts.topics.make_move_cmd, &mm_processed, &opts.client);
+            }
+            if !gs_processed.is_empty() {
+                ack(
+                    &opts.topics.game_states_changelog,
+                    &gs_processed,
+                    &opts.client,
+                )
             }
         }
     }

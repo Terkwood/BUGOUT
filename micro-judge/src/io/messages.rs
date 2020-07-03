@@ -50,8 +50,8 @@ pub fn create_consumer_group(_topics: &StreamTopics) {
     todo!()
 }
 
-pub fn ack(_client: &Client) {
-    todo!("fix args")
+pub fn ack(key: &str, ids: &[XReadEntryId], _client: &Client) {
+    todo!()
 }
 
 fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntryId, StreamData> {
