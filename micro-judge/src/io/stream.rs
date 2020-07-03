@@ -12,7 +12,7 @@ use log::{error, info, warn};
 
 /// Spins too much.  See https://github.com/Terkwood/BUGOUT/issues/217
 pub fn process(opts: ProcessOpts) {
-    create_consumer_group(&opts.topics);
+    let group = create_consumer_group(&opts.topics);
     loop {
         if let Ok(xread_result) = read_sorted(&opts.topics, &opts.client) {
             let mut mm_processed = vec![];
@@ -53,14 +53,24 @@ pub fn process(opts: ProcessOpts) {
             }
 
             if !mm_processed.is_empty() {
-                ack(&opts.topics.make_move_cmd, &mm_processed, &opts.client);
+                if let Err(e) = ack(
+                    &opts.topics.make_move_cmd,
+                    &group,
+                    &mm_processed,
+                    &opts.client,
+                ) {
+                    error!("ack in make move failed {:?} ", e)
+                }
             }
             if !gs_processed.is_empty() {
-                ack(
+                if let Err(e) = ack(
                     &opts.topics.game_states_changelog,
+                    &group,
                     &gs_processed,
                     &opts.client,
-                )
+                ) {
+                    error!("ack in game states failed {:?} ", e);
+                }
             }
         }
     }

@@ -46,12 +46,20 @@ pub fn read_sorted(
     Ok(answer)
 }
 
-pub fn create_consumer_group(_topics: &StreamTopics) {
+pub fn create_consumer_group(_topics: &StreamTopics) -> String {
     todo!()
 }
 
-pub fn ack(key: &str, ids: &[XReadEntryId], _client: &Client) {
-    todo!()
+pub fn ack(
+    key: &str,
+    group: &str,
+    ids: &[XReadEntryId],
+    client: &Client,
+) -> Result<(), redis::RedisError> {
+    let mut conn = client.get_connection().expect("conn");
+    let idstrs: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
+    let _: usize = conn.xack(key, group, &idstrs)?;
+    Ok(())
 }
 
 fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntryId, StreamData> {
