@@ -1,6 +1,6 @@
 use super::topics::*;
 use crate::model::*;
-use log::error;
+use log::{error, warn};
 use redis::streams::StreamReadOptions;
 use redis::{Client, Commands};
 use redis_streams::*;
@@ -46,8 +46,25 @@ pub fn read_sorted(
     Ok(answer)
 }
 
-pub fn create_consumer_group(_topics: &StreamTopics) -> String {
-    todo!()
+const GROUP_NAME: &str = "micro-judge";
+pub fn create_consumer_groups(topics: &StreamTopics, client: &Client) -> String {
+    let mut conn = client.get_connection().expect("group create conn");
+    let mm: Result<(), _> = conn.xgroup_create(&topics.make_move_cmd, GROUP_NAME, "$");
+    if let Err(e) = mm {
+        warn!(
+            "Ignoring error creating MakeMoveCmd consumer group (it probably exists already) {:?}",
+            e
+        );
+    }
+    let gs: Result<(), _> = conn.xgroup_create(&topics.game_states_changelog, GROUP_NAME, "$");
+    if let Err(e) = gs {
+        warn!(
+            "Ignoring error creating GameStates consumer group (it probably exists already) {:?}",
+            e
+        );
+    }
+
+    GROUP_NAME.to_string()
 }
 
 pub fn ack(

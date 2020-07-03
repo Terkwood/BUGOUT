@@ -12,7 +12,7 @@ use log::{error, info, warn};
 
 /// Spins too much.  See https://github.com/Terkwood/BUGOUT/issues/217
 pub fn process(opts: ProcessOpts) {
-    let group = create_consumer_group(&opts.topics);
+    let group = create_consumer_groups(&opts.topics, &opts.client);
     loop {
         if let Ok(xread_result) = read_sorted(&opts.topics, &opts.client) {
             let mut mm_processed = vec![];
