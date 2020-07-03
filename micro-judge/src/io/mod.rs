@@ -1,5 +1,6 @@
 pub mod redis_keys;
 
+mod ack;
 pub mod stream;
 pub mod topics;
 pub mod xread;

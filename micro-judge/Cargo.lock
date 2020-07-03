@@ -433,7 +433,7 @@ dependencies = [
  "env_logger",
  "log",
  "micro_model_moves",
- "redis",
+ "redis 0.16.1-alpha.0 (git+https://github.com/mitsuhiko/redis-rs)",
  "redis_streams",
  "uuid",
 ]
@@ -671,7 +671,7 @@ dependencies = [
 [[package]]
 name = "redis"
 version = "0.16.1-alpha.0"
-source = "git+https://github.com/mitsuhiko/redis-rs?rev=aaecd6734a4c1f0bc59c96429d0e2102348e23ef#aaecd6734a4c1f0bc59c96429d0e2102348e23ef"
+source = "git+https://github.com/mitsuhiko/redis-rs#6df31842bc8edbecb2808e4bc98fbe4fa28bbcce"
 dependencies = [
  "async-std",
  "async-trait",
@@ -690,11 +690,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "redis"
+version = "0.16.1-alpha.0"
+source = "git+https://github.com/mitsuhiko/redis-rs?rev=aaecd6734a4c1f0bc59c96429d0e2102348e23ef#aaecd6734a4c1f0bc59c96429d0e2102348e23ef"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "bytes",
+ "combine",
+ "dtoa",
+ "futures-util",
+ "itoa",
+ "percent-encoding",
+ "pin-project-lite",
+ "sha1",
+ "tokio",
+ "tokio-util",
+ "url",
+]
+
+[[package]]
 name = "redis_streams"
 version = "0.3.2"
 source = "git+https://github.com/Terkwood/BUGOUT?branch=tinker/streams#7a6f9ca6961f0efe349e3b3c4c10314b69a19208"
 dependencies = [
- "redis",
+ "redis 0.16.1-alpha.0 (git+https://github.com/mitsuhiko/redis-rs?rev=aaecd6734a4c1f0bc59c96429d0e2102348e23ef)",
  "uuid",
 ]
 

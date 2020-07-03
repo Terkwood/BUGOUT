@@ -1,18 +1,17 @@
 [package]
-name = "micro_judge"
-version = "0.1.11"
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
+name = "micro_judge"
+version = "0.1.11"
 
 [dependencies]
-uuid = { version = "0.8.1", features = ["serde", "v4"] }
 bincode = "1.2.1"
-micro_model_moves = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
-redis = { git = "https://github.com/mitsuhiko/redis-rs", rev = "aaecd6734a4c1f0bc59c96429d0e2102348e23ef", features = ["r2d2"] }
-# TODO below
-redis_streams = { git = "https://github.com/Terkwood/BUGOUT", branch = "tinker/streams" }
 env_logger = "0.7.1"
 log = "0.4.8"
+micro_model_moves = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
+redis = {git = "https://github.com/mitsuhiko/redis-rs", features = ["r2d2"]}
+redis_streams = {git = "https://github.com/Terkwood/BUGOUT", branch = "tinker/streams"}
+uuid = {version = "0.8.1", features = ["serde", "v4"]}
 
 # tips https://www.philipdaniels.com/blog/2019/rust-release-mode-builds/
 [profile.release]
