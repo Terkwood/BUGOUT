@@ -1,11 +1,9 @@
 pub mod topics;
 mod xread;
 
-use crate::repo::entry_id_repo::EntryIdType;
 use crate::repo::*;
 use crate::Components;
 use micro_model_moves::*;
-use redis_conn_pool::redis;
 pub use topics::StreamTopics;
 use xread::*;
 
@@ -14,68 +12,50 @@ use log::{error, info};
 pub fn process(topics: StreamTopics, components: &crate::Components) {
     info!("Processing {:#?}", topics);
     loop {
-        match entry_id_repo::fetch_all(components) {
-            Ok(entry_ids) => match xread_sorted(entry_ids, &topics, &components.pool) {
-                Ok(xrr) => {
-                    for time_ordered_event in xrr {
-                        match time_ordered_event {
-                            (entry_id, StreamData::MA(move_acc)) => {
-                                match update_game_state(&move_acc, &components) {
-                                    Err(e) => error!("err updating game state {:?}", e),
-                                    Ok(gs) => {
-                                        // These next two ops are concurrent in the kafka impl
-                                        if let Err(e) = xadd_game_states_changelog(
-                                            &move_acc.game_id,
-                                            gs,
-                                            &topics.game_states_changelog,
-                                            components,
-                                        ) {
-                                            error!("could not XADD to game state changelog {:?}", e)
-                                        }
-
-                                        if let Err(e) = xadd_move_made(
-                                            &move_acc,
-                                            &topics.move_made_ev,
-                                            &components,
-                                        ) {
-                                            error!("err in XADD move made {:?}", e)
-                                        }
-
-                                        if let Err(e) = entry_id_repo::update(
-                                            EntryIdType::MoveAcceptedEvent,
-                                            entry_id,
-                                            &components,
-                                        ) {
-                                            error!("err saving entry id for move accepted {:?}", e)
-                                        }
+        match read_sorted(&topics, &components.client) {
+            Ok(xrr) => {
+                for time_ordered_event in xrr {
+                    match time_ordered_event {
+                        (entry_id, StreamData::MA(move_acc)) => {
+                            match update_game_state(&move_acc, &components) {
+                                Err(e) => error!("err updating game state {:?}", e),
+                                Ok(gs) => {
+                                    // These next two ops are concurrent in the kafka impl
+                                    if let Err(e) = xadd_game_states_changelog(
+                                        &move_acc.game_id,
+                                        gs,
+                                        &topics.game_states_changelog,
+                                        components,
+                                    ) {
+                                        error!("could not XADD to game state changelog {:?}", e)
                                     }
-                                }
-                            }
-                            (entry_id, StreamData::GS(game_id, gs)) => {
-                                if let Err(e) = game_states_repo::write(&game_id, &gs, &components)
-                                {
-                                    error!("Error saving game state {:#?}", e)
-                                } else {
-                                    info!("wrote game state: {:?} {:?}", game_id, gs);
-                                }
 
-                                if let Err(e) = entry_id_repo::update(
-                                    EntryIdType::GameStateChangelog,
-                                    entry_id,
-                                    &components,
-                                ) {
-                                    error!("Error saving entry ID for game state {:#?}", e)
+                                    if let Err(e) =
+                                        xadd_move_made(&move_acc, &topics.move_made_ev, &components)
+                                    {
+                                        error!("err in XADD move made {:?}", e)
+                                    }
+
+                                    todo!("push message ID to vec")
                                 }
                             }
                         }
+                        (entry_id, StreamData::GS(game_id, gs)) => {
+                            if let Err(e) = game_states_repo::write(&game_id, &gs, &components) {
+                                error!("Error saving game state {:#?}", e)
+                            } else {
+                                info!("wrote game state: {:?} {:?}", game_id, gs);
+                            }
+
+                            todo!("push message ID to vec")
+                        }
                     }
                 }
-                Err(e) => error!("Redis err in xread: {:#?}", e),
-            },
-            Err(FetchErr::Deser) => error!("Unable to deserialize entry IDs"),
-            Err(FetchErr::Redis(r)) => error!("Redis err {:#?}", r),
-            Err(FetchErr::EIDRepo) => error!("Error with EID repo"),
+            }
+            Err(e) => error!("Redis err in xread: {:#?}", e),
         }
+
+        todo!("xack everything from vecs")
     }
 }
 
@@ -132,7 +112,8 @@ fn xadd_move_made(
     stream_name: &str,
     components: &Components,
 ) -> Result<String, WriteErr> {
-    let mut conn = components.pool.get().unwrap();
+    let mut conn = components.client.get_connection().expect("xadd conn");
+    todo!("rewrite using new API");
     Ok(redis::cmd("XADD")
         .arg(stream_name)
         .arg("MAXLEN")
@@ -143,7 +124,7 @@ fn xadd_move_made(
         .arg(mm.game_id.0.to_string())
         .arg("data")
         .arg(mm.serialize()?)
-        .query::<String>(&mut *conn)?)
+        .query::<String>(&mut conn)?)
 }
 
 fn xadd_game_states_changelog(
@@ -152,7 +133,8 @@ fn xadd_game_states_changelog(
     stream_name: &str,
     components: &Components,
 ) -> Result<String, WriteErr> {
-    let mut conn = components.pool.get().unwrap();
+    todo!("rewrite using new api");
+    let mut conn = components.client.get_connection().expect("xadd gs conn");
     Ok(redis::cmd("XADD")
         .arg(stream_name)
         .arg("MAXLEN")
@@ -163,5 +145,5 @@ fn xadd_game_states_changelog(
         .arg(game_id.0.to_string())
         .arg("data")
         .arg(gs.serialize()?)
-        .query::<String>(&mut *conn)?)
+        .query::<String>(&mut conn)?)
 }

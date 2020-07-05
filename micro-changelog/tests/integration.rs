@@ -1,8 +1,6 @@
 extern crate micro_changelog;
 
 use micro_changelog::micro_model_moves::*;
-use micro_changelog::redis_conn_pool;
-use micro_changelog::redis_conn_pool::*;
 use micro_changelog::repo::redis_key::*;
 use micro_changelog::stream::*;
 use micro_changelog::*;
@@ -35,6 +33,8 @@ fn test_process_move() {
         keys_to_clean.clone(),
         pool.clone(),
     );
+
+    todo!("create consumer group");
 
     thread::spawn(move || stream::process(test_topics(), &test_components(&test_pool())));
     thread::sleep(Duration::from_millis(100));

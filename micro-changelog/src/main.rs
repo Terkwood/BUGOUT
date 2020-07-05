@@ -9,5 +9,6 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 fn main() {
     env_logger::init();
     info!("🔢 {}", VERSION);
+    todo!("create consumer group");
     stream::process(StreamTopics::default(), &Components::default())
 }

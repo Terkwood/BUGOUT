@@ -1,4 +1,3 @@
-pub mod entry_id_repo;
 pub mod game_states_repo;
 pub mod redis_key;
 

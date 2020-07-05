@@ -1,9 +1,7 @@
 use super::StreamTopics;
 use crate::redis;
-use crate::repo::entry_id_repo::AllEntryIds;
 use log::{error, warn};
 use micro_model_moves::{GameId, GameState, MoveMade};
-use redis_conn_pool::Pool;
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -14,21 +12,21 @@ const BLOCK_MSEC: u32 = 5000;
 pub type XReadResult =
     Vec<HashMap<String, Vec<HashMap<String, (String, String, String, Option<Vec<u8>>)>>>>;
 
-pub fn xread_sorted(
-    entry_ids: AllEntryIds,
+pub fn read_sorted(
     topics: &StreamTopics,
-    pool: &Pool,
+    client: &redis::Client,
 ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
-    let mut conn = pool.get().unwrap();
+    let mut conn = client.get_connection().expect("conn");
+    todo!("rewrite using new API");
     let ser = redis::cmd("XREAD")
         .arg("BLOCK")
         .arg(&BLOCK_MSEC.to_string())
         .arg("STREAMS")
         .arg(&topics.move_accepted_ev)
         .arg(&topics.game_states_changelog)
-        .arg(entry_ids.move_accepted_eid.to_string())
-        .arg(entry_ids.game_states_eid.to_string())
-        .query::<XReadResult>(&mut *conn)?;
+        .arg(">")
+        .arg(">")
+        .query::<XReadResult>(&mut conn)?;
 
     let unsorted = deser(ser, &topics);
     let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();

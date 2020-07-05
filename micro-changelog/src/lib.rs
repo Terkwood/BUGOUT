@@ -2,29 +2,28 @@ extern crate bincode;
 extern crate env_logger;
 extern crate log;
 pub extern crate micro_model_moves;
+extern crate redis;
 extern crate redis_streams;
 
 mod model;
 pub mod repo;
 pub mod stream;
 
-pub use redis_conn_pool;
-pub use redis_conn_pool::{r2d2, r2d2_redis, redis, RedisHostUrl};
-use repo::redis_key::KeyProvider;
-
 use log::info;
+use repo::redis_key::KeyProvider;
+use std::rc::Rc;
 
 pub struct Components {
-    pub pool: redis_conn_pool::Pool,
+    pub client: Rc<redis::Client>,
     pub redis_key_provider: KeyProvider,
 }
 
 impl Default for Components {
     fn default() -> Self {
-        let pool = redis_conn_pool::create(RedisHostUrl::default());
+        let client = Rc::new(redis::Client::open("redis://redis").expect("client"));
         info!("Connected to redis");
         Components {
-            pool,
+            client,
             redis_key_provider: KeyProvider::default(),
         }
     }
