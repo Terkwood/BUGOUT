@@ -47,9 +47,9 @@ fn test_namespace() -> RedisKeyNamespace {
     RedisKeyNamespace("BUGTEST".to_string())
 }
 
-fn test_opts() -> stream::ProcessOpts {
+fn test_opts() -> stream::StreamOpts {
     let client = rc_redis_client();
-    stream::ProcessOpts {
+    stream::StreamOpts {
         topics: StreamTopics {
             make_move_cmd: TEST_MAKE_MOVE_CMD_TOPIC.to_string(),
             game_states_changelog: TEST_GAME_STATES_TOPIC.to_string(),
@@ -86,6 +86,9 @@ fn test_emitted_game_states() {
         redis_keys::entry_ids_hash_key(&test_namespace()),
     ];
     panic_cleanup(streams_to_clean.clone(), keys_to_clean.clone());
+
+    let to = test_opts();
+    stream::create_consumer_groups(&to.topics, &to.client);
 
     thread::spawn(move || stream::process(test_opts()));
 
@@ -150,6 +153,9 @@ fn test_moves_processed() {
         redis_keys::entry_ids_hash_key(&test_namespace()),
     ];
     panic_cleanup(streams_to_clean.clone(), keys_to_clean.clone());
+
+    let to = test_opts();
+    stream::create_consumer_groups(&to.topics, &to.client);
 
     thread::spawn(move || stream::process(test_opts()));
 
