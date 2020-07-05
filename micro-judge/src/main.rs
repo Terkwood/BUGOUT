@@ -11,5 +11,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn main() {
     env_logger::init();
     info!("🔢 {:<8} {}", NAME, VERSION);
-    stream::process(stream::ProcessOpts::default());
+    let process_opts = stream::StreamOpts::default();
+    stream::create_consumer_groups(&process_opts.topics, &process_opts.client);
+    stream::process(process_opts);
 }

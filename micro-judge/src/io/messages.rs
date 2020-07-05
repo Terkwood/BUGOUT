@@ -1,32 +1,36 @@
-use super::conn_pool::Pool;
-use super::redis;
 use super::topics::*;
 use crate::model::*;
-use crate::repo::entry_id::AllEntryIds;
 use log::error;
+use redis::streams::StreamReadOptions;
+use redis::{Client, Commands};
 use redis_streams::*;
 use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
-const BLOCK_MSEC: u32 = 5000;
+const BLOCK_MS: usize = 5000;
+
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, HashMap<String, Vec<u8>>>>>>;
 
-pub fn xread_sort(
-    entry_ids: &AllEntryIds,
+#[derive(Clone)]
+pub enum StreamData {
+    MM(MakeMoveCommand),
+    GS(GameId, GameState),
+}
+
+pub fn read_sorted(
     topics: &StreamTopics,
-    pool: &Pool,
+    client: &Client,
 ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
-    let mut conn = pool.get().unwrap();
-    let ser = redis::cmd("XREAD")
-        .arg("BLOCK")
-        .arg(&BLOCK_MSEC.to_string())
-        .arg("STREAMS")
-        .arg(&topics.make_move_cmd)
-        .arg(&topics.game_states_changelog)
-        .arg(entry_ids.make_moves_eid.to_string())
-        .arg(entry_ids.game_states_eid.to_string())
-        .query::<XReadResult>(&mut *conn)?;
+    let mut conn = client.get_connection().expect("redis conn");
+    let opts = StreamReadOptions::default()
+        .block(BLOCK_MS)
+        .group("micro-judge", "singleton");
+    let ser = conn.xread_options(
+        &[&topics.make_move_cmd, &topics.game_states_changelog],
+        &[">", ">"],
+        opts,
+    )?;
 
     let unsorted = deser(ser, &topics);
     let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
@@ -42,11 +46,18 @@ pub fn xread_sort(
     Ok(answer)
 }
 
-#[derive(Clone)]
-pub enum StreamData {
-    MM(MakeMoveCommand),
-    GS(GameId, GameState),
+pub fn ack(
+    key: &str,
+    group: &str,
+    ids: &[XReadEntryId],
+    client: &Client,
+) -> Result<(), redis::RedisError> {
+    let mut conn = client.get_connection().expect("conn");
+    let idstrs: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
+    let _: usize = conn.xack(key, group, &idstrs)?;
+    Ok(())
 }
+
 fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntryId, StreamData> {
     let mut stream_data = HashMap::new();
     let make_move_topic = &topics.make_move_cmd;

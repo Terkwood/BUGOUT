@@ -1,11 +1,8 @@
 pub mod redis_keys;
 
+pub mod messages;
 pub mod stream;
 pub mod topics;
-pub mod xread;
-
-pub use redis_conn_pool as conn_pool;
-pub use redis_conn_pool::{r2d2_redis, redis};
 
 #[derive(Debug)]
 pub enum WriteErr {

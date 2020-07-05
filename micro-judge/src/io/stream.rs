@@ -1,114 +1,127 @@
-use super::conn_pool::Pool;
+use super::messages::*;
 use super::redis_keys::RedisKeyNamespace;
 use super::topics::*;
-use super::xread::*;
-use super::{FetchErr, WriteErr};
+use super::WriteErr;
 use crate::game::*;
 use crate::model::*;
-use crate::repo::entry_id::{EntryIdRepo, EntryIdType};
 use crate::repo::game_states::GameStatesRepo;
+use redis::{Client, Commands};
 use std::rc::Rc;
 
 use log::{error, info, warn};
 
 /// Spins too much.  See https://github.com/Terkwood/BUGOUT/issues/217
-pub fn process(opts: ProcessOpts) {
-    let eid_repo = opts.entry_id_repo;
-
+pub fn process(opts: StreamOpts) {
     loop {
-        match eid_repo.fetch_all() {
-            Ok(entry_ids) => {
-                if let Ok(xread_result) = xread_sort(&entry_ids, &opts.topics, &opts.pool) {
-                    for time_ordered_event in xread_result {
-                        match time_ordered_event {
-                            (entry_id, StreamData::MM(mm)) => {
-                                let fetched_gs = opts.game_states_repo.fetch(&mm.game_id);
-                                match fetched_gs {
-                                    Ok(Some(game_state)) => match judge(&mm, &game_state) {
-                                        Judgement::Accepted(move_made) => {
-                                            if let Err(e) = xadd_move_accepted(
-                                                &move_made,
-                                                &opts.pool,
-                                                &opts.topics.move_accepted_ev,
-                                            ) {
-                                                error!("Error XADD to move_accepted {:?}", e)
-                                            }
-                                        }
-                                        Judgement::Rejected => error!("MOVE REJECTED: {:#?}", mm),
-                                    },
-                                    Ok(None) => warn!("No game state for game {}", mm.game_id.0),
-                                    Err(e) => error!("Deser error ({:?})!", e),
+        if let Ok(xread_result) = read_sorted(&opts.topics, &opts.client) {
+            let mut mm_processed = vec![];
+            let mut gs_processed = vec![];
+            for time_ordered_event in xread_result {
+                match time_ordered_event {
+                    (entry_id, StreamData::MM(mm)) => {
+                        let fetched_gs = opts.game_states_repo.fetch(&mm.game_id);
+                        match fetched_gs {
+                            Ok(Some(game_state)) => match judge(&mm, &game_state) {
+                                Judgement::Accepted(move_made) => {
+                                    if let Err(e) = xadd_move_accepted(
+                                        &move_made,
+                                        &opts.client,
+                                        &opts.topics.move_accepted_ev,
+                                    ) {
+                                        error!("Error XADD to move_accepted {:?}", e)
+                                    }
                                 }
-
-                                if let Err(e) =
-                                    eid_repo.update(EntryIdType::MakeMoveCommand, entry_id)
-                                {
-                                    error!("error updating make_move_cmd eid: {:?}", e)
-                                }
-                            }
-                            (entry_id, StreamData::GS(game_id, game_state)) => {
-                                if let Err(e) = &opts.game_states_repo.write(&game_id, &game_state)
-                                {
-                                    error!(
-                                        "error writing game state {:?}  -- advancing eid pointer",
-                                        e
-                                    )
-                                }
-
-                                if let Err(e) =
-                                    eid_repo.update(EntryIdType::GameStateChangelog, entry_id)
-                                {
-                                    error!("error updating changelog eid: {:?}", e);
-                                }
-
-                                info!("Tracking {:?} {:?}", game_id, game_state);
-                            }
+                                Judgement::Rejected => error!("MOVE REJECTED: {:#?}", mm),
+                            },
+                            Ok(None) => warn!("No game state for game {}", mm.game_id.0),
+                            Err(e) => error!("Deser error ({:?})!", e),
                         }
+
+                        mm_processed.push(entry_id);
+                    }
+                    (entry_id, StreamData::GS(game_id, game_state)) => {
+                        if let Err(e) = &opts.game_states_repo.write(&game_id, &game_state) {
+                            error!("error writing game state {:?}  -- advancing eid pointer", e)
+                        }
+
+                        gs_processed.push(entry_id);
+
+                        info!("Tracking {:?} {:?}", game_id, game_state);
                     }
                 }
             }
-            Err(FetchErr::Deser) => error!("Deserialization err in stream processing"),
-            Err(FetchErr::Redis(r)) => error!("Redis error in stream processing {:?}", r),
-            Err(FetchErr::EIDRepo) => error!("eid repo"),
+
+            if !mm_processed.is_empty() {
+                if let Err(e) = ack(
+                    &opts.topics.make_move_cmd,
+                    GROUP_NAME,
+                    &mm_processed,
+                    &opts.client,
+                ) {
+                    error!("ack in make move failed {:?} ", e)
+                }
+            }
+            if !gs_processed.is_empty() {
+                if let Err(e) = ack(
+                    &opts.topics.game_states_changelog,
+                    GROUP_NAME,
+                    &gs_processed,
+                    &opts.client,
+                ) {
+                    error!("ack in game states failed {:?} ", e);
+                }
+            }
         }
     }
 }
 
-#[derive(Clone)]
-pub struct ProcessOpts {
-    pub topics: StreamTopics,
-    pub entry_id_repo: EntryIdRepo,
-    pub game_states_repo: GameStatesRepo,
-    pub pool: Rc<Pool>,
+const GROUP_NAME: &str = "micro-judge";
+pub fn create_consumer_groups(topics: &StreamTopics, client: &Client) {
+    let mut conn = client.get_connection().expect("group create conn");
+    let mm: Result<(), _> = conn.xgroup_create(&topics.make_move_cmd, GROUP_NAME, "$");
+    if let Err(e) = mm {
+        warn!(
+            "Ignoring error creating MakeMoveCmd consumer group (it probably exists already) {:?}",
+            e
+        );
+    }
+    let gs: Result<(), _> = conn.xgroup_create(&topics.game_states_changelog, GROUP_NAME, "$");
+    if let Err(e) = gs {
+        warn!(
+            "Ignoring error creating GameStates consumer group (it probably exists already) {:?}",
+            e
+        );
+    }
 }
-impl Default for ProcessOpts {
+
+#[derive(Clone)]
+pub struct StreamOpts {
+    pub topics: StreamTopics,
+    pub game_states_repo: GameStatesRepo,
+    pub client: Rc<Client>,
+}
+impl Default for StreamOpts {
     fn default() -> Self {
         let namespace = RedisKeyNamespace::default();
-        let pool = Rc::new(super::conn_pool::create(
-            super::conn_pool::RedisHostUrl::default(),
-        ));
-        ProcessOpts {
+        let client = Rc::new(redis::Client::open("redis://redis").expect("client"));
+        StreamOpts {
             topics: StreamTopics::default(),
-            entry_id_repo: EntryIdRepo {
-                namespace: namespace.clone(),
-                pool: pool.clone(),
-            },
             game_states_repo: GameStatesRepo {
                 namespace,
-                pool: pool.clone(),
+                client: client.clone(),
             },
-            pool,
+            client,
         }
     }
 }
 
 fn xadd_move_accepted(
     move_made: &MoveMade,
-    pool: &Pool,
+    client: &Client,
     stream_name: &str,
 ) -> Result<String, WriteErr> {
-    let mut conn = pool.get().unwrap();
-    Ok(super::redis::cmd("XADD")
+    let mut conn = client.get_connection().unwrap();
+    Ok(redis::cmd("XADD")
         .arg(stream_name)
         .arg("MAXLEN")
         .arg("~")
@@ -118,5 +131,5 @@ fn xadd_move_accepted(
         .arg(move_made.game_id.0.to_string())
         .arg("data")
         .arg(move_made.serialize()?)
-        .query::<String>(&mut *conn)?)
+        .query::<String>(&mut conn)?)
 }

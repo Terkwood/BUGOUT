@@ -9,18 +9,12 @@
 /// cargo watch -x "test -- --test-threads=1"
 /// ```
 extern crate micro_judge;
-use micro_judge::io::r2d2_redis;
 
-use conn_pool::Pool;
-use conn_pool::RedisHostUrl;
-use micro_judge::io::{conn_pool, redis_keys, stream, topics};
+use micro_judge::io::{redis_keys, stream, topics};
 use micro_judge::model::*;
-use micro_judge::repo::entry_id::{EntryIdRepo, EntryIdType};
 use micro_judge::repo::game_states::GameStatesRepo;
-use r2d2_redis::{r2d2, redis};
 use redis::Commands;
 use redis_keys::RedisKeyNamespace;
-use redis_streams::XReadEntryId;
 use std::panic;
 use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
@@ -42,47 +36,47 @@ const TEST_MOVE_ACCEPTED_EV_TOPIC: &str = "bugtest-move-accepted-ev";
 
 static FIRST_TEST_COMPLETE: AtomicBool = AtomicBool::new(false);
 
-fn redis_pool() -> r2d2::Pool<r2d2_redis::RedisConnectionManager> {
-    conn_pool::create(RedisHostUrl("redis://localhost".to_string()))
+fn redis_client() -> redis::Client {
+    redis::Client::open("redis://localhost").expect("client")
+}
+fn rc_redis_client() -> Rc<redis::Client> {
+    Rc::new(redis_client())
 }
 
 fn test_namespace() -> RedisKeyNamespace {
     RedisKeyNamespace("BUGTEST".to_string())
 }
 
-fn test_opts() -> stream::ProcessOpts {
-    let pool = std::rc::Rc::new(redis_pool());
-    stream::ProcessOpts {
+fn test_opts() -> stream::StreamOpts {
+    let client = rc_redis_client();
+    stream::StreamOpts {
         topics: StreamTopics {
             make_move_cmd: TEST_MAKE_MOVE_CMD_TOPIC.to_string(),
             game_states_changelog: TEST_GAME_STATES_TOPIC.to_string(),
             move_accepted_ev: TEST_MOVE_ACCEPTED_EV_TOPIC.to_string(),
         },
-        entry_id_repo: EntryIdRepo {
-            namespace: test_namespace(),
-            pool: pool.clone(),
-        },
         game_states_repo: GameStatesRepo {
             namespace: test_namespace(),
-            pool: pool.clone(),
+            client: client.clone(),
         },
-        pool,
+        client,
     }
 }
 
-fn panic_cleanup(stream_names: Vec<String>, keys: Vec<String>, pool: Pool) {
+fn panic_cleanup(stream_names: Vec<String>, keys: Vec<String>) {
+    let client = redis_client();
     panic::set_hook(Box::new(move |e| {
         println!("{}", USAGE);
         println!("{:#?}", e);
-        clean_streams(stream_names.clone(), &pool);
-        clean_keys(keys.clone(), &pool);
+        clean_streams(stream_names.clone(), &client);
+        clean_keys(keys.clone(), &client);
         FIRST_TEST_COMPLETE.swap(true, std::sync::atomic::Ordering::Relaxed);
     }));
 }
 
 #[test]
 fn test_emitted_game_states() {
-    let test_pool = redis_pool();
+    let test_client = rc_redis_client();
     let streams_to_clean = vec![TEST_GAME_STATES_TOPIC.to_string()];
 
     let game_id = GameId(uuid::Uuid::new_v4());
@@ -91,22 +85,14 @@ fn test_emitted_game_states() {
         data_key.clone(),
         redis_keys::entry_ids_hash_key(&test_namespace()),
     ];
-    panic_cleanup(
-        streams_to_clean.clone(),
-        keys_to_clean.clone(),
-        test_pool.clone(),
-    );
+    panic_cleanup(streams_to_clean.clone(), keys_to_clean.clone());
 
-    let eid_repo = EntryIdRepo {
-        namespace: test_namespace(),
-        pool: Rc::new(test_pool.clone()),
-    };
+    let to = test_opts();
+    stream::create_consumer_groups(&to.topics, &to.client);
+
     thread::spawn(move || stream::process(test_opts()));
 
-    let mut conn = test_pool.get().unwrap();
-
-    // Check precondition
-    assert_eq!(eid_repo.fetch_all().unwrap().game_states_eid.millis_time, 0);
+    let mut conn = test_client.get_connection().unwrap();
 
     let expected_game_state = GameState::default();
     redis::cmd("XADD")
@@ -119,7 +105,7 @@ fn test_emitted_game_states() {
         .arg(game_id.0.to_string())
         .arg("data")
         .arg(expected_game_state.serialize().unwrap())
-        .query::<String>(&mut *conn)
+        .query::<String>(&mut conn)
         .unwrap();
 
     const WAIT_MS: u64 = 100;
@@ -141,22 +127,9 @@ fn test_emitted_game_states() {
     assert!(f.len() > 0);
     let actual_game_state = GameState::from(&f);
     assert_eq!(expected_game_state, actual_game_state.unwrap());
-    retries = INIT_RETRIES;
-    let mut time_updated = false;
-    while retries > 0 {
-        if let Ok(entry_ids) = eid_repo.fetch_all() {
-            time_updated = entry_ids.game_states_eid.millis_time > 0;
-            if time_updated {
-                break;
-            }
-        }
-        thread::sleep(Duration::from_millis(WAIT_MS));
-        retries -= 1;
-    }
-    assert!(time_updated);
 
-    clean_streams(streams_to_clean, &test_pool);
-    clean_keys(keys_to_clean, &test_pool);
+    clean_streams(streams_to_clean, &test_client);
+    clean_keys(keys_to_clean, &test_client);
 
     FIRST_TEST_COMPLETE.swap(true, std::sync::atomic::Ordering::Relaxed);
 }
@@ -166,7 +139,7 @@ fn test_moves_processed() {
     while !FIRST_TEST_COMPLETE.load(std::sync::atomic::Ordering::Relaxed) {
         thread::sleep(Duration::from_secs(1))
     }
-    let test_pool = redis_pool();
+    let test_client = rc_redis_client();
     let streams_to_clean = vec![
         TEST_GAME_STATES_TOPIC.to_string(),
         TEST_MAKE_MOVE_CMD_TOPIC.to_string(),
@@ -179,27 +152,14 @@ fn test_moves_processed() {
         game_states_data_key.clone(),
         redis_keys::entry_ids_hash_key(&test_namespace()),
     ];
-    panic_cleanup(
-        streams_to_clean.clone(),
-        keys_to_clean.clone(),
-        test_pool.clone(),
-    );
+    panic_cleanup(streams_to_clean.clone(), keys_to_clean.clone());
 
-    let eid_repo = EntryIdRepo {
-        namespace: test_namespace(),
-        pool: Rc::new(test_pool.clone()),
-    };
+    let to = test_opts();
+    stream::create_consumer_groups(&to.topics, &to.client);
+
     thread::spawn(move || stream::process(test_opts()));
 
-    let mut conn = test_pool.get().unwrap();
-
-    // Clear entry ids in redis
-    eid_repo
-        .update(EntryIdType::GameStateChangelog, XReadEntryId::default())
-        .unwrap();
-    eid_repo
-        .update(EntryIdType::MakeMoveCommand, XReadEntryId::default())
-        .unwrap();
+    let mut conn = test_client.get_connection().unwrap();
 
     let initial_game_state = GameState::default();
     redis::cmd("XADD")
@@ -212,7 +172,7 @@ fn test_moves_processed() {
         .arg(game_id.0.to_string())
         .arg("data")
         .arg(initial_game_state.serialize().unwrap())
-        .query::<String>(&mut *conn)
+        .query::<String>(&mut conn)
         .unwrap();
 
     let moves = vec![
@@ -246,7 +206,7 @@ fn test_moves_processed() {
             .arg(move_coord.y.to_string())
             .arg("req_id")
             .arg(move_req_id.to_string())
-            .query::<String>(&mut *conn)
+            .query::<String>(&mut conn)
             .unwrap();
 
         thread::sleep(Duration::from_millis(10));
@@ -285,21 +245,21 @@ fn test_moves_processed() {
             .arg(game_id.clone().0.to_string())
             .arg("data")
             .arg(current_game_state.serialize().unwrap())
-            .query::<String>(&mut *conn)
+            .query::<String>(&mut conn)
             .unwrap();
     }
 
     // Above moves should all be ACCEPTED by judge.  Check
     // that there is data on `bugtest-move-accepted-ev`
     // to confirm this.
-    let mut conn = test_pool.get().unwrap();
+    let mut conn = test_client.get_connection().unwrap();
     let move_accepted_data = redis::cmd("XREAD")
         .arg("BLOCK")
         .arg(5000)
         .arg("STREAMS")
         .arg(TEST_MOVE_ACCEPTED_EV_TOPIC)
         .arg("0-0")
-        .query::<redis::Value>(&mut *conn)
+        .query::<redis::Value>(&mut conn)
         .unwrap();
 
     // It's in there somewhere...
@@ -332,25 +292,25 @@ fn test_moves_processed() {
     assert_eq!(accepted.coord, Some(first_coord));
     assert_eq!(accepted.player, first_player);
 
-    clean_streams(streams_to_clean, &test_pool);
-    clean_keys(keys_to_clean, &test_pool);
+    clean_streams(streams_to_clean, &test_client);
+    clean_keys(keys_to_clean, &test_client);
 }
 
-fn clean_keys(keys: Vec<String>, pool: &Pool) {
-    let mut conn = pool.get().unwrap();
+fn clean_keys(keys: Vec<String>, client: &redis::Client) {
+    let mut conn = client.get_connection().unwrap();
     for k in keys {
         conn.del(k.clone()).unwrap()
     }
 }
 
-fn clean_streams(stream_names: Vec<String>, pool: &Pool) {
-    let mut conn = pool.get().unwrap();
+fn clean_streams(stream_names: Vec<String>, client: &redis::Client) {
+    let mut conn = client.get_connection().unwrap();
     for sn in stream_names {
         match redis::cmd("XTRIM")
             .arg(&sn)
             .arg("MAXLEN")
             .arg("0")
-            .query::<u32>(&mut *conn)
+            .query::<u32>(&mut conn)
         {
             Err(e) => println!("Error in cleanup {}", e),
             Ok(count) => println!("Cleaned {} in {}", count, sn),
