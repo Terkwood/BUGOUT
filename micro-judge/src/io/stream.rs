@@ -5,14 +5,13 @@ use super::WriteErr;
 use crate::game::*;
 use crate::model::*;
 use crate::repo::game_states::GameStatesRepo;
-use redis::Client;
+use redis::{Client, Commands};
 use std::rc::Rc;
 
 use log::{error, info, warn};
 
 /// Spins too much.  See https://github.com/Terkwood/BUGOUT/issues/217
-pub fn process(opts: ProcessOpts) {
-    let group = create_consumer_groups(&opts.topics, &opts.client);
+pub fn process(opts: StreamOpts) {
     loop {
         if let Ok(xread_result) = read_sorted(&opts.topics, &opts.client) {
             let mut mm_processed = vec![];
@@ -55,7 +54,7 @@ pub fn process(opts: ProcessOpts) {
             if !mm_processed.is_empty() {
                 if let Err(e) = ack(
                     &opts.topics.make_move_cmd,
-                    &group,
+                    GROUP_NAME,
                     &mm_processed,
                     &opts.client,
                 ) {
@@ -65,7 +64,7 @@ pub fn process(opts: ProcessOpts) {
             if !gs_processed.is_empty() {
                 if let Err(e) = ack(
                     &opts.topics.game_states_changelog,
-                    &group,
+                    GROUP_NAME,
                     &gs_processed,
                     &opts.client,
                 ) {
@@ -76,17 +75,36 @@ pub fn process(opts: ProcessOpts) {
     }
 }
 
+const GROUP_NAME: &str = "micro-judge";
+pub fn create_consumer_groups(topics: &StreamTopics, client: &Client) {
+    let mut conn = client.get_connection().expect("group create conn");
+    let mm: Result<(), _> = conn.xgroup_create(&topics.make_move_cmd, GROUP_NAME, "$");
+    if let Err(e) = mm {
+        warn!(
+            "Ignoring error creating MakeMoveCmd consumer group (it probably exists already) {:?}",
+            e
+        );
+    }
+    let gs: Result<(), _> = conn.xgroup_create(&topics.game_states_changelog, GROUP_NAME, "$");
+    if let Err(e) = gs {
+        warn!(
+            "Ignoring error creating GameStates consumer group (it probably exists already) {:?}",
+            e
+        );
+    }
+}
+
 #[derive(Clone)]
-pub struct ProcessOpts {
+pub struct StreamOpts {
     pub topics: StreamTopics,
     pub game_states_repo: GameStatesRepo,
     pub client: Rc<Client>,
 }
-impl Default for ProcessOpts {
+impl Default for StreamOpts {
     fn default() -> Self {
         let namespace = RedisKeyNamespace::default();
         let client = Rc::new(redis::Client::open("redis://redis").expect("client"));
-        ProcessOpts {
+        StreamOpts {
             topics: StreamTopics::default(),
             game_states_repo: GameStatesRepo {
                 namespace,
