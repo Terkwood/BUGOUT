@@ -4,8 +4,9 @@ use micro_changelog::micro_model_moves::*;
 use micro_changelog::repo::redis_key::*;
 use micro_changelog::stream::*;
 use micro_changelog::*;
-use redis::Commands;
+use redis::{Client, Commands};
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::thread;
 use std::time::Duration;
 use uuid::Uuid;
@@ -23,7 +24,7 @@ fn test_process_move() {
         MOVE_MADE_EV_TOPIC,
         GAME_READY_EV_TOPIC,
     ];
-    let pool = test_pool();
+    let client = rc_redis_client();
     panic_cleanup(
         streams_to_clean
             .clone()
@@ -31,16 +32,15 @@ fn test_process_move() {
             .map(|s| s.to_string())
             .collect(),
         keys_to_clean.clone(),
-        pool.clone(),
     );
 
-    todo!("create consumer group");
+    stream::create_consumer_group(&test_topics());
 
-    thread::spawn(move || stream::process(test_topics(), &test_components(&test_pool())));
+    thread::spawn(move || stream::process(test_topics(), &test_components()));
     thread::sleep(Duration::from_millis(100));
 
     let game_id = GameId(uuid::Uuid::new_v4());
-    let mut conn = pool.get().unwrap();
+    let mut conn = client.get_connection().unwrap();
     // Changelog expects a game ready event and will initialize
     // an empty game
     redis::cmd("XADD")
@@ -51,7 +51,7 @@ fn test_process_move() {
         .arg("*")
         .arg("game_id")
         .arg(game_id.0.to_string())
-        .query::<String>(&mut *conn)
+        .query::<String>(&mut conn)
         .unwrap();
 
     let placement = Coord::of(0, 0);
@@ -74,7 +74,7 @@ fn test_process_move() {
         .arg(game_id.0.to_string())
         .arg("data")
         .arg(move_made.serialize().unwrap())
-        .query::<String>(&mut *conn)
+        .query::<String>(&mut conn)
         .unwrap();
     // We should see something published to MOVE_MADE
     let xread_move_made = redis::cmd("XREAD")
@@ -83,7 +83,7 @@ fn test_process_move() {
         .arg("STREAMS")
         .arg(MOVE_MADE_EV_TOPIC)
         .arg("0-0")
-        .query::<redis::Value>(&mut *conn)
+        .query::<redis::Value>(&mut conn)
         .unwrap();
 
     assert_ne!(xread_move_made, redis::Value::Nil);
@@ -94,7 +94,7 @@ fn test_process_move() {
         .arg("STREAMS")
         .arg(GAME_STATES_TOPIC)
         .arg("0-0")
-        .query::<Vec<HashMap<String, Vec<HashMap<String, (String, String, String, Option<Vec<u8>>)>>>>>(&mut *conn)
+        .query::<Vec<HashMap<String, Vec<HashMap<String, (String, String, String, Option<Vec<u8>>)>>>>>(&mut conn)
         .unwrap();
     assert_eq!(xread_game_states_changelog.len(), 1);
     let by_timestamp = xread_game_states_changelog[0].get(GAME_STATES_TOPIC);
@@ -124,16 +124,17 @@ fn test_process_move() {
 
     clean_streams(
         streams_to_clean.iter().map(|s| s.to_string()).collect(),
-        &pool,
+        &client,
     );
-    clean_keys(keys_to_clean, &pool);
+    clean_keys(keys_to_clean, &client);
 }
 
-fn panic_cleanup(stream_names: Vec<String>, keys: Vec<String>, pool: Pool) {
+fn panic_cleanup(stream_names: Vec<String>, keys: Vec<String>) {
+    let client = redis_client();
     std::panic::set_hook(Box::new(move |e| {
         println!("{:#?}", e);
-        clean_streams(stream_names.clone(), &pool);
-        clean_keys(keys.clone(), &pool);
+        clean_streams(stream_names.clone(), &client);
+        clean_keys(keys.clone(), &client);
     }));
 }
 fn test_topics() -> StreamTopics {
@@ -143,34 +144,39 @@ fn test_topics() -> StreamTopics {
         move_made_ev: MOVE_MADE_EV_TOPIC.to_string(),
     }
 }
-fn test_pool() -> r2d2::Pool<r2d2_redis::RedisConnectionManager> {
-    redis_conn_pool::create(RedisHostUrl("redis://localhost".to_string()))
+fn redis_client() -> redis::Client {
+    redis::Client::open("redis://localhost").expect("client")
 }
+
+fn rc_redis_client() -> Rc<redis::Client> {
+    Rc::new(redis_client())
+}
+
 fn test_namespace() -> RedisKeyNamespace {
     RedisKeyNamespace("BUGTEST".to_string())
 }
-fn test_components(pool: &Pool) -> Components {
+fn test_components() -> Components {
     Components {
-        pool: pool.clone(),
+        client: rc_redis_client(),
         redis_key_provider: KeyProvider(test_namespace()),
     }
 }
 
-fn clean_keys(keys: Vec<String>, pool: &Pool) {
-    let mut conn = pool.get().unwrap();
+fn clean_keys(keys: Vec<String>, client: &Client) {
+    let mut conn = client.get_connection().unwrap();
     for k in keys {
         conn.del(k.clone()).unwrap()
     }
 }
 
-fn clean_streams(stream_names: Vec<String>, pool: &Pool) {
-    let mut conn = pool.get().unwrap();
+fn clean_streams(stream_names: Vec<String>, client: &Client) {
+    let mut conn = client.get_connection().expect("conn in clean streams");
     for sn in stream_names {
         match redis::cmd("XTRIM")
             .arg(&sn)
             .arg("MAXLEN")
             .arg("0")
-            .query::<u32>(&mut *conn)
+            .query::<u32>(&mut conn)
         {
             Err(e) => println!("Error in cleanup {}", e),
             Ok(count) => println!("Cleaned {} in {}", count, sn),
