@@ -10,6 +10,7 @@ fn main() {
     env_logger::init();
     info!("🔢 {}", VERSION);
     let topics = StreamTopics::default();
-    stream::create_consumer_group(&topics);
-    stream::process(topics, &Components::default())
+    let components = Components::default();
+    stream::create_consumer_group(&topics, &components.client);
+    stream::process(topics, &components)
 }

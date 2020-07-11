@@ -5,9 +5,10 @@ use crate::repo::*;
 use crate::Components;
 use messages::*;
 use micro_model_moves::*;
+use redis::Commands;
 pub use topics::StreamTopics;
 
-use log::{error, info};
+use log::{error, info, warn};
 
 const GROUP_NAME: &str = "micro-changelog";
 
@@ -170,6 +171,20 @@ fn xadd_game_states_changelog(
         .query::<String>(&mut conn)?)
 }
 
-pub fn create_consumer_group(topics: &StreamTopics) {
-    todo!()
+pub fn create_consumer_group(topics: &StreamTopics, client: &redis::Client) {
+    let mut conn = client.get_connection().expect("group create conn");
+    let mm: Result<(), _> = conn.xgroup_create(&topics.move_accepted_ev, GROUP_NAME, "$");
+    if let Err(e) = mm {
+        warn!(
+            "Ignoring error creating MoveAcceptedEv consumer group (it probably exists already) {:?}",
+            e
+        );
+    }
+    let gs: Result<(), _> = conn.xgroup_create(&topics.game_states_changelog, GROUP_NAME, "$");
+    if let Err(e) = gs {
+        warn!(
+            "Ignoring error creating GameStates consumer group (it probably exists already) {:?}",
+            e
+        );
+    }
 }
