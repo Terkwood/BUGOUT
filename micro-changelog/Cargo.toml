@@ -1,15 +1,14 @@
 [package]
-name = "micro_changelog"
-version = "0.1.4"
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
-
+name = "micro_changelog"
+version = "0.1.5"
 
 [dependencies]
-micro_model_moves = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
-redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
-redis_streams = { git = "https://github.com/Terkwood/BUGOUT", version = "0.2.0", rev = "fdad420" }
 bincode = "1.2.1"
-uuid = { version = "0.8.1", features = ["serde"] }
-log = "0.4.8"
 env_logger = "0.7.1"
+log = "0.4.8"
+micro_model_moves = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
+redis = {git = "https://github.com/mitsuhiko/redis-rs"}
+redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "0.3.1", rev = "0e2fdb7"}
+uuid = {version = "0.8.1", features = ["serde"]}

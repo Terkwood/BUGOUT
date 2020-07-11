@@ -4,10 +4,13 @@ use stream::StreamTopics;
 
 use log::info;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
     env_logger::init();
     info!("🔢 {}", VERSION);
-    stream::process(StreamTopics::default(), &Components::default())
+    let topics = StreamTopics::default();
+    let components = Components::default();
+    stream::create_consumer_group(&topics, &components.client);
+    stream::process(topics, &components)
 }
