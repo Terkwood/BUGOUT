@@ -8,10 +8,16 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
-const BLOCK_MS: usize = 5000;
+#[derive(Clone, Debug)]
+pub enum StreamData {
+    MA(MoveMade),
+    GS(GameId, GameState),
+}
 
 pub type XReadResult =
     Vec<HashMap<String, Vec<HashMap<String, (String, String, String, Option<Vec<u8>>)>>>>;
+
+const BLOCK_MS: usize = 5000;
 
 pub fn read_sorted(
     topics: &StreamTopics,
@@ -38,12 +44,6 @@ pub fn read_sorted(
         }
     }
     Ok(answer)
-}
-
-#[derive(Clone, Debug)]
-pub enum StreamData {
-    MA(MoveMade),
-    GS(GameId, GameState),
 }
 
 fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntryId, StreamData> {
