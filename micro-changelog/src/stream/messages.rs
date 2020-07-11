@@ -46,6 +46,19 @@ pub fn read_sorted(
     Ok(answer)
 }
 
+pub fn ack(
+    key: &str,
+    group: &str,
+    ids: &[XReadEntryId],
+    client: &redis::Client,
+) -> Result<(), redis::RedisError> {
+    let mut conn = client.get_connection().expect("conn");
+    let idstrs: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
+    let _: usize = conn.xack(key, group, &idstrs)?;
+    Ok(())
+}
+
+
 fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntryId, StreamData> {
     let mut stream_data = HashMap::new();
     let move_accepted_topic = &topics.move_accepted_ev;

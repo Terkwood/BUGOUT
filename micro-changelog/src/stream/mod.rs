@@ -9,8 +9,12 @@ pub use topics::StreamTopics;
 
 use log::{error, info};
 
+const GROUP_NAME: &str = "micro-changelog";
+
 pub fn process(topics: StreamTopics, components: &crate::Components) {
     info!("Processing {:#?}", topics);
+    let mut ma_processed = vec![];
+    let mut gs_processed = vec![];
     loop {
         match read_sorted(&topics, &components.client) {
             Ok(xrr) => {
@@ -36,7 +40,7 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                                         error!("err in XADD move made {:?}", e)
                                     }
 
-                                    todo!("push message ID to vec")
+                                    ma_processed.push(entry_id);
                                 }
                             }
                         }
@@ -47,7 +51,7 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                                 info!("wrote game state: {:?} {:?}", game_id, gs);
                             }
 
-                            todo!("push message ID to vec")
+                            gs_processed.push(entry_id);
                         }
                     }
                 }
@@ -55,7 +59,26 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
             Err(e) => error!("Redis err in xread: {:#?}", e),
         }
 
-        todo!("xack everything from vecs")
+        if !ma_processed.is_empty() {
+            if let Err(e) = ack(
+                &topics.move_accepted_ev,
+                GROUP_NAME,
+                &ma_processed,
+                &components.client,
+            ) {
+                error!("ack in move accepted failed {:?} ", e)
+            }
+        }
+        if !gs_processed.is_empty() {
+            if let Err(e) = ack(
+                &topics.game_states_changelog,
+                GROUP_NAME,
+                &gs_processed,
+                &components.client,
+            ) {
+                error!("ack in game states failed {:?} ", e);
+            }
+        }
     }
 }
 
