@@ -136,7 +136,7 @@ fn xadd_move_made(
     components: &Components,
 ) -> Result<String, WriteErr> {
     let mut conn = components.client.get_connection().expect("xadd conn");
-    todo!("rewrite using new API");
+
     Ok(redis::cmd("XADD")
         .arg(stream_name)
         .arg("MAXLEN")
@@ -156,7 +156,6 @@ fn xadd_game_states_changelog(
     stream_name: &str,
     components: &Components,
 ) -> Result<String, WriteErr> {
-    todo!("rewrite using new api");
     let mut conn = components.client.get_connection().expect("xadd gs conn");
     Ok(redis::cmd("XADD")
         .arg(stream_name)
