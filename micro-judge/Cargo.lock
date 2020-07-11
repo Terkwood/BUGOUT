@@ -427,7 +427,7 @@ checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
 name = "micro_judge"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "bincode",
  "env_logger",
@@ -711,8 +711,8 @@ dependencies = [
 
 [[package]]
 name = "redis_streams"
-version = "0.3.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=tinker/streams#7a6f9ca6961f0efe349e3b3c4c10314b69a19208"
+version = "0.3.1"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0e2fdb7cba4063282a57feb57317814277187554"
 dependencies = [
  "redis 0.16.1-alpha.0 (git+https://github.com/mitsuhiko/redis-rs?rev=aaecd6734a4c1f0bc59c96429d0e2102348e23ef)",
  "uuid",
