@@ -1,13 +1,14 @@
 use super::StreamTopics;
-use crate::redis;
 use log::{error, warn};
 use micro_model_moves::{GameId, GameState, MoveMade};
+use redis::streams::StreamReadOptions;
+use redis::Commands;
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
-const BLOCK_MSEC: u32 = 5000;
+const BLOCK_MS: usize = 5000;
 
 pub type XReadResult =
     Vec<HashMap<String, Vec<HashMap<String, (String, String, String, Option<Vec<u8>>)>>>>;
@@ -17,16 +18,14 @@ pub fn read_sorted(
     client: &redis::Client,
 ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
     let mut conn = client.get_connection().expect("conn");
-    todo!("rewrite using new API");
-    let ser = redis::cmd("XREAD")
-        .arg("BLOCK")
-        .arg(&BLOCK_MSEC.to_string())
-        .arg("STREAMS")
-        .arg(&topics.move_accepted_ev)
-        .arg(&topics.game_states_changelog)
-        .arg(">")
-        .arg(">")
-        .query::<XReadResult>(&mut conn)?;
+    let opts = StreamReadOptions::default()
+        .block(BLOCK_MS)
+        .group("micro-changelog", "singleton");
+    let ser = conn.xread_options(
+        &[&topics.move_accepted_ev, &topics.game_states_changelog],
+        &[">", ">"],
+        opts,
+    )?;
 
     let unsorted = deser(ser, &topics);
     let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();

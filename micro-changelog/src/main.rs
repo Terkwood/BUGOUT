@@ -4,7 +4,7 @@ use stream::StreamTopics;
 
 use log::info;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
     env_logger::init();
