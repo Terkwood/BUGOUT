@@ -34,7 +34,7 @@ fn test_process_move() {
         keys_to_clean.clone(),
     );
 
-    stream::create_consumer_group(&test_topics());
+    stream::create_consumer_group(&test_topics(), &client);
 
     thread::spawn(move || stream::process(test_topics(), &test_components()));
     thread::sleep(Duration::from_millis(100));
