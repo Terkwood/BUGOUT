@@ -147,3 +147,7 @@ fn xadd_game_states_changelog(
         .arg(gs.serialize()?)
         .query::<String>(&mut conn)?)
 }
+
+pub fn create_consumer_group(topics: &StreamTopics) {
+    todo!()
+}
