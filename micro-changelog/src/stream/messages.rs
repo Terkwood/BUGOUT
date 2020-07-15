@@ -58,7 +58,6 @@ pub fn ack(
     Ok(())
 }
 
-
 fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntryId, StreamData> {
     let mut stream_data = HashMap::new();
     let move_accepted_topic = &topics.move_accepted_ev;

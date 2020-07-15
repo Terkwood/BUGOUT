@@ -75,17 +75,18 @@ pub fn process(opts: StreamOpts) {
     }
 }
 
-const GROUP_NAME: &str = "micro-judge";
+pub const GROUP_NAME: &str = "micro-judge";
 pub fn create_consumer_groups(topics: &StreamTopics, client: &Client) {
     let mut conn = client.get_connection().expect("group create conn");
-    let mm: Result<(), _> = conn.xgroup_create(&topics.make_move_cmd, GROUP_NAME, "$");
+    let mm: Result<(), _> = conn.xgroup_create_mkstream(&topics.make_move_cmd, GROUP_NAME, "$");
     if let Err(e) = mm {
         warn!(
             "Ignoring error creating MakeMoveCmd consumer group (it probably exists already) {:?}",
             e
         );
     }
-    let gs: Result<(), _> = conn.xgroup_create(&topics.game_states_changelog, GROUP_NAME, "$");
+    let gs: Result<(), _> =
+        conn.xgroup_create_mkstream(&topics.game_states_changelog, GROUP_NAME, "$");
     if let Err(e) = gs {
         warn!(
             "Ignoring error creating GameStates consumer group (it probably exists already) {:?}",

@@ -1,3 +1,4 @@
+use super::stream::GROUP_NAME;
 use super::topics::*;
 use crate::model::*;
 use log::error;
@@ -25,7 +26,7 @@ pub fn read_sorted(
     let mut conn = client.get_connection().expect("redis conn");
     let opts = StreamReadOptions::default()
         .block(BLOCK_MS)
-        .group("micro-judge", "singleton");
+        .group(GROUP_NAME, "singleton");
     let ser = conn.xread_options(
         &[&topics.make_move_cmd, &topics.game_states_changelog],
         &[">", ">"],
