@@ -173,14 +173,15 @@ fn xadd_game_states_changelog(
 
 pub fn create_consumer_group(topics: &StreamTopics, client: &redis::Client) {
     let mut conn = client.get_connection().expect("group create conn");
-    let mm: Result<(), _> = conn.xgroup_create(&topics.move_accepted_ev, GROUP_NAME, "$");
+    let mm: Result<(), _> = conn.xgroup_create_mkstream(&topics.move_accepted_ev, GROUP_NAME, "$");
     if let Err(e) = mm {
         warn!(
             "Ignoring error creating MoveAcceptedEv consumer group (it probably exists already) {:?}",
             e
         );
     }
-    let gs: Result<(), _> = conn.xgroup_create(&topics.game_states_changelog, GROUP_NAME, "$");
+    let gs: Result<(), _> =
+        conn.xgroup_create_mkstream(&topics.game_states_changelog, GROUP_NAME, "$");
     if let Err(e) = gs {
         warn!(
             "Ignoring error creating GameStates consumer group (it probably exists already) {:?}",
