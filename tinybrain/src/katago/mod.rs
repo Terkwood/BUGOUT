@@ -10,15 +10,18 @@ use std::thread;
 pub mod json;
 
 const PROGRAM: &str = "./katago";
-const ARGS: &[&str] = &[
-    "analysis",
-    "-model",
-    "g170e-b20c256x2-s2430231552-d525879064.bin.gz",
-    "-config",
-    "analysis.cfg",
-    "-analysis-threads",
-    "2",
-];
+
+lazy_static! {
+    pub static ref ARGS: Vec<String> = vec![
+        "analysis".to_string(),
+        "-model".to_string(),
+        env::MODEL_FILE.to_string(),
+        "-config".to_string(),
+        "analysis.cfg".to_string(),
+        "-analysis-threads".to_string(),
+        "2".to_string(),
+    ];
+}
 
 pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<ComputeMove>) {
     let mut process = launch_child().expect("failed to start katago");
@@ -100,13 +103,13 @@ impl TryFrom<KataGoResponse> for MoveComputed {
 
 fn launch_child() -> Result<Child, std::io::Error> {
     Command::new(PROGRAM)
-        .arg(ARGS[0])
-        .arg(ARGS[1])
-        .arg(ARGS[2])
-        .arg(ARGS[3])
-        .arg(ARGS[4])
-        .arg(ARGS[5])
-        .arg(ARGS[6])
+        .arg(&ARGS[0])
+        .arg(&ARGS[1])
+        .arg(&ARGS[2])
+        .arg(&ARGS[3])
+        .arg(&ARGS[4])
+        .arg(&ARGS[5])
+        .arg(&ARGS[6])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
