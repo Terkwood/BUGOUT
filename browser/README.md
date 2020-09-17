@@ -6,4 +6,4 @@ Thank you to the Sabaki author and community for making their project available 
 
 ## Deployment
 
-Deploy from the root directory of this project.  npm build artifacts will be deposited here.
+Deploy from _this_ directory. npm build artifacts will be deposited to this directory.
