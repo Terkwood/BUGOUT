@@ -1,9 +1,10 @@
 [package]
-name = "micro-history-provider"
-version = "0.1.0"
 authors = ["Terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+name = "micro-history-provider"
+repository = "https://github.com/Terkwood/BUGOUT"
+version = "0.1.0"
 
 [dependencies]
+redis = {version = "0.17.0", features = ["r2d2"]}
