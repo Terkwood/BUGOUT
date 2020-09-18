@@ -3,8 +3,7 @@
 - Create CHANGELOG.md
 - Parameterize tinybrain model input (#328) 
 fb412e0 23 hours ago (origin/main, main) Touch up browser README (#326) 
-- Use xgroup_create_mkstream (#319) 
-- Micro changelog : use xreadgroup  (#318) 
+- Micro changelog : use xreadgroup  (#318), Use xgroup_create_mkstream (#319) 
 - Fix branch dependency 
 - Remove entry ID repo from micro-judge streams (#312) 
 - Add wake script 
