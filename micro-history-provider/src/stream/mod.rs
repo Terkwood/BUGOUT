@@ -45,3 +45,21 @@ pub fn create_consumer_group(client: &redis::Client) {
         );
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::repo::*;
+    use crate::Components;
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::sync::{Arc, Mutex};
+    use std::thread;
+    use std::time::Duration;
+
+    static FAKE_PROV_HIST_MILLIS: AtomicU64 = AtomicU64::new(0);
+    static FAKE_GAME_STATES_MILLIS: AtomicU64 = AtomicU64::new(0);
+    static FAKE_PROV_HIST_SEQ: AtomicU64 = AtomicU64::new(0);
+    static FAKE_GAME_STATES_SEQ: AtomicU64 = AtomicU64::new(0);
+
+    struct FakeHistory {}
+}
