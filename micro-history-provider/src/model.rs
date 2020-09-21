@@ -17,8 +17,14 @@ pub struct Coord {
 
 pub struct MoveEvent {
     pub player: Player,
-    coord: Option<Coord>,
-    turn: u32,
+    pub coord: Option<Coord>,
+    pub turn: u32,
+}
+
+pub struct Move {
+    pub player: Player,
+    pub coord: Option<Coord>,
+    pub turn: u32,
 }
 
 pub struct GameState {
