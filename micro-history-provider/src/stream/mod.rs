@@ -2,8 +2,8 @@ mod topics;
 mod xadd;
 mod xread;
 
-pub use xadd::XAdd;
-pub use xread::XRead;
+pub use xadd::*;
+pub use xread::*;
 
 use crate::api::*;
 use crate::components::*;
@@ -12,7 +12,7 @@ use log::warn;
 use redis::Commands;
 
 #[derive(Clone, Debug)]
-pub enum StreamData {
+pub enum StreamInput {
     PH(ProvideHistory),
     GS(GameId, GameState),
 }
@@ -76,6 +76,24 @@ mod test {
             let mut data = self.contents.lock().expect("mutex");
             *data = Some(moves.clone());
             Ok(self.put_in.send(moves).expect("send"))
+        }
+    }
+
+    struct FakeXRead {
+        sorted_data: Arc<Mutex<Vec<StreamInput>>>,
+    }
+    impl XRead for FakeXRead {
+        fn xread_sorted(
+            &self,
+        ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, redis::RedisError> {
+            todo!()
+        }
+    }
+
+    struct FakeXAdd(Sender<HistoryProvided>);
+    impl XAdd for FakeXAdd {
+        fn xadd(&self, data: HistoryProvided) -> Result<(), XAddErr> {
+            Ok(self.0.send(data).expect("send"))
         }
     }
 }

@@ -537,7 +537,8 @@ dependencies = [
  "crossbeam-channel",
  "env_logger",
  "log",
- "redis",
+ "redis 0.17.0",
+ "redis_streams",
  "serde",
  "serde_derive",
  "uuid",
@@ -789,6 +790,26 @@ dependencies = [
 
 [[package]]
 name = "redis"
+version = "0.16.1-alpha.0"
+source = "git+https://github.com/mitsuhiko/redis-rs?rev=aaecd6734a4c1f0bc59c96429d0e2102348e23ef#aaecd6734a4c1f0bc59c96429d0e2102348e23ef"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "bytes",
+ "combine",
+ "dtoa",
+ "futures-util",
+ "itoa",
+ "percent-encoding",
+ "pin-project-lite",
+ "sha1",
+ "tokio",
+ "tokio-util",
+ "url",
+]
+
+[[package]]
+name = "redis"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95357caf2640abc54651b93c98a8df4fe1ccbf44b8e601ccdf43d5c1451f29ac"
@@ -807,6 +828,15 @@ dependencies = [
  "tokio",
  "tokio-util",
  "url",
+]
+
+[[package]]
+name = "redis_streams"
+version = "0.3.1"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=0e2fdb7#0e2fdb7cba4063282a57feb57317814277187554"
+dependencies = [
+ "redis 0.16.1-alpha.0",
+ "uuid",
 ]
 
 [[package]]

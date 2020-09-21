@@ -1,3 +1,5 @@
+extern crate redis_streams;
+
 mod api;
 mod components;
 mod model;
