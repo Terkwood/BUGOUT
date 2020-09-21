@@ -7,13 +7,13 @@ pub struct ReqId(Uuid);
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct EventId(Uuid);
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Copy)]
 pub enum Player {
     BLACK,
     WHITE,
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Copy)]
 pub struct Coord {
     pub x: u16,
     pub y: u16,

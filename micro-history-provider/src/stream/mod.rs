@@ -51,6 +51,7 @@ mod test {
     use super::*;
     use crate::repo::*;
     use crate::Components;
+    use crossbeam_channel::{Receiver, Sender};
     use std::sync::atomic::{AtomicU64, Ordering};
     use std::sync::{Arc, Mutex};
     use std::thread;
@@ -61,5 +62,20 @@ mod test {
     static FAKE_PROV_HIST_SEQ: AtomicU64 = AtomicU64::new(0);
     static FAKE_GAME_STATES_SEQ: AtomicU64 = AtomicU64::new(0);
 
-    struct FakeHistory {}
+    struct FakeHistoryRepo {
+        pub contents: Arc<Mutex<Option<Vec<Move>>>>,
+        pub put_in: Sender<Vec<Move>>,
+    }
+
+    impl HistoryRepo for FakeHistoryRepo {
+        fn get(&self, game_id: GameId) -> Result<Option<Vec<Move>>, FetchErr> {
+            Ok(self.contents.lock().expect("mutex").clone())
+        }
+
+        fn put(&self, game_id: GameId, moves: Vec<Move>) -> Result<(), WriteErr> {
+            let mut data = self.contents.lock().expect("mutex");
+            *data = Some(moves.clone());
+            Ok(self.put_in.send(moves).expect("send"))
+        }
+    }
 }
