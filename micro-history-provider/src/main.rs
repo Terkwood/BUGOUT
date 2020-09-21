@@ -11,4 +11,5 @@ pub fn main() {
     info!("🔢 {}", VERSION);
     let components = Components::default();
     stream::create_consumer_group(&components.client);
+    stream::process(&components)
 }
