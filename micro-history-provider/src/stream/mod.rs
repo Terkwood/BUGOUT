@@ -98,6 +98,13 @@ mod test {
         }
     }
 
+    fn quick_eid(ms: u64) -> XReadEntryId {
+        XReadEntryId {
+            millis_time: ms,
+            seq_no: 0,
+        }
+    }
+
     #[test]
     fn test_process() {
         let (xadd_call_in, xadd_call_out): (Sender<HistoryProvided>, _) = unbounded();
@@ -155,7 +162,7 @@ mod test {
         let fake_player_up = Player::BLACK;
         // emit a game state
         sorted_fake_stream.lock().expect("lock").push((
-            todo!("quick eid"),
+            quick_eid(fake_time_ms),
             StreamInput::GS(
                 fake_game_id.clone(),
                 GameState {
@@ -164,11 +171,17 @@ mod test {
                 },
             ),
         ));
+        fake_time_ms += incr_ms;
 
         thread::sleep(timeout);
 
         // history repo should now contain the moves from that game
-        let actual_moves = fake_history_contents.clone().lock().expect("hr").unwrap();
+        let actual_moves = fake_history_contents
+            .clone()
+            .lock()
+            .expect("hr")
+            .clone()
+            .unwrap();
         let expected_moves = vec![
             Move {
                 player: Player::BLACK,
@@ -182,5 +195,28 @@ mod test {
             },
         ];
         assert_eq!(actual_moves, expected_moves);
+
+        // request history
+        let fake_req_id = ReqId(uuid::Uuid::default());
+        sorted_fake_stream.lock().expect("lock").push((
+            quick_eid(fake_time_ms),
+            StreamInput::PH(ProvideHistory {
+                game_id: fake_game_id.clone(),
+                req_id: fake_req_id.clone(),
+            }),
+        ));
+
+        // There should be an XADD triggered on history-provided stream
+        select! {
+            recv(xadd_call_out) -> msg => match msg {
+                Ok(HistoryProvided { game_id, reply_to, moves, event_id: _, epoch_millis: _, }) => {
+                    assert_eq!(game_id, fake_game_id);
+                    assert_eq!(moves, expected_moves);
+                    assert_eq!(reply_to, fake_req_id)
+                },
+                _ => panic!("wrong output")
+            },
+            default(timeout) => panic!("WAIT timeout")
+        }
     }
 }
