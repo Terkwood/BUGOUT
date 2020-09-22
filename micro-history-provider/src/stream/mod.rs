@@ -51,7 +51,8 @@ mod test {
     use super::*;
     use crate::repo::*;
     use crate::Components;
-    use crossbeam_channel::{Receiver, Sender};
+    use crossbeam_channel::{select, unbounded, Receiver, Sender};
+    use redis_streams::XReadEntryId;
     use std::sync::atomic::{AtomicU64, Ordering};
     use std::sync::{Arc, Mutex};
     use std::thread;
@@ -95,5 +96,26 @@ mod test {
         fn xadd(&self, data: HistoryProvided) -> Result<(), XAddErr> {
             Ok(self.0.send(data).expect("send"))
         }
+    }
+
+    #[test]
+    fn test_process() {
+        let (xadd_call_in, xadd_call_out): (Sender<HistoryProvided>, _) = unbounded();
+        let (put_history_in, put_history_out): (Sender<Vec<Move>>, _) = unbounded();
+
+        let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, ProvideHistory)>>> =
+            Arc::new(Mutex::new(vec![]));
+
+        // set up a loop to process game lobby requests
+        let fake_history_contents = Arc::new(Mutex::new(vec![]));
+        let fh = fake_history_contents.clone();
+        std::thread::spawn(move || loop {
+            select! {
+                recv(put_history_out) -> msg => match msg {
+                    Ok(moves) => *fh.lock().expect("mutex lock") = moves,
+                    Err(_) => panic!("fail")
+                }
+            }
+        });
     }
 }
