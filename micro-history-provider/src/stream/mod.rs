@@ -133,5 +133,25 @@ mod test {
             };
             process(&components);
         });
+
+        // emit some events in a time-ordered fashion
+        // (fake xread impl expects time ordering 😁)
+
+        let timeout = Duration::from_millis(166);
+        let mut fake_time_ms = 100;
+        let incr_ms = 100;
+
+        let fake_game_id = GameId(uuid::Uuid::default());
+        // emit a game state
+        sorted_fake_stream.lock().expect("lock").push((
+            todo!("quick eid"),
+            StreamInput::GS(fake_game_id.clone(), todo!()),
+        ));
+
+        thread::sleep(timeout);
+
+        // history repo should now contain the moves from that game
+        let actual_moves = fake_history_contents.clone().lock().expect("hr").unwrap();
+        assert_eq!(actual_moves.len(), 1)
     }
 }

@@ -1,11 +1,11 @@
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 #[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct GameId(Uuid);
+pub struct GameId(pub Uuid);
 #[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct ReqId(Uuid);
+pub struct ReqId(pub Uuid);
 #[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct EventId(Uuid);
+pub struct EventId(pub Uuid);
 
 #[derive(Clone, Serialize, Deserialize, Debug, Copy)]
 pub enum Player {
