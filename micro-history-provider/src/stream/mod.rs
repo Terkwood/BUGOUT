@@ -85,7 +85,7 @@ mod test {
             &self,
         ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, redis::RedisError> {
             let max_eid_millis = MAX_READ_EID_MILLIS.load(Ordering::Relaxed);
-            let mut highest_new_eid_millis = 0;
+
             let data: Vec<_> = self
                 .sorted_data
                 .lock()

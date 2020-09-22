@@ -1,6 +1,5 @@
 use crate::repo::HistoryRepo;
 use crate::stream::{XAdd, XRead};
-use log::info;
 use redis::Client;
 use std::rc::Rc;
 
