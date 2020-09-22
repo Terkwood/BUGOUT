@@ -53,9 +53,12 @@ mod test {
     use crate::Components;
     use crossbeam_channel::{select, unbounded, Sender};
     use redis_streams::XReadEntryId;
+    use std::sync::atomic::{AtomicU64, Ordering};
     use std::sync::{Arc, Mutex};
     use std::thread;
     use std::time::Duration;
+
+    static MAX_READ_EID_MILLIS: AtomicU64 = AtomicU64::new(0);
 
     struct FakeHistoryRepo {
         pub contents: Arc<Mutex<Option<Vec<Move>>>>,
@@ -81,14 +84,16 @@ mod test {
         fn xread_sorted(
             &self,
         ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, redis::RedisError> {
+            let max_eid_millis = MAX_READ_EID_MILLIS.load(Ordering::Relaxed);
+            let mut highest_new_eid_millis = 0;
             let data: Vec<_> = self
                 .sorted_data
                 .lock()
                 .expect("lock")
                 .iter()
                 .filter(|(eid, stream_data)| match stream_data {
-                    StreamInput::PH(_) => todo!(" track already-read EID internal to this fake "),
-                    StreamInput::GS(_, _) => todo!(" track already-read EID internal to this fake"),
+                    StreamInput::PH(_) => max_eid_millis < eid.millis_time,
+                    StreamInput::GS(_, _) => max_eid_millis < eid.millis_time,
                 })
                 .cloned()
                 .collect();
@@ -96,6 +101,10 @@ mod test {
             if data.is_empty() {
                 // stop the test thread from spinning like crazy
                 std::thread::sleep(Duration::from_millis(20))
+            } else {
+                // this hack is standing in for "xreadgroup >" semantics
+                let new_max_eid_millis = data.iter().map(|(eid, _)| eid).max().unwrap();
+                MAX_READ_EID_MILLIS.swap(new_max_eid_millis.millis_time, Ordering::Relaxed);
             }
             Ok(data)
         }
