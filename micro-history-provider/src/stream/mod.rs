@@ -81,7 +81,7 @@ mod test {
     }
 
     struct FakeXRead {
-        sorted_data: Arc<Mutex<Vec<StreamInput>>>,
+        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
     }
     impl XRead for FakeXRead {
         fn xread_sorted(
@@ -103,19 +103,35 @@ mod test {
         let (xadd_call_in, xadd_call_out): (Sender<HistoryProvided>, _) = unbounded();
         let (put_history_in, put_history_out): (Sender<Vec<Move>>, _) = unbounded();
 
-        let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, ProvideHistory)>>> =
-            Arc::new(Mutex::new(vec![]));
-
         // set up a loop to process game lobby requests
-        let fake_history_contents = Arc::new(Mutex::new(vec![]));
+        let fake_history_contents = Arc::new(Mutex::new(None));
         let fh = fake_history_contents.clone();
         std::thread::spawn(move || loop {
             select! {
                 recv(put_history_out) -> msg => match msg {
-                    Ok(moves) => *fh.lock().expect("mutex lock") = moves,
+                    Ok(moves) => *fh.lock().expect("mutex lock") = Some(moves),
                     Err(_) => panic!("fail")
                 }
             }
+        });
+
+        let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
+            Arc::new(Mutex::new(vec![]));
+
+        let sfs = sorted_fake_stream.clone();
+        let fh = fake_history_contents.clone();
+        thread::spawn(move || {
+            let components = Components {
+                history_repo: Box::new(FakeHistoryRepo {
+                    contents: fh,
+                    put_in: put_history_in,
+                }),
+                xread: Box::new(FakeXRead {
+                    sorted_data: sfs.clone(),
+                }),
+                xadd: Box::new(FakeXAdd(xadd_call_in)),
+            };
+            process(&components);
         });
     }
 }
