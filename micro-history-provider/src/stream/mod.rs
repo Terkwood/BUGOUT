@@ -169,6 +169,18 @@ mod test {
 
         // history repo should now contain the moves from that game
         let actual_moves = fake_history_contents.clone().lock().expect("hr").unwrap();
-        assert_eq!(actual_moves.len(), 1)
+        let expected_moves = vec![
+            Move {
+                player: Player::BLACK,
+                coord: Some(Coord { x: 1, y: 1 }),
+                turn: 1,
+            },
+            Move {
+                player: Player::WHITE,
+                coord: None,
+                turn: 2,
+            },
+        ];
+        assert_eq!(actual_moves, expected_moves);
     }
 }
