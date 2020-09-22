@@ -51,17 +51,11 @@ mod test {
     use super::*;
     use crate::repo::*;
     use crate::Components;
-    use crossbeam_channel::{select, unbounded, Receiver, Sender};
+    use crossbeam_channel::{select, unbounded, Sender};
     use redis_streams::XReadEntryId;
-    use std::sync::atomic::{AtomicU64, Ordering};
     use std::sync::{Arc, Mutex};
     use std::thread;
     use std::time::Duration;
-
-    static FAKE_PROV_HIST_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static FAKE_GAME_STATES_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static FAKE_PROV_HIST_SEQ: AtomicU64 = AtomicU64::new(0);
-    static FAKE_GAME_STATES_SEQ: AtomicU64 = AtomicU64::new(0);
 
     struct FakeHistoryRepo {
         pub contents: Arc<Mutex<Option<Vec<Move>>>>,
@@ -69,11 +63,11 @@ mod test {
     }
 
     impl HistoryRepo for FakeHistoryRepo {
-        fn get(&self, game_id: GameId) -> Result<Option<Vec<Move>>, FetchErr> {
+        fn get(&self, _game_id: GameId) -> Result<Option<Vec<Move>>, FetchErr> {
             Ok(self.contents.lock().expect("mutex").clone())
         }
 
-        fn put(&self, game_id: GameId, moves: Vec<Move>) -> Result<(), WriteErr> {
+        fn put(&self, _game_id: GameId, moves: Vec<Move>) -> Result<(), WriteErr> {
             let mut data = self.contents.lock().expect("mutex");
             *data = Some(moves.clone());
             Ok(self.put_in.send(moves).expect("send"))
