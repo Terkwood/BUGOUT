@@ -19,7 +19,7 @@ pub enum StreamInput {
 
 pub fn process(components: &Components) {
     loop {
-        todo!()
+        todo!("please write something")
     }
 }
 
@@ -81,7 +81,23 @@ mod test {
         fn xread_sorted(
             &self,
         ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, redis::RedisError> {
-            todo!()
+            let data: Vec<_> = self
+                .sorted_data
+                .lock()
+                .expect("lock")
+                .iter()
+                .filter(|(eid, stream_data)| match stream_data {
+                    StreamInput::PH(_) => todo!(" track already-read EID internal to this fake "),
+                    StreamInput::GS(_, _) => todo!(" track already-read EID internal to this fake"),
+                })
+                .cloned()
+                .collect();
+
+            if data.is_empty() {
+                // stop the test thread from spinning like crazy
+                std::thread::sleep(Duration::from_millis(20))
+            }
+            Ok(data)
         }
     }
 
