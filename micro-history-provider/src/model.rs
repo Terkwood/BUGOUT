@@ -23,7 +23,6 @@ pub struct Coord {
 pub struct MoveEvent {
     pub player: Player,
     pub coord: Option<Coord>,
-    pub turn: u32,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]

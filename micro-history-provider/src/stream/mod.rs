@@ -142,10 +142,27 @@ mod test {
         let incr_ms = 100;
 
         let fake_game_id = GameId(uuid::Uuid::default());
+        let fake_moves = vec![
+            MoveEvent {
+                player: Player::BLACK,
+                coord: Some(Coord { x: 1, y: 1 }),
+            },
+            MoveEvent {
+                player: Player::WHITE,
+                coord: None,
+            },
+        ];
+        let fake_player_up = Player::BLACK;
         // emit a game state
         sorted_fake_stream.lock().expect("lock").push((
             todo!("quick eid"),
-            StreamInput::GS(fake_game_id.clone(), todo!()),
+            StreamInput::GS(
+                fake_game_id.clone(),
+                GameState {
+                    moves: Some(fake_moves),
+                    player_up: fake_player_up,
+                },
+            ),
         ));
 
         thread::sleep(timeout);
