@@ -8,8 +8,9 @@ pub use xread::*;
 use crate::api::*;
 use crate::components::*;
 use crate::model::*;
-use log::warn;
+use log::{error, warn};
 use redis::Commands;
+use redis_streams::XReadEntryId;
 
 #[derive(Clone, Debug)]
 pub enum StreamInput {
@@ -18,8 +19,24 @@ pub enum StreamInput {
 }
 
 pub fn process(components: &Components) {
+    let mut gs_processed: Vec<XReadEntryId> = vec![];
+    let mut ph_processed: Vec<XReadEntryId> = vec![];
     loop {
-        todo!("please write something")
+        match components.xread.xread_sorted() {
+            Ok(xrr) => {
+                for time_ordered_event in xrr {
+                    match time_ordered_event {
+                        (entry_id, StreamInput::GS(_, _)) => todo!("write history to repo"),
+                        (entry_id, StreamInput::PH(_)) => {
+                            todo!("read history from repo");
+                            todo!("write to stream")
+                        }
+                    }
+                }
+            }
+            Err(_) => error!("xread"),
+        }
+        todo!("ack streams");
     }
 }
 
