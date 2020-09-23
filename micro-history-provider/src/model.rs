@@ -40,6 +40,7 @@ pub struct GameState {
 
 impl GameState {
     pub fn to_history(&self) -> Vec<Move> {
+        let e_moves = self.moves.iter().enumerate().map(|(i, event)| todo!());
         todo!("gs to_hist")
     }
 }
@@ -47,5 +48,13 @@ impl GameState {
 impl EventId {
     pub fn new() -> Self {
         EventId(Uuid::new_v4())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn game_state_to_history() {
+        todo!()
     }
 }
