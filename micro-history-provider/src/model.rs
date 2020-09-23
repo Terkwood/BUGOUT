@@ -53,8 +53,40 @@ impl EventId {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     #[test]
     fn game_state_to_history() {
-        todo!()
+        let c1 = None;
+        let c2 = Some(Coord { x: 0, y: 0 });
+        let gs_moves = vec![
+            MoveEvent {
+                coord: c1,
+                player: Player::BLACK,
+            },
+            MoveEvent {
+                coord: c2,
+                player: Player::WHITE,
+            },
+        ];
+        let player_up = Player::BLACK;
+        let game_state = GameState {
+            moves: Some(gs_moves),
+            player_up,
+        };
+
+        let actual = game_state.to_history();
+        let expected: Vec<Move> = vec![
+            Move {
+                coord: c1,
+                turn: 1,
+                player: Player::BLACK,
+            },
+            Move {
+                coord: c2,
+                player: Player::WHITE,
+                turn: 2,
+            },
+        ];
+        assert_eq!(actual, expected)
     }
 }
