@@ -249,9 +249,10 @@ mod test {
             },
         ];
         let fake_player_up = Player::BLACK;
+        let eid_gs = quick_eid(fake_time_ms);
         // emit a game state
         sorted_fake_stream.lock().expect("lock").push((
-            quick_eid(fake_time_ms),
+            eid_gs,
             StreamInput::GS(
                 fake_game_id.clone(),
                 GameState {
@@ -284,12 +285,15 @@ mod test {
             },
         ];
         assert_eq!(actual_moves, expected_moves);
+        // check ack for game_states stream
+        let gs_ack = LAST_GS_ACK_MILLIS.load(Ordering::Relaxed);
+        assert_eq!(gs_ack, eid_gs.millis_time);
 
         // request history
         let fake_req_id = ReqId(uuid::Uuid::default());
-        let eid_0 = quick_eid(fake_time_ms);
+        let eid_ph = quick_eid(fake_time_ms);
         sorted_fake_stream.lock().expect("lock").push((
-            eid_0,
+            eid_ph,
             StreamInput::PH(ProvideHistory {
                 game_id: fake_game_id.clone(),
                 req_id: fake_req_id.clone(),
@@ -303,8 +307,9 @@ mod test {
                     assert_eq!(game_id, fake_game_id);
                     assert_eq!(moves, expected_moves);
                     assert_eq!(reply_to, fake_req_id);
+                    // check ack for provide_history stream
                     let ph_ack = LAST_PH_ACK_MILLIS.load(Ordering::Relaxed);
-                    assert_eq!(ph_ack, eid_0.millis_time)
+                    assert_eq!(ph_ack, eid_ph.millis_time)
                 },
                 _ => panic!("wrong output")
             },
