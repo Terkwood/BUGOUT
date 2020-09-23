@@ -1,3 +1,7 @@
+# v0.8.10
+
+- Create micro-history-provider
+
 # v0.8.9
 
 - Create CHANGELOG.md
