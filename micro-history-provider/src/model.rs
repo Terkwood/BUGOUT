@@ -38,6 +38,12 @@ pub struct GameState {
     pub player_up: Player,
 }
 
+impl GameState {
+    pub fn to_history(&self) -> Vec<Move> {
+        todo!("gs to_hist")
+    }
+}
+
 impl EventId {
     pub fn new() -> Self {
         EventId(Uuid::new_v4())

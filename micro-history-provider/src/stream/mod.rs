@@ -26,10 +26,10 @@ pub fn process(components: &Components) {
             Ok(xrr) => {
                 for time_ordered_event in xrr {
                     match time_ordered_event {
-                        (entry_id, StreamInput::GS(game_id, _)) => {
+                        (entry_id, StreamInput::GS(game_id, game_state)) => {
                             if let Err(_e) = components
                                 .history_repo
-                                .put(&game_id, todo!(" convert history "))
+                                .put(&game_id, game_state.to_history())
                             {
                                 error!("write to history repo")
                             }
