@@ -37,3 +37,9 @@ pub struct GameState {
     pub moves: Option<Vec<MoveEvent>>,
     pub player_up: Player,
 }
+
+impl EventId {
+    pub fn new() -> Self {
+        EventId(Uuid::new_v4())
+    }
+}

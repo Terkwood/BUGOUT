@@ -26,10 +26,36 @@ pub fn process(components: &Components) {
             Ok(xrr) => {
                 for time_ordered_event in xrr {
                     match time_ordered_event {
-                        (entry_id, StreamInput::GS(_, _)) => todo!("write history to repo"),
-                        (entry_id, StreamInput::PH(_)) => {
-                            todo!("read history from repo");
-                            todo!("write to stream")
+                        (entry_id, StreamInput::GS(game_id, _)) => {
+                            if let Err(_e) = components
+                                .history_repo
+                                .put(&game_id, todo!(" convert history "))
+                            {
+                                error!("write to history repo")
+                            }
+
+                            gs_processed.push(entry_id)
+                        }
+                        (entry_id, StreamInput::PH(ProvideHistory { game_id, req_id })) => {
+                            let maybe_hist_r = components.history_repo.get(&game_id);
+                            match maybe_hist_r {
+                                Ok(Some(moves)) => {
+                                    let hp = HistoryProvided {
+                                        moves,
+                                        event_id: EventId::new(),
+                                        epoch_millis: todo!(),
+                                        game_id,
+                                        reply_to: req_id,
+                                    };
+                                    if let Err(e) = components.xadd.xadd(hp) {
+                                        error!("error in xadd {:?}", e)
+                                    }
+                                }
+                                Ok(None) => warn!("no history for game {:?}", game_id),
+                                Err(_e) => error!("history lookup error"),
+                            }
+
+                            ph_processed.push(entry_id);
                         }
                     }
                 }
@@ -83,11 +109,11 @@ mod test {
     }
 
     impl HistoryRepo for FakeHistoryRepo {
-        fn get(&self, _game_id: GameId) -> Result<Option<Vec<Move>>, FetchErr> {
+        fn get(&self, _game_id: &GameId) -> Result<Option<Vec<Move>>, FetchErr> {
             Ok(self.contents.lock().expect("mutex").clone())
         }
 
-        fn put(&self, _game_id: GameId, moves: Vec<Move>) -> Result<(), WriteErr> {
+        fn put(&self, _game_id: &GameId, moves: Vec<Move>) -> Result<(), WriteErr> {
             let mut data = self.contents.lock().expect("mutex");
             *data = Some(moves.clone());
             Ok(self.put_in.send(moves).expect("send"))
