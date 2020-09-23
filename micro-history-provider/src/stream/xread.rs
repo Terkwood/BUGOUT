@@ -18,6 +18,7 @@ pub trait XRead {
 #[derive(Debug)]
 pub enum StreamReadErr {
     Deser(StreamDeserErr),
+    XRead(redis::RedisError),
     Conn,
 }
 #[derive(Debug)]
@@ -33,7 +34,6 @@ const CONSUMER_NAME: &str = "singleton";
 impl XRead for Rc<Client> {
     fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr> {
         if let Ok(mut conn) = self.get_connection() {
-            let mut conn = self.get_connection().expect("conn");
             let opts = StreamReadOptions::default()
                 .block(BLOCK_MS)
                 .group(GROUP_NAME, CONSUMER_NAME);
@@ -48,9 +48,15 @@ impl XRead for Rc<Client> {
                     let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
                     sorted_keys.sort();
 
-                    Ok(todo!("answer"))
+                    let mut answer = vec![];
+                    for sk in sorted_keys {
+                        if let Some(data) = unsorted.get(&sk) {
+                            answer.push((sk, data.clone()))
+                        }
+                    }
+                    Ok(answer)
                 }
-                Err(e) => Err(StreamReadErr::Deser(StreamDeserErr::DataDeser)),
+                Err(e) => Err(StreamReadErr::Deser(e)),
             }
         } else {
             Err(StreamReadErr::Conn)
@@ -120,8 +126,9 @@ impl From<redis::RedisError> for StreamAckErr {
         Self
     }
 }
+
 impl From<redis::RedisError> for StreamReadErr {
     fn from(e: redis::RedisError) -> Self {
-        StreamReadErr::Deser(StreamDeserErr::DataDeser)
+        StreamReadErr::XRead(e)
     }
 }
