@@ -1,9 +1,9 @@
-use super::topics;
+use super::{topics, GROUP_NAME};
 use crate::model::GameId;
 use crate::stream::StreamInput;
 use log::error;
 use redis::streams::StreamReadReply;
-use redis::Client;
+use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -13,19 +13,6 @@ pub trait XRead {
     fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr>;
     fn xack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
     fn xack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
-}
-impl XRead for Rc<Client> {
-    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr> {
-        todo!()
-    }
-
-    fn xack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-        todo!()
-    }
-
-    fn xack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-        todo!()
-    }
 }
 
 #[derive(Debug)]
@@ -40,6 +27,27 @@ pub enum StreamDeserErr {
 }
 #[derive(Debug)]
 pub struct StreamAckErr;
+
+impl XRead for Rc<Client> {
+    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr> {
+        todo!()
+    }
+
+    fn xack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+        ack(&self, topics::PROVIDE_HISTORY, ids)
+    }
+
+    fn xack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+        ack(&self, topics::GAME_STATES_CHANGELOG, ids)
+    }
+}
+
+fn ack(client: &Client, key: &str, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+    let mut conn = client.get_connection().expect("conn");
+    let idstrs: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
+    let _: usize = conn.xack(key, GROUP_NAME, &idstrs)?;
+    Ok(())
+}
 
 fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, StreamDeserErr> {
     let mut out = HashMap::new();
@@ -81,4 +89,10 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, Str
         }
     }
     Ok(out)
+}
+
+impl From<redis::RedisError> for StreamAckErr {
+    fn from(_: redis::RedisError) -> Self {
+        Self
+    }
 }
