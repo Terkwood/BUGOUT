@@ -40,8 +40,20 @@ pub struct GameState {
 
 impl GameState {
     pub fn to_history(&self) -> Vec<Move> {
-        let e_moves = self.moves.iter().enumerate().map(|(i, event)| todo!());
-        todo!("gs to_hist")
+        self.moves
+            .clone()
+            .map(|the_moves| {
+                the_moves
+                    .iter()
+                    .enumerate()
+                    .map(|(i, &MoveEvent { player, coord })| Move {
+                        turn: (i + 1) as u32,
+                        player,
+                        coord,
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 }
 
