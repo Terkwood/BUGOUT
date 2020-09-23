@@ -28,8 +28,14 @@ impl HistoryRepo for Rc<Client> {
     }
 
     fn put(&self, game_id: &GameId, moves: Vec<Move>) -> Result<(), WriteErr> {
-        todo!();
-        todo!("ttl")
+        let key = redis_key(game_id);
+        if let (Ok(mut conn), Ok(bytes)) = (self.get_connection(), bincode::serialize(&moves)) {
+            let done = conn.set(&key, bytes).map_err(|_| WriteErr)?;
+            conn.expire(&key, EXPIRY_SECS)?;
+            Ok(done)
+        } else {
+            Err(WriteErr)
+        }
     }
 }
 
@@ -38,6 +44,11 @@ fn redis_key(game_id: &GameId) -> String {
 }
 
 impl From<redis::RedisError> for FetchErr {
+    fn from(_: redis::RedisError) -> Self {
+        Self
+    }
+}
+impl From<redis::RedisError> for WriteErr {
     fn from(_: redis::RedisError) -> Self {
         Self
     }
