@@ -18,7 +18,7 @@ pub trait XRead {
 #[derive(Debug)]
 pub enum StreamReadErr {
     Deser(StreamDeserErr),
-    Other,
+    Conn,
 }
 #[derive(Debug)]
 pub enum StreamDeserErr {
@@ -42,9 +42,19 @@ impl XRead for Rc<Client> {
                 &[">", ">"],
                 opts,
             )?;
-        }
 
-        todo!()
+            match deser(ser) {
+                Ok(unsorted) => {
+                    let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
+                    sorted_keys.sort();
+
+                    Ok(todo!("answer"))
+                }
+                Err(e) => Err(StreamReadErr::Deser(StreamDeserErr::DataDeser)),
+            }
+        } else {
+            Err(StreamReadErr::Conn)
+        }
     }
 
     fn xack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
