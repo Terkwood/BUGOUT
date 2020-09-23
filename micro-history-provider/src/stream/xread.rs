@@ -2,7 +2,7 @@ use super::{topics, GROUP_NAME};
 use crate::model::GameId;
 use crate::stream::StreamInput;
 use log::error;
-use redis::streams::StreamReadReply;
+use redis::streams::{StreamReadOptions, StreamReadReply};
 use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
@@ -23,13 +23,27 @@ pub enum StreamReadErr {
 #[derive(Debug)]
 pub enum StreamDeserErr {
     EIDFormat,
-    DataDeser(String),
+    DataDeser,
 }
 #[derive(Debug)]
 pub struct StreamAckErr;
 
+const BLOCK_MS: usize = 5000;
+const CONSUMER_NAME: &str = "singleton";
 impl XRead for Rc<Client> {
     fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr> {
+        if let Ok(mut conn) = self.get_connection() {
+            let mut conn = self.get_connection().expect("conn");
+            let opts = StreamReadOptions::default()
+                .block(BLOCK_MS)
+                .group(GROUP_NAME, CONSUMER_NAME);
+            let ser = conn.xread_options(
+                &[topics::GAME_STATES_CHANGELOG, topics::PROVIDE_HISTORY],
+                &[">", ">"],
+                opts,
+            )?;
+        }
+
         todo!()
     }
 
@@ -79,7 +93,7 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, Str
                     if let Some(s) = sd {
                         out.insert(eid, s);
                     } else {
-                        return Err(StreamDeserErr::DataDeser(key));
+                        return Err(StreamDeserErr::DataDeser);
                     }
                 }
             } else {
@@ -94,5 +108,10 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, Str
 impl From<redis::RedisError> for StreamAckErr {
     fn from(_: redis::RedisError) -> Self {
         Self
+    }
+}
+impl From<redis::RedisError> for StreamReadErr {
+    fn from(e: redis::RedisError) -> Self {
+        StreamReadErr::Deser(StreamDeserErr::DataDeser)
     }
 }
