@@ -43,7 +43,7 @@ pub fn process(components: &Components) {
                                     let hp = HistoryProvided {
                                         moves,
                                         event_id: EventId::new(),
-                                        epoch_millis: todo!(),
+                                        epoch_millis: crate::time::now_millis() as u64,
                                         game_id,
                                         reply_to: req_id,
                                     };
@@ -62,7 +62,16 @@ pub fn process(components: &Components) {
             }
             Err(_) => error!("xread"),
         }
-        todo!("ack streams");
+        if !gs_processed.is_empty() {
+            if let Err(_e) = components.xread.xack_game_states(&gs_processed) {
+                error!("ack for game states failed")
+            }
+        }
+        if !ph_processed.is_empty() {
+            if let Err(_e) = components.xread.xack_prov_hist(&ph_processed) {
+                error!("ack for provide history failed")
+            }
+        }
     }
 }
 
@@ -102,6 +111,8 @@ mod test {
     use std::time::Duration;
 
     static MAX_READ_EID_MILLIS: AtomicU64 = AtomicU64::new(0);
+    static LAST_GS_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
+    static LAST_PH_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
 
     struct FakeHistoryRepo {
         pub contents: Arc<Mutex<Option<Vec<Move>>>>,
@@ -126,7 +137,7 @@ mod test {
     impl XRead for FakeXRead {
         fn xread_sorted(
             &self,
-        ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, redis::RedisError> {
+        ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, StreamReadErr> {
             let max_eid_millis = MAX_READ_EID_MILLIS.load(Ordering::Relaxed);
 
             let data: Vec<_> = self
@@ -150,6 +161,22 @@ mod test {
                 MAX_READ_EID_MILLIS.swap(new_max_eid_millis.millis_time, Ordering::Relaxed);
             }
             Ok(data)
+        }
+
+        fn xack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            if let Some(max_id_millis) = ids.iter().map(|id| id.millis_time).max() {
+                LAST_PH_ACK_MILLIS.swap(max_id_millis, Ordering::Relaxed);
+            }
+
+            Ok(())
+        }
+
+        fn xack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            if let Some(max_id_millis) = ids.iter().map(|id| id.millis_time).max() {
+                LAST_GS_ACK_MILLIS.swap(max_id_millis, Ordering::Relaxed);
+            }
+
+            Ok(())
         }
     }
 
@@ -260,8 +287,9 @@ mod test {
 
         // request history
         let fake_req_id = ReqId(uuid::Uuid::default());
+        let eid_0 = quick_eid(fake_time_ms);
         sorted_fake_stream.lock().expect("lock").push((
-            quick_eid(fake_time_ms),
+            eid_0,
             StreamInput::PH(ProvideHistory {
                 game_id: fake_game_id.clone(),
                 req_id: fake_req_id.clone(),
@@ -274,7 +302,9 @@ mod test {
                 Ok(HistoryProvided { game_id, reply_to, moves, event_id: _, epoch_millis: _, }) => {
                     assert_eq!(game_id, fake_game_id);
                     assert_eq!(moves, expected_moves);
-                    assert_eq!(reply_to, fake_req_id)
+                    assert_eq!(reply_to, fake_req_id);
+                    let ph_ack = LAST_PH_ACK_MILLIS.load(Ordering::Relaxed);
+                    assert_eq!(ph_ack, eid_0.millis_time)
                 },
                 _ => panic!("wrong output")
             },
