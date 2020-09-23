@@ -1,7 +1,7 @@
 use crate::model::*;
-use serde_derive::Serialize;
+use serde_derive::{Deserialize, Serialize};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct ProvideHistory {
     pub game_id: GameId,
     pub req_id: ReqId,
