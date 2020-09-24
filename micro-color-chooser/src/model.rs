@@ -7,19 +7,21 @@ pub enum Color {
     White,
 }
 
-#[derive(Copy, Clone, Debug, Deserialize)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize)]
 pub enum ColorPref {
     Black,
     White,
     Any,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SessionColorPref {
     pub game_id: GameId,
     pub session_id: SessionId,
     pub color_pref: ColorPref,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum GameColorPref {
     Empty,
     Partial(SessionColorPref),
@@ -28,9 +30,9 @@ pub enum GameColorPref {
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct ClientId(pub Uuid);
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Hash, Eq, PartialEq)]
 pub struct SessionId(pub Uuid);
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, Hash, PartialEq)]
 pub struct GameId(pub Uuid);
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct EventId(pub Uuid);

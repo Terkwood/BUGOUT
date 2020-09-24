@@ -46,12 +46,62 @@ mod tests {
     use crate::Components;
     use crossbeam_channel::{select, unbounded, Sender};
     use redis_streams::XReadEntryId;
+    use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
     use std::thread;
     use std::time::Duration;
     use uuid::Uuid;
 
     use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
+
+    struct FakeGameRepo {
+        pub contents: Arc<Mutex<HashMap<SessionId, GameId>>>,
+        pub put_in: Sender<GameId>,
+    }
+    struct FakePrefsRepo {
+        pub contents: Arc<Mutex<HashMap<GameId, GameColorPref>>>,
+        pub put_in: Sender<GameColorPref>,
+    }
+
+    impl GameRepo for FakeGameRepo {
+        fn get(&self, session_id: &SessionId) -> Result<Option<GameId>, FetchErr> {
+            Ok(self
+                .contents
+                .lock()
+                .expect("mutex")
+                .get(session_id)
+                .map(|g| g.clone()))
+        }
+
+        fn put(&self, session_id: &SessionId, game_id: &GameId) -> Result<(), WriteErr> {
+            let mut data = self.contents.lock().expect("mutex");
+            data.insert(session_id.clone(), game_id.clone());
+            Ok(self.put_in.send(game_id.clone()).expect("send"))
+        }
+    }
+
+    impl PrefsRepo for FakePrefsRepo {
+        fn get(&self, game_id: &GameId) -> Result<GameColorPref, FetchErr> {
+            todo!()
+        }
+
+        fn add(&self, scp: SessionColorPref) -> Result<(), WriteErr> {
+            let mut data = self.contents.lock().expect("mutex");
+            match data.get(&scp.game_id).cloned() {
+                None => {
+                    data.insert(scp.game_id.clone(), GameColorPref::Partial(scp.clone()));
+                }
+                Some(GameColorPref::Partial(first)) => {
+                    data.insert(
+                        scp.game_id.clone(),
+                        GameColorPref::Complete(first.clone(), scp.clone()),
+                    );
+                }
+                Some(_) => panic!("prefs already complete"),
+            }
+            todo!()
+        }
+    }
 
     fn run(c1: &ChooseColorPref, c2: &ChooseColorPref, game_id: &GameId) {
         static GR_ACK_XID: AtomicU64 = AtomicU64::new(0);
