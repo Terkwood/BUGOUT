@@ -82,7 +82,13 @@ mod tests {
 
     impl PrefsRepo for FakePrefsRepo {
         fn get(&self, game_id: &GameId) -> Result<GameColorPref, FetchErr> {
-            todo!()
+            Ok(self
+                .contents
+                .lock()
+                .expect("mutex")
+                .get(game_id)
+                .map(|gcp| gcp.clone())
+                .unwrap_or(GameColorPref::Empty))
         }
 
         fn add(&self, scp: SessionColorPref) -> Result<(), WriteErr> {
@@ -99,7 +105,7 @@ mod tests {
                 }
                 Some(_) => panic!("prefs already complete"),
             }
-            todo!()
+            Ok(())
         }
     }
 
