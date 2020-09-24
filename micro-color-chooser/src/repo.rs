@@ -14,11 +14,11 @@ const EXPIRY_SECS: usize = 86400;
 
 impl PrefsRepo for Rc<Client> {
     fn get(&self, game_id: &GameId) -> Result<Vec<SessionColorPref>, FetchErr> {
-        todo!()
+        todo!("get redis list")
     }
 
     fn put(&self, game_id: &GameId, scp: SessionColorPref) -> Result<(), WriteErr> {
-        todo!()
+        todo!("write redis list")
     }
 }
 
