@@ -13,6 +13,11 @@ use log::{error, warn};
 use redis::Commands;
 use redis_streams::XReadEntryId;
 
+pub enum StreamInput {
+    GR(GameReady),
+    CCP(ChooseColorPref),
+}
+
 pub fn process(components: &Components) {
     todo!("ack id arrays");
     let mut gs_processed: Vec<XReadEntryId> = vec![];
@@ -31,5 +36,24 @@ pub fn process(components: &Components) {
                 error!("ack for game states failed")
             }
         }*/
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uuid::Uuid;
+
+    #[test]
+    fn test_no_conflict() {
+        let game_id = GameId(Uuid::new_v4());
+        let sessions = (SessionId(Uuid::new_v4()), SessionId(Uuid::new_v4()));
+        let clients = (ClientId(Uuid::new_v4()), ClientId(Uuid::new_v4()));
+        let game_ready_event = GameReady {
+            game_id,
+            sessions,
+            event_id: EventId::new(),
+        };
+        todo!("write test");
     }
 }

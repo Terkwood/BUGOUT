@@ -24,3 +24,9 @@ pub struct SessionId(pub Uuid);
 pub struct GameId(pub Uuid);
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct EventId(pub Uuid);
+
+impl EventId {
+    pub fn new() -> Self {
+        Self(Uuid::new_v4())
+    }
+}
