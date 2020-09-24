@@ -1,6 +1,10 @@
 use crate::model::*;
 use serde_derive::{Deserialize, Serialize};
-pub struct ChooseColorPref {}
+pub struct ChooseColorPref {
+    pub client_id: ClientId,
+    pub color_pref: ColorPref,
+    pub session_id: SessionId,
+}
 
 pub struct ColorsChosen {
     pub game_id: GameId,

@@ -14,7 +14,17 @@ pub enum ColorPref {
     Any,
 }
 
-pub struct SessionColorPref(pub SessionId, pub ColorPref);
+pub struct SessionColorPref {
+    pub game_id: GameId,
+    pub session_id: SessionId,
+    pub color_pref: ColorPref,
+}
+
+pub enum GameColorPref {
+    Empty,
+    Partial(SessionColorPref),
+    Complete(SessionColorPref, SessionColorPref),
+}
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct ClientId(pub Uuid);

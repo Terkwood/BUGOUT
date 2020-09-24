@@ -42,7 +42,21 @@ pub fn process(components: &Components) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repo::*;
+    use crate::Components;
+    use crossbeam_channel::{select, unbounded, Sender};
+    use redis_streams::XReadEntryId;
+    use std::sync::{Arc, Mutex};
+    use std::thread;
+    use std::time::Duration;
     use uuid::Uuid;
+
+    use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
+
+    fn run(c1: &ChooseColorPref, c2: &ChooseColorPref, game_id: &GameId) {
+        static GR_ACK_XID: AtomicU64 = AtomicU64::new(0);
+        static CCP_ACK_XID: AtomicU64 = AtomicU64::new(0);
+    }
 
     #[test]
     fn test_no_conflict() {
