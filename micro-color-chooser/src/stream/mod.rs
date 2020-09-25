@@ -42,9 +42,10 @@ pub fn process(components: &Components) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::api::*;
     use crate::repo::*;
     use crate::Components;
-    use crossbeam_channel::{select, unbounded, Sender};
+    use crossbeam_channel::{select, unbounded, Receiver, Sender};
     use redis_streams::XReadEntryId;
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
@@ -63,7 +64,7 @@ mod tests {
         pub put_in: Sender<GameColorPref>,
     }
 
-    impl GameRepo for FakeGameRepo {
+    impl SessionGameRepo for FakeGameRepo {
         fn get(&self, session_id: &SessionId) -> Result<Option<GameId>, FetchErr> {
             Ok(self
                 .contents
@@ -109,9 +110,27 @@ mod tests {
         }
     }
 
-    fn run(c1: &ChooseColorPref, c2: &ChooseColorPref, game_id: &GameId) {
+    struct TestOutputs {
+        pub xadd_call_out: Receiver<ColorsChosen>,
+        pub put_prefs_out: Receiver<GameColorPref>,
+        pub put_session_game_out: Receiver<SessionGame>,
+    }
+
+    fn run(c1: &ChooseColorPref, c2: &ChooseColorPref, game_id: &GameId) -> TestOutputs {
         static GR_ACK_XID: AtomicU64 = AtomicU64::new(0);
         static CCP_ACK_XID: AtomicU64 = AtomicU64::new(0);
+
+        let (xadd_call_in, xadd_call_out): (_, Receiver<ColorsChosen>) = unbounded();
+        let (put_prefs_in, put_prefs_out): (_, Receiver<GameColorPref>) = unbounded();
+        let (put_session_game_in, put_session_game_out): (_, Receiver<SessionGame>) = unbounded();
+
+        todo!();
+
+        TestOutputs {
+            xadd_call_out,
+            put_prefs_out,
+            put_session_game_out,
+        }
     }
 
     #[test]
