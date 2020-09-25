@@ -22,23 +22,26 @@ pub enum StreamInput {
 const GROUP_NAME: &str = "micro-color-chooser";
 
 pub fn process(components: &Components) {
-    todo!("ack id arrays");
-    let mut gs_processed: Vec<XReadEntryId> = vec![];
+    let mut gr_processed: Vec<XReadEntryId> = vec![];
+    let mut ccp_processed: Vec<XReadEntryId> = vec![];
     loop {
-        todo!("match components.xread.xread_sorted()");
-        /*Ok(_) => {
-            for time_ordered_event in todo!("records") {
-                todo!("match time_ordered_event")
+        match components.xread.sorted() {
+            Ok(_) => todo!(),
+            Err(_) => error!("xread"),
+        }
+
+        if !gr_processed.is_empty() {
+            if let Err(_e) = components.xread.ack_game_ready(&gr_processed) {
+                error!("ack for game states failed")
+            } else {
+                gr_processed.clear()
             }
         }
-        Err(_) => error!("xread"),*/
-
-        todo!("acks");
-        /*if !gs_processed.is_empty() {
-            if let Err(_e) = components.xread.xack_game_states(&gs_processed) {
-                error!("ack for game states failed")
+        if !ccp_processed.is_empty() {
+            if let Err(_e) = components.xread.ack_choose_color_pref(&ccp_processed) {
+                ccp_processed.clear()
             }
-        }*/
+        }
     }
 }
 
