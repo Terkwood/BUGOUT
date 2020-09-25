@@ -68,6 +68,8 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                 &components.client,
             ) {
                 error!("ack in move accepted failed {:?} ", e)
+            } else {
+                ma_processed.clear()
             }
         }
         if !gs_processed.is_empty() {
@@ -78,6 +80,8 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                 &components.client,
             ) {
                 error!("ack in game states failed {:?} ", e);
+            } else {
+                gs_processed.clear()
             }
         }
     }
