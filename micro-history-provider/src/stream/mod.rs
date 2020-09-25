@@ -65,11 +65,15 @@ pub fn process(components: &Components) {
         if !gs_processed.is_empty() {
             if let Err(_e) = components.xread.xack_game_states(&gs_processed) {
                 error!("ack for game states failed")
+            } else {
+                gs_processed.clear()
             }
         }
         if !ph_processed.is_empty() {
             if let Err(_e) = components.xread.xack_prov_hist(&ph_processed) {
                 error!("ack for provide history failed")
+            } else {
+                ph_processed.clear()
             }
         }
     }
