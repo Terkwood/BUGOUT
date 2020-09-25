@@ -1,4 +1,5 @@
 mod init;
+mod topics;
 mod xadd;
 mod xread;
 
@@ -17,6 +18,8 @@ pub enum StreamInput {
     GR(GameReady),
     CCP(ChooseColorPref),
 }
+
+const GROUP_NAME: &str = "micro-color-chooser";
 
 pub fn process(components: &Components) {
     todo!("ack id arrays");
@@ -115,7 +118,19 @@ mod tests {
         }
     }
 
-    impl XRead for FakeXRead {}
+    impl XRead for FakeXRead {
+        fn sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr> {
+            todo!()
+        }
+
+        fn ack_choose_color_pref(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            todo!()
+        }
+
+        fn ack_game_ready(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            todo!()
+        }
+    }
 
     impl XAdd for FakeXAdd {
         fn xadd(&self, data: ColorsChosen) -> Result<(), XAddErr> {
