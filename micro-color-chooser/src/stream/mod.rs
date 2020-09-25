@@ -69,6 +69,8 @@ mod tests {
 
     struct FakeXAdd(Sender<ColorsChosen>);
     struct FakeXRead {
+        gr_ack_ms: Arc<AtomicU64>,
+        ccp_ack_ms: Arc<AtomicU64>,
         sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
     }
 
@@ -124,11 +126,19 @@ mod tests {
         }
 
         fn ack_choose_color_pref(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            todo!()
+            if let Some(max_id_millis) = ids.iter().map(|id| id.millis_time).max() {
+                self.ccp_ack_ms.swap(max_id_millis, Relaxed);
+            }
+
+            Ok(())
         }
 
         fn ack_game_ready(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            todo!()
+            if let Some(max_id_millis) = ids.iter().map(|id| id.millis_time).max() {
+                self.gr_ack_ms.swap(max_id_millis, Relaxed);
+            }
+
+            Ok(())
         }
     }
 
@@ -158,8 +168,8 @@ mod tests {
         second_color_pref: &ChooseColorPref,
         game_id: &GameId,
     ) -> TestOutputs {
-        static GR_ACK_XID: AtomicU64 = AtomicU64::new(0);
-        static CCP_ACK_XID: AtomicU64 = AtomicU64::new(0);
+        let gr_ack_ms = Arc::new(AtomicU64::new(0));
+        let ccp_ack_ms = Arc::new(AtomicU64::new(0));
 
         let (xadd_call_in, xadd_call_out): (_, Receiver<ColorsChosen>) = unbounded();
         let (put_prefs_in, put_prefs_out): (_, Receiver<SessionColorPref>) = unbounded();
@@ -186,10 +196,13 @@ mod tests {
 
         let sfs = sorted_fake_stream.clone();
         let fp = fake_prefs_contents.clone();
+        let fsg = fake_session_game_contents.clone();
+        let ca = ccp_ack_ms.clone();
+        let gra = gr_ack_ms.clone();
         thread::spawn(move || {
             let components = Components {
                 session_game_repo: Box::new(FakeGameRepo {
-                    contents: fake_session_game_contents,
+                    contents: fsg,
                     put_in: put_session_game_in,
                 }),
                 prefs_repo: Box::new(FakePrefsRepo {
@@ -197,6 +210,8 @@ mod tests {
                     put_in: put_prefs_in,
                 }),
                 xread: Box::new(FakeXRead {
+                    gr_ack_ms: gra,
+                    ccp_ack_ms: ca,
                     sorted_data: sfs.clone(),
                 }),
                 xadd: Box::new(FakeXAdd(xadd_call_in)),
@@ -220,6 +235,8 @@ mod tests {
 
         fake_time_ms += incr_ms;
         thread::sleep(wait_time);
+
+        assert_eq!(ccp_ack_ms.load(Relaxed), first_pref_xid.millis_time);
 
         let second_pref_xid = quick_eid(fake_time_ms);
 
@@ -247,8 +264,11 @@ mod tests {
             .expect("lock")
             .push((game_ready_xid, StreamInput::GR(game_ready)));
 
-        todo!("check good behavior of the stream processor wrt repos");
-
+        // check ack for game_states stream
+        let found_gr_ack_ms = gr_ack_ms.load(Relaxed);
+        let found_ccp_ack_ms = ccp_ack_ms.load(Relaxed);
+        assert_eq!(found_gr_ack_ms, game_ready_xid.millis_time);
+        assert_eq!(found_ccp_ack_ms, second_pref_xid.millis_time);
         TestOutputs {
             xadd_call_out,
             put_prefs_out,
