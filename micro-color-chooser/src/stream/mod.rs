@@ -14,6 +14,7 @@ use log::{error, warn};
 use redis::Commands;
 use redis_streams::XReadEntryId;
 
+#[derive(Clone)]
 pub enum StreamInput {
     GR(GameReady),
     CCP(ChooseColorPref),
@@ -46,7 +47,7 @@ pub fn process(components: &Components) {
 
                             ccp_processed.push(entry_id)
                         }
-                        _ => todo!(),
+                        _ => todo!(" write game ready branch -- compute things "),
                     }
                 }
             }
@@ -97,6 +98,7 @@ mod tests {
     struct FakeXRead {
         gr_ack_ms: Arc<AtomicU64>,
         ccp_ack_ms: Arc<AtomicU64>,
+        max_read_millis: AtomicU64,
         sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
     }
 
@@ -136,7 +138,29 @@ mod tests {
 
     impl XRead for FakeXRead {
         fn sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr> {
-            todo!()
+            let max_ms = self.max_read_millis.load(Relaxed);
+            let data: Vec<_> = self
+                .sorted_data
+                .lock()
+                .expect("lock")
+                .iter()
+                .filter(|(eid, stream_data)| match stream_data {
+                    StreamInput::CCP(_) => max_ms < eid.millis_time,
+                    StreamInput::GR(_) => max_ms < eid.millis_time,
+                })
+                .cloned()
+                .collect();
+
+            if data.is_empty() {
+                // stop the test thread from spinning like crazy
+                std::thread::sleep(Duration::from_millis(20))
+            } else {
+                // this hack is standing in for "xreadgroup >" semantics
+                let new_max_eid_millis = data.iter().map(|(eid, _)| eid).max().unwrap();
+                self.max_read_millis
+                    .swap(new_max_eid_millis.millis_time, Relaxed);
+            }
+            Ok(data)
         }
 
         fn ack_choose_color_pref(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
@@ -227,6 +251,7 @@ mod tests {
                     gr_ack_ms: gra,
                     ccp_ack_ms: ca,
                     sorted_data: sfs.clone(),
+                    max_read_millis: AtomicU64::new(0),
                 }),
                 xadd: Box::new(FakeXAdd(xadd_call_in)),
             };
@@ -281,8 +306,11 @@ mod tests {
         // check ack for game_states stream
         let found_gr_ack_ms = gr_ack_ms.load(Relaxed);
         let found_ccp_ack_ms = ccp_ack_ms.load(Relaxed);
-        assert_eq!(found_gr_ack_ms, game_ready_xid.millis_time);
+
         assert_eq!(found_ccp_ack_ms, second_pref_xid.millis_time);
+
+        assert_eq!(found_gr_ack_ms, game_ready_xid.millis_time);
+
         TestOutputs {
             xadd_call_out,
             put_prefs_out,
