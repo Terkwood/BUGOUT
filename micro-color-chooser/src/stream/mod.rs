@@ -216,11 +216,12 @@ mod tests {
         fake_time_ms += incr_ms;
         thread::sleep(wait_time);
 
-        let sessions = (SessionId(Uuid::new_v4()), SessionId(Uuid::new_v4()));
-
         let game_ready = GameReady {
             game_id: game_id.clone(),
-            sessions,
+            sessions: (
+                first_color_pref.session_id.clone(),
+                second_color_pref.session_id.clone(),
+            ),
             event_id: EventId::new(),
         };
 
@@ -247,11 +248,6 @@ mod tests {
         let game_id = GameId(Uuid::new_v4());
         let sessions = (SessionId(Uuid::new_v4()), SessionId(Uuid::new_v4()));
         let clients = (ClientId(Uuid::new_v4()), ClientId(Uuid::new_v4()));
-        let game_ready_event = GameReady {
-            game_id,
-            sessions: sessions.clone(),
-            event_id: EventId::new(),
-        };
 
         let first_client_pref = ChooseColorPref {
             client_id: clients.0,
@@ -263,6 +259,7 @@ mod tests {
             session_id: sessions.1,
             color_pref: ColorPref::Black,
         };
-        todo!("write test");
+        let test_outputs = run(&first_client_pref, &second_client_pref, &game_id);
+        todo!("write test")
     }
 }
