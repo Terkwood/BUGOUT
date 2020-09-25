@@ -61,7 +61,7 @@ mod tests {
     }
     struct FakePrefsRepo {
         pub contents: Arc<Mutex<HashMap<GameId, GameColorPref>>>,
-        pub put_in: Sender<GameColorPref>,
+        pub put_in: Sender<SessionColorPref>,
     }
 
     struct FakeXAdd(Sender<ColorsChosen>);
@@ -111,17 +111,21 @@ mod tests {
                 }
                 Some(_) => panic!("prefs already complete"),
             }
-            Ok(())
+            Ok(self.put_in.send(scp).expect("send"))
         }
     }
 
     impl XRead for FakeXRead {}
 
-    impl XAdd for FakeXAdd {}
+    impl XAdd for FakeXAdd {
+        fn xadd(&self, data: ColorsChosen) -> Result<(), XAddErr> {
+            todo!()
+        }
+    }
 
     struct TestOutputs {
         pub xadd_call_out: Receiver<ColorsChosen>,
-        pub put_prefs_out: Receiver<GameColorPref>,
+        pub put_prefs_out: Receiver<SessionColorPref>,
         pub put_session_game_out: Receiver<SessionGame>,
     }
 
@@ -130,40 +134,42 @@ mod tests {
         static CCP_ACK_XID: AtomicU64 = AtomicU64::new(0);
 
         let (xadd_call_in, xadd_call_out): (_, Receiver<ColorsChosen>) = unbounded();
-        let (put_prefs_in, put_prefs_out): (_, Receiver<GameColorPref>) = unbounded();
+        let (put_prefs_in, put_prefs_out): (_, Receiver<SessionColorPref>) = unbounded();
         let (put_session_game_in, put_session_game_out): (_, Receiver<SessionGame>) = unbounded();
 
-        // set up a loop to process prefs repo updates
-        let fake_prefs_contents = Arc::new(Mutex::new(None));
-        let fh = fake_prefs_contents.clone();
-        std::thread::spawn(move || loop {
-            select! {
-                recv(put_prefs_out) -> msg => match msg {
-                    Ok(moves) => *fh.lock().expect("mutex lock") = Some(moves),
-                    Err(_) => panic!("fail")
-                }
-            }
-        });
+        let fake_prefs_contents = Arc::new(Mutex::new(HashMap::new()));
+        let fake_session_game_contents = Arc::new(Mutex::new(HashMap::new()));
 
         let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
             Arc::new(Mutex::new(vec![]));
 
+        // TODO
+        // TODO
+        // TODO
+        // TODO
+        // TODO check the test impl of micro-history-provider
+        // TODO and trim the worthless put_in loops ?!
+        // TODO
+        // TODO
+        // TODO
+        // TODO
+
         let sfs = sorted_fake_stream.clone();
-        let fh = fake_prefs_contents.clone();
+        let fp = fake_prefs_contents.clone();
         thread::spawn(move || {
             let components = Components {
                 session_game_repo: Box::new(FakeGameRepo {
-                    contents: todo!(),
-                    put_in: todo!(),
+                    contents: fake_session_game_contents,
+                    put_in: put_session_game_in,
                 }),
                 prefs_repo: Box::new(FakePrefsRepo {
-                    contents: todo!(),
+                    contents: fp,
                     put_in: put_prefs_in,
                 }),
                 xread: Box::new(FakeXRead {
-                    sorted_data: todo!(),
+                    sorted_data: sfs.clone(),
                 }),
-                xadd: Box::new(FakeXAdd(todo!())),
+                xadd: Box::new(FakeXAdd(xadd_call_in)),
             };
             process(&components);
         });
