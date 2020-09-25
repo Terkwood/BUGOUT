@@ -56,16 +56,21 @@ mod tests {
     use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
 
     struct FakeGameRepo {
-        pub contents: Arc<Mutex<HashMap<SessionId, GameId>>>,
-        pub put_in: Sender<GameId>,
+        pub contents: Arc<Mutex<HashMap<SessionId, SessionGame>>>,
+        pub put_in: Sender<SessionGame>,
     }
     struct FakePrefsRepo {
         pub contents: Arc<Mutex<HashMap<GameId, GameColorPref>>>,
         pub put_in: Sender<GameColorPref>,
     }
 
+    struct FakeXAdd(Sender<ColorsChosen>);
+    struct FakeXRead {
+        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
+    }
+
     impl SessionGameRepo for FakeGameRepo {
-        fn get(&self, session_id: &SessionId) -> Result<Option<GameId>, FetchErr> {
+        fn get(&self, session_id: &SessionId) -> Result<Option<SessionGame>, FetchErr> {
             Ok(self
                 .contents
                 .lock()
@@ -74,10 +79,10 @@ mod tests {
                 .map(|g| g.clone()))
         }
 
-        fn put(&self, session_id: &SessionId, game_id: &GameId) -> Result<(), WriteErr> {
+        fn put(&self, session_game: SessionGame) -> Result<(), WriteErr> {
             let mut data = self.contents.lock().expect("mutex");
-            data.insert(session_id.clone(), game_id.clone());
-            Ok(self.put_in.send(game_id.clone()).expect("send"))
+            data.insert(session_game.session_id.clone(), session_game.clone());
+            Ok(self.put_in.send(session_game).expect("send"))
         }
     }
 
@@ -110,6 +115,10 @@ mod tests {
         }
     }
 
+    impl XRead for FakeXRead {}
+
+    impl XAdd for FakeXAdd {}
+
     struct TestOutputs {
         pub xadd_call_out: Receiver<ColorsChosen>,
         pub put_prefs_out: Receiver<GameColorPref>,
@@ -123,6 +132,41 @@ mod tests {
         let (xadd_call_in, xadd_call_out): (_, Receiver<ColorsChosen>) = unbounded();
         let (put_prefs_in, put_prefs_out): (_, Receiver<GameColorPref>) = unbounded();
         let (put_session_game_in, put_session_game_out): (_, Receiver<SessionGame>) = unbounded();
+
+        // set up a loop to process prefs repo updates
+        let fake_prefs_contents = Arc::new(Mutex::new(None));
+        let fh = fake_prefs_contents.clone();
+        std::thread::spawn(move || loop {
+            select! {
+                recv(put_prefs_out) -> msg => match msg {
+                    Ok(moves) => *fh.lock().expect("mutex lock") = Some(moves),
+                    Err(_) => panic!("fail")
+                }
+            }
+        });
+
+        let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
+            Arc::new(Mutex::new(vec![]));
+
+        let sfs = sorted_fake_stream.clone();
+        let fh = fake_prefs_contents.clone();
+        thread::spawn(move || {
+            let components = Components {
+                session_game_repo: Box::new(FakeGameRepo {
+                    contents: todo!(),
+                    put_in: todo!(),
+                }),
+                prefs_repo: Box::new(FakePrefsRepo {
+                    contents: todo!(),
+                    put_in: put_prefs_in,
+                }),
+                xread: Box::new(FakeXRead {
+                    sorted_data: todo!(),
+                }),
+                xadd: Box::new(FakeXAdd(todo!())),
+            };
+            process(&components);
+        });
 
         todo!();
 
