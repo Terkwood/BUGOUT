@@ -123,13 +123,26 @@ mod tests {
         }
     }
 
+    fn quick_eid(millis_time: u64) -> XReadEntryId {
+        XReadEntryId {
+            millis_time,
+            seq_no: 0,
+        }
+    }
+
     struct TestOutputs {
         pub xadd_call_out: Receiver<ColorsChosen>,
         pub put_prefs_out: Receiver<SessionColorPref>,
         pub put_session_game_out: Receiver<SessionGame>,
+        pub prefs_contents: Arc<Mutex<HashMap<GameId, GameColorPref>>>,
+        pub session_game_contents: Arc<Mutex<HashMap<SessionId, SessionGame>>>,
     }
 
-    fn run(c1: &ChooseColorPref, c2: &ChooseColorPref, game_id: &GameId) -> TestOutputs {
+    fn run(
+        first_color_pref: &ChooseColorPref,
+        second_color_pref: &ChooseColorPref,
+        game_id: &GameId,
+    ) -> TestOutputs {
         static GR_ACK_XID: AtomicU64 = AtomicU64::new(0);
         static CCP_ACK_XID: AtomicU64 = AtomicU64::new(0);
 
@@ -137,8 +150,10 @@ mod tests {
         let (put_prefs_in, put_prefs_out): (_, Receiver<SessionColorPref>) = unbounded();
         let (put_session_game_in, put_session_game_out): (_, Receiver<SessionGame>) = unbounded();
 
-        let fake_prefs_contents = Arc::new(Mutex::new(HashMap::new()));
-        let fake_session_game_contents = Arc::new(Mutex::new(HashMap::new()));
+        let fake_prefs_contents: Arc<Mutex<HashMap<GameId, GameColorPref>>> =
+            Arc::new(Mutex::new(HashMap::new()));
+        let fake_session_game_contents: Arc<Mutex<HashMap<SessionId, SessionGame>>> =
+            Arc::new(Mutex::new(HashMap::new()));
 
         let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
             Arc::new(Mutex::new(vec![]));
@@ -181,37 +196,49 @@ mod tests {
         let mut fake_time_ms = 100;
         let incr_ms = 100;
 
-        sorted_fake_stream
-            .lock()
-            .expect("lock")
-            .push((todo!("xid"), StreamInput::CCP(c1.clone())));
-
-        fake_time_ms += incr_ms;
-        thread::sleep(wait_time);
+        let first_pref_xid = quick_eid(fake_time_ms);
 
         sorted_fake_stream
             .lock()
             .expect("lock")
-            .push((todo!("xid"), StreamInput::CCP(c2.clone())));
+            .push((first_pref_xid, StreamInput::CCP(first_color_pref.clone())));
 
         fake_time_ms += incr_ms;
         thread::sleep(wait_time);
+
+        let second_pref_xid = quick_eid(fake_time_ms);
+
+        sorted_fake_stream
+            .lock()
+            .expect("lock")
+            .push((second_pref_xid, StreamInput::CCP(second_color_pref.clone())));
+
+        fake_time_ms += incr_ms;
+        thread::sleep(wait_time);
+
+        let sessions = (SessionId(Uuid::new_v4()), SessionId(Uuid::new_v4()));
 
         let game_ready = GameReady {
             game_id: game_id.clone(),
-            sessions: (todo!(), todo!()),
+            sessions,
             event_id: EventId::new(),
         };
+
+        let game_ready_xid = quick_eid(fake_time_ms);
 
         sorted_fake_stream
             .lock()
             .expect("lock")
-            .push((todo!("xid"), StreamInput::GR(game_ready)));
+            .push((game_ready_xid, StreamInput::GR(game_ready)));
+
+        todo!("check good behavior of the stream processor wrt repos");
 
         TestOutputs {
             xadd_call_out,
             put_prefs_out,
             put_session_game_out,
+            prefs_contents: fake_prefs_contents,
+            session_game_contents: fake_session_game_contents,
         }
     }
 
@@ -222,8 +249,19 @@ mod tests {
         let clients = (ClientId(Uuid::new_v4()), ClientId(Uuid::new_v4()));
         let game_ready_event = GameReady {
             game_id,
-            sessions,
+            sessions: sessions.clone(),
             event_id: EventId::new(),
+        };
+
+        let first_client_pref = ChooseColorPref {
+            client_id: clients.0,
+            session_id: sessions.0,
+            color_pref: ColorPref::White,
+        };
+        let second_client_pref = ChooseColorPref {
+            client_id: clients.1,
+            session_id: sessions.1,
+            color_pref: ColorPref::Black,
         };
         todo!("write test");
     }
