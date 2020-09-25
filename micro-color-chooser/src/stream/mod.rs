@@ -174,7 +174,39 @@ mod tests {
             process(&components);
         });
 
-        todo!();
+        // emit some events in a time-ordered fashion
+        // (fake xread impl expects time ordering 😁)
+
+        let wait_time = Duration::from_millis(166);
+        let mut fake_time_ms = 100;
+        let incr_ms = 100;
+
+        sorted_fake_stream
+            .lock()
+            .expect("lock")
+            .push((todo!("xid"), StreamInput::CCP(c1.clone())));
+
+        fake_time_ms += incr_ms;
+        thread::sleep(wait_time);
+
+        sorted_fake_stream
+            .lock()
+            .expect("lock")
+            .push((todo!("xid"), StreamInput::CCP(c2.clone())));
+
+        fake_time_ms += incr_ms;
+        thread::sleep(wait_time);
+
+        let game_ready = GameReady {
+            game_id: game_id.clone(),
+            sessions: (todo!(), todo!()),
+            event_id: EventId::new(),
+        };
+
+        sorted_fake_stream
+            .lock()
+            .expect("lock")
+            .push((todo!("xid"), StreamInput::GR(game_ready)));
 
         TestOutputs {
             xadd_call_out,
