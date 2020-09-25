@@ -26,7 +26,30 @@ pub fn process(components: &Components) {
     let mut ccp_processed: Vec<XReadEntryId> = vec![];
     loop {
         match components.xread.sorted() {
-            Ok(_) => todo!(),
+            Ok(xrr) => {
+                for time_ordered_event in xrr {
+                    match time_ordered_event {
+                        (
+                            entry_id,
+                            StreamInput::CCP(ChooseColorPref {
+                                client_id: _,
+                                color_pref,
+                                session_id,
+                            }),
+                        ) => {
+                            if let Err(_e) = components.prefs_repo.put(SessionColorPref {
+                                color_pref,
+                                session_id,
+                            }) {
+                                error!("write to pref repo")
+                            }
+
+                            ccp_processed.push(entry_id)
+                        }
+                        _ => todo!(),
+                    }
+                }
+            }
             Err(_) => error!("xread"),
         }
 
@@ -66,7 +89,7 @@ mod tests {
         pub put_in: Sender<SessionGame>,
     }
     struct FakePrefsRepo {
-        pub contents: Arc<Mutex<HashMap<GameId, GameColorPref>>>,
+        pub contents: Arc<Mutex<HashMap<SessionId, SessionColorPref>>>,
         pub put_in: Sender<SessionColorPref>,
     }
 
@@ -95,30 +118,18 @@ mod tests {
     }
 
     impl PrefsRepo for FakePrefsRepo {
-        fn get(&self, game_id: &GameId) -> Result<GameColorPref, FetchErr> {
+        fn get(&self, session_id: &SessionId) -> Result<Option<SessionColorPref>, FetchErr> {
             Ok(self
                 .contents
                 .lock()
                 .expect("mutex")
-                .get(game_id)
-                .map(|gcp| gcp.clone())
-                .unwrap_or(GameColorPref::Empty))
+                .get(session_id)
+                .map(|gcp| gcp.clone()))
         }
 
-        fn add(&self, scp: SessionColorPref) -> Result<(), WriteErr> {
+        fn put(&self, scp: SessionColorPref) -> Result<(), WriteErr> {
             let mut data = self.contents.lock().expect("mutex");
-            match data.get(&scp.game_id).cloned() {
-                None => {
-                    data.insert(scp.game_id.clone(), GameColorPref::Partial(scp.clone()));
-                }
-                Some(GameColorPref::Partial(first)) => {
-                    data.insert(
-                        scp.game_id.clone(),
-                        GameColorPref::Complete(first.clone(), scp.clone()),
-                    );
-                }
-                Some(_) => panic!("prefs already complete"),
-            }
+            data.insert(scp.session_id.clone(), scp.clone());
             Ok(self.put_in.send(scp).expect("send"))
         }
     }
@@ -162,7 +173,7 @@ mod tests {
         pub xadd_call_out: Receiver<ColorsChosen>,
         pub put_prefs_out: Receiver<SessionColorPref>,
         pub put_session_game_out: Receiver<SessionGame>,
-        pub prefs_contents: Arc<Mutex<HashMap<GameId, GameColorPref>>>,
+        pub prefs_contents: Arc<Mutex<HashMap<SessionId, SessionColorPref>>>,
         pub session_game_contents: Arc<Mutex<HashMap<SessionId, SessionGame>>>,
     }
 
@@ -178,7 +189,7 @@ mod tests {
         let (put_prefs_in, put_prefs_out): (_, Receiver<SessionColorPref>) = unbounded();
         let (put_session_game_in, put_session_game_out): (_, Receiver<SessionGame>) = unbounded();
 
-        let fake_prefs_contents: Arc<Mutex<HashMap<GameId, GameColorPref>>> =
+        let fake_prefs_contents: Arc<Mutex<HashMap<SessionId, SessionColorPref>>> =
             Arc::new(Mutex::new(HashMap::new()));
         let fake_session_game_contents: Arc<Mutex<HashMap<SessionId, SessionGame>>> =
             Arc::new(Mutex::new(HashMap::new()));

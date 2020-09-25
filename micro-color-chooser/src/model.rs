@@ -16,7 +16,6 @@ pub enum ColorPref {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SessionColorPref {
-    pub game_id: GameId,
     pub session_id: SessionId,
     pub color_pref: ColorPref,
 }
