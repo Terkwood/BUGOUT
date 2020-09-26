@@ -11,8 +11,23 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
     repos.session_game.get(session_id).map(|sg| match sg {
         None => GameColorPref::NotReady,
         Some(session_game) => {
-            todo!("when there is a link, but only one person's prefs registered, partial");
-            todo!("otherwise complete")
+            let first_pref = repos.prefs.get(&session_game.sessions.0).ok().flatten();
+            let second_pref = repos.prefs.get(&session_game.sessions.1).ok().flatten();
+            match (first_pref, second_pref) {
+                (Some(first), Some(second)) => GameColorPref::Complete {
+                    game_id: session_game.game_id.clone(),
+                    prefs: (first, second),
+                },
+                (Some(partial), None) => GameColorPref::Partial {
+                    game_id: session_game.game_id.clone(),
+                    pref: partial,
+                },
+                (None, Some(partial)) => GameColorPref::Partial {
+                    game_id: session_game.game_id.clone(),
+                    pref: partial,
+                },
+                _ => GameColorPref::NotReady,
+            }
         }
     })
 }
