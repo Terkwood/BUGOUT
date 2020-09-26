@@ -1,11 +1,52 @@
 use crate::api::ColorsChosen;
 use crate::model::*;
+use rand::distributions::Uniform;
+use rand::prelude::*;
+
+pub struct ChoiceRng {
+    pub rng: ThreadRng,
+    pub uniform: Uniform<u8>,
+}
+impl ChoiceRng {
+    pub fn new() -> Self {
+        let rng: ThreadRng = rand::thread_rng();
+        let uniform: Uniform<u8> = Uniform::from(1..2);
+        Self { rng, uniform }
+    }
+}
+
 pub fn choose(
     first: &SessionColorPref,
     second: &SessionColorPref,
     game_id: &GameId,
+    rng: &mut ChoiceRng,
 ) -> ColorsChosen {
-    todo!()
+    let (black, white): (ClientId, ClientId) = match (first.color_pref, second.color_pref) {
+        (ColorPref::Black, ColorPref::Black) => todo!(),
+        (ColorPref::White, ColorPref::White) => todo!(),
+        (ColorPref::Black, _) => (first.client_id.clone(), second.client_id.clone()),
+        (_, ColorPref::White) => (first.client_id.clone(), second.client_id.clone()),
+        (ColorPref::White, _) => (second.client_id.clone(), first.client_id.clone()),
+        (_, ColorPref::Black) => (second.client_id.clone(), first.client_id.clone()),
+        (ColorPref::Any, ColorPref::Any) => todo!(),
+    };
+    ColorsChosen {
+        game_id: game_id.clone(),
+        white,
+        black,
+    }
+}
+
+fn randomize(
+    first: &ClientId,
+    second: &ClientId,
+    choice_rng: &mut ChoiceRng,
+) -> (ClientId, ClientId) {
+    if choice_rng.uniform.sample(&mut choice_rng.rng) == 0 {
+        (first.clone(), second.clone())
+    } else {
+        (second.clone(), first.clone())
+    }
 }
 
 #[cfg(test)]

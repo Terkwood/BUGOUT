@@ -1,3 +1,4 @@
+extern crate rand;
 extern crate redis_streams;
 
 mod api;

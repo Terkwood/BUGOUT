@@ -15,6 +15,7 @@ redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "0.3.1", 
 serde = "1.0.116"
 serde_derive = "1.0.116"
 uuid = {version = "0.8.1", features = ["serde", "v4"]}
+rand = "0.7.3"
 
 [dev-dependencies]
 crossbeam-channel = "0.4.4"

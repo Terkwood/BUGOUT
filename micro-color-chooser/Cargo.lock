@@ -547,6 +547,7 @@ dependencies = [
  "crossbeam-channel",
  "env_logger",
  "log",
+ "rand",
  "redis 0.17.0",
  "redis_streams",
  "serde",
