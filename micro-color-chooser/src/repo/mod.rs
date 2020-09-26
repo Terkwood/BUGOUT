@@ -8,7 +8,10 @@ use crate::model::*;
 use redis::Client;
 use std::rc::Rc;
 
+#[derive(Debug)]
 pub struct FetchErr;
+
+#[derive(Debug)]
 pub struct WriteErr;
 
 const EXPIRY_SECS: usize = 86400;

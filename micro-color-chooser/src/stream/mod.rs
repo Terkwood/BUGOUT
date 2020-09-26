@@ -35,7 +35,7 @@ pub fn process(components: &Components) {
                         (
                             xid,
                             StreamInput::CCP(ChooseColorPref {
-                                client_id: _,
+                                client_id,
                                 color_pref,
                                 session_id,
                             }),
@@ -43,6 +43,7 @@ pub fn process(components: &Components) {
                             let scp = SessionColorPref {
                                 color_pref,
                                 session_id: session_id.clone(),
+                                client_id,
                             };
 
                             if let Err(_e) = components.prefs_repo.put(&scp) {
@@ -51,7 +52,7 @@ pub fn process(components: &Components) {
 
                             match game_color_prefs::by_session_id(&session_id, &repos) {
                                 Ok(GameColorPref::Complete { game_id, prefs }) => {
-                                    let colors_chosen = choose(&prefs.0, &prefs.1);
+                                    let colors_chosen = choose(&prefs.0, &prefs.1, &game_id);
                                     if let Err(_e) = components.xadd.xadd(colors_chosen) {
                                         error!("error writing to colors chose stream")
                                     }
@@ -82,7 +83,7 @@ pub fn process(components: &Components) {
 
                             match game_color_prefs::by_game_ready(&gr, &repos) {
                                 Ok(GameColorPref::Complete { game_id, prefs }) => {
-                                    let colors_chosen = choose(&prefs.0, &prefs.1);
+                                    let colors_chosen = choose(&prefs.0, &prefs.1, &game_id);
                                     if let Err(_e) = components.xadd.xadd(colors_chosen) {
                                         error!("error writing to colors chose stream")
                                     }
