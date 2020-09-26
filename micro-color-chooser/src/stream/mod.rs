@@ -475,6 +475,10 @@ mod tests {
             event_id: EventId::new(),
         });
         let test_outputs = run_stream(vec![first_client_pref, second_client_pref, game_ready]);
-        todo!("write test")
+
+        test_outputs.put_prefs_out.recv().expect("recv");
+        test_outputs.put_prefs_out.recv().expect("recv");
+        test_outputs.put_game_ready_out.recv().expect("recv");
+        test_outputs.xadd_call_out.recv().expect("recv");
     }
 }
