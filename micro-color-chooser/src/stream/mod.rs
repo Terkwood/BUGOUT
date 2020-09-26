@@ -68,16 +68,10 @@ pub fn process(components: &Components) {
                             ccp_processed.push(xid)
                         }
                         (xid, StreamInput::GR(gr)) => {
-                            if let Err(_e) = components.session_game_repo.put(SessionGame {
-                                sessions: gr.sessions.clone(),
-                                game_id: gr.game_id.clone(),
-                            }) {
+                            if let Err(_e) = components.game_ready_repo.put(gr.clone()) {
                                 error!("write to session game repo 0")
                             }
-                            if let Err(_e) = components.session_game_repo.put(SessionGame {
-                                sessions: gr.sessions.clone(),
-                                game_id: gr.game_id.clone(),
-                            }) {
+                            if let Err(_e) = components.game_ready_repo.put(gr.clone()) {
                                 error!("write to session game repo 0")
                             }
 
@@ -134,8 +128,8 @@ mod tests {
     use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
 
     struct FakeGameRepo {
-        pub contents: Arc<Mutex<HashMap<SessionId, SessionGame>>>,
-        pub put_in: Sender<SessionGame>,
+        pub contents: Arc<Mutex<HashMap<SessionId, GameReady>>>,
+        pub put_in: Sender<GameReady>,
     }
     struct FakePrefsRepo {
         pub contents: Arc<Mutex<HashMap<SessionId, SessionColorPref>>>,
@@ -150,8 +144,8 @@ mod tests {
         sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
     }
 
-    impl SessionGameRepo for FakeGameRepo {
-        fn get(&self, session_id: &SessionId) -> Result<Option<SessionGame>, FetchErr> {
+    impl GameReadyRepo for FakeGameRepo {
+        fn get(&self, session_id: &SessionId) -> Result<Option<GameReady>, FetchErr> {
             Ok(self
                 .contents
                 .lock()
@@ -160,11 +154,11 @@ mod tests {
                 .map(|g| g.clone()))
         }
 
-        fn put(&self, session_game: SessionGame) -> Result<(), WriteErr> {
+        fn put(&self, game_ready: GameReady) -> Result<(), WriteErr> {
             let mut data = self.contents.lock().expect("mutex");
-            data.insert(session_game.sessions.0.clone(), session_game.clone());
-            data.insert(session_game.sessions.1.clone(), session_game.clone());
-            Ok(self.put_in.send(session_game).expect("send"))
+            data.insert(game_ready.sessions.0.clone(), game_ready.clone());
+            data.insert(game_ready.sessions.1.clone(), game_ready.clone());
+            Ok(self.put_in.send(game_ready).expect("send"))
         }
     }
 
@@ -245,9 +239,9 @@ mod tests {
     struct TestOutputs {
         pub xadd_call_out: Receiver<ColorsChosen>,
         pub put_prefs_out: Receiver<SessionColorPref>,
-        pub put_session_game_out: Receiver<SessionGame>,
+        pub put_game_ready_out: Receiver<GameReady>,
         pub prefs_contents: Arc<Mutex<HashMap<SessionId, SessionColorPref>>>,
-        pub session_game_contents: Arc<Mutex<HashMap<SessionId, SessionGame>>>,
+        pub game_ready_contents: Arc<Mutex<HashMap<SessionId, GameReady>>>,
     }
 
     fn run(
@@ -260,11 +254,11 @@ mod tests {
 
         let (xadd_call_in, xadd_call_out): (_, Receiver<ColorsChosen>) = unbounded();
         let (put_prefs_in, put_prefs_out): (_, Receiver<SessionColorPref>) = unbounded();
-        let (put_session_game_in, put_session_game_out): (_, Receiver<SessionGame>) = unbounded();
+        let (put_game_ready_in, put_game_ready_out): (_, Receiver<GameReady>) = unbounded();
 
         let fake_prefs_contents: Arc<Mutex<HashMap<SessionId, SessionColorPref>>> =
             Arc::new(Mutex::new(HashMap::new()));
-        let fake_session_game_contents: Arc<Mutex<HashMap<SessionId, SessionGame>>> =
+        let fake_game_ready_contents: Arc<Mutex<HashMap<SessionId, GameReady>>> =
             Arc::new(Mutex::new(HashMap::new()));
 
         let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
@@ -283,14 +277,14 @@ mod tests {
 
         let sfs = sorted_fake_stream.clone();
         let fp = fake_prefs_contents.clone();
-        let fsg = fake_session_game_contents.clone();
+        let fsg = fake_game_ready_contents.clone();
         let ca = ccp_ack_ms.clone();
         let gra = gr_ack_ms.clone();
         thread::spawn(move || {
             let components = Components {
-                session_game_repo: Rc::new(FakeGameRepo {
+                game_ready_repo: Rc::new(FakeGameRepo {
                     contents: fsg,
-                    put_in: put_session_game_in,
+                    put_in: put_game_ready_in,
                 }),
                 prefs_repo: Rc::new(FakePrefsRepo {
                     contents: fp,
@@ -363,9 +357,9 @@ mod tests {
         TestOutputs {
             xadd_call_out,
             put_prefs_out,
-            put_session_game_out,
+            put_game_ready_out,
             prefs_contents: fake_prefs_contents,
-            session_game_contents: fake_session_game_contents,
+            game_ready_contents: fake_game_ready_contents,
         }
     }
 

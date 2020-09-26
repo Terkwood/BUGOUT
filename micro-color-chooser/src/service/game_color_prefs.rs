@@ -5,25 +5,25 @@ use crate::repo::*;
 
 /// Call this when you receive a ChooseColorPref event
 /// It will provide an aggregated view of choices for that game,
-/// based on all available data from both session_game repo
+/// based on all available data from both game_ready repo
 /// and prefs repo.
 pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorPref, FetchErr> {
-    repos.session_game.get(session_id).and_then(|sg| match sg {
+    repos.game_ready.get(session_id).and_then(|sg| match sg {
         None => Ok(GameColorPref::NotReady),
-        Some(session_game) => {
-            let first_pref = repos.prefs.get(&session_game.sessions.0);
-            let second_pref = repos.prefs.get(&session_game.sessions.1);
+        Some(game_ready) => {
+            let first_pref = repos.prefs.get(&game_ready.sessions.0);
+            let second_pref = repos.prefs.get(&game_ready.sessions.1);
             match (first_pref, second_pref) {
                 (Ok(Some(first)), Ok(Some(second))) => Ok(GameColorPref::Complete {
-                    game_id: session_game.game_id.clone(),
+                    game_id: game_ready.game_id.clone(),
                     prefs: (first, second),
                 }),
                 (Ok(Some(partial)), Ok(None)) => Ok(GameColorPref::Partial {
-                    game_id: session_game.game_id.clone(),
+                    game_id: game_ready.game_id.clone(),
                     pref: partial,
                 }),
                 (Ok(None), Ok(Some(partial))) => Ok(GameColorPref::Partial {
-                    game_id: session_game.game_id.clone(),
+                    game_id: game_ready.game_id.clone(),
                     pref: partial,
                 }),
                 (Ok(None), Ok(None)) => Ok(GameColorPref::NotReady),
@@ -35,28 +35,23 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
 
 /// Call this when you receive a GameReady event.
 /// It will provide an aggregated view of choices for that game,
-/// based on all available data from both session_game repo
+/// based on all available data from both game_ready repo
 /// and prefs repo.
 pub fn by_game_ready(game_ready: &GameReady, repos: &Repos) -> Result<GameColorPref, FetchErr> {
-    let session_game = SessionGame {
-        game_id: game_ready.game_id.clone(),
-        sessions: game_ready.sessions.clone(),
-    };
-
-    let first_pref = repos.prefs.get(&session_game.sessions.0)?;
-    let second_pref = repos.prefs.get(&session_game.sessions.1)?;
+    let first_pref = repos.prefs.get(&game_ready.sessions.0)?;
+    let second_pref = repos.prefs.get(&game_ready.sessions.1)?;
 
     Ok(match (first_pref, second_pref) {
         (Some(first), Some(second)) => GameColorPref::Complete {
-            game_id: session_game.game_id.clone(),
+            game_id: game_ready.game_id.clone(),
             prefs: (first, second),
         },
         (Some(partial), None) => GameColorPref::Partial {
-            game_id: session_game.game_id.clone(),
+            game_id: game_ready.game_id.clone(),
             pref: partial,
         },
         (None, Some(partial)) => GameColorPref::Partial {
-            game_id: session_game.game_id.clone(),
+            game_id: game_ready.game_id.clone(),
             pref: partial,
         },
         _ => GameColorPref::NotReady,
@@ -69,24 +64,24 @@ mod tests {
     use std::rc::Rc;
 
     struct SGNotReady;
-    struct SGReady(pub SessionGame);
+    struct SGReady(pub GameReady);
 
     struct PrefsNone;
     struct PrefsOne(pub SessionColorPref);
     struct PrefsTwo(pub SessionColorPref, pub SessionColorPref);
 
-    impl SessionGameRepo for SGNotReady {
-        fn get(&self, _: &SessionId) -> Result<Option<SessionGame>, FetchErr> {
+    impl GameReadyRepo for SGNotReady {
+        fn get(&self, _: &SessionId) -> Result<Option<GameReady>, FetchErr> {
             Ok(None)
         }
 
-        fn put(&self, _: SessionGame) -> Result<(), WriteErr> {
+        fn put(&self, _: GameReady) -> Result<(), WriteErr> {
             panic!()
         }
     }
 
-    impl SessionGameRepo for SGReady {
-        fn get(&self, session_id: &SessionId) -> Result<Option<SessionGame>, FetchErr> {
+    impl GameReadyRepo for SGReady {
+        fn get(&self, session_id: &SessionId) -> Result<Option<GameReady>, FetchErr> {
             if session_id == &self.0.sessions.0 {
                 Ok(Some(self.0.clone()))
             } else if session_id == &self.0.sessions.1 {
@@ -96,7 +91,7 @@ mod tests {
             }
         }
 
-        fn put(&self, _: SessionGame) -> Result<(), WriteErr> {
+        fn put(&self, _: GameReady) -> Result<(), WriteErr> {
             panic!()
         }
     }
@@ -171,9 +166,10 @@ mod tests {
 
         let repos = Repos {
             prefs: Rc::new(PrefsTwo(one_pref.clone(), another_pref.clone())),
-            session_game: Rc::new(SGReady(SessionGame {
+            game_ready: Rc::new(SGReady(GameReady {
                 sessions: (sid.clone(), another_sid.clone()),
                 game_id: gid.clone(),
+                event_id: EventId::new(),
             })),
         };
 
@@ -199,9 +195,10 @@ mod tests {
         };
         let repos = Repos {
             prefs: Rc::new(PrefsOne(pref.clone())),
-            session_game: Rc::new(SGReady(SessionGame {
+            game_ready: Rc::new(SGReady(GameReady {
                 sessions: (sid.clone(), new_session_id()),
                 game_id: gid.clone(),
+                event_id: EventId::new(),
             })),
         };
 
@@ -218,7 +215,7 @@ mod tests {
                 color_pref: ColorPref::Black,
                 client_id: cid.clone(),
             })),
-            session_game: Rc::new(SGNotReady),
+            game_ready: Rc::new(SGNotReady),
         };
 
         let actual = by_session_id(&sid, &repos).expect("ok");
@@ -226,15 +223,33 @@ mod tests {
     }
 
     #[test]
-    fn test_by_game_ready_complete() {
+    fn test_by_game_ready_two_prefs() {
         todo!()
     }
     #[test]
-    fn test_by_game_ready_partial() {
+    fn test_by_game_ready_one_pref() {
         todo!()
     }
     #[test]
-    fn test_by_game_ready_not_ready() {
-        todo!()
+    fn test_by_game_ready_no_prefs() {
+        let sid = new_session_id();
+        let cid = new_client_id();
+        let gid = new_game_id();
+
+        let sessions = (sid, new_session_id());
+
+        let game_ready = GameReady {
+            sessions: sessions.clone(),
+            game_id: gid,
+            event_id: EventId::new(),
+        };
+
+        let repos = Repos {
+            prefs: Rc::new(PrefsNone),
+            game_ready: Rc::new(SGReady(game_ready.clone())),
+        };
+
+        let actual = by_game_ready(&game_ready, &repos).expect("ok");
+        assert_eq!(actual, GameColorPref::NotReady)
     }
 }

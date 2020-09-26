@@ -1,7 +1,7 @@
-mod game;
+mod game_ready;
 mod prefs;
 
-pub use game::*;
+pub use game_ready::*;
 pub use prefs::*;
 
 use crate::model::*;
