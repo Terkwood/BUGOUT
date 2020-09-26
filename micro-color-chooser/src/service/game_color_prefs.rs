@@ -224,16 +224,73 @@ mod tests {
 
     #[test]
     fn test_by_game_ready_two_prefs() {
-        todo!()
+        let sid = new_session_id();
+        let gid = new_game_id();
+
+        let another_sid = new_session_id();
+        let sessions = (sid.clone(), another_sid.clone());
+
+        let game_ready = GameReady {
+            sessions: sessions.clone(),
+            game_id: gid.clone(),
+            event_id: EventId::new(),
+        };
+
+        let first_pref = SessionColorPref {
+            session_id: sid.clone(),
+            color_pref: ColorPref::Black,
+            client_id: new_client_id(),
+        };
+        let second_pref = SessionColorPref {
+            session_id: another_sid.clone(),
+            color_pref: ColorPref::Black,
+            client_id: new_client_id(),
+        };
+
+        let repos = Repos {
+            prefs: Rc::new(PrefsTwo(first_pref.clone(), second_pref.clone())),
+            game_ready: Rc::new(SGReady(game_ready.clone())),
+        };
+
+        let actual = by_game_ready(&game_ready, &repos).expect("ok");
+        assert_eq!(
+            actual,
+            GameColorPref::Complete {
+                game_id: gid,
+                prefs: (first_pref, second_pref)
+            }
+        )
     }
     #[test]
     fn test_by_game_ready_one_pref() {
-        todo!()
+        let sid = new_session_id();
+        let gid = new_game_id();
+
+        let sessions = (sid.clone(), new_session_id());
+
+        let game_ready = GameReady {
+            sessions: sessions.clone(),
+            game_id: gid.clone(),
+            event_id: EventId::new(),
+        };
+
+        let pref = SessionColorPref {
+            session_id: sid.clone(),
+            color_pref: ColorPref::Black,
+            client_id: new_client_id(),
+        };
+
+        let repos = Repos {
+            prefs: Rc::new(PrefsOne(pref.clone())),
+            game_ready: Rc::new(SGReady(game_ready.clone())),
+        };
+
+        let actual = by_game_ready(&game_ready, &repos).expect("ok");
+        assert_eq!(actual, GameColorPref::Partial { game_id: gid, pref })
     }
     #[test]
     fn test_by_game_ready_no_prefs() {
         let sid = new_session_id();
-        let cid = new_client_id();
         let gid = new_game_id();
 
         let sessions = (sid, new_session_id());
