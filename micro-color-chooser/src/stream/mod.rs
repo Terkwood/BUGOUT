@@ -131,18 +131,6 @@ mod tests {
         pub contents: Arc<Mutex<HashMap<SessionId, GameReady>>>,
         pub put_in: Sender<GameReady>,
     }
-    struct FakePrefsRepo {
-        pub contents: Arc<Mutex<HashMap<SessionId, SessionColorPref>>>,
-        pub put_in: Sender<SessionColorPref>,
-    }
-
-    struct FakeXAdd(Sender<ColorsChosen>);
-    struct FakeXRead {
-        gr_ack_ms: Arc<AtomicU64>,
-        ccp_ack_ms: Arc<AtomicU64>,
-        max_read_millis: AtomicU64,
-        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
-    }
 
     impl GameReadyRepo for FakeGameRepo {
         fn get(&self, session_id: &SessionId) -> Result<Option<GameReady>, FetchErr> {
@@ -162,6 +150,11 @@ mod tests {
         }
     }
 
+    struct FakePrefsRepo {
+        pub contents: Arc<Mutex<HashMap<SessionId, SessionColorPref>>>,
+        pub put_in: Sender<SessionColorPref>,
+    }
+
     impl PrefsRepo for FakePrefsRepo {
         fn get(&self, session_id: &SessionId) -> Result<Option<SessionColorPref>, FetchErr> {
             Ok(self
@@ -177,6 +170,13 @@ mod tests {
             data.insert(scp.session_id.clone(), scp.clone());
             Ok(self.put_in.send(scp.clone()).expect("send"))
         }
+    }
+
+    struct FakeXRead {
+        gr_ack_ms: Arc<AtomicU64>,
+        ccp_ack_ms: Arc<AtomicU64>,
+        max_read_millis: AtomicU64,
+        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
     }
 
     impl XRead for FakeXRead {
@@ -223,13 +223,14 @@ mod tests {
         }
     }
 
+    struct FakeXAdd(Sender<ColorsChosen>);
     impl XAdd for FakeXAdd {
         fn xadd(&self, data: ColorsChosen) -> Result<(), XAddErr> {
             todo!()
         }
     }
 
-    fn quick_eid(millis_time: u64) -> XReadEntryId {
+    fn quick_xid(millis_time: u64) -> XReadEntryId {
         XReadEntryId {
             millis_time,
             seq_no: 0,
@@ -309,7 +310,7 @@ mod tests {
         let mut fake_time_ms = 100;
         let incr_ms = 100;
 
-        let first_pref_xid = quick_eid(fake_time_ms);
+        let first_pref_xid = quick_xid(fake_time_ms);
 
         sorted_fake_stream
             .lock()
@@ -321,7 +322,7 @@ mod tests {
 
         assert_eq!(ccp_ack_ms.load(Relaxed), first_pref_xid.millis_time);
 
-        let second_pref_xid = quick_eid(fake_time_ms);
+        let second_pref_xid = quick_xid(fake_time_ms);
 
         sorted_fake_stream
             .lock()
@@ -340,7 +341,7 @@ mod tests {
             event_id: EventId::new(),
         };
 
-        let game_ready_xid = quick_eid(fake_time_ms);
+        let game_ready_xid = quick_xid(fake_time_ms);
 
         sorted_fake_stream
             .lock()
@@ -364,23 +365,116 @@ mod tests {
         }
     }
 
+    fn run_stream(events: Vec<StreamInput>) -> TestOutputs {
+        let gr_ack_ms = Arc::new(AtomicU64::new(0));
+        let ccp_ack_ms = Arc::new(AtomicU64::new(0));
+
+        let (xadd_call_in, xadd_call_out): (_, Receiver<ColorsChosen>) = unbounded();
+        let (put_prefs_in, put_prefs_out): (_, Receiver<SessionColorPref>) = unbounded();
+        let (put_game_ready_in, put_game_ready_out): (_, Receiver<GameReady>) = unbounded();
+
+        let fake_prefs_contents: Arc<Mutex<HashMap<SessionId, SessionColorPref>>> =
+            Arc::new(Mutex::new(HashMap::new()));
+        let fake_game_ready_contents: Arc<Mutex<HashMap<SessionId, GameReady>>> =
+            Arc::new(Mutex::new(HashMap::new()));
+
+        let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
+            Arc::new(Mutex::new(vec![]));
+
+        // TODO
+        // TODO
+        // TODO
+        // TODO
+        // TODO check the test impl of micro-history-provider
+        // TODO and trim the worthless put_in loops ?!
+        // TODO
+        // TODO
+        // TODO
+        // TODO
+
+        let sfs = sorted_fake_stream.clone();
+        let fp = fake_prefs_contents.clone();
+        let fsg = fake_game_ready_contents.clone();
+        let ca = ccp_ack_ms.clone();
+        let gra = gr_ack_ms.clone();
+        thread::spawn(move || {
+            let mut components = Components {
+                game_ready_repo: Rc::new(FakeGameRepo {
+                    contents: fsg,
+                    put_in: put_game_ready_in,
+                }),
+                prefs_repo: Rc::new(FakePrefsRepo {
+                    contents: fp,
+                    put_in: put_prefs_in,
+                }),
+                xread: Box::new(FakeXRead {
+                    gr_ack_ms: gra,
+                    ccp_ack_ms: ca,
+                    sorted_data: sfs.clone(),
+                    max_read_millis: AtomicU64::new(0),
+                }),
+                xadd: Box::new(FakeXAdd(xadd_call_in)),
+                random: crate::service::Random::new(),
+            };
+            process(&mut components);
+        });
+
+        // emit some events in a time-ordered fashion
+        // (fake xread impl expects time ordering 😁)
+
+        let wait_time = Duration::from_millis(166);
+        let mut fake_time_ms = 100;
+        let incr_ms = 100;
+
+        for event in events {
+            let xid = quick_xid(fake_time_ms);
+
+            sorted_fake_stream
+                .lock()
+                .expect("lock")
+                .push((xid, event.clone()));
+
+            fake_time_ms += incr_ms;
+            thread::sleep(wait_time);
+
+            match event {
+                StreamInput::CCP(_) => assert_eq!(ccp_ack_ms.load(Relaxed), xid.millis_time),
+                StreamInput::GR(_) => assert_eq!(gr_ack_ms.load(Relaxed), xid.millis_time),
+            }
+        }
+
+        TestOutputs {
+            xadd_call_out,
+            put_prefs_out,
+            put_game_ready_out,
+            prefs_contents: fake_prefs_contents,
+            game_ready_contents: fake_game_ready_contents,
+        }
+    }
+
     #[test]
-    fn happy_path() {
+    fn happy_path_1() {
         let game_id = GameId(Uuid::new_v4());
         let sessions = (SessionId(Uuid::new_v4()), SessionId(Uuid::new_v4()));
         let clients = (ClientId(Uuid::new_v4()), ClientId(Uuid::new_v4()));
 
-        let first_client_pref = ChooseColorPref {
+        let first_client_pref = StreamInput::CCP(ChooseColorPref {
             client_id: clients.0,
-            session_id: sessions.0,
+            session_id: sessions.0.clone(),
             color_pref: ColorPref::White,
-        };
-        let second_client_pref = ChooseColorPref {
+        });
+        let second_client_pref = StreamInput::CCP(ChooseColorPref {
             client_id: clients.1,
-            session_id: sessions.1,
+            session_id: sessions.1.clone(),
             color_pref: ColorPref::Black,
-        };
-        let test_outputs = run(&first_client_pref, &second_client_pref, &game_id);
+        });
+
+        let game_ready = StreamInput::GR(GameReady {
+            game_id,
+            sessions,
+            event_id: EventId::new(),
+        });
+        let test_outputs = run_stream(vec![first_client_pref, second_client_pref, game_ready]);
         todo!("write test")
     }
 }
