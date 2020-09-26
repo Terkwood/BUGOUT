@@ -11,8 +11,7 @@ use crate::api::*;
 use crate::components::*;
 use crate::model::*;
 
-use log::{error, warn};
-use redis::Commands;
+use log::error;
 use redis_streams::XReadEntryId;
 
 #[derive(Clone)]
@@ -23,7 +22,7 @@ pub enum StreamInput {
 
 const GROUP_NAME: &str = "micro-color-chooser";
 
-pub fn process(components: &StreamComponents) {
+pub fn process(components: &Components) {
     loop {
         let mut gr_processed: Vec<XReadEntryId> = vec![];
         let mut ccp_processed: Vec<XReadEntryId> = vec![];
@@ -237,7 +236,7 @@ mod tests {
         let ca = ccp_ack_ms.clone();
         let gra = gr_ack_ms.clone();
         thread::spawn(move || {
-            let components = StreamComponents {
+            let components = Components {
                 session_game_repo: Rc::new(FakeGameRepo {
                     contents: fsg,
                     put_in: put_session_game_in,
