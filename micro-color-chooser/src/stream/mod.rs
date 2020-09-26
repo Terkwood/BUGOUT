@@ -10,6 +10,7 @@ pub use xread::*;
 use crate::api::*;
 use crate::components::*;
 use crate::model::*;
+use crate::service::game_color_prefs;
 
 use log::error;
 use redis_streams::XReadEntryId;
@@ -23,6 +24,7 @@ pub enum StreamInput {
 const GROUP_NAME: &str = "micro-color-chooser";
 
 pub fn process(components: &Components) {
+    let repos = Repos::from(components);
     loop {
         let mut gr_processed: Vec<XReadEntryId> = vec![];
         let mut ccp_processed: Vec<XReadEntryId> = vec![];
@@ -38,11 +40,17 @@ pub fn process(components: &Components) {
                                 session_id,
                             }),
                         ) => {
-                            if let Err(_e) = components.prefs_repo.put(SessionColorPref {
+                            let scp = SessionColorPref {
                                 color_pref,
-                                session_id,
-                            }) {
+                                session_id: session_id.clone(),
+                            };
+
+                            if let Err(_e) = components.prefs_repo.put(&scp) {
                                 error!("write to pref repo")
+                            }
+
+                            if let Err(_) = game_color_prefs::by_session_id(&session_id, &repos) {
+                                error!("fetch error checking game color prefs by session ID")
                             }
 
                             ccp_processed.push(entry_id)
@@ -127,10 +135,10 @@ mod tests {
                 .map(|gcp| gcp.clone()))
         }
 
-        fn put(&self, scp: SessionColorPref) -> Result<(), WriteErr> {
+        fn put(&self, scp: &SessionColorPref) -> Result<(), WriteErr> {
             let mut data = self.contents.lock().expect("mutex");
             data.insert(scp.session_id.clone(), scp.clone());
-            Ok(self.put_in.send(scp).expect("send"))
+            Ok(self.put_in.send(scp.clone()).expect("send"))
         }
     }
 
@@ -319,7 +327,7 @@ mod tests {
     }
 
     #[test]
-    fn test_no_conflict() {
+    fn happy_path() {
         let game_id = GameId(Uuid::new_v4());
         let sessions = (SessionId(Uuid::new_v4()), SessionId(Uuid::new_v4()));
         let clients = (ClientId(Uuid::new_v4()), ClientId(Uuid::new_v4()));

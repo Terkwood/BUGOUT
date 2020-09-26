@@ -20,3 +20,17 @@ impl Components {
         }
     }
 }
+
+pub struct Repos {
+    pub prefs: Rc<dyn PrefsRepo>,
+    pub session_game: Rc<dyn SessionGameRepo>,
+}
+
+impl From<&Components> for Repos {
+    fn from(c: &Components) -> Self {
+        Self {
+            prefs: c.prefs_repo.clone(),
+            session_game: c.session_game_repo.clone(),
+        }
+    }
+}

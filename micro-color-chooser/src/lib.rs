@@ -4,6 +4,7 @@ mod api;
 mod components;
 mod model;
 mod repo;
+mod service;
 pub mod stream;
 mod time;
 

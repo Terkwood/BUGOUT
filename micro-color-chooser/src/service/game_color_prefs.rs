@@ -1,8 +1,7 @@
 use crate::api::GameReady;
+use crate::components::Repos;
 use crate::model::*;
 use crate::repo::*;
-use crate::Components;
-use std::rc::Rc;
 
 /// Call this when you receive a ChooseColorPref event
 
@@ -16,4 +15,16 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
 /// and prefs repo.
 pub fn by_game_ready(game_id: &GameReady, repos: &Repos) -> Result<GameColorPref, FetchErr> {
     todo!()
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_by_session_id() {
+        todo!()
+    }
+    #[test]
+    fn test_by_game_ready() {
+        todo!()
+    }
 }
