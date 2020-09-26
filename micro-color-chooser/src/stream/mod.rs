@@ -226,7 +226,7 @@ mod tests {
     struct FakeXAdd(Sender<ColorsChosen>);
     impl XAdd for FakeXAdd {
         fn xadd(&self, data: ColorsChosen) -> Result<(), XAddErr> {
-            todo!()
+            Ok(self.0.send(data).expect("send"))
         }
     }
 
