@@ -10,7 +10,7 @@ pub use xread::*;
 use crate::api::*;
 use crate::components::*;
 use crate::model::*;
-use crate::service::game_color_prefs;
+use crate::service::{choose, game_color_prefs};
 
 use log::error;
 use redis_streams::XReadEntryId;
@@ -33,7 +33,7 @@ pub fn process(components: &Components) {
                 for time_ordered_event in xrr {
                     match time_ordered_event {
                         (
-                            entry_id,
+                            xid,
                             StreamInput::CCP(ChooseColorPref {
                                 client_id: _,
                                 color_pref,
@@ -49,13 +49,54 @@ pub fn process(components: &Components) {
                                 error!("write to pref repo")
                             }
 
-                            if let Err(_) = game_color_prefs::by_session_id(&session_id, &repos) {
-                                error!("fetch error checking game color prefs by session ID")
+                            match game_color_prefs::by_session_id(&session_id, &repos) {
+                                Ok(GameColorPref::Complete(first, second)) => {
+                                    let colors_chosen = choose(&first, &second);
+                                    if let Err(_e) = components.xadd.xadd(colors_chosen) {
+                                        error!("error writing to colors chose stream")
+                                    }
+                                }
+                                Ok(_) => {
+                                    // do nothing until we know what both sides prefer
+                                }
+                                Err(_e) => {
+                                    error!("fetch error checking game color prefs by session ID")
+                                }
                             }
 
-                            ccp_processed.push(entry_id)
+                            ccp_processed.push(xid)
                         }
-                        _ => todo!(" write game ready branch -- compute things "),
+                        (xid, StreamInput::GR(gr)) => {
+                            if let Err(_e) = components.session_game_repo.put(SessionGame {
+                                session_id: gr.sessions.0.clone(),
+                                game_id: gr.game_id.clone(),
+                            }) {
+                                error!("write to session game repo 0")
+                            }
+                            if let Err(_e) = components.session_game_repo.put(SessionGame {
+                                session_id: gr.sessions.1.clone(),
+                                game_id: gr.game_id.clone(),
+                            }) {
+                                error!("write to session game repo 0")
+                            }
+
+                            match game_color_prefs::by_game_ready(&gr, &repos) {
+                                Ok(GameColorPref::Complete(first, second)) => {
+                                    let colors_chosen = choose(&first, &second);
+                                    if let Err(_e) = components.xadd.xadd(colors_chosen) {
+                                        error!("error writing to colors chose stream")
+                                    }
+                                }
+                                Ok(_) => {
+                                    // do nothing until we know what both sides prefer
+                                }
+                                Err(_e) => {
+                                    error!("fetch error checking game color prefs by session ID")
+                                }
+                            }
+
+                            gr_processed.push(xid)
+                        }
                     }
                 }
             }

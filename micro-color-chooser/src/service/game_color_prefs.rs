@@ -6,15 +6,15 @@ use crate::repo::*;
 /// Call this when you receive a ChooseColorPref event
 
 pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorPref, FetchErr> {
-    todo!()
+    todo!("aa")
 }
 
 /// Call this when you receive a GameReady event.
 /// It will provide an aggregated view of choices for that game,
 /// based on all available data from both session_game repo
 /// and prefs repo.
-pub fn by_game_ready(game_id: &GameReady, repos: &Repos) -> Result<GameColorPref, FetchErr> {
-    todo!()
+pub fn by_game_ready(game_ready: &GameReady, repos: &Repos) -> Result<GameColorPref, FetchErr> {
+    todo!("bb")
 }
 
 #[cfg(test)]
