@@ -45,7 +45,7 @@ pub struct EventId(pub Uuid);
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct SessionGame {
-    pub session_id: SessionId,
+    pub sessions: (SessionId, SessionId),
     pub game_id: GameId,
 }
 

@@ -69,13 +69,13 @@ pub fn process(components: &Components) {
                         }
                         (xid, StreamInput::GR(gr)) => {
                             if let Err(_e) = components.session_game_repo.put(SessionGame {
-                                session_id: gr.sessions.0.clone(),
+                                sessions: gr.sessions.clone(),
                                 game_id: gr.game_id.clone(),
                             }) {
                                 error!("write to session game repo 0")
                             }
                             if let Err(_e) = components.session_game_repo.put(SessionGame {
-                                session_id: gr.sessions.1.clone(),
+                                sessions: gr.sessions.clone(),
                                 game_id: gr.game_id.clone(),
                             }) {
                                 error!("write to session game repo 0")
@@ -162,7 +162,8 @@ mod tests {
 
         fn put(&self, session_game: SessionGame) -> Result<(), WriteErr> {
             let mut data = self.contents.lock().expect("mutex");
-            data.insert(session_game.session_id.clone(), session_game.clone());
+            data.insert(session_game.sessions.0.clone(), session_game.clone());
+            data.insert(session_game.sessions.1.clone(), session_game.clone());
             Ok(self.put_in.send(session_game).expect("send"))
         }
     }

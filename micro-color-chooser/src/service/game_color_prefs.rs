@@ -8,9 +8,13 @@ use crate::repo::*;
 /// based on all available data from both session_game repo
 /// and prefs repo.
 pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorPref, FetchErr> {
-    todo!("when there is no link from session ID to game, it's empty");
-    todo!("when there is a link, but only one person's prefs registered, partial");
-    todo!("otherwise complete")
+    repos.session_game.get(session_id).map(|sg| match sg {
+        None => GameColorPref::NotReady,
+        Some(session_game) => {
+            todo!("when there is a link, but only one person's prefs registered, partial");
+            todo!("otherwise complete")
+        }
+    })
 }
 
 /// Call this when you receive a GameReady event.
@@ -27,15 +31,14 @@ mod tests {
     use super::*;
     use std::rc::Rc;
 
-    struct SGNone;
-    struct SGOne(pub SessionGame);
-    struct SGTwo(pub SessionGame, pub SessionGame);
+    struct SGNotReady;
+    struct SGReady(pub SessionGame);
 
     struct PrefsNone;
     struct PrefsOne(pub SessionColorPref);
     struct PrefsTwo(pub SessionColorPref, pub SessionColorPref);
 
-    impl SessionGameRepo for SGNone {
+    impl SessionGameRepo for SGNotReady {
         fn get(&self, _: &SessionId) -> Result<Option<SessionGame>, FetchErr> {
             Ok(None)
         }
@@ -45,26 +48,12 @@ mod tests {
         }
     }
 
-    impl SessionGameRepo for SGOne {
+    impl SessionGameRepo for SGReady {
         fn get(&self, session_id: &SessionId) -> Result<Option<SessionGame>, FetchErr> {
-            if session_id == &self.0.session_id {
+            if session_id == &self.0.sessions.0 {
                 Ok(Some(self.0.clone()))
-            } else {
-                Ok(None)
-            }
-        }
-
-        fn put(&self, _: SessionGame) -> Result<(), WriteErr> {
-            panic!()
-        }
-    }
-
-    impl SessionGameRepo for SGTwo {
-        fn get(&self, session_id: &SessionId) -> Result<Option<SessionGame>, FetchErr> {
-            if session_id == &self.0.session_id {
+            } else if session_id == &self.0.sessions.1 {
                 Ok(Some(self.0.clone()))
-            } else if session_id == &self.1.session_id {
-                Ok(Some(self.1.clone()))
             } else {
                 Ok(None)
             }
@@ -145,16 +134,10 @@ mod tests {
 
         let repos = Repos {
             prefs: Rc::new(PrefsTwo(one_pref.clone(), another_pref.clone())),
-            session_game: Rc::new(SGTwo(
-                SessionGame {
-                    session_id: sid.clone(),
-                    game_id: gid.clone(),
-                },
-                SessionGame {
-                    session_id: another_sid.clone(),
-                    game_id: gid.clone(),
-                },
-            )),
+            session_game: Rc::new(SGReady(SessionGame {
+                sessions: (sid.clone(), another_sid.clone()),
+                game_id: gid.clone(),
+            })),
         };
 
         let actual = by_session_id(&sid, &repos).expect("ok");
@@ -179,8 +162,8 @@ mod tests {
         };
         let repos = Repos {
             prefs: Rc::new(PrefsOne(pref.clone())),
-            session_game: Rc::new(SGOne(SessionGame {
-                session_id: sid.clone(),
+            session_game: Rc::new(SGReady(SessionGame {
+                sessions: (sid.clone(), new_session_id()),
                 game_id: gid.clone(),
             })),
         };
@@ -198,7 +181,7 @@ mod tests {
                 color_pref: ColorPref::Black,
                 client_id: cid.clone(),
             })),
-            session_game: Rc::new(SGNone),
+            session_game: Rc::new(SGNotReady),
         };
 
         let actual = by_session_id(&sid, &repos).expect("ok");
