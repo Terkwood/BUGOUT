@@ -22,9 +22,15 @@ pub struct SessionColorPref {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum GameColorPref {
-    Empty,
-    Partial(SessionColorPref),
-    Complete(SessionColorPref, SessionColorPref),
+    NotReady,
+    Partial {
+        game_id: GameId,
+        pref: SessionColorPref,
+    },
+    Complete {
+        game_id: GameId,
+        prefs: (SessionColorPref, SessionColorPref),
+    },
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
