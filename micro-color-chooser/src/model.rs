@@ -1,7 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Copy, Clone, Debug, Serialize)]
+#[derive(Copy, Clone, Debug, Serialize, PartialEq)]
 pub enum Color {
     Black,
     White,
@@ -46,5 +46,26 @@ pub struct EventId(pub Uuid);
 impl EventId {
     pub fn new() -> Self {
         Self(Uuid::new_v4())
+    }
+}
+
+#[cfg(test)]
+impl GameId {
+    pub fn random() -> Self {
+        Self(uuid::Uuid::new_v4())
+    }
+}
+
+#[cfg(test)]
+impl ClientId {
+    pub fn random() -> Self {
+        Self(uuid::Uuid::new_v4())
+    }
+}
+
+#[cfg(test)]
+impl SessionId {
+    pub fn random() -> Self {
+        Self(uuid::Uuid::new_v4())
     }
 }

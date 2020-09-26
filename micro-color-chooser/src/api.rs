@@ -9,7 +9,7 @@ pub struct ChooseColorPref {
     pub session_id: SessionId,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, PartialEq)]
 
 pub struct ColorsChosen {
     pub game_id: GameId,

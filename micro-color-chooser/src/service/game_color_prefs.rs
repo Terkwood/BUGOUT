@@ -136,28 +136,18 @@ mod tests {
         }
     }
 
-    fn new_session_id() -> SessionId {
-        SessionId(uuid::Uuid::new_v4())
-    }
-    fn new_game_id() -> GameId {
-        GameId(uuid::Uuid::new_v4())
-    }
-    fn new_client_id() -> ClientId {
-        ClientId(uuid::Uuid::new_v4())
-    }
-
     #[test]
     fn test_by_session_id_complete() {
-        let sid = new_session_id();
-        let cid = new_client_id();
-        let gid = new_game_id();
+        let sid = SessionId::random();
+        let cid = ClientId::random();
+        let gid = GameId::random();
         let one_pref = SessionColorPref {
             session_id: sid.clone(),
             color_pref: ColorPref::Black,
             client_id: cid.clone(),
         };
-        let another_sid = new_session_id();
-        let another_cid = new_client_id();
+        let another_sid = SessionId::random();
+        let another_cid = ClientId::random();
         let another_pref = SessionColorPref {
             session_id: another_sid.clone(),
             color_pref: ColorPref::Black,
@@ -185,9 +175,9 @@ mod tests {
 
     #[test]
     fn test_by_session_id_partial() {
-        let sid = new_session_id();
-        let cid = new_client_id();
-        let gid = new_game_id();
+        let sid = SessionId::random();
+        let cid = ClientId::random();
+        let gid = GameId::random();
         let pref = SessionColorPref {
             session_id: sid.clone(),
             color_pref: ColorPref::Black,
@@ -196,7 +186,7 @@ mod tests {
         let repos = Repos {
             prefs: Rc::new(PrefsOne(pref.clone())),
             game_ready: Rc::new(SGReady(GameReady {
-                sessions: (sid.clone(), new_session_id()),
+                sessions: (sid.clone(), SessionId::random()),
                 game_id: gid.clone(),
                 event_id: EventId::new(),
             })),
@@ -207,8 +197,8 @@ mod tests {
     }
     #[test]
     fn test_by_session_id_not_ready() {
-        let sid = new_session_id();
-        let cid = new_client_id();
+        let sid = SessionId::random();
+        let cid = ClientId::random();
         let repos = Repos {
             prefs: Rc::new(PrefsOne(SessionColorPref {
                 session_id: sid.clone(),
@@ -224,10 +214,10 @@ mod tests {
 
     #[test]
     fn test_by_game_ready_two_prefs() {
-        let sid = new_session_id();
-        let gid = new_game_id();
+        let sid = SessionId::random();
+        let gid = GameId::random();
 
-        let another_sid = new_session_id();
+        let another_sid = SessionId::random();
         let sessions = (sid.clone(), another_sid.clone());
 
         let game_ready = GameReady {
@@ -239,12 +229,12 @@ mod tests {
         let first_pref = SessionColorPref {
             session_id: sid.clone(),
             color_pref: ColorPref::Black,
-            client_id: new_client_id(),
+            client_id: ClientId::random(),
         };
         let second_pref = SessionColorPref {
             session_id: another_sid.clone(),
             color_pref: ColorPref::Black,
-            client_id: new_client_id(),
+            client_id: ClientId::random(),
         };
 
         let repos = Repos {
@@ -263,10 +253,10 @@ mod tests {
     }
     #[test]
     fn test_by_game_ready_one_pref() {
-        let sid = new_session_id();
-        let gid = new_game_id();
+        let sid = SessionId::random();
+        let gid = GameId::random();
 
-        let sessions = (sid.clone(), new_session_id());
+        let sessions = (sid.clone(), SessionId::random());
 
         let game_ready = GameReady {
             sessions: sessions.clone(),
@@ -277,7 +267,7 @@ mod tests {
         let pref = SessionColorPref {
             session_id: sid.clone(),
             color_pref: ColorPref::Black,
-            client_id: new_client_id(),
+            client_id: ClientId::random(),
         };
 
         let repos = Repos {
@@ -290,10 +280,10 @@ mod tests {
     }
     #[test]
     fn test_by_game_ready_no_prefs() {
-        let sid = new_session_id();
-        let gid = new_game_id();
+        let sid = SessionId::random();
+        let gid = GameId::random();
 
-        let sessions = (sid, new_session_id());
+        let sessions = (sid, SessionId::random());
 
         let game_ready = GameReady {
             sessions: sessions.clone(),
