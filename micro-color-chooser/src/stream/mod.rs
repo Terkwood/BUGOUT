@@ -21,6 +21,11 @@ pub enum StreamInput {
     CCP(ChooseColorPref),
 }
 
+enum Processed {
+    GR(XReadEntryId),
+    CCP(XReadEntryId),
+}
+
 const GROUP_NAME: &str = "micro-color-chooser";
 
 pub fn process(components: &mut Components) {
@@ -31,7 +36,7 @@ pub fn process(components: &mut Components) {
         match components.xread.sorted() {
             Ok(xrr) => {
                 for time_ordered_event in xrr {
-                    match time_ordered_event {
+                    let (result, pxid) = match time_ordered_event {
                         (
                             xid,
                             StreamInput::CCP(ChooseColorPref {
@@ -50,27 +55,10 @@ pub fn process(components: &mut Components) {
                                 error!("write to pref repo")
                             }
 
-                            match game_color_prefs::by_session_id(&session_id, &repos) {
-                                Ok(GameColorPref::Complete { game_id, prefs }) => {
-                                    let colors_chosen = choose(
-                                        &prefs.0,
-                                        &prefs.1,
-                                        &game_id,
-                                        &mut components.random,
-                                    );
-                                    if let Err(_e) = components.xadd.xadd(colors_chosen) {
-                                        error!("error writing to colors chose stream")
-                                    }
-                                }
-                                Ok(_) => {
-                                    // do nothing until we know what both sides prefer
-                                }
-                                Err(_e) => {
-                                    error!("fetch error checking game color prefs by session ID")
-                                }
-                            }
-
-                            ccp_processed.push(xid)
+                            (
+                                game_color_prefs::by_session_id(&session_id, &repos),
+                                Processed::CCP(xid),
+                            )
                         }
                         (xid, StreamInput::GR(gr)) => {
                             if let Err(_e) = components.game_ready_repo.put(gr.clone()) {
@@ -80,28 +68,30 @@ pub fn process(components: &mut Components) {
                                 error!("write to session game repo 0")
                             }
 
-                            match game_color_prefs::by_game_ready(&gr, &repos) {
-                                Ok(GameColorPref::Complete { game_id, prefs }) => {
-                                    let colors_chosen = choose(
-                                        &prefs.0,
-                                        &prefs.1,
-                                        &game_id,
-                                        &mut components.random,
-                                    );
-                                    if let Err(_e) = components.xadd.xadd(colors_chosen) {
-                                        error!("error writing to colors chose stream")
-                                    }
-                                }
-                                Ok(_) => {
-                                    // do nothing until we know what both sides prefer
-                                }
-                                Err(_e) => {
-                                    error!("fetch error checking game color prefs by session ID")
-                                }
-                            }
-
-                            gr_processed.push(xid)
+                            (
+                                game_color_prefs::by_game_ready(&gr, &repos),
+                                Processed::GR(xid),
+                            )
                         }
+                    };
+
+                    match result {
+                        Ok(GameColorPref::Complete { game_id, prefs }) => {
+                            let colors_chosen =
+                                choose(&prefs.0, &prefs.1, &game_id, &mut components.random);
+                            if let Err(_e) = components.xadd.xadd(colors_chosen) {
+                                error!("error writing to colors chose stream")
+                            }
+                        }
+                        Ok(_) => {
+                            // do nothing until we know what both sides prefer
+                        }
+                        Err(_e) => error!("fetch error checking game color prefs by session ID"),
+                    }
+
+                    match pxid {
+                        Processed::CCP(xid) => ccp_processed.push(xid),
+                        Processed::GR(xid) => gr_processed.push(xid),
                     }
                 }
             }
