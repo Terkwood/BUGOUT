@@ -10,7 +10,7 @@ pub fn main() {
     env_logger::init();
     info!("🔢 {}", VERSION);
     let client = micro_color_chooser::create_redis_client();
-    let components = Components::new(&client);
+    let mut components = Components::new(&client);
     stream::create_consumer_group(&client);
-    stream::process(&components)
+    stream::process(&mut components)
 }

@@ -23,8 +23,8 @@ pub enum StreamInput {
 
 const GROUP_NAME: &str = "micro-color-chooser";
 
-pub fn process(components: &Components) {
-    let repos = Repos::from(components);
+pub fn process(components: &mut Components) {
+    let repos = Repos::new(components);
     loop {
         let mut gr_processed: Vec<XReadEntryId> = vec![];
         let mut ccp_processed: Vec<XReadEntryId> = vec![];
@@ -52,8 +52,12 @@ pub fn process(components: &Components) {
 
                             match game_color_prefs::by_session_id(&session_id, &repos) {
                                 Ok(GameColorPref::Complete { game_id, prefs }) => {
-                                    let colors_chosen =
-                                        choose(&prefs.0, &prefs.1, &game_id, &components.random);
+                                    let colors_chosen = choose(
+                                        &prefs.0,
+                                        &prefs.1,
+                                        &game_id,
+                                        &mut components.random,
+                                    );
                                     if let Err(_e) = components.xadd.xadd(colors_chosen) {
                                         error!("error writing to colors chose stream")
                                     }
@@ -78,8 +82,12 @@ pub fn process(components: &Components) {
 
                             match game_color_prefs::by_game_ready(&gr, &repos) {
                                 Ok(GameColorPref::Complete { game_id, prefs }) => {
-                                    let colors_chosen =
-                                        choose(&prefs.0, &prefs.1, &game_id, &components.random);
+                                    let colors_chosen = choose(
+                                        &prefs.0,
+                                        &prefs.1,
+                                        &game_id,
+                                        &mut components.random,
+                                    );
                                     if let Err(_e) = components.xadd.xadd(colors_chosen) {
                                         error!("error writing to colors chose stream")
                                     }
@@ -101,12 +109,12 @@ pub fn process(components: &Components) {
         }
 
         if !gr_processed.is_empty() {
-            if let Err(_e) = components.xread.ack_game_ready(&gr_processed) {
+            if let Err(_e) = &components.xread.ack_game_ready(&gr_processed) {
                 error!("ack for game ready failed")
             }
         }
         if !ccp_processed.is_empty() {
-            if let Err(_e) = components.xread.ack_choose_color_pref(&ccp_processed) {
+            if let Err(_e) = &components.xread.ack_choose_color_pref(&ccp_processed) {
                 error!("ack for choose color prefs failed")
             }
         }
@@ -283,7 +291,7 @@ mod tests {
         let ca = ccp_ack_ms.clone();
         let gra = gr_ack_ms.clone();
         thread::spawn(move || {
-            let components = Components {
+            let mut components = Components {
                 game_ready_repo: Rc::new(FakeGameRepo {
                     contents: fsg,
                     put_in: put_game_ready_in,
@@ -301,7 +309,7 @@ mod tests {
                 xadd: Box::new(FakeXAdd(xadd_call_in)),
                 random: crate::service::Random::new(),
             };
-            process(&components);
+            process(&mut components);
         });
 
         // emit some events in a time-ordered fashion

@@ -7,10 +7,10 @@ pub fn choose(
     first: &SessionColorPref,
     second: &SessionColorPref,
     game_id: &GameId,
-    rng: &Random,
+    rng: &mut Random,
 ) -> ColorsChosen {
     let (black, white): (ClientId, ClientId) = match (first.color_pref, second.color_pref) {
-        (ColorPref::Black, ColorPref::Black) => todo!(),
+        (ColorPref::Black, ColorPref::Black) => rng.roll(&first.client_id, &second.client_id),
         (ColorPref::White, ColorPref::White) => todo!(),
         (ColorPref::Black, _) => (first.client_id.clone(), second.client_id.clone()),
         (_, ColorPref::White) => (first.client_id.clone(), second.client_id.clone()),
@@ -57,7 +57,7 @@ mod tests {
         let second_sid = SessionId::random();
         let first_cid = ClientId::random();
         let second_cid = ClientId::random();
-        let random = Random::new();
+        let mut random = Random::new();
 
         let first_pref = SessionColorPref {
             color_pref: ColorPref::Black,
@@ -69,7 +69,7 @@ mod tests {
             session_id: second_sid,
             client_id: second_cid.clone(),
         };
-        let actual = choose(&first_pref, &second_pref, &game_id, &random);
+        let actual = choose(&first_pref, &second_pref, &game_id, &mut random);
         assert_eq!(
             actual,
             ColorsChosen {
@@ -86,7 +86,7 @@ mod tests {
         let second_sid = SessionId::random();
         let first_cid = ClientId::random();
         let second_cid = ClientId::random();
-        let random = Random::new();
+        let mut random = Random::new();
 
         let first_pref = SessionColorPref {
             color_pref: ColorPref::Black,
@@ -98,7 +98,7 @@ mod tests {
             session_id: second_sid,
             client_id: second_cid.clone(),
         };
-        let actual = choose(&first_pref, &second_pref, &game_id, &random);
+        let actual = choose(&first_pref, &second_pref, &game_id, &mut random);
         assert_ne!(actual.black, actual.white)
     }
 
@@ -109,7 +109,7 @@ mod tests {
         let second_sid = SessionId::random();
         let first_cid = ClientId::random();
         let second_cid = ClientId::random();
-        let random = Random::new();
+        let mut random = Random::new();
 
         let first_pref = SessionColorPref {
             color_pref: ColorPref::White,
@@ -121,7 +121,7 @@ mod tests {
             session_id: second_sid,
             client_id: second_cid.clone(),
         };
-        let actual = choose(&first_pref, &second_pref, &game_id, &random);
+        let actual = choose(&first_pref, &second_pref, &game_id, &mut random);
         assert_ne!(actual.black, actual.white)
     }
     #[test]
@@ -131,7 +131,7 @@ mod tests {
         let second_sid = SessionId::random();
         let first_cid = ClientId::random();
         let second_cid = ClientId::random();
-        let random = Random::new();
+        let mut random = Random::new();
 
         let first_pref = SessionColorPref {
             color_pref: ColorPref::Any,
@@ -143,7 +143,7 @@ mod tests {
             session_id: second_sid,
             client_id: second_cid.clone(),
         };
-        let actual = choose(&first_pref, &second_pref, &game_id, &random);
+        let actual = choose(&first_pref, &second_pref, &game_id, &mut random);
         assert_ne!(actual.black, actual.white)
     }
 
@@ -154,7 +154,7 @@ mod tests {
         let second_sid = SessionId::random();
         let first_cid = ClientId::random();
         let second_cid = ClientId::random();
-        let random = Random::new();
+        let mut random = Random::new();
 
         let first_pref = SessionColorPref {
             color_pref: ColorPref::Any,
@@ -166,7 +166,7 @@ mod tests {
             session_id: second_sid,
             client_id: second_cid.clone(),
         };
-        let actual = choose(&first_pref, &second_pref, &game_id, &random);
+        let actual = choose(&first_pref, &second_pref, &game_id, &mut random);
         assert_eq!(
             actual,
             ColorsChosen {
@@ -184,7 +184,7 @@ mod tests {
         let second_sid = SessionId::random();
         let first_cid = ClientId::random();
         let second_cid = ClientId::random();
-        let random = Random::new();
+        let mut random = Random::new();
 
         let first_pref = SessionColorPref {
             color_pref: ColorPref::Black,
@@ -196,7 +196,7 @@ mod tests {
             session_id: second_sid,
             client_id: second_cid.clone(),
         };
-        let actual = choose(&first_pref, &second_pref, &game_id, &random);
+        let actual = choose(&first_pref, &second_pref, &game_id, &mut random);
         assert_eq!(
             actual,
             ColorsChosen {

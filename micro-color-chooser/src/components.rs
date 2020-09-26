@@ -29,8 +29,8 @@ pub struct Repos {
     pub game_ready: Rc<dyn GameReadyRepo>,
 }
 
-impl From<&Components> for Repos {
-    fn from(c: &Components) -> Self {
+impl Repos {
+    pub fn new(c: &mut Components) -> Self {
         Self {
             prefs: c.prefs_repo.clone(),
             game_ready: c.game_ready_repo.clone(),
