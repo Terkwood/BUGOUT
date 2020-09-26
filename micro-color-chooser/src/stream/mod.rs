@@ -52,7 +52,8 @@ pub fn process(components: &Components) {
 
                             match game_color_prefs::by_session_id(&session_id, &repos) {
                                 Ok(GameColorPref::Complete { game_id, prefs }) => {
-                                    let colors_chosen = choose(&prefs.0, &prefs.1, &game_id);
+                                    let colors_chosen =
+                                        choose(&prefs.0, &prefs.1, &game_id, &components.random);
                                     if let Err(_e) = components.xadd.xadd(colors_chosen) {
                                         error!("error writing to colors chose stream")
                                     }
@@ -77,7 +78,8 @@ pub fn process(components: &Components) {
 
                             match game_color_prefs::by_game_ready(&gr, &repos) {
                                 Ok(GameColorPref::Complete { game_id, prefs }) => {
-                                    let colors_chosen = choose(&prefs.0, &prefs.1, &game_id);
+                                    let colors_chosen =
+                                        choose(&prefs.0, &prefs.1, &game_id, &components.random);
                                     if let Err(_e) = components.xadd.xadd(colors_chosen) {
                                         error!("error writing to colors chose stream")
                                     }
@@ -297,6 +299,7 @@ mod tests {
                     max_read_millis: AtomicU64::new(0),
                 }),
                 xadd: Box::new(FakeXAdd(xadd_call_in)),
+                random: crate::service::Random::new(),
             };
             process(&components);
         });
