@@ -11,12 +11,12 @@ pub fn choose(
 ) -> ColorsChosen {
     let (black, white): (ClientId, ClientId) = match (first.color_pref, second.color_pref) {
         (ColorPref::Black, ColorPref::Black) => rng.roll(&first.client_id, &second.client_id),
-        (ColorPref::White, ColorPref::White) => todo!(),
+        (ColorPref::White, ColorPref::White) => rng.roll(&first.client_id, &second.client_id),
         (ColorPref::Black, _) => (first.client_id.clone(), second.client_id.clone()),
         (_, ColorPref::White) => (first.client_id.clone(), second.client_id.clone()),
         (ColorPref::White, _) => (second.client_id.clone(), first.client_id.clone()),
         (_, ColorPref::Black) => (second.client_id.clone(), first.client_id.clone()),
-        (ColorPref::Any, ColorPref::Any) => todo!(),
+        (ColorPref::Any, ColorPref::Any) => rng.roll(&first.client_id, &second.client_id),
     };
     ColorsChosen {
         game_id: game_id.clone(),
