@@ -8,25 +8,26 @@ use crate::repo::*;
 /// based on all available data from both session_game repo
 /// and prefs repo.
 pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorPref, FetchErr> {
-    repos.session_game.get(session_id).map(|sg| match sg {
-        None => GameColorPref::NotReady,
+    repos.session_game.get(session_id).and_then(|sg| match sg {
+        None => Ok(GameColorPref::NotReady),
         Some(session_game) => {
-            let first_pref = repos.prefs.get(&session_game.sessions.0).ok().flatten();
-            let second_pref = repos.prefs.get(&session_game.sessions.1).ok().flatten();
+            let first_pref = repos.prefs.get(&session_game.sessions.0);
+            let second_pref = repos.prefs.get(&session_game.sessions.1);
             match (first_pref, second_pref) {
-                (Some(first), Some(second)) => GameColorPref::Complete {
+                (Ok(Some(first)), Ok(Some(second))) => Ok(GameColorPref::Complete {
                     game_id: session_game.game_id.clone(),
                     prefs: (first, second),
-                },
-                (Some(partial), None) => GameColorPref::Partial {
+                }),
+                (Ok(Some(partial)), Ok(None)) => Ok(GameColorPref::Partial {
                     game_id: session_game.game_id.clone(),
                     pref: partial,
-                },
-                (None, Some(partial)) => GameColorPref::Partial {
+                }),
+                (Ok(None), Ok(Some(partial))) => Ok(GameColorPref::Partial {
                     game_id: session_game.game_id.clone(),
                     pref: partial,
-                },
-                _ => GameColorPref::NotReady,
+                }),
+                (Ok(None), Ok(None)) => Ok(GameColorPref::NotReady),
+                _ => Err(FetchErr),
             }
         }
     })
@@ -37,8 +38,29 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
 /// based on all available data from both session_game repo
 /// and prefs repo.
 pub fn by_game_ready(game_ready: &GameReady, repos: &Repos) -> Result<GameColorPref, FetchErr> {
-    todo!("check session prefs for each mentioned session id");
-    todo!("you need both sessions to have prefs in order to return complete");
+    let session_game = SessionGame {
+        game_id: game_ready.game_id.clone(),
+        sessions: game_ready.sessions.clone(),
+    };
+
+    let first_pref = repos.prefs.get(&session_game.sessions.0)?;
+    let second_pref = repos.prefs.get(&session_game.sessions.1)?;
+
+    Ok(match (first_pref, second_pref) {
+        (Some(first), Some(second)) => GameColorPref::Complete {
+            game_id: session_game.game_id.clone(),
+            prefs: (first, second),
+        },
+        (Some(partial), None) => GameColorPref::Partial {
+            game_id: session_game.game_id.clone(),
+            pref: partial,
+        },
+        (None, Some(partial)) => GameColorPref::Partial {
+            game_id: session_game.game_id.clone(),
+            pref: partial,
+        },
+        _ => GameColorPref::NotReady,
+    })
 }
 
 #[cfg(test)]
