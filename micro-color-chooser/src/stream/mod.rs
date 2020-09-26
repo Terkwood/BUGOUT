@@ -10,6 +10,7 @@ pub use xread::*;
 use crate::api::*;
 use crate::components::*;
 use crate::model::*;
+
 use log::{error, warn};
 use redis::Commands;
 use redis_streams::XReadEntryId;
@@ -22,10 +23,10 @@ pub enum StreamInput {
 
 const GROUP_NAME: &str = "micro-color-chooser";
 
-pub fn process(components: &Components) {
-    let mut gr_processed: Vec<XReadEntryId> = vec![];
-    let mut ccp_processed: Vec<XReadEntryId> = vec![];
+pub fn process(components: &StreamComponents) {
     loop {
+        let mut gr_processed: Vec<XReadEntryId> = vec![];
+        let mut ccp_processed: Vec<XReadEntryId> = vec![];
         match components.xread.sorted() {
             Ok(xrr) => {
                 for time_ordered_event in xrr {
@@ -56,14 +57,12 @@ pub fn process(components: &Components) {
 
         if !gr_processed.is_empty() {
             if let Err(_e) = components.xread.ack_game_ready(&gr_processed) {
-                error!("ack for game states failed")
-            } else {
-                gr_processed.clear()
+                error!("ack for game ready failed")
             }
         }
         if !ccp_processed.is_empty() {
             if let Err(_e) = components.xread.ack_choose_color_pref(&ccp_processed) {
-                ccp_processed.clear()
+                error!("ack for choose color prefs failed")
             }
         }
     }
@@ -72,12 +71,12 @@ pub fn process(components: &Components) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::*;
     use crate::repo::*;
     use crate::Components;
     use crossbeam_channel::{select, unbounded, Receiver, Sender};
     use redis_streams::XReadEntryId;
     use std::collections::HashMap;
+    use std::rc::Rc;
     use std::sync::{Arc, Mutex};
     use std::thread;
     use std::time::Duration;
@@ -238,12 +237,12 @@ mod tests {
         let ca = ccp_ack_ms.clone();
         let gra = gr_ack_ms.clone();
         thread::spawn(move || {
-            let components = Components {
-                session_game_repo: Box::new(FakeGameRepo {
+            let components = StreamComponents {
+                session_game_repo: Rc::new(FakeGameRepo {
                     contents: fsg,
                     put_in: put_session_game_in,
                 }),
-                prefs_repo: Box::new(FakePrefsRepo {
+                prefs_repo: Rc::new(FakePrefsRepo {
                     contents: fp,
                     put_in: put_prefs_in,
                 }),
