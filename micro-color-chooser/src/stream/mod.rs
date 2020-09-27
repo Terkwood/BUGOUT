@@ -261,17 +261,6 @@ mod tests {
         let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
             Arc::new(Mutex::new(vec![]));
 
-        // TODO
-        // TODO
-        // TODO
-        // TODO
-        // TODO check the test impl of micro-history-provider
-        // TODO and trim the worthless put_in loops ?!
-        // TODO
-        // TODO
-        // TODO
-        // TODO
-
         let sfs = sorted_fake_stream.clone();
         let fp = fake_prefs_contents.clone();
         let fsg = fake_game_ready_contents.clone();
