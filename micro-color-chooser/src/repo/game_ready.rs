@@ -9,14 +9,15 @@ pub trait GameReadyRepo {
 }
 
 impl GameReadyRepo for Rc<Client> {
+    /// Get a game ready record for this session, if it exists
+    /// And then update the record's TTL
     fn get(&self, session_id: &SessionId) -> Result<Option<GameReady>, FetchErr> {
         if let Ok(mut conn) = self.get_connection() {
             let key = redis_key(session_id);
             let data: Result<Vec<u8>, _> = conn.get(&key).map_err(|_| FetchErr);
 
             if let Ok(_) = data {
-                // Touch TTL whenever you get the record
-                conn.expire(&key, EXPIRY_SECS)?;
+                touch_ttl(&mut conn, &key)
             }
 
             data.and_then(|bytes| bincode::deserialize(&bytes).map_err(|_| FetchErr))
@@ -27,7 +28,9 @@ impl GameReadyRepo for Rc<Client> {
 
     fn put(&self, game_ready: GameReady) -> Result<(), WriteErr> {
         if let Ok(mut conn) = self.get_connection() {
-            todo!("redis game repo put")
+            todo!("redis game repo put first record");
+            todo!("redis game repo put second record");
+            todo!("touch ttl")
         } else {
             Err(WriteErr)
         }
@@ -35,5 +38,5 @@ impl GameReadyRepo for Rc<Client> {
 }
 
 fn redis_key(session_id: &SessionId) -> String {
-    todo!()
+    format!("/BUGOUT/micro_color_chooser/game_ready/{}", session_id.0)
 }
