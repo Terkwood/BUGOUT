@@ -120,7 +120,6 @@ mod test {
 
     struct FakeHistoryRepo {
         pub contents: Arc<Mutex<Option<Vec<Move>>>>,
-        pub put_in: Sender<Vec<Move>>,
     }
 
     impl HistoryRepo for FakeHistoryRepo {
@@ -131,7 +130,7 @@ mod test {
         fn put(&self, _game_id: &GameId, moves: Vec<Move>) -> Result<(), WriteErr> {
             let mut data = self.contents.lock().expect("mutex");
             *data = Some(moves.clone());
-            Ok(self.put_in.send(moves).expect("send"))
+            Ok(())
         }
     }
 
@@ -201,19 +200,9 @@ mod test {
     #[test]
     fn test_process() {
         let (xadd_call_in, xadd_call_out): (Sender<HistoryProvided>, _) = unbounded();
-        let (put_history_in, put_history_out): (Sender<Vec<Move>>, _) = unbounded();
 
         // set up a loop to process game lobby requests
         let fake_history_contents = Arc::new(Mutex::new(None));
-        let fh = fake_history_contents.clone();
-        std::thread::spawn(move || loop {
-            select! {
-                recv(put_history_out) -> msg => match msg {
-                    Ok(moves) => *fh.lock().expect("mutex lock") = Some(moves),
-                    Err(_) => panic!("fail")
-                }
-            }
-        });
 
         let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
             Arc::new(Mutex::new(vec![]));
@@ -222,10 +211,7 @@ mod test {
         let fh = fake_history_contents.clone();
         thread::spawn(move || {
             let components = Components {
-                history_repo: Box::new(FakeHistoryRepo {
-                    contents: fh,
-                    put_in: put_history_in,
-                }),
+                history_repo: Box::new(FakeHistoryRepo { contents: fh }),
                 xread: Box::new(FakeXRead {
                     sorted_data: sfs.clone(),
                 }),

@@ -4,7 +4,7 @@ edition = "2018"
 license = "MIT"
 name = "micro-history-provider"
 repository = "https://github.com/Terkwood/BUGOUT"
-version = "0.1.1"
+version = "0.1.2-a"
 
 [dependencies]
 bincode = "1.3.1"
