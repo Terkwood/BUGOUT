@@ -116,7 +116,7 @@ mod tests {
     use super::*;
     use crate::repo::*;
     use crate::Components;
-    use crossbeam_channel::{select, unbounded, Receiver, Sender};
+    use crossbeam_channel::{unbounded, Receiver, Sender};
     use redis_streams::XReadEntryId;
     use std::collections::HashMap;
     use std::rc::Rc;

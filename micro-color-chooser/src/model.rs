@@ -1,12 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Copy, Clone, Debug, Serialize, PartialEq)]
-pub enum Color {
-    Black,
-    White,
-}
-
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub enum ColorPref {
     Black,
