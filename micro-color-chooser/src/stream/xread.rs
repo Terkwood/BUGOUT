@@ -46,11 +46,22 @@ impl XRead for Rc<Client> {
     }
 
     fn ack_choose_color_pref(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-        todo!()
+        ack(self, topics::CHOOSE_COLOR_PREF, ids)
     }
 
     fn ack_game_ready(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-        todo!()
+        ack(self, topics::GAME_READY, ids)
+    }
+}
+
+fn ack(client: &Client, key: &str, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+    let c = client.get_connection();
+    if let Ok(mut conn) = c {
+        let idstrs: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
+        let _: usize = conn.xack(key, GROUP_NAME, &idstrs)?;
+        Ok(())
+    } else {
+        Err(StreamAckErr)
     }
 }
 
