@@ -40,9 +40,13 @@ impl XRead for Rc<Client> {
                 &[">", ">"],
                 opts,
             )?;
-            todo!()
+            match deser(ser) {
+                Ok(unsorted) => todo!(),
+                Err(_) => todo!(),
+            }
+        } else {
+            Err(StreamReadErr::Conn)
         }
-        todo!()
     }
 
     fn ack_choose_color_pref(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
@@ -52,6 +56,10 @@ impl XRead for Rc<Client> {
     fn ack_game_ready(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         ack(self, topics::GAME_READY, ids)
     }
+}
+
+fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, StreamDeserErr> {
+    todo!()
 }
 
 fn ack(client: &Client, key: &str, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
