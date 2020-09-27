@@ -28,11 +28,13 @@ enum Processed {
 
 const GROUP_NAME: &str = "micro-color-chooser";
 
+const ACK_QUEUE_CAPACITY: usize = 25;
+
 pub fn process(components: &mut Components) {
     let repos = Repos::new(components);
     loop {
-        let mut gr_processed: Vec<XReadEntryId> = vec![];
-        let mut ccp_processed: Vec<XReadEntryId> = vec![];
+        let mut gr_processed: Vec<XReadEntryId> = Vec::with_capacity(ACK_QUEUE_CAPACITY);
+        let mut ccp_processed: Vec<XReadEntryId> = Vec::with_capacity(ACK_QUEUE_CAPACITY);
         match components.xread.sorted() {
             Ok(xrr) => {
                 for time_ordered_event in xrr {
