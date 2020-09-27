@@ -17,7 +17,7 @@ pub struct ColorsChosen {
     pub white: ClientId,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, Serialize)]
 pub struct GameReady {
     pub game_id: GameId,
     pub sessions: (SessionId, SessionId),
