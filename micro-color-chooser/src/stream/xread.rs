@@ -1,5 +1,5 @@
 use super::*;
-use log::{error, warn};
+use log::error;
 use redis::streams::{StreamReadOptions, StreamReadReply};
 use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
@@ -89,8 +89,7 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, Str
                             .map(|gr| StreamInput::GR(gr))
                             .ok()
                     } else {
-                        warn!("Unknown key {}", key);
-                        None
+                        return Err(StreamDeserErr::DataDeser);
                     };
                     if let Some(s) = sd {
                         out.insert(eid, s);
