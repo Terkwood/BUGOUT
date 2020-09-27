@@ -41,8 +41,19 @@ impl XRead for Rc<Client> {
                 opts,
             )?;
             match deser(ser) {
-                Ok(unsorted) => todo!(),
-                Err(_) => todo!(),
+                Ok(unsorted) => {
+                    let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
+                    sorted_keys.sort();
+
+                    let mut answer = vec![];
+                    for sk in sorted_keys {
+                        if let Some(data) = unsorted.get(&sk) {
+                            answer.push((sk, data.clone()))
+                        }
+                    }
+                    Ok(answer)
+                }
+                Err(e) => Err(StreamReadErr::Deser(e)),
             }
         } else {
             Err(StreamReadErr::Conn)
