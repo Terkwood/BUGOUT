@@ -4,13 +4,15 @@ use redis::Commands;
 
 /// Associates SessionIds with GameIds and allows retrieval by SessionId
 pub trait GameReadyRepo {
+    /// Get a game ready record for this session, if it exists
+    /// And then update the record's TTL
     fn get(&self, session_id: &SessionId) -> Result<Option<GameReady>, FetchErr>;
+    /// Save a game ready record, associating it with both session IDs
+    /// found in its `sessions` field.  Updates record TTL.
     fn put(&self, game_ready: GameReady) -> Result<(), WriteErr>;
 }
 
 impl GameReadyRepo for Rc<Client> {
-    /// Get a game ready record for this session, if it exists
-    /// And then update the record's TTL
     fn get(&self, session_id: &SessionId) -> Result<Option<GameReady>, FetchErr> {
         if let Ok(mut conn) = self.get_connection() {
             let key = redis_key(session_id);
