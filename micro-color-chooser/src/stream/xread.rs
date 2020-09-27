@@ -1,15 +1,18 @@
 use super::*;
-use log::error;
+use log::{error, warn};
 use redis::streams::{StreamReadOptions, StreamReadReply};
 use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::rc::Rc;
-use uuid::Uuid;
 
+/// Read sorted entries from choose-color-pref and game-ready streams streams and acknowledge them.
 pub trait XRead {
+    /// Read sorted entries from choose-color-pref and game-ready streams
     fn sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr>;
+    /// Ack entries in choose-color-pref
     fn ack_choose_color_pref(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    /// Ack entries in game-ready
     fn ack_game_ready(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
 }
 
@@ -21,7 +24,7 @@ pub enum StreamReadErr {
 }
 #[derive(Debug)]
 pub enum StreamDeserErr {
-    EIDFormat,
+    XIDFormat,
     DataDeser,
 }
 #[derive(Debug)]
@@ -70,7 +73,38 @@ impl XRead for Rc<Client> {
 }
 
 fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, StreamDeserErr> {
-    todo!()
+    let mut out = HashMap::new();
+    for k in srr.keys {
+        let key = k.key;
+        for e in k.ids {
+            if let Ok(eid) = XReadEntryId::from_str(&e.id) {
+                let maybe_data: Option<Vec<u8>> = e.get("data");
+                if let Some(data) = maybe_data {
+                    let sd: Option<StreamInput> = if key == topics::CHOOSE_COLOR_PREF {
+                        bincode::deserialize(&data)
+                            .map(|ccp| StreamInput::CCP(ccp))
+                            .ok()
+                    } else if key == topics::GAME_READY {
+                        bincode::deserialize(&data)
+                            .map(|gr| StreamInput::GR(gr))
+                            .ok()
+                    } else {
+                        warn!("Unknown key {}", key);
+                        None
+                    };
+                    if let Some(s) = sd {
+                        out.insert(eid, s);
+                    } else {
+                        return Err(StreamDeserErr::DataDeser);
+                    }
+                }
+            } else {
+                error!("xid format");
+                return Err(StreamDeserErr::XIDFormat);
+            }
+        }
+    }
+    Ok(out)
 }
 
 fn ack(client: &Client, key: &str, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
