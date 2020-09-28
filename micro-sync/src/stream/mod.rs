@@ -215,9 +215,14 @@ mod test {
     }
 
     #[test]
-    fn test_process() {
+    fn test_req_sync() {
+        todo!()
+    }
+
+    #[test]
+    fn test_provide_history() {
         let (hist_prov_xadd_in, hist_prov_xadd_out): (Sender<HistoryProvided>, _) = unbounded();
-        let (sync_reply_xadd_in, sync_reply_xadd_out): (Sender<SyncReply>, _) = unbounded();
+        let (sync_reply_xadd_in, _): (Sender<SyncReply>, _) = unbounded();
 
         // set up a loop to process game lobby requests
         let fake_history_contents = Arc::new(Mutex::new(None));
