@@ -1,6 +1,6 @@
 # v0.8.10
 
-- Create micro-history-provider (#331, #335, #337)
+- Create micro-sync (history provider) service (#331, #335, #337)
 - Fix memory leak in micro-changelog (#336)
 - Create micro-color-chooser (#334)
 
