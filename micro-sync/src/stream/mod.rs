@@ -45,58 +45,8 @@ fn process_event(event: &StreamInput, components: &Components) {
     match event {
         StreamInput::RS(rs) => process_req_sync(rs, components),
         StreamInput::PH(ph) => process_prov_hist(ph, components),
-        StreamInput::GS(game_id, game_state) => {
-            if let Err(_e) = components
-                .history_repo
-                .put(&game_id, game_state.to_history())
-            {
-                error!("write to history repo")
-            }
-        }
-        StreamInput::MM(_) => {
-            // this needs to get saved to a repo !!!
-
-            // why ? because we will listen for the move made
-            // event specifically tied to a given session_id
-            // and only then write to sync_reply
-
-            // 🤔🤔 think about it
-            // .... and make sure you maintain joinish semantics with
-            // ... the ReqSync branch of this loop 👩‍🚒👩‍🚒👩‍🚒
-            /*
-            val histProvMoveMadeReplies: KStream<ReqId, SystemMoved> =
-            clientAheadByReqId
-                    .join(
-                        moveMadeByReqId,
-                        { l, r -> SystemMoved(l, r) },
-                    )
-            val clientMoveComputed: KStream<SessionId, SyncReplyEv> =
-                histProvMoveMadeReplies.map { reqId, v ->
-                    val allMoves = ArrayList<Move>()
-                    allMoves.addAll(v.hist.histProv.moves)
-                    val theTurn = (
-                            v.hist.histProv.moves.lastOrNull()?.turn ?: 0
-                            ) + 1
-                    allMoves.add(Move(
-                        v.moved.player,
-                        v.moved.coord,
-                        theTurn))
-
-                    KeyValue(
-                        v.hist.reqSync.sessionId,
-                        SyncReplyEv(
-                            sessionId = v.hist.reqSync.sessionId,
-                            gameId = v.hist.reqSync.gameId,
-                            replyTo = reqId,
-                            moves = allMoves,
-                            turn = theTurn + 1,
-                            playerUp = otherPlayer(v.moved.player)
-                        )
-                    )
-                }
-                */
-            todo!("stream match move made");
-        }
+        StreamInput::GS(game_id, game_state) => process_game_state(game_id, game_state, components),
+        StreamInput::MM(mm) => process_move_made(mm, components),
     }
 }
 
@@ -166,6 +116,66 @@ fn process_prov_hist(ph: &ProvideHistory, components: &Components) {
         Ok(None) => warn!("no history for game {:?}", ph.game_id),
         Err(_e) => error!("history lookup error"),
     }
+}
+
+fn process_game_state(game_id: &GameId, game_state: &GameState, components: &Components) {
+    if let Err(_e) = components
+        .history_repo
+        .put(&game_id, game_state.to_history())
+    {
+        error!("write to history repo")
+    }
+}
+
+fn process_move_made(move_made: &MoveMade, components: &Components) {
+    /*if let Err(_e) = components.last_move_made_repo
+        .put(move_made)
+    {
+        error!("write to move made repo")
+    }*/
+
+    // this needs to get saved to a repo !!!
+
+    // why ? because we will listen for the move made
+    // event specifically tied to a given session_id
+    // and only then write to sync_reply
+
+    // 🤔🤔 think about it
+    // .... and make sure you maintain joinish semantics with
+    // ... the ReqSync branch of this loop 👩‍🚒👩‍🚒👩‍🚒
+    /*
+    val histProvMoveMadeReplies: KStream<ReqId, SystemMoved> =
+    clientAheadByReqId
+            .join(
+                moveMadeByReqId,
+                { l, r -> SystemMoved(l, r) },
+            )
+    val clientMoveComputed: KStream<SessionId, SyncReplyEv> =
+        histProvMoveMadeReplies.map { reqId, v ->
+            val allMoves = ArrayList<Move>()
+            allMoves.addAll(v.hist.histProv.moves)
+            val theTurn = (
+                    v.hist.histProv.moves.lastOrNull()?.turn ?: 0
+                    ) + 1
+            allMoves.add(Move(
+                v.moved.player,
+                v.moved.coord,
+                theTurn))
+
+            KeyValue(
+                v.hist.reqSync.sessionId,
+                SyncReplyEv(
+                    sessionId = v.hist.reqSync.sessionId,
+                    gameId = v.hist.reqSync.gameId,
+                    replyTo = reqId,
+                    moves = allMoves,
+                    turn = theTurn + 1,
+                    playerUp = otherPlayer(v.moved.player)
+                )
+            )
+        }
+        */
+    todo!("stream match move made");
 }
 
 #[cfg(test)]
