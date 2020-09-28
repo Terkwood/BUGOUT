@@ -12,6 +12,9 @@ use crate::model::*;
 use log::{error, warn};
 use redis_streams::XReadEntryId;
 
+const GROUP_NAME: &str = "micro-sync";
+const INIT_ACK_CAPACITY: usize = 25;
+
 #[derive(Clone, Debug)]
 pub enum StreamInput {
     PH(ProvideHistory),
@@ -39,9 +42,30 @@ pub fn process(components: &Components) {
 
 fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components) {
     match event {
-        StreamInput::RS(rs) => {
-            todo!(" stream match req sync");
-            todo!("but here is some inspiration");
+        StreamInput::RS(ReqSync {
+            game_id,
+            session_id,
+            req_id,
+            player_up: req_player_up,
+            turn: req_turn,
+            last_move: req_last_move,
+        }) => {
+            match components.history_repo.get(game_id) {
+                Ok(history) => {
+                    let pre_flat = history.unwrap_or_default();
+                    let system_last_move = pre_flat.last();
+                    let system_player_up = system_last_move
+                        .map(
+                            |Move {
+                                 player,
+                                 coord: _,
+                                 turn: _,
+                             }| other_player(*player),
+                        )
+                        .unwrap_or(Player::BLACK);
+                }
+                Err(_) => error!("history lookup for req sync"),
+            }
             /*
             val histJoined: KStream<GameId, HistProvReply> = reqSyncByGameId.join(
             histProvStream,
@@ -101,8 +125,6 @@ struct Unacknowledged {
     move_made: Vec<XReadEntryId>,
 }
 
-const GROUP_NAME: &str = "micro-sync";
-
 impl Unacknowledged {
     pub fn ack_all(&mut self, components: &Components) {
         if !self.req_sync.is_empty() {
@@ -145,7 +167,6 @@ impl Unacknowledged {
     }
 }
 
-const INIT_ACK_CAPACITY: usize = 25;
 impl Default for Unacknowledged {
     fn default() -> Self {
         Self {
@@ -154,6 +175,13 @@ impl Default for Unacknowledged {
             game_states: Vec::with_capacity(INIT_ACK_CAPACITY),
             move_made: Vec::with_capacity(INIT_ACK_CAPACITY),
         }
+    }
+}
+
+fn other_player(player: Player) -> Player {
+    match player {
+        Player::BLACK => Player::WHITE,
+        _ => Player::BLACK,
     }
 }
 
