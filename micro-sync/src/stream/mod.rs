@@ -118,7 +118,7 @@ mod test {
     use std::thread;
     use std::time::Duration;
 
-    static MAX_READ_EID_MILLIS: AtomicU64 = AtomicU64::new(0);
+    static MAX_READ_XID_MILLIS: AtomicU64 = AtomicU64::new(0);
     static LAST_GS_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
     static LAST_RS_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
     static LAST_PH_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
@@ -147,19 +147,14 @@ mod test {
         fn xread_sorted(
             &self,
         ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, StreamReadErr> {
-            let max_eid_millis = MAX_READ_EID_MILLIS.load(Ordering::Relaxed);
+            let max_xid_ms = MAX_READ_XID_MILLIS.load(Ordering::Relaxed);
 
             let data: Vec<_> = self
                 .sorted_data
                 .lock()
                 .expect("lock")
                 .iter()
-                .filter(|(eid, stream_data)| match stream_data {
-                    StreamInput::PH(_) => max_eid_millis < eid.millis_time,
-                    StreamInput::GS(_, _) => max_eid_millis < eid.millis_time,
-                    StreamInput::RS(_) => max_eid_millis < eid.millis_time,
-                    StreamInput::MM(_) => max_eid_millis < eid.millis_time,
-                })
+                .filter(|(xid, _)| max_xid_ms < xid.millis_time)
                 .cloned()
                 .collect();
 
@@ -169,7 +164,7 @@ mod test {
             } else {
                 // this hack is standing in for "xreadgroup >" semantics
                 let new_max_eid_millis = data.iter().map(|(eid, _)| eid).max().unwrap();
-                MAX_READ_EID_MILLIS.swap(new_max_eid_millis.millis_time, Ordering::Relaxed);
+                MAX_READ_XID_MILLIS.swap(new_max_eid_millis.millis_time, Ordering::Relaxed);
             }
             Ok(data)
         }
