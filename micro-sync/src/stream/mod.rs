@@ -56,7 +56,17 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
                     if is_client_ahead_by_one_turn(rs, system_turn, system_player_up) {
                         todo!()
                     } else {
-                        todo!()
+                        let sync_reply = SyncReply {
+                            moves: history,
+                            game_id: rs.game_id.clone(),
+                            reply_to: rs.req_id.clone(),
+                            player_up: system_player_up,
+                            turn: system_turn,
+                            session_id: rs.session_id.clone(),
+                        };
+                        if let Err(e) = components.xadd.add_sync_reply(sync_reply) {
+                            error! {"xadd sync reply {:?}",e}
+                        }
                     }
                 }
                 Err(_) => error!("history lookup for req sync"),
