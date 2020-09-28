@@ -9,6 +9,10 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use uuid::Uuid;
 
+const INIT_ACK_CAPACITY: usize = 25;
+const BLOCK_MS: usize = 5000;
+const CONSUMER_NAME: &str = "singleton";
+
 pub trait XRead {
     fn read_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr>;
     fn ack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
@@ -17,22 +21,6 @@ pub trait XRead {
     fn ack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
 }
 
-#[derive(Debug)]
-pub enum StreamReadErr {
-    Deser(StreamDeserErr),
-    XRead(redis::RedisError),
-    Conn,
-}
-#[derive(Debug)]
-pub enum StreamDeserErr {
-    EIDFormat,
-    DataDeser,
-}
-#[derive(Debug)]
-pub struct StreamAckErr;
-
-const BLOCK_MS: usize = 5000;
-const CONSUMER_NAME: &str = "singleton";
 impl XRead for Rc<Client> {
     fn read_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr> {
         if let Ok(mut conn) = self.get_connection() {
@@ -76,6 +64,79 @@ impl XRead for Rc<Client> {
     }
     fn ack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         ack(&self, topics::MOVE_MADE, ids)
+    }
+}
+#[derive(Debug)]
+pub enum StreamReadErr {
+    Deser(StreamDeserErr),
+    XRead(redis::RedisError),
+    Conn,
+}
+#[derive(Debug)]
+pub enum StreamDeserErr {
+    EIDFormat,
+    DataDeser,
+}
+#[derive(Debug)]
+pub struct StreamAckErr;
+
+pub struct Unacknowledged {
+    req_sync: Vec<XReadEntryId>,
+    prov_hist: Vec<XReadEntryId>,
+    game_states: Vec<XReadEntryId>,
+    move_made: Vec<XReadEntryId>,
+}
+
+impl Unacknowledged {
+    pub fn ack_all(&mut self, components: &crate::Components) {
+        if !self.req_sync.is_empty() {
+            if let Err(_e) = components.xread.ack_req_sync(&self.req_sync) {
+                error!("ack for req sync failed")
+            } else {
+                self.req_sync.clear();
+            }
+        }
+
+        if !self.prov_hist.is_empty() {
+            if let Err(_e) = components.xread.ack_prov_hist(&self.prov_hist) {
+                error!("ack for provide history failed")
+            } else {
+                self.prov_hist.clear();
+            }
+        }
+        if !self.game_states.is_empty() {
+            if let Err(_e) = components.xread.ack_game_states(&self.game_states) {
+                error!("ack for game states failed")
+            } else {
+                self.game_states.clear();
+            }
+        }
+        if !self.move_made.is_empty() {
+            if let Err(_e) = components.xread.ack_move_made(&self.move_made) {
+                error!("ack for move made failed")
+            } else {
+                self.move_made.clear();
+            }
+        }
+    }
+    pub fn push(&mut self, xid: XReadEntryId, event: StreamInput) {
+        match event {
+            StreamInput::GS(_, _) => self.game_states.push(xid),
+            StreamInput::MM(_) => self.move_made.push(xid),
+            StreamInput::PH(_) => self.prov_hist.push(xid),
+            StreamInput::RS(_) => self.req_sync.push(xid),
+        }
+    }
+}
+
+impl Default for Unacknowledged {
+    fn default() -> Self {
+        Self {
+            prov_hist: Vec::with_capacity(INIT_ACK_CAPACITY),
+            req_sync: Vec::with_capacity(INIT_ACK_CAPACITY),
+            game_states: Vec::with_capacity(INIT_ACK_CAPACITY),
+            move_made: Vec::with_capacity(INIT_ACK_CAPACITY),
+        }
     }
 }
 

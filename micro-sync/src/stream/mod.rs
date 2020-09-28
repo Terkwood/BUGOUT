@@ -13,7 +13,6 @@ use log::{error, warn};
 use redis_streams::XReadEntryId;
 
 const GROUP_NAME: &str = "micro-sync";
-const INIT_ACK_CAPACITY: usize = 25;
 
 #[derive(Clone, Debug)]
 pub enum StreamInput {
@@ -30,7 +29,7 @@ pub fn process(components: &Components) {
             Ok(xrr) => {
                 for (xid, event) in xrr {
                     process_event(xid, &event, components);
-                    unacked.queue(xid, event);
+                    unacked.push(xid, event);
                 }
             }
             Err(_) => error!("xread"),
@@ -130,66 +129,6 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
         }
         StreamInput::MM(_) => {
             todo!("stream match move made");
-        }
-    }
-}
-
-struct Unacknowledged {
-    req_sync: Vec<XReadEntryId>,
-    prov_hist: Vec<XReadEntryId>,
-    game_states: Vec<XReadEntryId>,
-    move_made: Vec<XReadEntryId>,
-}
-
-impl Unacknowledged {
-    pub fn ack_all(&mut self, components: &Components) {
-        if !self.req_sync.is_empty() {
-            if let Err(_e) = components.xread.ack_req_sync(&self.req_sync) {
-                error!("ack for req sync failed")
-            } else {
-                self.req_sync.clear();
-            }
-        }
-
-        if !self.prov_hist.is_empty() {
-            if let Err(_e) = components.xread.ack_prov_hist(&self.prov_hist) {
-                error!("ack for provide history failed")
-            } else {
-                self.prov_hist.clear();
-            }
-        }
-        if !self.game_states.is_empty() {
-            if let Err(_e) = components.xread.ack_game_states(&self.game_states) {
-                error!("ack for game states failed")
-            } else {
-                self.game_states.clear();
-            }
-        }
-        if !self.move_made.is_empty() {
-            if let Err(_e) = components.xread.ack_move_made(&self.move_made) {
-                error!("ack for move made failed")
-            } else {
-                self.move_made.clear();
-            }
-        }
-    }
-    pub fn queue(&mut self, xid: XReadEntryId, event: StreamInput) {
-        match event {
-            StreamInput::GS(_, _) => self.game_states.push(xid),
-            StreamInput::MM(_) => self.move_made.push(xid),
-            StreamInput::PH(_) => self.prov_hist.push(xid),
-            StreamInput::RS(_) => self.req_sync.push(xid),
-        }
-    }
-}
-
-impl Default for Unacknowledged {
-    fn default() -> Self {
-        Self {
-            prov_hist: Vec::with_capacity(INIT_ACK_CAPACITY),
-            req_sync: Vec::with_capacity(INIT_ACK_CAPACITY),
-            game_states: Vec::with_capacity(INIT_ACK_CAPACITY),
-            move_made: Vec::with_capacity(INIT_ACK_CAPACITY),
         }
     }
 }
