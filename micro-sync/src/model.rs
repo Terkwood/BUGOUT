@@ -40,6 +40,16 @@ pub struct GameState {
     pub player_up: Player,
 }
 
+#[derive(Clone, Deserialize, Debug)]
+pub struct MoveMade {
+    pub game_id: GameId,
+    pub reply_to: ReqId,
+    pub event_id: EventId,
+    pub player: Player,
+    pub coord: Option<Coord>,
+    pub captured: Vec<Coord>,
+}
+
 impl GameState {
     pub fn to_history(&self) -> Vec<Move> {
         self.moves
