@@ -366,6 +366,8 @@ mod test {
 
         thread::sleep(wait);
 
+        // request sync event should be acknowledged
+        // during stream::process
         let rs_ack = fakes.acks.last_rs_ack_ms.load(Ordering::Relaxed);
         assert_eq!(rs_ack, xid_rs.millis_time);
 
@@ -378,7 +380,8 @@ mod test {
             turn,
         };
 
-        todo!("draft test")
+        let actual = fakes.sync_reply_xadd_out.recv().expect("recv");
+        assert_eq!(actual, expected)
     }
 
     #[test]

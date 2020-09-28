@@ -11,7 +11,7 @@ pub struct ReqSync {
     pub last_move: Option<Move>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, PartialEq)]
 pub struct SyncReply {
     pub session_id: SessionId,
     pub reply_to: ReqId,
