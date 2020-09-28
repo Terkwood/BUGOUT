@@ -62,23 +62,44 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
                 Err(_) => error!("history lookup for req sync"),
             }
             /*
-            val histJoined: KStream<GameId, HistProvReply> = reqSyncByGameId.join(
-            histProvStream,
-            { left: ReqSyncCmd,
-              right: HistoryProvidedEv ->
-                val maybeLastMove = right.moves.lastOrNull()
-                val systemPlayerUp: Player =
-                        if (maybeLastMove == null) Player.BLACK else
-                            otherPlayer(maybeLastMove.player)
-                val systemTurn: Int =
-                        (maybeLastMove?.turn ?: 0) + 1
 
-                HistProvReply(left,
-                        right,
-                        systemTurn, systemPlayerUp
-                )
-            },
-                        */
+                    // THIS PORTION WILL BE INSPECTED DOWN STREAM
+                    HistProvReply(left,
+                            right,
+                            systemTurn, systemPlayerUp
+                    )
+
+                    val branches = histReplyStream.kbranch(
+                // client is ahead of server by a single turn
+                // and their move needs to be processed
+                { _: SessionId, hpr: HistProvReply ->
+                    isClientAheadByOneTurn(hpr)
+                },
+                // in every other case, we should send the server's view:
+                // - no op: client is caught up
+                // - client is behind by one move
+                // - client has a state which we cannot reconcile
+                //            ...(but maybe they can fix themselves)
+                { _: SessionId, hpr: HistProvReply ->
+                    !isClientAheadByOneTurn(hpr) }
+            )
+
+            val clientAheadByOneTurnBranch = branches[0]
+            clientAheadByOneTurnBranch.map { _, v ->
+                    val missedMove = v.reqSync.lastMove!! // checked null above
+                    KeyValue(v.reqSync.gameId,
+                        MakeMoveCmd(gameId = v
+                            .reqSync.gameId, reqId = v.reqSync.reqId,
+                            player = missedMove.player,
+                            coord = missedMove.coord)) }
+                .mapValues { v ->
+                    jsonMapper.writeValueAsString(v)
+                }
+                .to(Topics.MAKE_MOVE_CMD,
+                    Produced.with(Serdes.UUID(), Serdes.String()))
+
+                },
+                            */
         }
         StreamInput::PH(ProvideHistory { game_id, req_id }) => {
             let maybe_hist_r = components.history_repo.get(&game_id);
