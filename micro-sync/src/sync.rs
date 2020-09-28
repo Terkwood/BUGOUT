@@ -29,7 +29,7 @@ mod tests {
         let system_player_up = Player::BLACK;
         let req = ReqSync {
             player_up: Player::WHITE,
-            turn: system_turn - 2,
+            turn: system_turn + 1,
             last_move: Some(Move {
                 player: Player::BLACK,
                 coord: None,
