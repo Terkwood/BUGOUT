@@ -296,7 +296,7 @@ mod test {
     /// will simply receive the server view.
     #[test]
     fn test_req_sync_no_op() {
-        let fakes = spawn_process_thread();
+        let fakes: TestFakes = spawn_process_thread();
 
         let turn = 3;
         let player_up = Player::BLACK;
@@ -312,6 +312,7 @@ mod test {
                 turn: 2,
             },
         ];
+
         let game_id = GameId::random();
         let session_id = SessionId::random();
         let req_id = ReqId::random();
@@ -325,6 +326,37 @@ mod test {
             player_up,
             turn,
         };
+
+        // force fake history repo to respond as we expect
+        *fakes.history_contents.lock().expect("lock") = Some(moves.clone());
+
+        let wait = Duration::from_millis(166);
+        let mut fake_time_ms = 100;
+        let incr_ms = 100;
+
+        let xid_rs = quick_eid(fake_time_ms);
+        // emit a request for sync
+        fakes
+            .sorted_stream
+            .lock()
+            .expect("lock")
+            .push((xid_rs, StreamInput::RS(req_sync)));
+        fake_time_ms += incr_ms;
+
+        thread::sleep(wait);
+
+        todo!("give it time to process");
+        todo!("check fake acks");
+
+        let expected = SyncReply {
+            session_id,
+            reply_to: req_id,
+            moves,
+            game_id,
+            player_up,
+            turn,
+        };
+
         todo!("draft test")
     }
 
@@ -352,7 +384,7 @@ mod test {
         // emit some events in a time-ordered fashion
         // (fake xread impl expects time ordering 😁)
 
-        let timeout = Duration::from_millis(166);
+        let wait = Duration::from_millis(166);
         let mut fake_time_ms = 100;
         let incr_ms = 100;
 
@@ -368,10 +400,10 @@ mod test {
             },
         ];
         let fake_player_up = Player::BLACK;
-        let eid_gs = quick_eid(fake_time_ms);
+        let xid_gs = quick_eid(fake_time_ms);
         // emit a game state
         fakes.sorted_stream.lock().expect("lock").push((
-            eid_gs,
+            xid_gs,
             StreamInput::GS(
                 fake_game_id.clone(),
                 GameState {
@@ -382,7 +414,7 @@ mod test {
         ));
         fake_time_ms += incr_ms;
 
-        thread::sleep(timeout);
+        thread::sleep(wait);
 
         // history repo should now contain the moves from that game
         let actual_moves = fakes
@@ -407,13 +439,13 @@ mod test {
         assert_eq!(actual_moves, expected_moves);
         // check ack for game_states stream
         let gs_ack = LAST_GS_ACK_MILLIS.load(Ordering::Relaxed);
-        assert_eq!(gs_ack, eid_gs.millis_time);
+        assert_eq!(gs_ack, xid_gs.millis_time);
 
         // request history
         let fake_req_id = ReqId(uuid::Uuid::default());
-        let eid_ph = quick_eid(fake_time_ms);
+        let xid_ph = quick_eid(fake_time_ms);
         fakes.sorted_stream.lock().expect("lock").push((
-            eid_ph,
+            xid_ph,
             StreamInput::PH(ProvideHistory {
                 game_id: fake_game_id.clone(),
                 req_id: fake_req_id.clone(),
@@ -429,11 +461,11 @@ mod test {
                     assert_eq!(reply_to, fake_req_id);
                     // check ack for provide_history stream
                     let ph_ack = LAST_PH_ACK_MILLIS.load(Ordering::Relaxed);
-                    assert_eq!(ph_ack, eid_ph.millis_time)
+                    assert_eq!(ph_ack, xid_ph.millis_time)
                 },
                 _ => panic!("wrong output")
             },
-            default(timeout) => panic!("WAIT timeout")
+            default(wait) => panic!("WAIT timeout")
         }
     }
 }
