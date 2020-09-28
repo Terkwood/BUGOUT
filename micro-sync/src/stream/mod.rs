@@ -23,7 +23,7 @@ pub enum StreamInput {
 pub fn process(components: &Components) {
     let mut unacked = Unacknowledged::default();
     loop {
-        match components.xread.xread_sorted() {
+        match components.xread.read_sorted() {
             Ok(xrr) => {
                 for time_ordered_event in xrr {
                     match time_ordered_event {
@@ -42,7 +42,7 @@ pub fn process(components: &Components) {
                                         game_id,
                                         reply_to: req_id,
                                     };
-                                    if let Err(e) = components.xadd.xadd(hp) {
+                                    if let Err(e) = components.xadd.add_history_provided(hp) {
                                         error!("error in xadd {:?}", e)
                                     }
                                 }
@@ -144,7 +144,7 @@ mod test {
         sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
     }
     impl XRead for FakeXRead {
-        fn xread_sorted(
+        fn read_sorted(
             &self,
         ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, StreamReadErr> {
             let max_xid_ms = MAX_READ_XID_MILLIS.load(Ordering::Relaxed);
@@ -169,19 +169,19 @@ mod test {
             Ok(data)
         }
 
-        fn xack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+        fn ack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
             Ok(self.update_max_id(&LAST_RS_ACK_MILLIS, ids))
         }
 
-        fn xack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+        fn ack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
             Ok(self.update_max_id(&LAST_PH_ACK_MILLIS, ids))
         }
 
-        fn xack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+        fn ack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
             Ok(self.update_max_id(&LAST_GS_ACK_MILLIS, ids))
         }
 
-        fn xack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+        fn ack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
             Ok(self.update_max_id(&LAST_MM_ACK_MILLIS, ids))
         }
     }
@@ -193,10 +193,17 @@ mod test {
         }
     }
 
-    struct FakeXAdd(Sender<HistoryProvided>);
+    struct FakeXAdd {
+        hist_prov_in: Sender<HistoryProvided>,
+        sync_reply_in: Sender<SyncReply>,
+    }
     impl XAdd for FakeXAdd {
-        fn xadd(&self, data: HistoryProvided) -> Result<(), XAddErr> {
-            Ok(self.0.send(data).expect("send"))
+        fn add_history_provided(&self, data: HistoryProvided) -> Result<(), XAddErr> {
+            Ok(self.hist_prov_in.send(data).expect("send"))
+        }
+
+        fn add_sync_reply(&self, data: SyncReply) -> Result<(), XAddErr> {
+            Ok(self.sync_reply_in.send(data).expect("send"))
         }
     }
 
@@ -209,7 +216,8 @@ mod test {
 
     #[test]
     fn test_process() {
-        let (xadd_call_in, xadd_call_out): (Sender<HistoryProvided>, _) = unbounded();
+        let (hist_prov_xadd_in, hist_prov_xadd_out): (Sender<HistoryProvided>, _) = unbounded();
+        let (sync_reply_xadd_in, sync_reply_xadd_out): (Sender<SyncReply>, _) = unbounded();
 
         // set up a loop to process game lobby requests
         let fake_history_contents = Arc::new(Mutex::new(None));
@@ -225,7 +233,10 @@ mod test {
                 xread: Box::new(FakeXRead {
                     sorted_data: sfs.clone(),
                 }),
-                xadd: Box::new(FakeXAdd(xadd_call_in)),
+                xadd: Box::new(FakeXAdd {
+                    hist_prov_in: hist_prov_xadd_in,
+                    sync_reply_in: sync_reply_xadd_in,
+                }),
             };
             process(&components);
         });
@@ -302,7 +313,7 @@ mod test {
 
         // There should be an XADD triggered on history-provided stream
         select! {
-            recv(xadd_call_out) -> msg => match msg {
+            recv(hist_prov_xadd_out) -> msg => match msg {
                 Ok(HistoryProvided { game_id, reply_to, moves, event_id: _, epoch_millis: _, }) => {
                     assert_eq!(game_id, fake_game_id);
                     assert_eq!(moves, expected_moves);
@@ -321,7 +332,7 @@ mod test {
 impl Unacknowledged {
     pub fn ack_all(&mut self, components: &Components) {
         if !self.req_sync.is_empty() {
-            if let Err(_e) = components.xread.xack_req_sync(&self.req_sync) {
+            if let Err(_e) = components.xread.ack_req_sync(&self.req_sync) {
                 error!("ack for req sync failed")
             } else {
                 self.req_sync.clear();
@@ -329,21 +340,21 @@ impl Unacknowledged {
         }
 
         if !self.prov_hist.is_empty() {
-            if let Err(_e) = components.xread.xack_prov_hist(&self.prov_hist) {
+            if let Err(_e) = components.xread.ack_prov_hist(&self.prov_hist) {
                 error!("ack for provide history failed")
             } else {
                 self.prov_hist.clear();
             }
         }
         if !self.game_states.is_empty() {
-            if let Err(_e) = components.xread.xack_game_states(&self.game_states) {
+            if let Err(_e) = components.xread.ack_game_states(&self.game_states) {
                 error!("ack for game states failed")
             } else {
                 self.game_states.clear();
             }
         }
         if !self.move_made.is_empty() {
-            if let Err(_e) = components.xread.xack_move_made(&self.move_made) {
+            if let Err(_e) = components.xread.ack_move_made(&self.move_made) {
                 error!("ack for move made failed")
             } else {
                 self.move_made.clear();

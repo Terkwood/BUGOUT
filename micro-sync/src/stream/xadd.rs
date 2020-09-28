@@ -1,11 +1,12 @@
 use super::topics;
-use crate::api::HistoryProvided;
+use crate::api::{HistoryProvided, SyncReply};
 use redis::{streams::StreamMaxlen, Client, Commands};
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
 pub trait XAdd {
-    fn xadd(&self, data: HistoryProvided) -> Result<(), XAddErr>;
+    fn add_history_provided(&self, data: HistoryProvided) -> Result<(), XAddErr>;
+    fn add_sync_reply(&self, data: SyncReply) -> Result<(), XAddErr>;
 }
 
 #[derive(Debug)]
@@ -20,7 +21,7 @@ const MAP_KEY: &str = "data";
 const MAX_LEN: usize = 1000;
 
 impl XAdd for Rc<Client> {
-    fn xadd(&self, data: HistoryProvided) -> Result<(), XAddErr> {
+    fn add_history_provided(&self, data: HistoryProvided) -> Result<(), XAddErr> {
         let ser_bytes_result = bincode::serialize(&data);
 
         if let Ok(bytes) = ser_bytes_result {
@@ -40,5 +41,9 @@ impl XAdd for Rc<Client> {
         } else {
             Err(XAddErr::Ser)
         }
+    }
+
+    fn add_sync_reply(&self, data: SyncReply) -> Result<(), XAddErr> {
+        todo!()
     }
 }

@@ -10,11 +10,11 @@ use std::rc::Rc;
 use uuid::Uuid;
 
 pub trait XRead {
-    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr>;
-    fn xack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
-    fn xack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
-    fn xack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
-    fn xack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    fn read_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr>;
+    fn ack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    fn ack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    fn ack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    fn ack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
 }
 
 #[derive(Debug)]
@@ -34,7 +34,7 @@ pub struct StreamAckErr;
 const BLOCK_MS: usize = 5000;
 const CONSUMER_NAME: &str = "singleton";
 impl XRead for Rc<Client> {
-    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr> {
+    fn read_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr> {
         if let Ok(mut conn) = self.get_connection() {
             let opts = StreamReadOptions::default()
                 .block(BLOCK_MS)
@@ -65,16 +65,16 @@ impl XRead for Rc<Client> {
         }
     }
 
-    fn xack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+    fn ack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         ack(&self, topics::REQ_SYNC, ids)
     }
-    fn xack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+    fn ack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         ack(&self, topics::PROVIDE_HISTORY, ids)
     }
-    fn xack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+    fn ack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         ack(&self, topics::GAME_STATES_CHANGELOG, ids)
     }
-    fn xack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+    fn ack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         ack(&self, topics::MOVE_MADE, ids)
     }
 }
