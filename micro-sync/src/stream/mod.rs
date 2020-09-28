@@ -459,10 +459,83 @@ mod test {
         let actual = fakes.sync_reply_xadd_out.recv().expect("recv");
         assert_eq!(actual, expected)
     }
+
+    /// Client sends a turn / lastMove combination that
+    /// seems completely bogus.  Server responds with the
+    /// correct view of the game (same as no-op, or client
+    /// being behind).  If  the client is able to fix their
+    /// local state, that's great.  If not, sync has still
+    /// done its job.
     #[test]
     fn test_req_sync_bogus_client_state() {
         let fakes = spawn_process_thread();
-        todo!("draft test")
+
+        let turn = 3;
+        let player_up = Player::BLACK;
+        let moves = vec![
+            Move {
+                player: Player::BLACK,
+                coord: Some(Coord { x: 4, y: 4 }),
+                turn: 1,
+            },
+            Move {
+                player: Player::WHITE,
+                coord: Some(Coord { x: 10, y: 10 }),
+                turn: 2,
+            },
+        ];
+
+        let game_id = GameId::random();
+        let session_id = SessionId::random();
+        let req_id = ReqId::random();
+
+        let bogus_client_turn = 7;
+        let bogus_client_move = Move {
+            player: Player::BLACK,
+            coord: Some(Coord { x: 13, y: 13 }),
+            turn: bogus_client_turn,
+        };
+
+        let req_sync = ReqSync {
+            session_id: session_id.clone(),
+            req_id: req_id.clone(),
+            game_id: game_id.clone(),
+            player_up: Player::BLACK,
+            turn: bogus_client_turn,
+            last_move: Some(bogus_client_move),
+        };
+
+        // make sure fake history repo is configured
+        *fakes.history_contents.lock().expect("lock") = Some(moves.clone());
+
+        let wait = Duration::from_millis(166);
+        let fake_time_ms = 100;
+
+        let xid_rs = quick_eid(fake_time_ms);
+        // emit a request for sync
+        fakes
+            .sorted_stream
+            .lock()
+            .expect("lock")
+            .push((xid_rs, StreamInput::RS(req_sync)));
+
+        thread::sleep(wait);
+
+        // request sync event should be acknowledged
+        // during stream::process
+        let rs_ack = fakes.acks.last_rs_ack_ms.load(Ordering::Relaxed);
+        assert_eq!(rs_ack, xid_rs.millis_time);
+
+        let expected = SyncReply {
+            session_id,
+            reply_to: req_id,
+            moves,
+            game_id,
+            player_up,
+            turn,
+        };
+        let actual = fakes.sync_reply_xadd_out.recv().expect("recv");
+        assert_eq!(actual, expected)
     }
     #[test]
     fn test_req_sync_server_catch_up() {
