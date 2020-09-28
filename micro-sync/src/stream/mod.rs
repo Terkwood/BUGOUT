@@ -63,6 +63,8 @@ pub fn process(components: &Components) {
             }
             Err(_) => error!("xread"),
         }
+
+        unacked.ack_all(&components)
     }
 }
 
@@ -308,26 +310,29 @@ mod test {
 }
 
 impl Unacknowledged {
-    pub fn ack_all(&self, xread: &XRead) {
-        if !self.game_states.is_empty() {
-            if let Err(_e) = xread.xack_game_states(&self.game_states) {
-                error!("ack for game states failed")
+    pub fn ack_all(&mut self, components: &Components) {
+        if !self.req_sync.is_empty() {
+            if let Err(_e) = components.xread.xack_req_sync(&self.req_sync) {
+                error!("ack for req sync failed")
+            } else {
+                self.req_sync.clear();
             }
         }
-        if !self.prov_hist.is_empty() {
-            if let Err(_e) = xread.xack_prov_hist(&self.prov_hist) {
-                error!("ack for provide history failed")
-            }
-        }
-        todo!("the eother");
-        self.clear_all()
-    }
 
-    fn clear_all(&mut self) {
-        self.game_states.clear();
-        self.req_sync.clear();
-        self.prov_hist.clear();
-        todo!("te otherr")
+        if !self.prov_hist.is_empty() {
+            if let Err(_e) = components.xread.xack_prov_hist(&self.prov_hist) {
+                error!("ack for provide history failed")
+            } else {
+                self.prov_hist.clear();
+            }
+        }
+        if !self.game_states.is_empty() {
+            if let Err(_e) = components.xread.xack_game_states(&self.game_states) {
+                error!("ack for game states failed")
+            } else {
+                self.game_states.clear();
+            }
+        }
     }
 }
 
