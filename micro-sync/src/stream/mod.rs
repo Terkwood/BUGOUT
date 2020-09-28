@@ -297,6 +297,34 @@ mod test {
     #[test]
     fn test_req_sync_no_op() {
         let fakes = spawn_process_thread();
+
+        let turn = 3;
+        let player_up = Player::BLACK;
+        let moves = vec![
+            Move {
+                player: Player::BLACK,
+                coord: Some(Coord { x: 4, y: 4 }),
+                turn: 1,
+            },
+            Move {
+                player: Player::WHITE,
+                coord: Some(Coord { x: 10, y: 10 }),
+                turn: 2,
+            },
+        ];
+        let game_id = GameId::random();
+        let session_id = SessionId::random();
+        let req_id = ReqId::random();
+
+        let last_move = moves.last().cloned();
+        let req_sync = ReqSync {
+            session_id,
+            req_id,
+            game_id,
+            last_move,
+            player_up,
+            turn,
+        };
         todo!("draft test")
     }
 
