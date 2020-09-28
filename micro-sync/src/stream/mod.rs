@@ -54,7 +54,11 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
                     let system_turn = system_last_move.map(|m| m.turn).unwrap_or(0) + 1;
 
                     if is_client_ahead_by_one_turn(rs, system_turn, system_player_up) {
-                        todo!()
+                        todo!();
+
+                        if let Err(e) = components.xadd.add_make_move(todo!()) {
+                            error!("xadd make move {:?}", e)
+                        }
                     } else {
                         let sync_reply = SyncReply {
                             moves: history,
@@ -65,7 +69,7 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
                             session_id: rs.session_id.clone(),
                         };
                         if let Err(e) = components.xadd.add_sync_reply(sync_reply) {
-                            error! {"xadd sync reply {:?}",e}
+                            error!("xadd sync reply {:?}", e)
                         }
                     }
                 }
