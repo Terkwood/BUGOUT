@@ -45,4 +45,28 @@ mod tests {
             system_player_up
         ))
     }
+
+    #[test]
+    fn expected_client_equal() {
+        let game_id = GameId::random();
+        let session_id = SessionId::random();
+        let req_id = ReqId::random();
+
+        let system_turn = 2;
+        let system_player_up = Player::WHITE;
+        let req = ReqSync {
+            player_up: Player::WHITE,
+            turn: system_turn,
+            last_move: Some(Move {
+                player: Player::BLACK,
+                coord: None,
+                turn: 1,
+            }),
+            game_id: game_id.clone(),
+            session_id: session_id.clone(),
+            req_id: req_id.clone(),
+        };
+        let no = !is_client_ahead_by_one_turn(&req, system_turn, system_player_up);
+        assert!(no)
+    }
 }
