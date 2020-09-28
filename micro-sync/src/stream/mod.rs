@@ -216,7 +216,15 @@ mod test {
 
     #[test]
     fn test_req_sync() {
-        todo!()
+        let (hist_prov_xadd_in, _): (Sender<HistoryProvided>, _) = unbounded();
+        let (sync_reply_xadd_in, sync_reply_xadd_out): (Sender<SyncReply>, _) = unbounded();
+
+        todo!("let fake_something_contents: Arc<Mutex<...>> = Arc::new(todo!());");
+
+        let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
+            Arc::new(Mutex::new(vec![]));
+
+        todo!("draft test")
     }
 
     #[test]
