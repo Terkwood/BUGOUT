@@ -27,8 +27,11 @@ pub fn process(components: &Components) {
             Ok(xrr) => {
                 for time_ordered_event in xrr {
                     match time_ordered_event {
-                        (entry_id, StreamInput::RS(rs)) => todo!(),
-                        (entry_id, StreamInput::PH(ProvideHistory { game_id, req_id })) => {
+                        (xid, StreamInput::RS(rs)) => {
+                            todo!(" stream match req sync");
+                            unacked.req_sync.push(xid)
+                        }
+                        (xid, StreamInput::PH(ProvideHistory { game_id, req_id })) => {
                             let maybe_hist_r = components.history_repo.get(&game_id);
                             match maybe_hist_r {
                                 Ok(Some(moves)) => {
@@ -47,9 +50,9 @@ pub fn process(components: &Components) {
                                 Err(_e) => error!("history lookup error"),
                             }
 
-                            unacked.prov_hist.push(entry_id);
+                            unacked.prov_hist.push(xid);
                         }
-                        (entry_id, StreamInput::GS(game_id, game_state)) => {
+                        (xid, StreamInput::GS(game_id, game_state)) => {
                             if let Err(_e) = components
                                 .history_repo
                                 .put(&game_id, game_state.to_history())
@@ -57,11 +60,11 @@ pub fn process(components: &Components) {
                                 error!("write to history repo")
                             }
 
-                            unacked.game_states.push(entry_id)
+                            unacked.game_states.push(xid)
                         }
-                        (entry_id, StreamInput::MM(_)) => {
-                            todo!();
-                            unacked.move_made.push(entry_id)
+                        (xid, StreamInput::MM(_)) => {
+                            todo!("stream match move made");
+                            unacked.move_made.push(xid)
                         }
                     }
                 }
@@ -154,8 +157,8 @@ mod test {
                 .filter(|(eid, stream_data)| match stream_data {
                     StreamInput::PH(_) => max_eid_millis < eid.millis_time,
                     StreamInput::GS(_, _) => max_eid_millis < eid.millis_time,
-                    StreamInput::RS(_) => todo!(),
-                    StreamInput::MM(_) => todo!(),
+                    StreamInput::RS(_) => max_eid_millis < eid.millis_time,
+                    StreamInput::MM(_) => max_eid_millis < eid.millis_time,
                 })
                 .cloned()
                 .collect();
