@@ -17,6 +17,7 @@ pub enum StreamInput {
     PH(ProvideHistory),
     GS(GameId, GameState),
     RS(ReqSync),
+    MM(MoveMade),
 }
 
 pub fn process(components: &Components) {
@@ -26,16 +27,7 @@ pub fn process(components: &Components) {
             Ok(xrr) => {
                 for time_ordered_event in xrr {
                     match time_ordered_event {
-                        (entry_id, StreamInput::GS(game_id, game_state)) => {
-                            if let Err(_e) = components
-                                .history_repo
-                                .put(&game_id, game_state.to_history())
-                            {
-                                error!("write to history repo")
-                            }
-
-                            unacked.game_states.push(entry_id)
-                        }
+                        (entry_id, StreamInput::RS(rs)) => todo!(),
                         (entry_id, StreamInput::PH(ProvideHistory { game_id, req_id })) => {
                             let maybe_hist_r = components.history_repo.get(&game_id);
                             match maybe_hist_r {
@@ -57,7 +49,20 @@ pub fn process(components: &Components) {
 
                             unacked.prov_hist.push(entry_id);
                         }
-                        (entry_id, StreamInput::RS(rs)) => todo!(),
+                        (entry_id, StreamInput::GS(game_id, game_state)) => {
+                            if let Err(_e) = components
+                                .history_repo
+                                .put(&game_id, game_state.to_history())
+                            {
+                                error!("write to history repo")
+                            }
+
+                            unacked.game_states.push(entry_id)
+                        }
+                        (entry_id, StreamInput::MM(_)) => {
+                            todo!();
+                            unacked.move_made.push(entry_id)
+                        }
                     }
                 }
             }
@@ -72,6 +77,7 @@ struct Unacknowledged {
     req_sync: Vec<XReadEntryId>,
     prov_hist: Vec<XReadEntryId>,
     game_states: Vec<XReadEntryId>,
+    move_made: Vec<XReadEntryId>,
 }
 
 const GROUP_NAME: &str = "micro-sync";
@@ -111,8 +117,9 @@ mod test {
 
     static MAX_READ_EID_MILLIS: AtomicU64 = AtomicU64::new(0);
     static LAST_GS_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static LAST_PH_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
     static LAST_RS_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
+    static LAST_PH_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
+    static LAST_MM_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
 
     struct FakeHistoryRepo {
         pub contents: Arc<Mutex<Option<Vec<Move>>>>,
@@ -148,6 +155,7 @@ mod test {
                     StreamInput::PH(_) => max_eid_millis < eid.millis_time,
                     StreamInput::GS(_, _) => max_eid_millis < eid.millis_time,
                     StreamInput::RS(_) => todo!(),
+                    StreamInput::MM(_) => todo!(),
                 })
                 .cloned()
                 .collect();
@@ -163,24 +171,27 @@ mod test {
             Ok(data)
         }
 
-        fn xack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            if let Some(max_id_millis) = ids.iter().map(|id| id.millis_time).max() {
-                LAST_PH_ACK_MILLIS.swap(max_id_millis, Ordering::Relaxed);
-            }
+        fn xack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            Ok(self.update_max_id(&LAST_RS_ACK_MILLIS, ids))
+        }
 
-            Ok(())
+        fn xack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            Ok(self.update_max_id(&LAST_PH_ACK_MILLIS, ids))
         }
 
         fn xack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            if let Some(max_id_millis) = ids.iter().map(|id| id.millis_time).max() {
-                LAST_GS_ACK_MILLIS.swap(max_id_millis, Ordering::Relaxed);
-            }
-
-            Ok(())
+            Ok(self.update_max_id(&LAST_GS_ACK_MILLIS, ids))
         }
 
-        fn xack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            todo!()
+        fn xack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            Ok(self.update_max_id(&LAST_MM_ACK_MILLIS, ids))
+        }
+    }
+    impl FakeXRead {
+        fn update_max_id(&self, some: &AtomicU64, ids: &[XReadEntryId]) {
+            if let Some(max_id_millis) = ids.iter().map(|id| id.millis_time).max() {
+                some.swap(max_id_millis, Ordering::Relaxed);
+            }
         }
     }
 
@@ -333,6 +344,13 @@ impl Unacknowledged {
                 self.game_states.clear();
             }
         }
+        if !self.move_made.is_empty() {
+            if let Err(_e) = components.xread.xack_move_made(&self.move_made) {
+                error!("ack for move made failed")
+            } else {
+                self.move_made.clear();
+            }
+        }
     }
 }
 
@@ -343,6 +361,7 @@ impl Default for Unacknowledged {
             prov_hist: Vec::with_capacity(INIT_ACK_CAPACITY),
             req_sync: Vec::with_capacity(INIT_ACK_CAPACITY),
             game_states: Vec::with_capacity(INIT_ACK_CAPACITY),
+            move_made: Vec::with_capacity(INIT_ACK_CAPACITY),
         }
     }
 }

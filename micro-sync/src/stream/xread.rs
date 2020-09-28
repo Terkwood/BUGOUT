@@ -11,9 +11,10 @@ use uuid::Uuid;
 
 pub trait XRead {
     fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr>;
+    fn xack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
     fn xack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
     fn xack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
-    fn xack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    fn xack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
 }
 
 #[derive(Debug)]
@@ -73,6 +74,10 @@ impl XRead for Rc<Client> {
     }
 
     fn xack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+        todo!()
+    }
+
+    fn xack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         todo!()
     }
 }
