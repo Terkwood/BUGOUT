@@ -206,7 +206,7 @@ mod test {
     use super::*;
     use crate::repo::*;
     use crate::Components;
-    use crossbeam_channel::{select, unbounded, Sender};
+    use crossbeam_channel::{select, unbounded, Receiver, Sender};
     use redis_streams::XReadEntryId;
     use std::sync::atomic::{AtomicU64, Ordering};
     use std::sync::{Arc, Mutex};
@@ -309,18 +309,24 @@ mod test {
         }
     }
 
-    #[test]
-    fn test_req_sync() {
-        let (hist_prov_xadd_in, _): (Sender<HistoryProvided>, _) = unbounded();
+    struct TestFakes {
+        history_contents: Arc<Mutex<Option<Vec<Move>>>>,
+        sorted_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
+        sync_reply_xadd_out: Receiver<SyncReply>,
+        hist_prov_xadd_out: Receiver<HistoryProvided>,
+    }
+
+    fn spawn_process_thread() -> TestFakes {
+        let (hist_prov_xadd_in, hist_prov_xadd_out): (Sender<HistoryProvided>, _) = unbounded();
         let (sync_reply_xadd_in, sync_reply_xadd_out): (Sender<SyncReply>, _) = unbounded();
 
-        let fake_history_contents = Arc::new(Mutex::new(None));
+        let history_contents: Arc<Mutex<Option<Vec<Move>>>> = Arc::new(Mutex::new(None));
 
-        let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
+        let sorted_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
             Arc::new(Mutex::new(vec![]));
 
-        let sfs = sorted_fake_stream.clone();
-        let fh = fake_history_contents.clone();
+        let sfs = sorted_stream.clone();
+        let fh = history_contents.clone();
         thread::spawn(move || {
             let components = Components {
                 history_repo: Box::new(FakeHistoryRepo { contents: fh }),
@@ -334,35 +340,24 @@ mod test {
             };
             process(&components);
         });
+
+        TestFakes {
+            history_contents,
+            sorted_stream,
+            hist_prov_xadd_out,
+            sync_reply_xadd_out,
+        }
+    }
+
+    #[test]
+    fn test_req_sync() {
+        let fakes = spawn_process_thread();
         todo!("draft test")
     }
 
     #[test]
     fn test_provide_history() {
-        let (hist_prov_xadd_in, hist_prov_xadd_out): (Sender<HistoryProvided>, _) = unbounded();
-        let (sync_reply_xadd_in, _): (Sender<SyncReply>, _) = unbounded();
-
-        // set up a loop to process game lobby requests
-        let fake_history_contents = Arc::new(Mutex::new(None));
-
-        let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
-            Arc::new(Mutex::new(vec![]));
-
-        let sfs = sorted_fake_stream.clone();
-        let fh = fake_history_contents.clone();
-        thread::spawn(move || {
-            let components = Components {
-                history_repo: Box::new(FakeHistoryRepo { contents: fh }),
-                xread: Box::new(FakeXRead {
-                    sorted_data: sfs.clone(),
-                }),
-                xadd: Box::new(FakeXAdd {
-                    hist_prov_in: hist_prov_xadd_in,
-                    sync_reply_in: sync_reply_xadd_in,
-                }),
-            };
-            process(&components);
-        });
+        let fakes = spawn_process_thread();
 
         // emit some events in a time-ordered fashion
         // (fake xread impl expects time ordering 😁)
@@ -385,7 +380,7 @@ mod test {
         let fake_player_up = Player::BLACK;
         let eid_gs = quick_eid(fake_time_ms);
         // emit a game state
-        sorted_fake_stream.lock().expect("lock").push((
+        fakes.sorted_stream.lock().expect("lock").push((
             eid_gs,
             StreamInput::GS(
                 fake_game_id.clone(),
@@ -400,7 +395,8 @@ mod test {
         thread::sleep(timeout);
 
         // history repo should now contain the moves from that game
-        let actual_moves = fake_history_contents
+        let actual_moves = fakes
+            .history_contents
             .clone()
             .lock()
             .expect("hr")
@@ -426,7 +422,7 @@ mod test {
         // request history
         let fake_req_id = ReqId(uuid::Uuid::default());
         let eid_ph = quick_eid(fake_time_ms);
-        sorted_fake_stream.lock().expect("lock").push((
+        fakes.sorted_stream.lock().expect("lock").push((
             eid_ph,
             StreamInput::PH(ProvideHistory {
                 game_id: fake_game_id.clone(),
@@ -436,7 +432,7 @@ mod test {
 
         // There should be an XADD triggered on history-provided stream
         select! {
-            recv(hist_prov_xadd_out) -> msg => match msg {
+            recv(fakes.hist_prov_xadd_out) -> msg => match msg {
                 Ok(HistoryProvided { game_id, reply_to, moves, event_id: _, epoch_millis: _, }) => {
                     assert_eq!(game_id, fake_game_id);
                     assert_eq!(moves, expected_moves);
