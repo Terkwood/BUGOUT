@@ -9,6 +9,7 @@ pub use xread::*;
 use crate::api::*;
 use crate::components::*;
 use crate::model::*;
+use crate::player::other_player;
 use crate::sync::is_client_ahead_by_one_turn;
 use log::{error, warn};
 use redis_streams::XReadEntryId;
@@ -52,7 +53,7 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
                         .unwrap_or(Player::BLACK);
                     let system_turn = system_last_move.map(|m| m.turn).unwrap_or(0) + 1;
 
-                    if is_client_ahead_by_one_turn(rs, history, system_turn, system_player_up) {
+                    if is_client_ahead_by_one_turn(rs, system_turn, system_player_up) {
                         todo!()
                     } else {
                         todo!()
@@ -130,13 +131,6 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
         StreamInput::MM(_) => {
             todo!("stream match move made");
         }
-    }
-}
-
-fn other_player(player: Player) -> Player {
-    match player {
-        Player::BLACK => Player::WHITE,
-        Player::WHITE => Player::BLACK,
     }
 }
 
