@@ -445,6 +445,8 @@ mod test {
         let rs_ack = fakes.acks.last_rs_ack_ms.load(Ordering::Relaxed);
         assert_eq!(rs_ack, xid_rs.millis_time);
 
+        // system replies so that client can catch
+        // up to current status
         let expected = SyncReply {
             session_id,
             reply_to: req_id,
