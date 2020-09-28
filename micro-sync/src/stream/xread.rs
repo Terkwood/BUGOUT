@@ -105,13 +105,21 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, Str
                         bincode::deserialize(&data)
                             .map(|gs| StreamInput::GS(game_id, gs))
                             .ok()
+                    } else if key == topics::REQ_SYNC {
+                        bincode::deserialize(&data)
+                            .map(|rs| StreamInput::RS(rs))
+                            .ok()
                     } else if key == topics::PROVIDE_HISTORY {
                         bincode::deserialize(&data)
                             .map(|ph| StreamInput::PH(ph))
                             .ok()
+                    } else if key == topics::MOVE_MADE {
+                        bincode::deserialize(&data)
+                            .map(|mm| StreamInput::MM(mm))
+                            .ok()
                     } else {
                         error!("Unknown key {}", key);
-                        None
+                        return Err(StreamDeserErr::DataDeser);
                     };
                     if let Some(s) = sd {
                         out.insert(eid, s);
