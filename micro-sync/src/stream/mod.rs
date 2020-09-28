@@ -89,23 +89,6 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
                 }
                 Err(_) => error!("history lookup for req sync"),
             }
-            /*
-            val clientAheadByOneTurnBranch = branches[0]
-            clientAheadByOneTurnBranch.map { _, v ->
-                    val missedMove = v.reqSync.lastMove!! // checked null above
-                    KeyValue(v.reqSync.gameId,
-                        MakeMoveCmd(gameId = v
-                            .reqSync.gameId, reqId = v.reqSync.reqId,
-                            player = missedMove.player,
-                            coord = missedMove.coord)) }
-                .mapValues { v ->
-                    jsonMapper.writeValueAsString(v)
-                }
-                .to(Topics.MAKE_MOVE_CMD,
-                    Produced.with(Serdes.UUID(), Serdes.String()))
-
-                },
-                            */
         }
         StreamInput::PH(ProvideHistory { game_id, req_id }) => {
             let maybe_hist_r = components.history_repo.get(&game_id);
