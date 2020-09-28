@@ -51,7 +51,7 @@ pub struct MakeMove {
 
 /// An event signalling the acceptance of a move.
 /// This is emitted by changelog service.
-#[derive(Clone, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct MoveMade {
     pub game_id: GameId,
     pub reply_to: ReqId,
