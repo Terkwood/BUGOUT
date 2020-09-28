@@ -16,11 +16,11 @@ use redis_streams::XReadEntryId;
 pub enum StreamInput {
     PH(ProvideHistory),
     GS(GameId, GameState),
+    RS(ReqSync),
 }
 
 pub fn process(components: &Components) {
-    let mut gs_processed: Vec<XReadEntryId> = vec![];
-    let mut ph_processed: Vec<XReadEntryId> = vec![];
+    let mut unacked = Unacknowledged::default();
     loop {
         match components.xread.xread_sorted() {
             Ok(xrr) => {
@@ -34,7 +34,7 @@ pub fn process(components: &Components) {
                                 error!("write to history repo")
                             }
 
-                            gs_processed.push(entry_id)
+                            unacked.game_states.push(entry_id)
                         }
                         (entry_id, StreamInput::PH(ProvideHistory { game_id, req_id })) => {
                             let maybe_hist_r = components.history_repo.get(&game_id);
@@ -55,28 +55,21 @@ pub fn process(components: &Components) {
                                 Err(_e) => error!("history lookup error"),
                             }
 
-                            ph_processed.push(entry_id);
+                            unacked.prov_hist.push(entry_id);
                         }
+                        (entry_id, StreamInput::RS(rs)) => todo!(),
                     }
                 }
             }
             Err(_) => error!("xread"),
         }
-        if !gs_processed.is_empty() {
-            if let Err(_e) = components.xread.xack_game_states(&gs_processed) {
-                error!("ack for game states failed")
-            } else {
-                gs_processed.clear()
-            }
-        }
-        if !ph_processed.is_empty() {
-            if let Err(_e) = components.xread.xack_prov_hist(&ph_processed) {
-                error!("ack for provide history failed")
-            } else {
-                ph_processed.clear()
-            }
-        }
     }
+}
+
+struct Unacknowledged {
+    req_sync: Vec<XReadEntryId>,
+    prov_hist: Vec<XReadEntryId>,
+    game_states: Vec<XReadEntryId>,
 }
 
 const GROUP_NAME: &str = "micro-sync";
@@ -117,6 +110,7 @@ mod test {
     static MAX_READ_EID_MILLIS: AtomicU64 = AtomicU64::new(0);
     static LAST_GS_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
     static LAST_PH_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
+    static LAST_RS_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
 
     struct FakeHistoryRepo {
         pub contents: Arc<Mutex<Option<Vec<Move>>>>,
@@ -151,6 +145,7 @@ mod test {
                 .filter(|(eid, stream_data)| match stream_data {
                     StreamInput::PH(_) => max_eid_millis < eid.millis_time,
                     StreamInput::GS(_, _) => max_eid_millis < eid.millis_time,
+                    StreamInput::RS(_) => todo!(),
                 })
                 .cloned()
                 .collect();
@@ -180,6 +175,10 @@ mod test {
             }
 
             Ok(())
+        }
+
+        fn xack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            todo!()
         }
     }
 
@@ -304,6 +303,41 @@ mod test {
                 _ => panic!("wrong output")
             },
             default(timeout) => panic!("WAIT timeout")
+        }
+    }
+}
+
+impl Unacknowledged {
+    pub fn ack_all(&self, xread: &XRead) {
+        if !self.game_states.is_empty() {
+            if let Err(_e) = xread.xack_game_states(&self.game_states) {
+                error!("ack for game states failed")
+            }
+        }
+        if !self.prov_hist.is_empty() {
+            if let Err(_e) = xread.xack_prov_hist(&self.prov_hist) {
+                error!("ack for provide history failed")
+            }
+        }
+        todo!("the eother");
+        self.clear_all()
+    }
+
+    fn clear_all(&mut self) {
+        self.game_states.clear();
+        self.req_sync.clear();
+        self.prov_hist.clear();
+        todo!("te otherr")
+    }
+}
+
+const INIT_ACK_CAPACITY: usize = 25;
+impl Default for Unacknowledged {
+    fn default() -> Self {
+        Self {
+            prov_hist: Vec::with_capacity(INIT_ACK_CAPACITY),
+            req_sync: Vec::with_capacity(INIT_ACK_CAPACITY),
+            game_states: Vec::with_capacity(INIT_ACK_CAPACITY),
         }
     }
 }

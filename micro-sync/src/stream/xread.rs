@@ -13,6 +13,7 @@ pub trait XRead {
     fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr>;
     fn xack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
     fn xack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    fn xack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
 }
 
 #[derive(Debug)]
@@ -69,6 +70,10 @@ impl XRead for Rc<Client> {
 
     fn xack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         ack(&self, topics::GAME_STATES_CHANGELOG, ids)
+    }
+
+    fn xack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+        todo!()
     }
 }
 
