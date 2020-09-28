@@ -40,7 +40,7 @@ impl HistoryRepo for Rc<Client> {
 }
 
 fn redis_key(game_id: &GameId) -> String {
-    format!("/BUGOUT/micro_history_provider/history/{}", game_id.0)
+    format!("/BUGOUT/micro_sync/history/{}", game_id.0)
 }
 
 impl From<redis::RedisError> for FetchErr {

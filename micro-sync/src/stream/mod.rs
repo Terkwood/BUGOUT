@@ -79,7 +79,7 @@ pub fn process(components: &Components) {
     }
 }
 
-const GROUP_NAME: &str = "micro-history-provider";
+const GROUP_NAME: &str = "micro-sync";
 
 pub fn create_consumer_group(client: &redis::Client) {
     let mut conn = client.get_connection().expect("group create conn");
