@@ -136,7 +136,7 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
 fn other_player(player: Player) -> Player {
     match player {
         Player::BLACK => Player::WHITE,
-        _ => Player::BLACK,
+        Player::WHITE => Player::BLACK,
     }
 }
 
