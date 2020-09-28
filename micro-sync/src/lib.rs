@@ -5,6 +5,7 @@ mod components;
 mod model;
 mod repo;
 pub mod stream;
+mod sync;
 mod time;
 
 pub use components::Components;
