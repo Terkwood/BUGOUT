@@ -30,7 +30,7 @@ pub fn process(components: &Components) {
         match components.xread.read_sorted() {
             Ok(xrr) => {
                 for (xid, event) in xrr {
-                    process_event(xid, &event, components);
+                    process_event(&event, components);
                     unacked.push(xid, event);
                 }
             }
@@ -41,55 +41,9 @@ pub fn process(components: &Components) {
     }
 }
 
-fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components) {
+fn process_event(event: &StreamInput, components: &Components) {
     match event {
-        StreamInput::RS(rs) => {
-            match components.history_repo.get(&rs.game_id) {
-                Ok(maybe_history) => {
-                    let history = maybe_history.unwrap_or_default();
-                    let system_last_move = history.last();
-                    let system_player_up = system_last_move
-                        .map(|m| other_player(m.player))
-                        .unwrap_or(Player::BLACK);
-                    let system_turn = system_last_move.map(|m| m.turn).unwrap_or(0) + 1;
-
-                    if is_client_ahead_by_one_turn(rs, system_turn, system_player_up) {
-                        // client is ahead of server by a single turn
-                        // and their move needs to be processed
-                        if let Some(missed_move) = &rs.last_move {
-                            let make_move = MakeMove {
-                                game_id: rs.game_id.clone(),
-                                req_id: rs.req_id.clone(),
-                                player: missed_move.player,
-                                coord: missed_move.coord,
-                            };
-
-                            if let Err(e) = components.xadd.add_make_move(make_move) {
-                                error!("xadd make move {:?}", e)
-                            }
-                        }
-                    } else {
-                        // in every other case, we should send the server's view:
-                        // - no op: client is caught up
-                        // - client is behind by one move
-                        // - client has a state which we cannot reconcile
-                        //            ...(but maybe they can fix themselves)
-                        let sync_reply = SyncReply {
-                            moves: history,
-                            game_id: rs.game_id.clone(),
-                            reply_to: rs.req_id.clone(),
-                            player_up: system_player_up,
-                            turn: system_turn,
-                            session_id: rs.session_id.clone(),
-                        };
-                        if let Err(e) = components.xadd.add_sync_reply(sync_reply) {
-                            error!("xadd sync reply {:?}", e)
-                        }
-                    }
-                }
-                Err(_) => error!("history lookup for req sync"),
-            }
-        }
+        StreamInput::RS(rs) => process_req_sync(rs, components),
         StreamInput::PH(ProvideHistory { game_id, req_id }) => {
             let maybe_hist_r = components.history_repo.get(&game_id);
             match maybe_hist_r {
@@ -161,6 +115,54 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
                 */
             todo!("stream match move made");
         }
+    }
+}
+
+fn process_req_sync(rs: &ReqSync, components: &Components) {
+    match components.history_repo.get(&rs.game_id) {
+        Ok(maybe_history) => {
+            let history = maybe_history.unwrap_or_default();
+            let system_last_move = history.last();
+            let system_player_up = system_last_move
+                .map(|m| other_player(m.player))
+                .unwrap_or(Player::BLACK);
+            let system_turn = system_last_move.map(|m| m.turn).unwrap_or(0) + 1;
+
+            if is_client_ahead_by_one_turn(rs, system_turn, system_player_up) {
+                // client is ahead of server by a single turn
+                // and their move needs to be processed
+                if let Some(missed_move) = &rs.last_move {
+                    let make_move = MakeMove {
+                        game_id: rs.game_id.clone(),
+                        req_id: rs.req_id.clone(),
+                        player: missed_move.player,
+                        coord: missed_move.coord,
+                    };
+
+                    if let Err(e) = components.xadd.add_make_move(make_move) {
+                        error!("xadd make move {:?}", e)
+                    }
+                }
+            } else {
+                // in every other case, we should send the server's view:
+                // - no op: client is caught up
+                // - client is behind by one move
+                // - client has a state which we cannot reconcile
+                //            ...(but maybe they can fix themselves)
+                let sync_reply = SyncReply {
+                    moves: history,
+                    game_id: rs.game_id.clone(),
+                    reply_to: rs.req_id.clone(),
+                    player_up: system_player_up,
+                    turn: system_turn,
+                    session_id: rs.session_id.clone(),
+                };
+                if let Err(e) = components.xadd.add_sync_reply(sync_reply) {
+                    error!("xadd sync reply {:?}", e)
+                }
+            }
+        }
+        Err(_) => error!("history lookup for req sync"),
     }
 }
 
