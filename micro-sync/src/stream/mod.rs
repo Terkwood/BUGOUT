@@ -314,11 +314,26 @@ mod test {
         let (hist_prov_xadd_in, _): (Sender<HistoryProvided>, _) = unbounded();
         let (sync_reply_xadd_in, sync_reply_xadd_out): (Sender<SyncReply>, _) = unbounded();
 
-        todo!("let fake_something_contents: Arc<Mutex<...>> = Arc::new(todo!());");
+        let fake_history_contents = Arc::new(Mutex::new(None));
 
         let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
             Arc::new(Mutex::new(vec![]));
 
+        let sfs = sorted_fake_stream.clone();
+        let fh = fake_history_contents.clone();
+        thread::spawn(move || {
+            let components = Components {
+                history_repo: Box::new(FakeHistoryRepo { contents: fh }),
+                xread: Box::new(FakeXRead {
+                    sorted_data: sfs.clone(),
+                }),
+                xadd: Box::new(FakeXAdd {
+                    hist_prov_in: hist_prov_xadd_in,
+                    sync_reply_in: sync_reply_xadd_in,
+                }),
+            };
+            process(&components);
+        });
         todo!("draft test")
     }
 
