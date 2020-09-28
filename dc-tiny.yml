@@ -56,8 +56,8 @@ services:
       - "redis"
     depends_on:
       - "redis"
-  micro-history-provider:
-    build: micro-history-provider/.
+  micro-sync:
+    build: micro-sync/.
     links:
       - "redis"
     depends_on:
