@@ -352,8 +352,7 @@ mod test {
         *fakes.history_contents.lock().expect("lock") = Some(moves.clone());
 
         let wait = Duration::from_millis(166);
-        let mut fake_time_ms = 100;
-        let incr_ms = 100;
+        let fake_time_ms = 100;
 
         let xid_rs = quick_eid(fake_time_ms);
         // emit a request for sync
@@ -362,7 +361,6 @@ mod test {
             .lock()
             .expect("lock")
             .push((xid_rs, StreamInput::RS(req_sync)));
-        fake_time_ms += incr_ms;
 
         thread::sleep(wait);
 
