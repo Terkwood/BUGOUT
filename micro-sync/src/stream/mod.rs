@@ -136,6 +136,46 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
         }
         StreamInput::MM(_) => {
             // this needs to get saved to a repo !!!
+
+            // why ? because we will listen for the move made
+            // event specifically tied to a given session_id
+            // and only then write to sync_reply
+
+            // 🤔🤔 think about it
+            // .... and make sure you maintain joinish semantics with
+            // ... the ReqSync branch of this loop 👩‍🚒👩‍🚒👩‍🚒
+            /*
+            val histProvMoveMadeReplies: KStream<ReqId, SystemMoved> =
+            clientAheadByReqId
+                    .join(
+                        moveMadeByReqId,
+                        { l, r -> SystemMoved(l, r) },
+                    )
+            val clientMoveComputed: KStream<SessionId, SyncReplyEv> =
+                histProvMoveMadeReplies.map { reqId, v ->
+                    val allMoves = ArrayList<Move>()
+                    allMoves.addAll(v.hist.histProv.moves)
+                    val theTurn = (
+                            v.hist.histProv.moves.lastOrNull()?.turn ?: 0
+                            ) + 1
+                    allMoves.add(Move(
+                        v.moved.player,
+                        v.moved.coord,
+                        theTurn))
+
+                    KeyValue(
+                        v.hist.reqSync.sessionId,
+                        SyncReplyEv(
+                            sessionId = v.hist.reqSync.sessionId,
+                            gameId = v.hist.reqSync.gameId,
+                            replyTo = reqId,
+                            moves = allMoves,
+                            turn = theTurn + 1,
+                            playerUp = otherPlayer(v.moved.player)
+                        )
+                    )
+                }
+                */
             todo!("stream match move made");
         }
     }
