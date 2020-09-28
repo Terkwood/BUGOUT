@@ -1,5 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
+
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct GameId(pub Uuid);
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -38,16 +39,6 @@ pub struct Move {
 pub struct GameState {
     pub moves: Option<Vec<MoveEvent>>,
     pub player_up: Player,
-}
-
-#[derive(Clone, Deserialize, Debug)]
-pub struct MoveMade {
-    pub game_id: GameId,
-    pub reply_to: ReqId,
-    pub event_id: EventId,
-    pub player: Player,
-    pub coord: Option<Coord>,
-    pub captured: Vec<Coord>,
 }
 
 impl GameState {

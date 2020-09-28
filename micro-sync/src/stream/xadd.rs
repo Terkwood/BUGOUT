@@ -1,5 +1,5 @@
 use super::topics;
-use crate::api::{HistoryProvided, SyncReply};
+use crate::api::{HistoryProvided, MakeMove, SyncReply};
 use redis::{streams::StreamMaxlen, Client, Commands};
 use std::collections::BTreeMap;
 use std::rc::Rc;
@@ -7,6 +7,7 @@ use std::rc::Rc;
 pub trait XAdd {
     fn add_history_provided(&self, data: HistoryProvided) -> Result<(), XAddErr>;
     fn add_sync_reply(&self, data: SyncReply) -> Result<(), XAddErr>;
+    fn add_make_move(&self, data: MakeMove) -> Result<(), XAddErr>;
 }
 
 #[derive(Debug)]
@@ -44,6 +45,10 @@ impl XAdd for Rc<Client> {
     }
 
     fn add_sync_reply(&self, data: SyncReply) -> Result<(), XAddErr> {
+        todo!()
+    }
+
+    fn add_make_move(&self, data: MakeMove) -> Result<(), XAddErr> {
         todo!()
     }
 }

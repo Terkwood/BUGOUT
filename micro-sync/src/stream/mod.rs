@@ -239,6 +239,10 @@ mod test {
         fn add_sync_reply(&self, data: SyncReply) -> Result<(), XAddErr> {
             Ok(self.sync_reply_in.send(data).expect("send"))
         }
+
+        fn add_make_move(&self, data: MakeMove) -> Result<(), XAddErr> {
+            todo!()
+        }
     }
 
     fn quick_eid(ms: u64) -> XReadEntryId {
