@@ -2,6 +2,8 @@ use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct GameId(pub Uuid);
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct SessionId(pub Uuid);
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct ReqId(pub Uuid);
 #[derive(Clone, Serialize, Deserialize, Debug)]
