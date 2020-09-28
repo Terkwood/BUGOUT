@@ -9,6 +9,7 @@ pub use xread::*;
 use crate::api::*;
 use crate::components::*;
 use crate::model::*;
+use crate::sync::is_client_ahead_by_one_turn;
 use log::{error, warn};
 use redis_streams::XReadEntryId;
 
@@ -41,22 +42,21 @@ pub fn process(components: &Components) {
 
 fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components) {
     match event {
-        StreamInput::RS(ReqSync {
-            game_id,
-            session_id,
-            req_id,
-            player_up: req_player_up,
-            turn: req_turn,
-            last_move: req_last_move,
-        }) => {
-            match components.history_repo.get(game_id) {
-                Ok(history) => {
-                    let pre_flat = history.unwrap_or_default();
-                    let system_last_move = pre_flat.last();
+        StreamInput::RS(rs) => {
+            match components.history_repo.get(&rs.game_id) {
+                Ok(maybe_history) => {
+                    let history = maybe_history.unwrap_or_default();
+                    let system_last_move = history.last();
                     let system_player_up = system_last_move
                         .map(|m| other_player(m.player))
                         .unwrap_or(Player::BLACK);
                     let system_turn = system_last_move.map(|m| m.turn).unwrap_or(0) + 1;
+
+                    if is_client_ahead_by_one_turn(rs, history, system_turn, system_player_up) {
+                        todo!()
+                    } else {
+                        todo!()
+                    }
                 }
                 Err(_) => error!("history lookup for req sync"),
             }
@@ -289,7 +289,23 @@ mod test {
     }
 
     #[test]
-    fn test_req_sync() {
+    fn test_req_sync_no_op() {
+        let fakes = spawn_process_thread();
+        todo!("draft test")
+    }
+
+    #[test]
+    fn test_req_sync_client_catch_up() {
+        let fakes = spawn_process_thread();
+        todo!("draft test")
+    }
+    #[test]
+    fn test_req_sync_bogus_client_state() {
+        let fakes = spawn_process_thread();
+        todo!("draft test")
+    }
+    #[test]
+    fn test_req_sync_server_catch_up() {
         let fakes = spawn_process_thread();
         todo!("draft test")
     }
