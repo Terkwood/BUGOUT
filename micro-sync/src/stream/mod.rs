@@ -54,12 +54,26 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
                     let system_turn = system_last_move.map(|m| m.turn).unwrap_or(0) + 1;
 
                     if is_client_ahead_by_one_turn(rs, system_turn, system_player_up) {
-                        todo!();
+                        // client is ahead of server by a single turn
+                        // and their move needs to be processed
+                        if let Some(missed_move) = &rs.last_move {
+                            let make_move = MakeMove {
+                                game_id: rs.game_id.clone(),
+                                req_id: rs.req_id.clone(),
+                                player: missed_move.player,
+                                coord: missed_move.coord,
+                            };
 
-                        if let Err(e) = components.xadd.add_make_move(todo!()) {
-                            error!("xadd make move {:?}", e)
+                            if let Err(e) = components.xadd.add_make_move(make_move) {
+                                error!("xadd make move {:?}", e)
+                            }
                         }
                     } else {
+                        // in every other case, we should send the server's view:
+                        // - no op: client is caught up
+                        // - client is behind by one move
+                        // - client has a state which we cannot reconcile
+                        //            ...(but maybe they can fix themselves)
                         let sync_reply = SyncReply {
                             moves: history,
                             game_id: rs.game_id.clone(),
@@ -76,28 +90,6 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
                 Err(_) => error!("history lookup for req sync"),
             }
             /*
-
-                    // THIS PORTION WILL BE INSPECTED DOWN STREAM
-                    HistProvReply(left,
-                            right,
-                            systemTurn, systemPlayerUp
-                    )
-
-                    val branches = histReplyStream.kbranch(
-                // client is ahead of server by a single turn
-                // and their move needs to be processed
-                { _: SessionId, hpr: HistProvReply ->
-                    isClientAheadByOneTurn(hpr)
-                },
-                // in every other case, we should send the server's view:
-                // - no op: client is caught up
-                // - client is behind by one move
-                // - client has a state which we cannot reconcile
-                //            ...(but maybe they can fix themselves)
-                { _: SessionId, hpr: HistProvReply ->
-                    !isClientAheadByOneTurn(hpr) }
-            )
-
             val clientAheadByOneTurnBranch = branches[0]
             clientAheadByOneTurnBranch.map { _, v ->
                     val missedMove = v.reqSync.lastMove!! // checked null above
@@ -143,6 +135,7 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
             }
         }
         StreamInput::MM(_) => {
+            // this needs to get saved to a repo !!!
             todo!("stream match move made");
         }
     }
