@@ -55,14 +55,9 @@ fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components
                     let pre_flat = history.unwrap_or_default();
                     let system_last_move = pre_flat.last();
                     let system_player_up = system_last_move
-                        .map(
-                            |Move {
-                                 player,
-                                 coord: _,
-                                 turn: _,
-                             }| other_player(*player),
-                        )
+                        .map(|m| other_player(m.player))
                         .unwrap_or(Player::BLACK);
+                    let system_turn = system_last_move.map(|m| m.turn).unwrap_or(0) + 1;
                 }
                 Err(_) => error!("history lookup for req sync"),
             }
