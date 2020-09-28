@@ -292,6 +292,8 @@ mod test {
         }
     }
 
+    /// Simple case.  Client is in sync with the server and
+    /// will simply receive the server view.
     #[test]
     fn test_req_sync_no_op() {
         let fakes = spawn_process_thread();
@@ -314,6 +316,7 @@ mod test {
         todo!("draft test")
     }
 
+    /// Test the ProvideHistory API
     #[test]
     fn test_provide_history() {
         let fakes = spawn_process_thread();
