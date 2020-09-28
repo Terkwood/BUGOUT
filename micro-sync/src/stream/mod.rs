@@ -44,25 +44,7 @@ pub fn process(components: &Components) {
 fn process_event(event: &StreamInput, components: &Components) {
     match event {
         StreamInput::RS(rs) => process_req_sync(rs, components),
-        StreamInput::PH(ProvideHistory { game_id, req_id }) => {
-            let maybe_hist_r = components.history_repo.get(&game_id);
-            match maybe_hist_r {
-                Ok(Some(moves)) => {
-                    let hp = HistoryProvided {
-                        moves,
-                        event_id: EventId::new(),
-                        epoch_millis: crate::time::now_millis() as u64,
-                        game_id: game_id.clone(),
-                        reply_to: req_id.clone(),
-                    };
-                    if let Err(e) = components.xadd.add_history_provided(hp) {
-                        error!("error in xadd {:?}", e)
-                    }
-                }
-                Ok(None) => warn!("no history for game {:?}", game_id),
-                Err(_e) => error!("history lookup error"),
-            }
-        }
+        StreamInput::PH(ph) => process_prov_hist(ph, components),
         StreamInput::GS(game_id, game_state) => {
             if let Err(_e) = components
                 .history_repo
@@ -163,6 +145,26 @@ fn process_req_sync(rs: &ReqSync, components: &Components) {
             }
         }
         Err(_) => error!("history lookup for req sync"),
+    }
+}
+
+fn process_prov_hist(ph: &ProvideHistory, components: &Components) {
+    let maybe_hist_r = components.history_repo.get(&ph.game_id);
+    match maybe_hist_r {
+        Ok(Some(moves)) => {
+            let hp = HistoryProvided {
+                moves,
+                event_id: EventId::new(),
+                epoch_millis: crate::time::now_millis() as u64,
+                game_id: ph.game_id.clone(),
+                reply_to: ph.req_id.clone(),
+            };
+            if let Err(e) = components.xadd.add_history_provided(hp) {
+                error!("error in xadd {:?}", e)
+            }
+        }
+        Ok(None) => warn!("no history for game {:?}", ph.game_id),
+        Err(_e) => error!("history lookup error"),
     }
 }
 
