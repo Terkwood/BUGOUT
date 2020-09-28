@@ -11,6 +11,6 @@ pub fn main() {
     info!("🔢 {}", VERSION);
     let client = micro_sync::create_redis_client();
     let components = Components::new(&client);
-    stream::create_consumer_group(&client);
+    stream::init::create_consumer_group(&client);
     stream::process(&components)
 }

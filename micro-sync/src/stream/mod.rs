@@ -1,3 +1,4 @@
+pub mod init;
 mod topics;
 mod xadd;
 mod xread;
@@ -9,7 +10,6 @@ use crate::api::*;
 use crate::components::*;
 use crate::model::*;
 use log::{error, warn};
-use redis::Commands;
 use redis_streams::XReadEntryId;
 
 #[derive(Clone, Debug)]
@@ -25,54 +25,72 @@ pub fn process(components: &Components) {
     loop {
         match components.xread.read_sorted() {
             Ok(xrr) => {
-                for time_ordered_event in xrr {
-                    match time_ordered_event {
-                        (xid, StreamInput::RS(rs)) => {
-                            todo!(" stream match req sync");
-                            unacked.req_sync.push(xid)
-                        }
-                        (xid, StreamInput::PH(ProvideHistory { game_id, req_id })) => {
-                            let maybe_hist_r = components.history_repo.get(&game_id);
-                            match maybe_hist_r {
-                                Ok(Some(moves)) => {
-                                    let hp = HistoryProvided {
-                                        moves,
-                                        event_id: EventId::new(),
-                                        epoch_millis: crate::time::now_millis() as u64,
-                                        game_id,
-                                        reply_to: req_id,
-                                    };
-                                    if let Err(e) = components.xadd.add_history_provided(hp) {
-                                        error!("error in xadd {:?}", e)
-                                    }
-                                }
-                                Ok(None) => warn!("no history for game {:?}", game_id),
-                                Err(_e) => error!("history lookup error"),
-                            }
-
-                            unacked.prov_hist.push(xid);
-                        }
-                        (xid, StreamInput::GS(game_id, game_state)) => {
-                            if let Err(_e) = components
-                                .history_repo
-                                .put(&game_id, game_state.to_history())
-                            {
-                                error!("write to history repo")
-                            }
-
-                            unacked.game_states.push(xid)
-                        }
-                        (xid, StreamInput::MM(_)) => {
-                            todo!("stream match move made");
-                            unacked.move_made.push(xid)
-                        }
-                    }
+                for (xid, event) in xrr {
+                    process_event(xid, &event, components);
+                    unacked.queue(xid, event);
                 }
             }
             Err(_) => error!("xread"),
         }
 
         unacked.ack_all(&components)
+    }
+}
+
+fn process_event(xid: XReadEntryId, event: &StreamInput, components: &Components) {
+    match event {
+        StreamInput::RS(rs) => {
+            todo!(" stream match req sync");
+            todo!("but here is some inspiration");
+            /*
+            val histJoined: KStream<GameId, HistProvReply> = reqSyncByGameId.join(
+            histProvStream,
+            { left: ReqSyncCmd,
+              right: HistoryProvidedEv ->
+                val maybeLastMove = right.moves.lastOrNull()
+                val systemPlayerUp: Player =
+                        if (maybeLastMove == null) Player.BLACK else
+                            otherPlayer(maybeLastMove.player)
+                val systemTurn: Int =
+                        (maybeLastMove?.turn ?: 0) + 1
+
+                HistProvReply(left,
+                        right,
+                        systemTurn, systemPlayerUp
+                )
+            },
+                        */
+        }
+        StreamInput::PH(ProvideHistory { game_id, req_id }) => {
+            let maybe_hist_r = components.history_repo.get(&game_id);
+            match maybe_hist_r {
+                Ok(Some(moves)) => {
+                    let hp = HistoryProvided {
+                        moves,
+                        event_id: EventId::new(),
+                        epoch_millis: crate::time::now_millis() as u64,
+                        game_id: game_id.clone(),
+                        reply_to: req_id.clone(),
+                    };
+                    if let Err(e) = components.xadd.add_history_provided(hp) {
+                        error!("error in xadd {:?}", e)
+                    }
+                }
+                Ok(None) => warn!("no history for game {:?}", game_id),
+                Err(_e) => error!("history lookup error"),
+            }
+        }
+        StreamInput::GS(game_id, game_state) => {
+            if let Err(_e) = components
+                .history_repo
+                .put(&game_id, game_state.to_history())
+            {
+                error!("write to history repo")
+            }
+        }
+        StreamInput::MM(_) => {
+            todo!("stream match move made");
+        }
     }
 }
 
@@ -85,24 +103,57 @@ struct Unacknowledged {
 
 const GROUP_NAME: &str = "micro-sync";
 
-pub fn create_consumer_group(client: &redis::Client) {
-    let mut conn = client.get_connection().expect("group create conn");
-    let mm: Result<(), _> = conn.xgroup_create_mkstream(topics::PROVIDE_HISTORY, GROUP_NAME, "$");
-    if let Err(e) = mm {
-        warn!(
-            "Ignoring error creating {} consumer group (it probably exists already) {:?}",
-            topics::PROVIDE_HISTORY,
-            e
-        );
+impl Unacknowledged {
+    pub fn ack_all(&mut self, components: &Components) {
+        if !self.req_sync.is_empty() {
+            if let Err(_e) = components.xread.ack_req_sync(&self.req_sync) {
+                error!("ack for req sync failed")
+            } else {
+                self.req_sync.clear();
+            }
+        }
+
+        if !self.prov_hist.is_empty() {
+            if let Err(_e) = components.xread.ack_prov_hist(&self.prov_hist) {
+                error!("ack for provide history failed")
+            } else {
+                self.prov_hist.clear();
+            }
+        }
+        if !self.game_states.is_empty() {
+            if let Err(_e) = components.xread.ack_game_states(&self.game_states) {
+                error!("ack for game states failed")
+            } else {
+                self.game_states.clear();
+            }
+        }
+        if !self.move_made.is_empty() {
+            if let Err(_e) = components.xread.ack_move_made(&self.move_made) {
+                error!("ack for move made failed")
+            } else {
+                self.move_made.clear();
+            }
+        }
     }
-    let gs: Result<(), _> =
-        conn.xgroup_create_mkstream(topics::GAME_STATES_CHANGELOG, GROUP_NAME, "$");
-    if let Err(e) = gs {
-        warn!(
-            "Ignoring error creating {} consumer group (it probably exists already) {:?}",
-            topics::GAME_STATES_CHANGELOG,
-            e
-        );
+    pub fn queue(&mut self, xid: XReadEntryId, event: StreamInput) {
+        match event {
+            StreamInput::GS(_, _) => self.game_states.push(xid),
+            StreamInput::MM(_) => self.move_made.push(xid),
+            StreamInput::PH(_) => self.prov_hist.push(xid),
+            StreamInput::RS(_) => self.req_sync.push(xid),
+        }
+    }
+}
+
+const INIT_ACK_CAPACITY: usize = 25;
+impl Default for Unacknowledged {
+    fn default() -> Self {
+        Self {
+            prov_hist: Vec::with_capacity(INIT_ACK_CAPACITY),
+            req_sync: Vec::with_capacity(INIT_ACK_CAPACITY),
+            game_states: Vec::with_capacity(INIT_ACK_CAPACITY),
+            move_made: Vec::with_capacity(INIT_ACK_CAPACITY),
+        }
     }
 }
 
@@ -338,52 +389,6 @@ mod test {
                 _ => panic!("wrong output")
             },
             default(timeout) => panic!("WAIT timeout")
-        }
-    }
-}
-
-impl Unacknowledged {
-    pub fn ack_all(&mut self, components: &Components) {
-        if !self.req_sync.is_empty() {
-            if let Err(_e) = components.xread.ack_req_sync(&self.req_sync) {
-                error!("ack for req sync failed")
-            } else {
-                self.req_sync.clear();
-            }
-        }
-
-        if !self.prov_hist.is_empty() {
-            if let Err(_e) = components.xread.ack_prov_hist(&self.prov_hist) {
-                error!("ack for provide history failed")
-            } else {
-                self.prov_hist.clear();
-            }
-        }
-        if !self.game_states.is_empty() {
-            if let Err(_e) = components.xread.ack_game_states(&self.game_states) {
-                error!("ack for game states failed")
-            } else {
-                self.game_states.clear();
-            }
-        }
-        if !self.move_made.is_empty() {
-            if let Err(_e) = components.xread.ack_move_made(&self.move_made) {
-                error!("ack for move made failed")
-            } else {
-                self.move_made.clear();
-            }
-        }
-    }
-}
-
-const INIT_ACK_CAPACITY: usize = 25;
-impl Default for Unacknowledged {
-    fn default() -> Self {
-        Self {
-            prov_hist: Vec::with_capacity(INIT_ACK_CAPACITY),
-            req_sync: Vec::with_capacity(INIT_ACK_CAPACITY),
-            game_states: Vec::with_capacity(INIT_ACK_CAPACITY),
-            move_made: Vec::with_capacity(INIT_ACK_CAPACITY),
         }
     }
 }
