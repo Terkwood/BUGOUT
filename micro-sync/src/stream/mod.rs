@@ -152,12 +152,6 @@ mod test {
     use std::thread;
     use std::time::Duration;
 
-    static MAX_READ_XID_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static LAST_GS_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static LAST_RS_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static LAST_PH_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static LAST_MM_ACK_MILLIS: AtomicU64 = AtomicU64::new(0);
-
     struct FakeHistoryRepo {
         pub contents: Arc<Mutex<Option<Vec<Move>>>>,
     }
@@ -174,14 +168,33 @@ mod test {
         }
     }
 
+    struct FakeAcks {
+        last_mm_ack_ms: AtomicU64,
+        last_rs_ack_ms: AtomicU64,
+        last_ph_ack_ms: AtomicU64,
+        last_gs_ack_ms: AtomicU64,
+        max_read_xid_ms: AtomicU64,
+    }
+    impl FakeAcks {
+        pub fn new() -> Self {
+            Self {
+                last_mm_ack_ms: AtomicU64::new(0),
+                last_rs_ack_ms: AtomicU64::new(0),
+                last_ph_ack_ms: AtomicU64::new(0),
+                last_gs_ack_ms: AtomicU64::new(0),
+                max_read_xid_ms: AtomicU64::new(0),
+            }
+        }
+    }
     struct FakeXRead {
         sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
+        fake_acks: Arc<FakeAcks>,
     }
     impl XRead for FakeXRead {
         fn read_sorted(
             &self,
         ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, StreamReadErr> {
-            let max_xid_ms = MAX_READ_XID_MILLIS.load(Ordering::Relaxed);
+            let max_xid_ms = self.fake_acks.max_read_xid_ms.load(Ordering::Relaxed);
 
             let data: Vec<_> = self
                 .sorted_data
@@ -198,25 +211,27 @@ mod test {
             } else {
                 // this hack is standing in for "xreadgroup >" semantics
                 let new_max_xid_ms = data.iter().map(|(eid, _)| eid).max().unwrap();
-                MAX_READ_XID_MILLIS.swap(new_max_xid_ms.millis_time, Ordering::Relaxed);
+                self.fake_acks
+                    .max_read_xid_ms
+                    .swap(new_max_xid_ms.millis_time, Ordering::Relaxed);
             }
             Ok(data)
         }
 
         fn ack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            Ok(self.update_max_id(&LAST_RS_ACK_MILLIS, ids))
+            Ok(self.update_max_id(&self.fake_acks.last_rs_ack_ms, ids))
         }
 
         fn ack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            Ok(self.update_max_id(&LAST_PH_ACK_MILLIS, ids))
+            Ok(self.update_max_id(&self.fake_acks.last_ph_ack_ms, ids))
         }
 
         fn ack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            Ok(self.update_max_id(&LAST_GS_ACK_MILLIS, ids))
+            Ok(self.update_max_id(&self.fake_acks.last_gs_ack_ms, ids))
         }
 
         fn ack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            Ok(self.update_max_id(&LAST_MM_ACK_MILLIS, ids))
+            Ok(self.update_max_id(&self.fake_acks.last_mm_ack_ms, ids))
         }
     }
     impl FakeXRead {
@@ -257,6 +272,7 @@ mod test {
         sorted_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
         sync_reply_xadd_out: Receiver<SyncReply>,
         hist_prov_xadd_out: Receiver<HistoryProvided>,
+        acks: Arc<FakeAcks>,
     }
 
     fn spawn_process_thread() -> TestFakes {
@@ -270,11 +286,15 @@ mod test {
 
         let sfs = sorted_stream.clone();
         let fh = history_contents.clone();
+
+        let acks = Arc::new(FakeAcks::new());
+        let ackss = acks.clone();
         thread::spawn(move || {
             let components = Components {
                 history_repo: Box::new(FakeHistoryRepo { contents: fh }),
                 xread: Box::new(FakeXRead {
                     sorted_data: sfs.clone(),
+                    fake_acks: ackss,
                 }),
                 xadd: Box::new(FakeXAdd {
                     hist_prov_in: hist_prov_xadd_in,
@@ -289,6 +309,7 @@ mod test {
             sorted_stream,
             hist_prov_xadd_out,
             sync_reply_xadd_out,
+            acks,
         }
     }
 
@@ -319,9 +340,9 @@ mod test {
 
         let last_move = moves.last().cloned();
         let req_sync = ReqSync {
-            session_id,
-            req_id,
-            game_id,
+            session_id: session_id.clone(),
+            req_id: req_id.clone(),
+            game_id: game_id.clone(),
             last_move,
             player_up,
             turn,
@@ -345,8 +366,8 @@ mod test {
 
         thread::sleep(wait);
 
-        todo!("give it time to process");
-        todo!("check fake acks");
+        let rs_ack = fakes.acks.last_rs_ack_ms.load(Ordering::Relaxed);
+        assert_eq!(rs_ack, xid_rs.millis_time);
 
         let expected = SyncReply {
             session_id,
@@ -438,7 +459,7 @@ mod test {
         ];
         assert_eq!(actual_moves, expected_moves);
         // check ack for game_states stream
-        let gs_ack = LAST_GS_ACK_MILLIS.load(Ordering::Relaxed);
+        let gs_ack = fakes.acks.last_gs_ack_ms.load(Ordering::Relaxed);
         assert_eq!(gs_ack, xid_gs.millis_time);
 
         // request history
@@ -460,7 +481,7 @@ mod test {
                     assert_eq!(moves, expected_moves);
                     assert_eq!(reply_to, fake_req_id);
                     // check ack for provide_history stream
-                    let ph_ack = LAST_PH_ACK_MILLIS.load(Ordering::Relaxed);
+                    let ph_ack = fakes.acks.last_ph_ack_ms.load(Ordering::Relaxed);
                     assert_eq!(ph_ack, xid_ph.millis_time)
                 },
                 _ => panic!("wrong output")
