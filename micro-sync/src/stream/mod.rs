@@ -163,8 +163,8 @@ mod test {
                 std::thread::sleep(Duration::from_millis(20))
             } else {
                 // this hack is standing in for "xreadgroup >" semantics
-                let new_max_eid_millis = data.iter().map(|(eid, _)| eid).max().unwrap();
-                MAX_READ_XID_MILLIS.swap(new_max_eid_millis.millis_time, Ordering::Relaxed);
+                let new_max_xid_ms = data.iter().map(|(eid, _)| eid).max().unwrap();
+                MAX_READ_XID_MILLIS.swap(new_max_xid_ms.millis_time, Ordering::Relaxed);
             }
             Ok(data)
         }
