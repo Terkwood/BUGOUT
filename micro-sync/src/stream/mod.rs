@@ -272,12 +272,14 @@ mod test {
         sorted_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
         sync_reply_xadd_out: Receiver<SyncReply>,
         hist_prov_xadd_out: Receiver<HistoryProvided>,
+        make_move_xadd_out: Receiver<MakeMove>,
         acks: Arc<FakeAcks>,
     }
 
     fn spawn_process_thread() -> TestFakes {
         let (hist_prov_xadd_in, hist_prov_xadd_out): (Sender<HistoryProvided>, _) = unbounded();
         let (sync_reply_xadd_in, sync_reply_xadd_out): (Sender<SyncReply>, _) = unbounded();
+        let (make_move_xadd_in, make_move_xadd_out): (Sender<MakeMove>, _) = unbounded();
 
         let history_contents: Arc<Mutex<Option<Vec<Move>>>> = Arc::new(Mutex::new(None));
 
@@ -309,6 +311,7 @@ mod test {
             sorted_stream,
             hist_prov_xadd_out,
             sync_reply_xadd_out,
+            make_move_xadd_out,
             acks,
         }
     }
