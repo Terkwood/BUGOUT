@@ -152,11 +152,10 @@ fn process_move_made(move_made: &MoveMade, components: &Components) {
             // case where a client was previously ahead of the backend and we
             // emitted a MakeMove request.  This MoveMade is the result
             // of changelog recording our move
-            todo!();
-            todo!()
+            todo!("hi 🧤");
         }
-        Ok(None) => todo!(),
-        Err(_) => todo!(),
+        Ok(None) => (),
+        Err(_) => error!("error fetching from reply repo"),
     }
 
     // this needs to get saved to a repo !!!
