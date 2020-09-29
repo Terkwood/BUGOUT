@@ -600,7 +600,38 @@ mod test {
     }
     #[test]
     fn test_req_sync_server_catch_up() {
-        let mut fakes = spawn_process_thread();
+        let client_turn = 4;
+        let client_player_up = Player::WHITE;
+
+        let client_moves = vec![
+            Move {
+                player: Player::BLACK,
+                coord: Some(Coord { x: 4, y: 4 }),
+                turn: 1,
+            },
+            Move {
+                player: Player::WHITE,
+                coord: Some(Coord { x: 10, y: 10 }),
+                turn: 2,
+            },
+            Move {
+                player: Player::BLACK,
+                coord: Some(Coord { x: 4, y: 5 }),
+                turn: 3,
+            },
+        ];
+        let server_moves = vec![
+            Move {
+                player: Player::BLACK,
+                coord: Some(Coord { x: 4, y: 4 }),
+                turn: 1,
+            },
+            Move {
+                player: Player::WHITE,
+                coord: Some(Coord { x: 10, y: 10 }),
+                turn: 2,
+            },
+        ];
 
         let game_id = GameId::random();
         let session_id = SessionId::random();
@@ -614,6 +645,8 @@ mod test {
             turn: todo!(),
             player_up: todo!(),
         };
+
+        let mut fakes = spawn_process_thread();
 
         // make sure fake history repo is configured
         *fakes.history_contents.lock().expect("lock") = Some(todo!("fill history"));
