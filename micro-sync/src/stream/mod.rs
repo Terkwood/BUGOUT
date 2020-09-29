@@ -322,7 +322,7 @@ mod test {
         }
     }
 
-    const SLEEP_WAIT_MS: u64 = 64;
+    const SLEEP_WAIT_MS: u64 = 100;
     struct TestFakes {
         history_contents: Arc<Mutex<Option<Vec<Move>>>>,
         reply_contents: Arc<Mutex<Option<ReqSync>>>,
@@ -614,7 +614,7 @@ mod test {
     /// Test the ProvideHistory API
     #[test]
     fn test_provide_history() {
-        let fakes = spawn_process_thread();
+        let mut fakes = spawn_process_thread();
 
         // emit some events in a time-ordered fashion
         // (fake xread impl expects time ordering 😁)
@@ -634,21 +634,13 @@ mod test {
             },
         ];
         let fake_player_up = Player::BLACK;
-        let xid_gs = quick_xid(fake_time_ms);
-        // emit a game state
-        fakes.sorted_stream.lock().expect("lock").push((
-            xid_gs,
-            StreamInput::GS(
-                fake_game_id.clone(),
-                GameState {
-                    moves: Some(fake_moves),
-                    player_up: fake_player_up,
-                },
-            ),
+        let xid_gs = fakes.emit_sleep(StreamInput::GS(
+            fake_game_id.clone(),
+            GameState {
+                moves: Some(fake_moves),
+                player_up: fake_player_up,
+            },
         ));
-        fake_time_ms += incr_ms;
-
-        thread::sleep(fakes.wait());
 
         // history repo should now contain the moves from that game
         let actual_moves = fakes
@@ -677,14 +669,10 @@ mod test {
 
         // request history
         let fake_req_id = ReqId(uuid::Uuid::default());
-        let xid_ph = quick_xid(fake_time_ms);
-        fakes.sorted_stream.lock().expect("lock").push((
-            xid_ph,
-            StreamInput::PH(ProvideHistory {
-                game_id: fake_game_id.clone(),
-                req_id: fake_req_id.clone(),
-            }),
-        ));
+        let xid_ph = fakes.emit_sleep(StreamInput::PH(ProvideHistory {
+            game_id: fake_game_id.clone(),
+            req_id: fake_req_id.clone(),
+        }));
 
         // There should be an XADD triggered on history-provided stream
         select! {
