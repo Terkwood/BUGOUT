@@ -12,7 +12,6 @@ use crate::model::*;
 use crate::player::other_player;
 use crate::sync::is_client_ahead_by_one_turn;
 use log::{error, warn};
-use redis_streams::XReadEntryId;
 
 const GROUP_NAME: &str = "micro-sync";
 
@@ -642,7 +641,7 @@ mod test {
             player_up: client_player_up,
         };
 
-        let mut fakes = spawn_process_thread();
+        let mut fakes: TestFakes = spawn_process_thread();
 
         // make sure fake history repo is configured
         *fakes.history_contents.lock().expect("lock") = Some(server_moves.clone());
@@ -662,6 +661,19 @@ mod test {
             .expect("some")
             .clone();
         assert_eq!(actual_req_saved, req_sync);
+
+        // There should be an xadd to make-move-ev
+        let actual_make_move = fakes.make_move_xadd_out.recv().expect("recv xadd");
+        let expected_make_move = MakeMove {
+            game_id: game_id.clone(),
+            req_id: req_id.clone(),
+            player: other_player(client_player_up),
+            coord: client_last_move.clone().expect("client last move").coord,
+        };
+        assert_eq!(actual_make_move.game_id, expected_make_move.game_id);
+        assert_eq!(actual_make_move.req_id, expected_make_move.req_id);
+        assert_eq!(actual_make_move.player, expected_make_move.player);
+        assert_eq!(actual_make_move.coord, expected_make_move.coord);
 
         let move_made_at_changelog = MoveMade {
             game_id: game_id.clone(),
