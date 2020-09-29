@@ -578,6 +578,10 @@ mod test {
     #[test]
     fn test_req_sync_server_catch_up() {
         let fakes = spawn_process_thread();
+        todo!("set history repo");
+
+        todo!("fake extern svc: emit MoveMade to stream");
+
         todo!("draft test")
     }
 
