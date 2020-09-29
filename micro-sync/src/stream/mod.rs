@@ -298,7 +298,7 @@ mod test {
         }
     }
 
-    fn quick_eid(ms: u64) -> XReadEntryId {
+    fn quick_xid(ms: u64) -> XReadEntryId {
         XReadEntryId {
             millis_time: ms,
             seq_no: 0,
@@ -316,13 +316,14 @@ mod test {
         time_ms: u64,
     }
     impl TestFakes {
-        pub fn push_event_and_sleep(&self, input: StreamInput) -> XReadEntryId {
-            self.sorted_stream
-                .lock()
-                .expect("lock")
-                .push((todo!(), input));
+        pub fn push_event_and_sleep(&mut self, input: StreamInput) -> XReadEntryId {
+            let xid = quick_xid(self.time_ms);
+            self.sorted_stream.lock().expect("lock").push((xid, input));
 
-            todo!()
+            let wait = self.wait();
+            thread::sleep(wait);
+            self.time_ms = self.time_ms + wait.as_millis() as u64;
+            xid
         }
 
         pub fn wait(&self) -> Duration {
@@ -412,7 +413,7 @@ mod test {
 
         let fake_time_ms = 100;
 
-        let xid_rs = quick_eid(fake_time_ms);
+        let xid_rs = quick_xid(fake_time_ms);
         // emit a request for sync
         fakes
             .sorted_stream
@@ -484,7 +485,7 @@ mod test {
         let wait = Duration::from_millis(166);
         let fake_time_ms = 100;
 
-        let xid_rs = quick_eid(fake_time_ms);
+        let xid_rs = quick_xid(fake_time_ms);
         // emit a request for sync
         fakes
             .sorted_stream
@@ -565,7 +566,7 @@ mod test {
         let wait = Duration::from_millis(166);
         let fake_time_ms = 100;
 
-        let xid_rs = quick_eid(fake_time_ms);
+        let xid_rs = quick_xid(fake_time_ms);
         // emit a request for sync
         fakes
             .sorted_stream
@@ -604,7 +605,7 @@ mod test {
         let wait = Duration::from_millis(166);
         let fake_time_ms = 100;
 
-        let xid_rs = quick_eid(fake_time_ms);
+        let xid_rs = quick_xid(fake_time_ms);
         // emit a request for sync
         fakes
             .sorted_stream
@@ -653,7 +654,7 @@ mod test {
             },
         ];
         let fake_player_up = Player::BLACK;
-        let xid_gs = quick_eid(fake_time_ms);
+        let xid_gs = quick_xid(fake_time_ms);
         // emit a game state
         fakes.sorted_stream.lock().expect("lock").push((
             xid_gs,
@@ -696,7 +697,7 @@ mod test {
 
         // request history
         let fake_req_id = ReqId(uuid::Uuid::default());
-        let xid_ph = quick_eid(fake_time_ms);
+        let xid_ph = quick_xid(fake_time_ms);
         fakes.sorted_stream.lock().expect("lock").push((
             xid_ph,
             StreamInput::PH(ProvideHistory {
