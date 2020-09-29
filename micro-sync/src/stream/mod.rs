@@ -671,8 +671,8 @@ mod test {
         let move_made_at_changelog = MoveMade {
             game_id: game_id.clone(),
             reply_to: req_id.clone(),
-            coord: client_last_move.expect("move").coord,
-            player: other_player(client_player_up),
+            coord: client_last_move.clone().expect("move").coord,
+            player: client_last_move.expect("move").player,
             event_id: EventId::new(),
             captured: Vec::new(),
         };
