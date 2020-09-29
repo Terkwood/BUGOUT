@@ -305,6 +305,7 @@ mod test {
         }
     }
 
+    const SLEEP_WAIT_MS: u64 = 64;
     struct TestFakes {
         history_contents: Arc<Mutex<Option<Vec<Move>>>>,
         sorted_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
@@ -312,6 +313,21 @@ mod test {
         hist_prov_xadd_out: Receiver<HistoryProvided>,
         make_move_xadd_out: Receiver<MakeMove>,
         acks: Arc<FakeAcks>,
+        time_ms: u64,
+    }
+    impl TestFakes {
+        pub fn push_event_and_sleep(&self, input: StreamInput) -> XReadEntryId {
+            self.sorted_stream
+                .lock()
+                .expect("lock")
+                .push((todo!(), input));
+
+            todo!()
+        }
+
+        pub fn wait(&self) -> Duration {
+            Duration::from_millis(SLEEP_WAIT_MS)
+        }
     }
 
     fn spawn_process_thread() -> TestFakes {
@@ -351,6 +367,7 @@ mod test {
             sync_reply_xadd_out,
             make_move_xadd_out,
             acks,
+            time_ms: 0,
         }
     }
 
@@ -393,7 +410,6 @@ mod test {
         // force fake history repo to respond as we expect
         *fakes.history_contents.lock().expect("lock") = Some(moves.clone());
 
-        let wait = Duration::from_millis(166);
         let fake_time_ms = 100;
 
         let xid_rs = quick_eid(fake_time_ms);
@@ -404,7 +420,7 @@ mod test {
             .expect("lock")
             .push((xid_rs, StreamInput::RS(req_sync)));
 
-        thread::sleep(wait);
+        thread::sleep(fakes.wait());
 
         // request sync event should be acknowledged
         // during stream::process
@@ -534,7 +550,7 @@ mod test {
             turn: bogus_client_turn,
         };
 
-        let req_sync = ReqSync {
+        let req_sync: ReqSync = ReqSync {
             session_id: session_id.clone(),
             req_id: req_id.clone(),
             game_id: game_id.clone(),
@@ -578,11 +594,40 @@ mod test {
     #[test]
     fn test_req_sync_server_catch_up() {
         let fakes = spawn_process_thread();
-        todo!("set history repo");
 
-        todo!("fake extern svc: emit MoveMade to stream");
+        let req_sync: ReqSync = todo!();
 
-        todo!("draft test")
+        // make sure fake history repo is configured
+        *fakes.history_contents.lock().expect("lock") = Some(todo!("fill history"));
+
+        todo!("draft test");
+        let wait = Duration::from_millis(166);
+        let fake_time_ms = 100;
+
+        let xid_rs = quick_eid(fake_time_ms);
+        // emit a request for sync
+        fakes
+            .sorted_stream
+            .lock()
+            .expect("lock")
+            .push((xid_rs, StreamInput::RS(req_sync)));
+
+        thread::sleep(wait);
+        // request sync event should be acknowledged
+        // during stream::process
+        let rs_ack = fakes.acks.last_rs_ack_ms.load(Ordering::Relaxed);
+        assert_eq!(rs_ack, xid_rs.millis_time);
+
+        todo!("check replyonmove fake for entry ");
+
+        let xid_mm = fakes.push_event_and_sleep(StreamInput::MM(todo!()));
+
+        thread::sleep(wait);
+        todo!("check mm_ack xid_mm.millis_time");
+
+        let expected: SyncReply = todo!("finally, we should receive a reply 🥰");
+        let actual = fakes.sync_reply_xadd_out.recv().expect("recv");
+        assert_eq!(actual, expected)
     }
 
     /// Test the ProvideHistory API
@@ -593,7 +638,6 @@ mod test {
         // emit some events in a time-ordered fashion
         // (fake xread impl expects time ordering 😁)
 
-        let wait = Duration::from_millis(166);
         let mut fake_time_ms = 100;
         let incr_ms = 100;
 
@@ -623,7 +667,7 @@ mod test {
         ));
         fake_time_ms += incr_ms;
 
-        thread::sleep(wait);
+        thread::sleep(fakes.wait());
 
         // history repo should now contain the moves from that game
         let actual_moves = fakes
@@ -674,7 +718,7 @@ mod test {
                 },
                 _ => panic!("wrong output")
             },
-            default(wait) => panic!("WAIT timeout")
+            default(fakes.wait()) => panic!("WAIT timeout")
         }
     }
 }
