@@ -10,7 +10,7 @@ use std::rc::Rc;
 /// with a MOVE MADE event to form a sync reply.
 pub trait ReplyOnMoveRepo {
     fn get(&self, game_id: &GameId, req_id: &ReqId) -> Result<Option<ReqSync>, FetchErr>;
-    fn put(&self, req: ReqSync) -> Result<(), WriteErr>;
+    fn put(&self, req: &ReqSync) -> Result<(), WriteErr>;
     fn del(&self, game_id: &GameId, req_id: &ReqId) -> Result<(), WriteErr>;
 }
 
@@ -30,7 +30,7 @@ impl ReplyOnMoveRepo for Rc<Client> {
         }
     }
 
-    fn put(&self, req: ReqSync) -> Result<(), WriteErr> {
+    fn put(&self, req: &ReqSync) -> Result<(), WriteErr> {
         let key = redis_key(&req.game_id, &req.req_id);
         if let (Ok(mut conn), Ok(bytes)) = (self.get_connection(), bincode::serialize(&req)) {
             let done = conn.set(&key, bytes).map_err(|_| WriteErr)?;

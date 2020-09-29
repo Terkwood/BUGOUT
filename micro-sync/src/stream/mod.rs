@@ -74,6 +74,17 @@ fn process_req_sync(rs: &ReqSync, components: &Components) {
                     if let Err(e) = components.xadd.add_make_move(make_move) {
                         error!("xadd make move {:?}", e)
                     }
+
+                    // Very important ... 😈
+                    // We need to remember this request, so that
+                    // when a move is finally made by changelog,
+                    // we don't forget to send a sync reply.
+
+                    // The reply will ultimately be processed in our
+                    // process loop's StreamInput::MM(move_made) branch !
+                    if let Err(_) = components.reply_repo.put(rs) {
+                        error!("fail to put req in reply repo")
+                    }
                 }
             } else {
                 // in every other case, we should send the server's view:
@@ -224,16 +235,20 @@ mod test {
         pub contents: Arc<Mutex<Option<ReqSync>>>,
     }
     impl ReplyOnMoveRepo for FakeReplyRepo {
-        fn get(&self, game_id: &GameId, req_id: &ReqId) -> Result<Option<ReqSync>, FetchErr> {
-            todo!()
+        fn get(&self, _game_id: &GameId, _req_id: &ReqId) -> Result<Option<ReqSync>, FetchErr> {
+            Ok(self.contents.lock().expect("mutex").clone())
         }
 
-        fn put(&self, req: ReqSync) -> Result<(), WriteErr> {
-            todo!()
+        fn put(&self, req: &ReqSync) -> Result<(), WriteErr> {
+            let mut data = self.contents.lock().expect("mutex");
+            *data = Some(req.clone());
+            Ok(())
         }
 
-        fn del(&self, game_id: &GameId, req_id: &ReqId) -> Result<(), WriteErr> {
-            todo!()
+        fn del(&self, _game_id: &GameId, _req_id: &ReqId) -> Result<(), WriteErr> {
+            let mut data = self.contents.lock().expect("mutex");
+            *data = None;
+            Ok(())
         }
     }
 
