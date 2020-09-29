@@ -681,7 +681,14 @@ mod test {
         let mm_ack = fakes.acks.last_mm_ack_ms.load(Ordering::Relaxed);
         assert_eq!(mm_ack, xid_mm.millis_time);
 
-        let expected: SyncReply = todo!("finally, we should receive a reply 🥰");
+        let expected: SyncReply = SyncReply {
+            session_id,
+            reply_to: req_id,
+            moves: client_moves,
+            game_id,
+            player_up: client_player_up,
+            turn: client_turn,
+        };
         let actual = fakes.sync_reply_xadd_out.recv().expect("recv");
         assert_eq!(actual, expected)
     }
