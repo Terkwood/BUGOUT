@@ -390,7 +390,7 @@ mod test {
             sync_reply_xadd_out,
             make_move_xadd_out,
             acks,
-            time_ms: 0,
+            time_ms: 100,
         }
     }
 
