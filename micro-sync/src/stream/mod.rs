@@ -305,7 +305,7 @@ mod test {
         }
     }
 
-    const SLEEP_WAIT_MS: u64 = 64;
+    const SLEEP_WAIT_MS: u64 = 166;
     struct TestFakes {
         history_contents: Arc<Mutex<Option<Vec<Move>>>>,
         sorted_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
