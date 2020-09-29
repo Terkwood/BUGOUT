@@ -334,7 +334,7 @@ mod test {
         time_ms: u64,
     }
     impl TestFakes {
-        pub fn emit_stream_sleep(&mut self, input: StreamInput) -> XReadEntryId {
+        pub fn emit_sleep(&mut self, input: StreamInput) -> XReadEntryId {
             let xid = quick_xid(self.time_ms);
             self.sorted_stream.lock().expect("lock").push((xid, input));
 
@@ -433,7 +433,7 @@ mod test {
         // force fake history repo to respond as we expect
         *fakes.history_contents.lock().expect("lock") = Some(moves.clone());
 
-        let xid_rs = fakes.emit_stream_sleep(StreamInput::RS(req_sync));
+        let xid_rs = fakes.emit_sleep(StreamInput::RS(req_sync));
 
         // request sync event should be acknowledged
         // during stream::process
@@ -494,7 +494,7 @@ mod test {
         // note that it is one move ahead of the client's view
         *fakes.history_contents.lock().expect("lock") = Some(moves.clone());
 
-        let xid_rs = fakes.emit_stream_sleep(StreamInput::RS(req_sync));
+        let xid_rs = fakes.emit_sleep(StreamInput::RS(req_sync));
 
         // request sync event should be acknowledged
         // during stream::process
@@ -524,7 +524,7 @@ mod test {
     /// done its job.
     #[test]
     fn test_req_sync_bogus_client_state() {
-        let fakes = spawn_process_thread();
+        let mut fakes = spawn_process_thread();
 
         let turn = 3;
         let player_up = Player::BLACK;
@@ -564,18 +564,7 @@ mod test {
         // make sure fake history repo is configured
         *fakes.history_contents.lock().expect("lock") = Some(moves.clone());
 
-        let wait = Duration::from_millis(166);
-        let fake_time_ms = 100;
-
-        let xid_rs = quick_xid(fake_time_ms);
-        // emit a request for sync
-        fakes
-            .sorted_stream
-            .lock()
-            .expect("lock")
-            .push((xid_rs, StreamInput::RS(req_sync)));
-
-        thread::sleep(wait);
+        let xid_rs = fakes.emit_sleep(StreamInput::RS(req_sync));
 
         // request sync event should be acknowledged
         // during stream::process
@@ -603,18 +592,9 @@ mod test {
         *fakes.history_contents.lock().expect("lock") = Some(todo!("fill history"));
 
         todo!("draft test");
-        let wait = Duration::from_millis(166);
-        let fake_time_ms = 100;
 
-        let xid_rs = quick_xid(fake_time_ms);
-        // emit a request for sync
-        fakes
-            .sorted_stream
-            .lock()
-            .expect("lock")
-            .push((xid_rs, StreamInput::RS(req_sync)));
+        let xid_rs = fakes.emit_sleep(StreamInput::RS(req_sync));
 
-        thread::sleep(wait);
         // request sync event should be acknowledged
         // during stream::process
         let rs_ack = fakes.acks.last_rs_ack_ms.load(Ordering::Relaxed);
@@ -622,9 +602,8 @@ mod test {
 
         todo!("check replyonmove fake for entry ");
 
-        let xid_mm = fakes.emit_stream_sleep(StreamInput::MM(todo!()));
+        let xid_mm = fakes.emit_sleep(StreamInput::MM(todo!()));
 
-        thread::sleep(wait);
         todo!("check mm_ack xid_mm.millis_time");
 
         let expected: SyncReply = todo!("finally, we should receive a reply 🥰");
