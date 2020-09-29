@@ -53,7 +53,7 @@ impl ReplyOnMoveRepo for Rc<Client> {
 
 fn redis_key(game_id: &GameId, req_id: &ReqId) -> String {
     format!(
-        "/BUGOUT/micro_sync/last_move_made/{}_{}",
+        "/BUGOUT/micro_sync/reply_on_move/{}_{}",
         game_id.0, req_id.0
     )
 }
