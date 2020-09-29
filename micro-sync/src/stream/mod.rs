@@ -618,10 +618,6 @@ mod test {
 
         // emit some events in a time-ordered fashion
         // (fake xread impl expects time ordering 😁)
-
-        let mut fake_time_ms = 100;
-        let incr_ms = 100;
-
         let fake_game_id = GameId(uuid::Uuid::default());
         let fake_moves = vec![
             MoveEvent {
@@ -650,6 +646,7 @@ mod test {
             .expect("hr")
             .clone()
             .unwrap();
+
         let expected_moves = vec![
             Move {
                 player: Player::BLACK,
