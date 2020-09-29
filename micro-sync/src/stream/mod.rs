@@ -602,12 +602,21 @@ mod test {
     fn test_req_sync_server_catch_up() {
         let mut fakes = spawn_process_thread();
 
-        let req_sync: ReqSync = todo!();
+        let game_id = GameId::random();
+        let session_id = SessionId::random();
+        let req_id = ReqId::random();
+
+        let req_sync: ReqSync = ReqSync {
+            game_id: game_id.clone(),
+            session_id: session_id.clone(),
+            req_id: req_id.clone(),
+            last_move: todo!(),
+            turn: todo!(),
+            player_up: todo!(),
+        };
 
         // make sure fake history repo is configured
         *fakes.history_contents.lock().expect("lock") = Some(todo!("fill history"));
-
-        todo!("draft test");
 
         let xid_rs = fakes.emit_sleep(StreamInput::RS(req_sync));
 
@@ -616,11 +625,21 @@ mod test {
         let rs_ack = fakes.acks.last_rs_ack_ms.load(Ordering::Relaxed);
         assert_eq!(rs_ack, xid_rs.millis_time);
 
-        todo!("check replyonmove fake for entry ");
+        let actual_req_saved = fakes.reply_contents.lock().expect("lock").expect("some");
+        assert_eq!(actual_req_saved, req_sync);
 
-        let xid_mm = fakes.emit_sleep(StreamInput::MM(todo!()));
+        let move_made_at_changelog = MoveMade {
+            game_id: game_id.clone(),
+            reply_to: req_id.clone(),
+            coord: todo!(),
+            player: todo!(),
+            event_id: EventId::new(),
+            captured: Vec::new(),
+        };
+        let xid_mm = fakes.emit_sleep(StreamInput::MM(move_made_at_changelog));
 
-        todo!("check mm_ack xid_mm.millis_time");
+        let mm_ack = fakes.acks.last_mm_ack_ms.load(Ordering::Relaxed);
+        assert_eq!(mm_ack, xid_mm.millis_time);
 
         let expected: SyncReply = todo!("finally, we should receive a reply 🥰");
         let actual = fakes.sync_reply_xadd_out.recv().expect("recv");

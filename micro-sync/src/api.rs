@@ -1,7 +1,7 @@
 use crate::model::*;
 use serde_derive::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ReqSync {
     pub session_id: SessionId,
     pub req_id: ReqId,
