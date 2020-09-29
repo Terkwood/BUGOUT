@@ -4,6 +4,7 @@ use crate::model::*;
 use redis::Client;
 use std::rc::Rc;
 
+/// "Do we need to form a reply?"
 /// Used when client is ahead of the system.  Stores
 /// a requested sync event which can later be merged
 /// with a MOVE MADE event to form a sync reply.

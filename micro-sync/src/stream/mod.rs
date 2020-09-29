@@ -206,6 +206,23 @@ mod test {
         }
     }
 
+    struct FakeReplyRepo {
+        pub contents: Arc<Mutex<Option<ReqSync>>>,
+    }
+    impl ReplyOnMoveRepo for FakeReplyRepo {
+        fn get(&self, game_id: &GameId, req_id: &ReqId) -> Result<Option<ReqSync>, FetchErr> {
+            todo!()
+        }
+
+        fn put(&self, req: ReqSync) -> Result<(), WriteErr> {
+            todo!()
+        }
+
+        fn del(&self, game_id: &GameId, req_id: &ReqId) -> Result<(), WriteErr> {
+            todo!()
+        }
+    }
+
     struct FakeAcks {
         last_mm_ack_ms: AtomicU64,
         last_rs_ack_ms: AtomicU64,
@@ -308,6 +325,7 @@ mod test {
     const SLEEP_WAIT_MS: u64 = 64;
     struct TestFakes {
         history_contents: Arc<Mutex<Option<Vec<Move>>>>,
+        reply_contents: Arc<Mutex<Option<ReqSync>>>,
         sorted_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
         sync_reply_xadd_out: Receiver<SyncReply>,
         hist_prov_xadd_out: Receiver<HistoryProvided>,
@@ -337,18 +355,21 @@ mod test {
         let (make_move_xadd_in, make_move_xadd_out): (Sender<MakeMove>, _) = unbounded();
 
         let history_contents: Arc<Mutex<Option<Vec<Move>>>> = Arc::new(Mutex::new(None));
+        let reply_contents: Arc<Mutex<Option<ReqSync>>> = Arc::new(Mutex::new(None));
 
         let sorted_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
             Arc::new(Mutex::new(vec![]));
 
         let sfs = sorted_stream.clone();
         let fh = history_contents.clone();
+        let fr = reply_contents.clone();
 
         let acks = Arc::new(FakeAcks::new());
         let ackss = acks.clone();
         thread::spawn(move || {
             let components = Components {
                 history_repo: Box::new(FakeHistoryRepo { contents: fh }),
+                reply_repo: Box::new(FakeReplyRepo { contents: fr }),
                 xread: Box::new(FakeXRead {
                     sorted_data: sfs.clone(),
                     fake_acks: ackss,
@@ -363,6 +384,7 @@ mod test {
 
         TestFakes {
             history_contents,
+            reply_contents,
             sorted_stream,
             hist_prov_xadd_out,
             sync_reply_xadd_out,
