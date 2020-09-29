@@ -152,54 +152,35 @@ fn process_move_made(move_made: &MoveMade, components: &Components) {
             // case where a client was previously ahead of the backend and we
             // emitted a MakeMove request.  This MoveMade is the result
             // of changelog recording our move
-            todo!("hi 🧤");
+            match components.history_repo.get(&move_made.game_id) {
+                Ok(history_nested) => {
+                    let history = history_nested.unwrap_or_default();
+                    let mut all_moves = history.clone();
+                    let the_turn = (history.last().map(|l| l.turn)).unwrap_or_default() + 1;
+                    all_moves.push(Move {
+                        player: move_made.player,
+                        coord: move_made.coord,
+                        turn: the_turn,
+                    });
+
+                    let sync_reply = SyncReply {
+                        session_id: req_sync.session_id,
+                        game_id: req_sync.game_id,
+                        reply_to: req_sync.req_id,
+                        moves: all_moves,
+                        turn: the_turn + 1,
+                        player_up: other_player(move_made.player),
+                    };
+                    if let Err(_) = components.xadd.add_sync_reply(sync_reply) {
+                        error!("xadd sync reply")
+                    }
+                }
+                Err(_) => error!("history fetch err in move made processor"),
+            }
         }
         Ok(None) => (),
         Err(_) => error!("error fetching from reply repo"),
     }
-
-    // this needs to get saved to a repo !!!
-
-    // why ? because we will listen for the move made
-    // event specifically tied to a given session_id
-    // and only then write to sync_reply
-
-    // 🤔🤔 think about it
-    // .... and make sure you maintain joinish semantics with
-    // ... the ReqSync branch of this loop 👩‍🚒👩‍🚒👩‍🚒
-    /*
-    val histProvMoveMadeReplies: KStream<ReqId, SystemMoved> =
-    clientAheadByReqId
-            .join(
-                moveMadeByReqId,
-                { l, r -> SystemMoved(l, r) },
-            )
-    val clientMoveComputed: KStream<SessionId, SyncReplyEv> =
-        histProvMoveMadeReplies.map { reqId, v ->
-            val allMoves = ArrayList<Move>()
-            allMoves.addAll(v.hist.histProv.moves)
-            val theTurn = (
-                    v.hist.histProv.moves.lastOrNull()?.turn ?: 0
-                    ) + 1
-            allMoves.add(Move(
-                v.moved.player,
-                v.moved.coord,
-                theTurn))
-
-            KeyValue(
-                v.hist.reqSync.sessionId,
-                SyncReplyEv(
-                    sessionId = v.hist.reqSync.sessionId,
-                    gameId = v.hist.reqSync.gameId,
-                    replyTo = reqId,
-                    moves = allMoves,
-                    turn = theTurn + 1,
-                    playerUp = otherPlayer(v.moved.player)
-                )
-            )
-        }
-        */
-    todo!("stream match move made");
 }
 
 #[cfg(test)]
