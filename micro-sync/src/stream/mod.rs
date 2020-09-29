@@ -637,28 +637,35 @@ mod test {
         let session_id = SessionId::random();
         let req_id = ReqId::random();
 
+        let client_last_move = client_moves.last().map(|m| m.clone());
         let req_sync: ReqSync = ReqSync {
             game_id: game_id.clone(),
             session_id: session_id.clone(),
             req_id: req_id.clone(),
-            last_move: todo!(),
-            turn: todo!(),
-            player_up: todo!(),
+            last_move: client_last_move,
+            turn: client_turn,
+            player_up: client_player_up,
         };
 
         let mut fakes = spawn_process_thread();
 
         // make sure fake history repo is configured
-        *fakes.history_contents.lock().expect("lock") = Some(todo!("fill history"));
+        *fakes.history_contents.lock().expect("lock") = Some(server_moves.clone());
 
-        let xid_rs = fakes.emit_sleep(StreamInput::RS(req_sync));
+        let xid_rs = fakes.emit_sleep(StreamInput::RS(req_sync.clone()));
 
         // request sync event should be acknowledged
         // during stream::process
         let rs_ack = fakes.acks.last_rs_ack_ms.load(Ordering::Relaxed);
         assert_eq!(rs_ack, xid_rs.millis_time);
 
-        let actual_req_saved = fakes.reply_contents.lock().expect("lock").expect("some");
+        let actual_req_saved = fakes
+            .reply_contents
+            .lock()
+            .expect("lock")
+            .as_ref()
+            .expect("some")
+            .clone();
         assert_eq!(actual_req_saved, req_sync);
 
         let move_made_at_changelog = MoveMade {
