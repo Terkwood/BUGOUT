@@ -128,11 +128,25 @@ fn process_game_state(game_id: &GameId, game_state: &GameState, components: &Com
 }
 
 fn process_move_made(move_made: &MoveMade, components: &Components) {
-    /*if let Err(_e) = components.last_move_made_repo
-        .put(move_made)
+    // Check ReplyOnMove repo to see if we have a req_sync associated with this
+    // game_id & req_id combination.
+    match components
+        .reply_repo
+        .get(&move_made.game_id, &move_made.reply_to)
     {
-        error!("write to move made repo")
-    }*/
+        Ok(Some(req_sync)) => {
+            // We were waiting to hear about this move being made.
+            //  we need to create a
+            // sync reply based on this move.  This branch executes in the
+            // case where a client was previously ahead of the backend and we
+            // emitted a MakeMove request.  This MoveMade is the result
+            // of changelog recording our move
+            todo!();
+            todo!()
+        }
+        Ok(None) => todo!(),
+        Err(_) => todo!(),
+    }
 
     // this needs to get saved to a repo !!!
 
