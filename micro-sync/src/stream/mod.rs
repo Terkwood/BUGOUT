@@ -642,7 +642,7 @@ mod test {
             game_id: game_id.clone(),
             session_id: session_id.clone(),
             req_id: req_id.clone(),
-            last_move: client_last_move,
+            last_move: client_last_move.clone(),
             turn: client_turn,
             player_up: client_player_up,
         };
@@ -671,8 +671,8 @@ mod test {
         let move_made_at_changelog = MoveMade {
             game_id: game_id.clone(),
             reply_to: req_id.clone(),
-            coord: todo!(),
-            player: todo!(),
+            coord: client_last_move.expect("move").coord,
+            player: other_player(client_player_up),
             event_id: EventId::new(),
             captured: Vec::new(),
         };
