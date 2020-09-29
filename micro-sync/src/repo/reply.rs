@@ -41,7 +41,12 @@ impl ReplyOnMoveRepo for Rc<Client> {
     }
 
     fn del(&self, game_id: &GameId, req_id: &ReqId) -> Result<(), WriteErr> {
-        todo!()
+        let key = redis_key(&game_id, &req_id);
+        if let Ok(mut conn) = self.get_connection() {
+            conn.del(&key).map_err(|_| WriteErr)
+        } else {
+            Err(WriteErr)
+        }
     }
 }
 

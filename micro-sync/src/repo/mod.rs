@@ -1,8 +1,8 @@
 mod history;
-mod last_move_made;
+mod reply;
 
 pub use history::*;
-pub use last_move_made::*;
+pub use reply::*;
 
 use log::error;
 use redis::{Commands, Connection};
