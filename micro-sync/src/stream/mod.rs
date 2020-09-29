@@ -314,6 +314,7 @@ mod test {
     struct FakeXAdd {
         hist_prov_in: Sender<HistoryProvided>,
         sync_reply_in: Sender<SyncReply>,
+        make_move_in: Sender<MakeMove>,
     }
     impl XAdd for FakeXAdd {
         fn add_history_provided(&self, data: HistoryProvided) -> Result<(), XAddErr> {
@@ -325,7 +326,7 @@ mod test {
         }
 
         fn add_make_move(&self, data: MakeMove) -> Result<(), XAddErr> {
-            todo!()
+            Ok(self.make_move_in.send(data).expect("send"))
         }
     }
 
@@ -391,6 +392,7 @@ mod test {
                 xadd: Box::new(FakeXAdd {
                     hist_prov_in: hist_prov_xadd_in,
                     sync_reply_in: sync_reply_xadd_in,
+                    make_move_in: make_move_xadd_in,
                 }),
             };
             process(&components);
