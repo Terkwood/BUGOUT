@@ -3,8 +3,10 @@ extern crate redis_streams;
 mod api;
 mod components;
 mod model;
+pub mod player;
 mod repo;
 pub mod stream;
+mod sync;
 mod time;
 
 pub use components::Components;
