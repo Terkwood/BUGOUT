@@ -241,7 +241,7 @@ dependencies = [
 [[package]]
 name = "core-model"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#3cef91c8e3118d910f36acb0c325928eb78e67c7"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#8cd289f2faadde7dcedefe1197a863f130ac4986"
 dependencies = [
  "serde",
  "serde_derive",
@@ -605,7 +605,7 @@ dependencies = [
 [[package]]
 name = "move-model"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#3cef91c8e3118d910f36acb0c325928eb78e67c7"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#8cd289f2faadde7dcedefe1197a863f130ac4986"
 dependencies = [
  "bincode",
  "core-model",
@@ -958,7 +958,6 @@ dependencies = [
 [[package]]
 name = "sync-model"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#3cef91c8e3118d910f36acb0c325928eb78e67c7"
 
 [[package]]
 name = "termcolor"

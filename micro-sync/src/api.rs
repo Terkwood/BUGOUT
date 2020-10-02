@@ -48,7 +48,7 @@ pub struct MakeMove {
     pub player: Player,
     pub coord: Option<Coord>,
 }
-
+/*
 /// An event signalling the acceptance of a move.
 /// This is emitted by changelog service.
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -60,3 +60,4 @@ pub struct MoveMade {
     pub coord: Option<Coord>,
     pub captured: Vec<Coord>,
 }
+*/

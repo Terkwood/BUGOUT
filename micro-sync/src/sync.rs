@@ -21,9 +21,9 @@ mod tests {
     use crate::model::*;
     #[test]
     fn expected_client_ahead_by_one() {
-        let game_id = GameId::random();
-        let session_id = SessionId::random();
-        let req_id = ReqId::random();
+        let game_id = GameId::new();
+        let session_id = SessionId::new();
+        let req_id = ReqId::new();
 
         let system_turn = 3;
         let system_player_up = Player::BLACK;
@@ -48,9 +48,9 @@ mod tests {
 
     #[test]
     fn expected_client_equal() {
-        let game_id = GameId::random();
-        let session_id = SessionId::random();
-        let req_id = ReqId::random();
+        let game_id = GameId::new();
+        let session_id = SessionId::new();
+        let req_id = ReqId::new();
 
         let system_turn = 2;
         let system_player_up = Player::WHITE;
