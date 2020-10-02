@@ -1,34 +1,10 @@
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
-pub struct GameId(pub Uuid);
-#[cfg(test)]
-impl GameId {
-    pub fn random() -> Self {
-        Self(Uuid::new_v4())
-    }
-}
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
-pub struct SessionId(pub Uuid);
-
-#[cfg(test)]
-impl SessionId {
-    pub fn random() -> Self {
-        Self(Uuid::new_v4())
-    }
-}
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
-pub struct ReqId(pub Uuid);
-#[cfg(test)]
-impl ReqId {
-    pub fn random() -> Self {
-        Self(Uuid::new_v4())
-    }
-}
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct EventId(pub Uuid);
-
+pub use core_model::*;
+pub use move_model::*;
+pub use sync_model::*;
+/*
 #[derive(Clone, Serialize, Deserialize, Debug, Copy, PartialEq)]
 pub enum Player {
     BLACK,
@@ -45,7 +21,7 @@ pub struct Coord {
 pub struct MoveEvent {
     pub player: Player,
     pub coord: Option<Coord>,
-}
+}*/
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct Move {
@@ -53,37 +29,36 @@ pub struct Move {
     pub coord: Option<Coord>,
     pub turn: u32,
 }
-
+/*
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct GameState {
     pub moves: Option<Vec<MoveEvent>>,
     pub player_up: Player,
 }
+*/
+trait ToHistory {
+    fn to_history(&self) -> Vec<MoveMade>;
+}
 
-impl GameState {
-    pub fn to_history(&self) -> Vec<Move> {
+impl ToHistory for GameState {
+    fn to_history(&self) -> Vec<MoveMade> {
         self.moves
-            .clone()
-            .map(|the_moves| {
-                the_moves
-                    .iter()
-                    .enumerate()
-                    .map(|(i, &MoveEvent { player, coord })| Move {
-                        turn: (i + 1) as u32,
-                        player,
-                        coord,
-                    })
-                    .collect()
+            .iter()
+            .enumerate()
+            .map(|(i, mm)| Move {
+                turn: (i + 1) as u32,
+                player: mm.player,
+                coord: mm.coord,
             })
+            .collect()
             .unwrap_or_default()
     }
-}
+} /*
+  impl GameState {
+      pub fn to_history(&self) -> Vec<Move> {
 
-impl EventId {
-    pub fn new() -> Self {
-        EventId(Uuid::new_v4())
-    }
-}
+      }
+  }*/
 
 #[cfg(test)]
 mod tests {
@@ -106,6 +81,7 @@ mod tests {
         let game_state = GameState {
             moves: Some(gs_moves),
             player_up,
+            ..Default::default()
         };
 
         let actual = game_state.to_history();

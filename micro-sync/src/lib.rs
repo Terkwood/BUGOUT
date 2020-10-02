@@ -1,4 +1,7 @@
+extern crate core_model;
+extern crate move_model;
 extern crate redis_streams;
+extern crate sync_model;
 
 mod api;
 mod components;

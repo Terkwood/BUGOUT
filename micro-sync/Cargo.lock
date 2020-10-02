@@ -241,7 +241,7 @@ dependencies = [
 [[package]]
 name = "core-model"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#7363bbce27af463d08550449b79a7b77a46f4769"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#ae8ecde7d480072f390478c25fba2caf5cdc87c9"
 dependencies = [
  "serde",
  "serde_derive",
@@ -548,8 +548,21 @@ dependencies = [
  "crossbeam-channel",
  "env_logger",
  "log",
+ "micro_model_moves",
  "redis 0.17.0",
  "redis_streams",
+ "serde",
+ "serde_derive",
+ "sync-model",
+ "uuid",
+]
+
+[[package]]
+name = "micro_model_moves"
+version = "0.1.2"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=d6b94fb#d6b94fbaf0c596a91f43c50670ecdca43ff3c2e4"
+dependencies = [
+ "bincode",
  "serde",
  "serde_derive",
  "uuid",
@@ -937,6 +950,11 @@ dependencies = [
  "quote",
  "unicode-xid",
 ]
+
+[[package]]
+name = "sync-model"
+version = "0.1.0"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#ae8ecde7d480072f390478c25fba2caf5cdc87c9"
 
 [[package]]
 name = "termcolor"
