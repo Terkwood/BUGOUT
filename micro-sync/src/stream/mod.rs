@@ -425,9 +425,9 @@ mod test {
             },
         ];
 
-        let game_id = GameId::random();
-        let session_id = SessionId::random();
-        let req_id = ReqId::random();
+        let game_id = GameId::new();
+        let session_id = SessionId::new();
+        let req_id = ReqId::new();
 
         // client is caught up to the backend
         let last_move = moves.last().cloned();

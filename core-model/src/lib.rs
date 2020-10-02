@@ -5,7 +5,7 @@ use uuid::Uuid;
 pub struct GameId(pub Uuid);
 
 impl GameId {
-    pub fn now() -> Self {
+    pub fn new() -> Self {
         Self(Uuid::new_v4())
     }
 }
