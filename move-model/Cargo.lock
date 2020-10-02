@@ -22,7 +22,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "core-model"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#44ff4035616a93c0f9a34b0539ab8353eb692f4d"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#3cef91c8e3118d910f36acb0c325928eb78e67c7"
 dependencies = [
  "serde 1.0.116 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.116 (registry+https://github.com/rust-lang/crates.io-index)",

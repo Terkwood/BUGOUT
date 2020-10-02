@@ -36,12 +36,13 @@ pub struct GameState {
     pub player_up: Player,
 }
 */
-trait ToHistory {
-    fn to_history(&self) -> Vec<MoveMade>;
+
+pub trait ToHistory {
+    fn to_history(&self) -> Vec<Move>;
 }
 
 impl ToHistory for GameState {
-    fn to_history(&self) -> Vec<MoveMade> {
+    fn to_history(&self) -> Vec<Move> {
         self.moves
             .iter()
             .enumerate()
@@ -51,14 +52,8 @@ impl ToHistory for GameState {
                 coord: mm.coord,
             })
             .collect()
-            .unwrap_or_default()
     }
-} /*
-  impl GameState {
-      pub fn to_history(&self) -> Vec<Move> {
-
-      }
-  }*/
+}
 
 #[cfg(test)]
 mod tests {

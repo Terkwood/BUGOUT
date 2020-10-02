@@ -11,7 +11,7 @@ version = "0.2.1"
 ## TODO BRANCH
 ## TODO BRANCH
 core-model = {git = "https://github.com/Terkwood/BUGOUT", branch = "fix/shared-structs"}
-move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "fix/shared-struct"}
+move-model = {git = "https://github.com/Terkwood/BUGOUT", branch = "fix/shared-structs"}
 sync-model = {git = "https://github.com/Terkwood/BUGOUT", branch = "fix/shared-structs"}
 ## TODO BRANCH
 ## TODO BRANCH
