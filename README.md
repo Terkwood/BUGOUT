@@ -14,6 +14,12 @@
 - Uses a descendant of [Sabaki](https://sabaki.yichuanshen.de/) for the [web UI](browser/).
 - A [public-facing websocket gateway](gateway/README.md) communicates with the browser.
 
+## Marching to Production 
+
+BUGOUT is nearing its production release, at which point we will publish a playable website address. 
+
+Keep an eye on the pinned issues in this github repository if you're interested in the progress toward the release. Primarily we are finishing optimizations to the Multiplayer capability and adding an "easy mode" for playing against the AI. 
+
 ## Getting Started
 
 BUGOUT relies on [docker-compose](https://docs.docker.com/compose/install/) to run _most_ of its services.
