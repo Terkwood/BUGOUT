@@ -9,7 +9,7 @@ impl GameId {
         Self(Uuid::new_v4())
     }
 }
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct SessionId(pub Uuid);
 
 #[cfg(test)]
@@ -18,7 +18,7 @@ impl SessionId {
         Self(Uuid::new_v4())
     }
 }
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct ReqId(pub Uuid);
 #[cfg(test)]
 impl ReqId {
