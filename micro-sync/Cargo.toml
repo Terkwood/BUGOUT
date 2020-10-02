@@ -4,7 +4,7 @@ edition = "2018"
 license = "MIT"
 name = "micro-sync"
 repository = "https://github.com/Terkwood/BUGOUT"
-version = "0.2.0"
+version = "0.2.1"
 
 [dependencies]
 ## TODO BRANCH
