@@ -26,5 +26,5 @@ impl ReqId {
         Self(Uuid::new_v4())
     }
 }
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct EventId(pub Uuid);
