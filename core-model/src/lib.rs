@@ -1,7 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct GameId(pub Uuid);
 #[cfg(test)]
 impl GameId {
