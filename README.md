@@ -18,7 +18,7 @@
 
 BUGOUT is nearing its production release, at which point we will publish a playable website address. 
 
-Keep an eye on the pinned issues in this github repository if you're interested in the progress toward the release. Primarily we are finishing optimizations to the Multiplayer capability and adding an "easy mode" for playing against the AI. 
+Keep an eye on the [pinned issues](https://github.com/Terkwood/BUGOUT/issues) in this github repository if you're interested in the progress toward the release. Primarily we are finishing optimizations to the Multiplayer capability and adding an "easy mode" for playing against the AI. 
 
 ## Getting Started
 
