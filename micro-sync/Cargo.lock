@@ -243,7 +243,7 @@ dependencies = [
 [[package]]
 name = "core-model"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#510b07de92342475b28bf0d485dd403118fdb332"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#97aac6e255f19e0dfa93bc0410ea4ebf021a48bd"
 dependencies = [
  "serde",
  "serde_derive",
@@ -607,7 +607,7 @@ dependencies = [
 [[package]]
 name = "move-model"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#510b07de92342475b28bf0d485dd403118fdb332"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#97aac6e255f19e0dfa93bc0410ea4ebf021a48bd"
 dependencies = [
  "bincode",
  "core-model",
