@@ -1,27 +1,8 @@
 use serde_derive::{Deserialize, Serialize};
-use uuid::Uuid;
 
 pub use core_model::*;
 pub use move_model::*;
 pub use sync_model::*;
-/*
-#[derive(Clone, Serialize, Deserialize, Debug, Copy, PartialEq)]
-pub enum Player {
-    BLACK,
-    WHITE,
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug, Copy, PartialEq)]
-pub struct Coord {
-    pub x: u16,
-    pub y: u16,
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct MoveEvent {
-    pub player: Player,
-    pub coord: Option<Coord>,
-}*/
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct Move {
@@ -29,13 +10,6 @@ pub struct Move {
     pub coord: Option<Coord>,
     pub turn: u32,
 }
-/*
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct GameState {
-    pub moves: Option<Vec<MoveEvent>>,
-    pub player_up: Player,
-}
-*/
 
 pub trait ToHistory {
     fn to_history(&self) -> Vec<Move>;

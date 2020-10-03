@@ -49,13 +49,14 @@ dependencies = [
 
 [[package]]
 name = "async-io"
-version = "1.1.6"
+version = "1.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5bfd63f6fc8fd2925473a147d3f4d252c712291efdde0d7057b25146563402c"
+checksum = "e8cf20dd2c6d20ef09876e189b44f213e66e846972cb303eef28d9dfbe790928"
 dependencies = [
  "concurrent-queue",
  "fastrand",
  "futures-lite",
+ "libc",
  "log",
  "nb-connect",
  "once_cell",
@@ -63,6 +64,7 @@ dependencies = [
  "polling",
  "vec-arena",
  "waker-fn",
+ "winapi 0.3.9",
 ]
 
 [[package]]
@@ -241,7 +243,7 @@ dependencies = [
 [[package]]
 name = "core-model"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#8cd289f2faadde7dcedefe1197a863f130ac4986"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#510b07de92342475b28bf0d485dd403118fdb332"
 dependencies = [
  "serde",
  "serde_derive",
@@ -605,13 +607,12 @@ dependencies = [
 [[package]]
 name = "move-model"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#8cd289f2faadde7dcedefe1197a863f130ac4986"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/shared-structs#510b07de92342475b28bf0d485dd403118fdb332"
 dependencies = [
  "bincode",
  "core-model",
  "serde",
  "serde_derive",
- "uuid",
 ]
 
 [[package]]
@@ -723,14 +724,14 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "polling"
-version = "1.1.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0720e0b9ea9d52451cf29d3413ba8a9303f8815d9d9653ef70e03ff73e65566"
+checksum = "7215a098a80ab8ebd6349db593dc5faf741781bad0c4b7c5701fea6af548d52c"
 dependencies = [
  "cfg-if",
  "libc",
  "log",
- "wepoll-sys-stjepang",
+ "wepoll-sys",
  "winapi 0.3.9",
 ]
 
@@ -1155,10 +1156,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "wepoll-sys-stjepang"
-version = "1.0.8"
+name = "wepoll-sys"
+version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fdfbb03f290ca0b27922e8d48a0997b4ceea12df33269b9f75e713311eb178d"
+checksum = "142bc2cba3fe88be1a8fcb55c727fa4cd5b0cf2d7438722792e22f26f04bc1e0"
 dependencies = [
  "cc",
 ]

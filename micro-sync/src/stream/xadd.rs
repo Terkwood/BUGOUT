@@ -1,5 +1,6 @@
 use super::topics;
-use crate::api::{HistoryProvided, MakeMove, SyncReply};
+use crate::api::{HistoryProvided, SyncReply};
+use move_model::MakeMoveCommand;
 use redis::{streams::StreamMaxlen, Client, Commands};
 use std::collections::BTreeMap;
 use std::rc::Rc;

@@ -27,14 +27,6 @@ impl Player {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Eq, Serialize, Deserialize)]
-pub struct MakeMoveCommand {
-    pub game_id: GameId,
-    pub req_id: ReqId,
-    pub player: Player,
-    pub coord: Option<Coord>,
-}
-
 #[derive(Debug, Clone, PartialEq, Copy, Eq, Hash, Serialize, Deserialize)]
 pub struct Coord {
     pub x: u16,
@@ -107,7 +99,7 @@ impl Default for Captures {
 /// Also emitted by micro-sync in the case that the backend
 /// needs to catch up with the client's view of their
 /// own state.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Debug, PartialEq, Clone, Eq, Serialize, Deserialize)]
 pub struct MakeMove {
     pub game_id: GameId,
     pub req_id: ReqId,
