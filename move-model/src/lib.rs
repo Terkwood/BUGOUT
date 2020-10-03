@@ -3,7 +3,6 @@ extern crate core_model;
 use core_model::*;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
-use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize, Eq, Hash)]
 pub enum Player {
@@ -101,6 +100,21 @@ impl Default for Captures {
     }
 }
 
+/// This command requests that a move be judged for
+/// for correctness and, if accepted, communicated to
+/// all game participants.
+/// Emitted by changelog.
+/// Also emitted by micro-sync in the case that the backend
+/// needs to catch up with the client's view of their
+/// own state.
+#[derive(Clone, Debug, Serialize)]
+pub struct MakeMove {
+    pub game_id: GameId,
+    pub req_id: ReqId,
+    pub player: Player,
+    pub coord: Option<Coord>,
+}
+
 /// An event signalling the acceptance of a move.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct MoveMade {
@@ -120,6 +134,7 @@ impl MoveMade {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uuid::Uuid;
     #[test]
     fn test_game_state_ser_basic() {
         let gs = GameState::default();
