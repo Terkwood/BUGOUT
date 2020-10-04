@@ -1,7 +1,8 @@
 use super::*;
-use crate::model::*;
+use core_model::*;
 use redis::{Client, Commands};
 use std::rc::Rc;
+use sync_model::Move;
 
 pub trait HistoryRepo {
     fn get(&self, game_id: &GameId) -> Result<Option<Vec<Move>>, FetchErr>;

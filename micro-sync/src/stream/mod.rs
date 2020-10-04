@@ -6,12 +6,15 @@ mod xread;
 pub use xadd::*;
 pub use xread::*;
 
-use crate::api::*;
 use crate::components::*;
-use crate::model::*;
 use crate::player::other_player;
 use crate::sync::is_client_ahead_by_one_turn;
+use crate::ToHistory;
+use core_model::*;
 use log::{error, warn};
+use move_model::*;
+use sync_model::api::*;
+use sync_model::Move;
 
 const GROUP_NAME: &str = "micro-sync";
 
@@ -425,9 +428,9 @@ mod test {
             },
         ];
 
-        let game_id = GameId::random();
-        let session_id = SessionId::random();
-        let req_id = ReqId::random();
+        let game_id = GameId::new();
+        let session_id = SessionId::new();
+        let req_id = ReqId::new();
 
         // client is caught up to the backend
         let last_move = moves.last().cloned();
@@ -484,9 +487,9 @@ mod test {
             },
         ];
 
-        let game_id = GameId::random();
-        let session_id = SessionId::random();
-        let req_id = ReqId::random();
+        let game_id = GameId::new();
+        let session_id = SessionId::new();
+        let req_id = ReqId::new();
 
         // client view is behind by one move
         let client_last_move_behind_by_one = moves[0].clone();
@@ -551,9 +554,9 @@ mod test {
             },
         ];
 
-        let game_id = GameId::random();
-        let session_id = SessionId::random();
-        let req_id = ReqId::random();
+        let game_id = GameId::new();
+        let session_id = SessionId::new();
+        let req_id = ReqId::new();
 
         let bogus_client_turn = 7;
         let bogus_client_move = Move {
@@ -627,9 +630,9 @@ mod test {
             },
         ];
 
-        let game_id = GameId::random();
-        let session_id = SessionId::random();
-        let req_id = ReqId::random();
+        let game_id = GameId::new();
+        let session_id = SessionId::new();
+        let req_id = ReqId::new();
 
         let client_last_move = client_moves.last().map(|m| m.clone());
         let req_sync: ReqSync = ReqSync {
@@ -709,21 +712,30 @@ mod test {
         // (fake xread impl expects time ordering 😁)
         let fake_game_id = GameId(uuid::Uuid::default());
         let fake_moves = vec![
-            MoveEvent {
+            MoveMade {
                 player: Player::BLACK,
                 coord: Some(Coord { x: 1, y: 1 }),
+                game_id: fake_game_id.clone(),
+                reply_to: ReqId::new(),
+                event_id: EventId::new(),
+                captured: Vec::new(),
             },
-            MoveEvent {
+            MoveMade {
                 player: Player::WHITE,
                 coord: None,
+                reply_to: ReqId::new(),
+                event_id: EventId::new(),
+                game_id: fake_game_id.clone(),
+                captured: Vec::new(),
             },
         ];
         let fake_player_up = Player::BLACK;
         let xid_gs = fakes.emit_sleep(StreamInput::GS(
             fake_game_id.clone(),
             GameState {
-                moves: Some(fake_moves),
+                moves: fake_moves,
                 player_up: fake_player_up,
+                ..Default::default()
             },
         ));
 

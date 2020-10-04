@@ -1,8 +1,8 @@
 use super::*;
-use crate::api::ReqSync;
-use crate::model::*;
+use core_model::*;
 use redis::Client;
 use std::rc::Rc;
+use sync_model::api::ReqSync;
 
 /// "Do we need to form a reply?"
 /// Used when client is ahead of the system.  Stores
