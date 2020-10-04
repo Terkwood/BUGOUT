@@ -6,15 +6,12 @@ name = "micro-sync"
 repository = "https://github.com/Terkwood/BUGOUT"
 version = "0.2.1"
 
-### TODO FIX BRANCHES
-### TODO FIX BRANCHES
-### TODO FIX BRANCHES
 [dependencies]
 bincode = "1.3.1"
-core-model = {git = "https://github.com/Terkwood/BUGOUT", branch = "fix/shared-structs"}
+core-model = {path = "../core-model"}
 env_logger = "0.7.1"
 log = "0.4.11"
-move-model = {git = "https://github.com/Terkwood/BUGOUT", branch = "fix/shared-structs"}
+move-model = {path = "../move-model"}
 redis = {version = "0.17.0", features = ["r2d2"]}
 redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "0.3.1", rev = "0e2fdb7"}
 serde = "1.0.116"
