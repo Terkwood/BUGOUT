@@ -1,9 +1,9 @@
 use super::topics;
-use crate::api::{HistoryProvided, SyncReply};
 use move_model::MakeMove;
 use redis::{streams::StreamMaxlen, Client, Commands};
 use std::collections::BTreeMap;
 use std::rc::Rc;
+use sync_model::api::{HistoryProvided, SyncReply};
 
 pub trait XAdd {
     fn add_history_provided(&self, data: HistoryProvided) -> Result<(), XAddErr>;

@@ -3,16 +3,16 @@ extern crate move_model;
 extern crate redis_streams;
 extern crate sync_model;
 
-mod api;
 mod components;
-mod model;
 pub mod player;
 mod repo;
 pub mod stream;
 mod sync;
 mod time;
+mod to_history;
 
 pub use components::Components;
+pub use to_history::ToHistory;
 
 use redis::Client;
 use std::rc::Rc;

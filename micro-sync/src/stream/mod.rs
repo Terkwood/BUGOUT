@@ -6,12 +6,15 @@ mod xread;
 pub use xadd::*;
 pub use xread::*;
 
-use crate::api::*;
 use crate::components::*;
-use crate::model::*;
 use crate::player::other_player;
 use crate::sync::is_client_ahead_by_one_turn;
+use crate::ToHistory;
+use core_model::*;
 use log::{error, warn};
+use move_model::*;
+use sync_model::api::*;
+use sync_model::Move;
 
 const GROUP_NAME: &str = "micro-sync";
 

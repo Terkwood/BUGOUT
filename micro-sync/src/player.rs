@@ -1,4 +1,4 @@
-use crate::model::Player;
+use move_model::Player;
 pub fn other_player(player: Player) -> Player {
     match player {
         Player::BLACK => Player::WHITE,

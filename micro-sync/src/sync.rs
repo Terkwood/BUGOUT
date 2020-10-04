@@ -1,6 +1,6 @@
-use crate::api::ReqSync;
-use crate::model::Player;
 use crate::player::other_player;
+use move_model::Player;
+use sync_model::api::ReqSync;
 
 /// Note that the check for last_move.is_some() makes
 /// sense.  If the player passed, we'll still see a `Move`,
@@ -18,7 +18,8 @@ pub fn is_client_ahead_by_one_turn(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::*;
+    use core_model::*;
+    use sync_model::*;
     #[test]
     fn expected_client_ahead_by_one() {
         let game_id = GameId::new();

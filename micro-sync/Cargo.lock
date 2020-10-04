@@ -959,6 +959,12 @@ dependencies = [
 [[package]]
 name = "sync-model"
 version = "0.1.0"
+dependencies = [
+ "core-model",
+ "move-model",
+ "serde",
+ "serde_derive",
+]
 
 [[package]]
 name = "termcolor"
