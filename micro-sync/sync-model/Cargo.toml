@@ -7,7 +7,7 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-core-model = {git = "https://github.com/Terkwood/BUGOUT", branch = "fix/shared-structs"}
-move-model = {git = "https://github.com/Terkwood/BUGOUT", branch = "fix/shared-structs"}
+core-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "af087ee"}
+move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "af087ee"}
 serde = "1.0.116"
 serde_derive = "1.0.116"
