@@ -1,5 +1,6 @@
 use super::*;
 use crate::api::GameReady;
+use core_model::SessionId;
 use redis::Commands;
 
 /// Associates SessionIds with GameIds and allows retrieval by SessionId

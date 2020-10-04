@@ -1,4 +1,5 @@
 use super::*;
+use core_model::SessionId;
 pub trait PrefsRepo {
     fn get(&self, session_id: &SessionId) -> Result<Option<SessionColorPref>, FetchErr>;
     fn put(&self, scp: &SessionColorPref) -> Result<(), WriteErr>;

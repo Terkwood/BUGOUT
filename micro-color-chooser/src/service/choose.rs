@@ -1,5 +1,6 @@
 use crate::api::ColorsChosen;
 use crate::model::*;
+use core_model::*;
 use rand::distributions::Uniform;
 use rand::prelude::*;
 
