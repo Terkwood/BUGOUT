@@ -1,6 +1,3 @@
-use serde_derive::{Deserialize, Serialize};
-
-use core_model::*;
 use move_model::*;
 use sync_model::*;
 
@@ -25,6 +22,7 @@ impl ToHistory for GameState {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core_model::*;
     #[test]
     fn game_state_to_history() {
         let c1 = None;
