@@ -1,5 +1,5 @@
-use crate::api::ColorsChosen;
-use crate::model::*;
+use color_model::api::ColorsChosen;
+use color_model::*;
 use core_model::*;
 use rand::distributions::Uniform;
 use rand::prelude::*;
@@ -53,11 +53,11 @@ mod tests {
 
     #[test]
     pub fn no_conflict() {
-        let game_id = GameId::random();
-        let first_sid = SessionId::random();
-        let second_sid = SessionId::random();
-        let first_cid = ClientId::random();
-        let second_cid = ClientId::random();
+        let game_id = GameId::new();
+        let first_sid = SessionId::new();
+        let second_sid = SessionId::new();
+        let first_cid = ClientId::new();
+        let second_cid = ClientId::new();
         let mut random = Random::new();
 
         let first_pref = SessionColorPref {
@@ -82,11 +82,11 @@ mod tests {
     }
     #[test]
     pub fn conflict_black() {
-        let game_id = GameId::random();
-        let first_sid = SessionId::random();
-        let second_sid = SessionId::random();
-        let first_cid = ClientId::random();
-        let second_cid = ClientId::random();
+        let game_id = GameId::new();
+        let first_sid = SessionId::new();
+        let second_sid = SessionId::new();
+        let first_cid = ClientId::new();
+        let second_cid = ClientId::new();
         let mut random = Random::new();
 
         let first_pref = SessionColorPref {
@@ -105,11 +105,11 @@ mod tests {
 
     #[test]
     pub fn conflict_white() {
-        let game_id = GameId::random();
-        let first_sid = SessionId::random();
-        let second_sid = SessionId::random();
-        let first_cid = ClientId::random();
-        let second_cid = ClientId::random();
+        let game_id = GameId::new();
+        let first_sid = SessionId::new();
+        let second_sid = SessionId::new();
+        let first_cid = ClientId::new();
+        let second_cid = ClientId::new();
         let mut random = Random::new();
 
         let first_pref = SessionColorPref {
@@ -127,11 +127,11 @@ mod tests {
     }
     #[test]
     pub fn both_any() {
-        let game_id = GameId::random();
-        let first_sid = SessionId::random();
-        let second_sid = SessionId::random();
-        let first_cid = ClientId::random();
-        let second_cid = ClientId::random();
+        let game_id = GameId::new();
+        let first_sid = SessionId::new();
+        let second_sid = SessionId::new();
+        let first_cid = ClientId::new();
+        let second_cid = ClientId::new();
         let mut random = Random::new();
 
         let first_pref = SessionColorPref {
@@ -150,11 +150,11 @@ mod tests {
 
     #[test]
     pub fn first_any() {
-        let game_id = GameId::random();
-        let first_sid = SessionId::random();
-        let second_sid = SessionId::random();
-        let first_cid = ClientId::random();
-        let second_cid = ClientId::random();
+        let game_id = GameId::new();
+        let first_sid = SessionId::new();
+        let second_sid = SessionId::new();
+        let first_cid = ClientId::new();
+        let second_cid = ClientId::new();
         let mut random = Random::new();
 
         let first_pref = SessionColorPref {
@@ -180,11 +180,11 @@ mod tests {
 
     #[test]
     pub fn second_any() {
-        let game_id = GameId::random();
-        let first_sid = SessionId::random();
-        let second_sid = SessionId::random();
-        let first_cid = ClientId::random();
-        let second_cid = ClientId::random();
+        let game_id = GameId::new();
+        let first_sid = SessionId::new();
+        let second_sid = SessionId::new();
+        let first_cid = ClientId::new();
+        let second_cid = ClientId::new();
         let mut random = Random::new();
 
         let first_pref = SessionColorPref {

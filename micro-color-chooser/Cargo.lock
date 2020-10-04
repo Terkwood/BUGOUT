@@ -219,6 +219,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "color-model"
+version = "0.1.0"
+dependencies = [
+ "core-model",
+ "serde",
+ "serde_derive",
+]
+
+[[package]]
 name = "combine"
 version = "4.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -242,8 +251,8 @@ dependencies = [
 
 [[package]]
 name = "core-model"
-version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=af087ee#af087ee538fa85e38057036ea657b33002175276"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/color-choose-model#87ccbc13bf110f729faebdc8062e8104ede2f08c"
 dependencies = [
  "serde",
  "serde_derive",
@@ -552,6 +561,7 @@ name = "micro-color-chooser"
 version = "0.1.1"
 dependencies = [
  "bincode",
+ "color-model",
  "core-model",
  "crossbeam-channel",
  "env_logger",
@@ -559,8 +569,6 @@ dependencies = [
  "rand",
  "redis 0.17.0",
  "redis_streams",
- "serde",
- "serde_derive",
  "uuid",
 ]
 

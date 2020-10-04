@@ -1,7 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, Hash)]
 pub struct GameId(pub Uuid);
 
 impl GameId {
@@ -10,7 +10,7 @@ impl GameId {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, Hash)]
 pub struct ClientId(pub Uuid);
 
 impl ClientId {
@@ -18,7 +18,7 @@ impl ClientId {
         Self(Uuid::new_v4())
     }
 }
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, Hash)]
 pub struct SessionId(pub Uuid);
 
 impl SessionId {
@@ -26,7 +26,7 @@ impl SessionId {
         Self(Uuid::new_v4())
     }
 }
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, Hash)]
 pub struct ReqId(pub Uuid);
 
 impl ReqId {
@@ -34,7 +34,7 @@ impl ReqId {
         Self(Uuid::new_v4())
     }
 }
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, Hash)]
 pub struct EventId(pub Uuid);
 
 impl EventId {

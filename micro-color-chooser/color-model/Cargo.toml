@@ -5,5 +5,6 @@ name = "color-model"
 version = "0.1.0"
 
 [dependencies]
+core-model = {git = "https://github.com/Terkwood/BUGOUT", branch = "fix/color-choose-model"}
 serde = "1.0.116"
 serde_derive = "1.0.116"

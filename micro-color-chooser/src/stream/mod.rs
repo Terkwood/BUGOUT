@@ -7,10 +7,10 @@ pub use init::*;
 pub use xadd::*;
 pub use xread::*;
 
-use crate::api::*;
 use crate::components::*;
-use crate::model::*;
 use crate::service::{choose, game_color_prefs};
+use color_model::api::*;
+use color_model::*;
 
 use log::error;
 use redis_streams::XReadEntryId;
@@ -118,16 +118,16 @@ mod tests {
     use super::*;
     use crate::repo::*;
     use crate::Components;
+    use core_model::*;
     use crossbeam_channel::{unbounded, Receiver, Sender};
     use redis_streams::XReadEntryId;
     use std::collections::HashMap;
     use std::rc::Rc;
+    use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
     use std::sync::{Arc, Mutex};
     use std::thread;
     use std::time::Duration;
     use uuid::Uuid;
-
-    use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
 
     struct FakeGameRepo {
         pub contents: Arc<Mutex<HashMap<SessionId, GameReady>>>,
@@ -416,7 +416,7 @@ mod tests {
             session_id: sessions.0.clone(),
             color_pref: ColorPref::White,
         });
-        let game_id = GameId::random();
+        let game_id = GameId::new();
         let game_ready = StreamInput::GR(GameReady {
             game_id,
             sessions,

@@ -4,7 +4,7 @@ mod prefs;
 pub use game_ready::*;
 pub use prefs::*;
 
-use crate::model::*;
+use color_model::*;
 use log::error;
 use redis::{Client, Commands, Connection};
 use std::rc::Rc;
