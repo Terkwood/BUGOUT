@@ -223,6 +223,7 @@ name = "color-model"
 version = "0.1.0"
 dependencies = [
  "core-model",
+ "lobby-model",
  "serde",
  "serde_derive",
 ]
@@ -575,7 +576,6 @@ dependencies = [
  "core-model",
  "crossbeam-channel",
  "env_logger",
- "lobby-model",
  "log",
  "rand",
  "redis 0.17.0",

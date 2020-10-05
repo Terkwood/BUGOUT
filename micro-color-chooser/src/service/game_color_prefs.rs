@@ -1,8 +1,8 @@
 use crate::components::Repos;
 use crate::repo::*;
+use api::GameReady;
 use color_model::*;
 use core_model::*;
-use lobby_model::api::GameReady;
 
 /// Call this when you receive a ChooseColorPref event
 /// It will provide an aggregated view of choices for that game,

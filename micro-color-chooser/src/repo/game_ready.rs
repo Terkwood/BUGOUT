@@ -1,6 +1,6 @@
 use super::*;
+use color_model::api::GameReady;
 use core_model::SessionId;
-use lobby_model::api::GameReady;
 use redis::Commands;
 
 /// Associates SessionIds with GameIds and allows retrieval by SessionId

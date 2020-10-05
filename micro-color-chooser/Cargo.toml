@@ -14,7 +14,6 @@ bincode = "1.3.1"
 color-model = {path = "color-model"}
 core-model = {git = "https://github.com/Terkwood/BUGOUT", branch = "fix/color-choose-model"}
 env_logger = "0.7.1"
-lobby-model = {git = "https://github.com/Terkwood/BUGOUT", branch = "fix/color-choose-model"}
 log = "0.4.11"
 rand = "0.7.3"
 redis = {version = "0.17.0", features = ["r2d2"]}
