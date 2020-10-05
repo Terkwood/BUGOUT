@@ -11,6 +11,7 @@ use crate::components::*;
 use crate::service::{choose, game_color_prefs};
 use color_model::api::*;
 use color_model::*;
+use lobby_model::api::GameReady;
 
 use log::error;
 use redis_streams::XReadEntryId;
