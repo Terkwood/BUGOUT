@@ -11,6 +11,7 @@ use crate::components::*;
 use crate::service::{choose, game_color_prefs};
 use color_model::api::*;
 use color_model::*;
+use lobby_model::api::GameReady;
 
 use log::error;
 use redis_streams::XReadEntryId;
@@ -340,10 +341,12 @@ mod tests {
             color_pref: ColorPref::Black,
         });
 
+        let board_size = 9;
         let game_ready = StreamInput::GR(GameReady {
             game_id,
             sessions,
             event_id: EventId::new(),
+            board_size,
         });
         let test_outputs = run_stream(vec![first_client_pref, second_client_pref, game_ready]);
 
@@ -370,10 +373,12 @@ mod tests {
             color_pref: ColorPref::Black,
         });
 
+        let board_size = 9;
         let game_ready = StreamInput::GR(GameReady {
             game_id,
             sessions,
             event_id: EventId::new(),
+            board_size,
         });
         let test_outputs = run_stream(vec![game_ready, first_client_pref, second_client_pref]);
 
@@ -417,10 +422,12 @@ mod tests {
             color_pref: ColorPref::White,
         });
         let game_id = GameId::new();
+        let board_size = 9;
         let game_ready = StreamInput::GR(GameReady {
             game_id,
             sessions,
             event_id: EventId::new(),
+            board_size,
         });
 
         let test_outputs = run_stream(vec![first_client_pref, game_ready]);

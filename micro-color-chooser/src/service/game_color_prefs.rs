@@ -1,8 +1,8 @@
 use crate::components::Repos;
 use crate::repo::*;
-use color_model::api::GameReady;
 use color_model::*;
 use core_model::*;
+use lobby_model::api::GameReady;
 
 /// Call this when you receive a ChooseColorPref event
 /// It will provide an aggregated view of choices for that game,
@@ -154,6 +154,7 @@ mod tests {
             color_pref: ColorPref::Black,
             client_id: another_cid.clone(),
         };
+        let board_size = 9;
 
         let repos = Repos {
             prefs: Rc::new(PrefsTwo(one_pref.clone(), another_pref.clone())),
@@ -161,6 +162,7 @@ mod tests {
                 sessions: (sid.clone(), another_sid.clone()),
                 game_id: gid.clone(),
                 event_id: EventId::new(),
+                board_size,
             })),
         };
 
@@ -184,12 +186,14 @@ mod tests {
             color_pref: ColorPref::Black,
             client_id: cid.clone(),
         };
+        let board_size = 9;
         let repos = Repos {
             prefs: Rc::new(PrefsOne(pref.clone())),
             game_ready: Rc::new(SGReady(GameReady {
                 sessions: (sid.clone(), SessionId::new()),
                 game_id: gid.clone(),
                 event_id: EventId::new(),
+                board_size,
             })),
         };
 
@@ -221,10 +225,12 @@ mod tests {
         let another_sid = SessionId::new();
         let sessions = (sid.clone(), another_sid.clone());
 
+        let board_size = 9;
         let game_ready = GameReady {
             sessions: sessions.clone(),
             game_id: gid.clone(),
             event_id: EventId::new(),
+            board_size,
         };
 
         let first_pref = SessionColorPref {
@@ -259,10 +265,12 @@ mod tests {
 
         let sessions = (sid.clone(), SessionId::new());
 
+        let board_size = 9;
         let game_ready = GameReady {
             sessions: sessions.clone(),
             game_id: gid.clone(),
             event_id: EventId::new(),
+            board_size,
         };
 
         let pref = SessionColorPref {
@@ -286,10 +294,12 @@ mod tests {
 
         let sessions = (sid, SessionId::new());
 
+        let board_size = 9;
         let game_ready = GameReady {
             sessions: sessions.clone(),
             game_id: gid,
             event_id: EventId::new(),
+            board_size,
         };
 
         let repos = Repos {
