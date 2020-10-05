@@ -4,11 +4,13 @@ mod xread;
 pub use xadd::*;
 pub use xread::*;
 
-use crate::api::*;
 use crate::components::Components;
-use crate::game_lobby::*;
+use crate::game_lobby::GameLobbyOps;
 use crate::repo::EntryIdType;
-use crate::*;
+use crate::PUBLIC_GAME_BOARD_SIZE;
+use core_model::*;
+use lobby_model::api::*;
+use lobby_model::*;
 
 use log::{error, warn};
 use redis_streams::XReadEntryId;
@@ -343,10 +345,10 @@ mod test {
         let mut fake_time_ms = 100;
         let incr_ms = 100;
 
-        let session_b = SessionId(Uuid::new_v4());
-        let session_w = SessionId(Uuid::new_v4());
-        let client_b = ClientId(Uuid::new_v4());
-        let client_w = ClientId(Uuid::new_v4());
+        let session_b = SessionId::new();
+        let session_w = SessionId::new();
+        let client_b = ClientId::new();
+        let client_w = ClientId::new();
         sorted_fake_stream.lock().expect("lock").push((
             quick_eid(fake_time_ms),
             StreamInput::FPG(FindPublicGame {

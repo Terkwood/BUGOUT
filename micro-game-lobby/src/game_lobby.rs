@@ -1,4 +1,5 @@
-use crate::*;
+use core_model::*;
+use lobby_model::*;
 
 pub trait GameLobbyOps {
     fn open(&self, game: Game) -> Self;
@@ -41,17 +42,15 @@ impl AsBytes for GameLobby {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use uuid::Uuid;
+
     #[test]
     fn lobby_execute_bytes() {
-        let lobby = GameLobby {
-            games: HashSet::new(),
-        };
+        let lobby = GameLobby::default();
         assert!(lobby.as_bytes().is_ok());
         let next = lobby.open(Game {
-            game_id: GameId(Uuid::new_v4()),
+            game_id: GameId::new(),
             board_size: 3,
-            creator: SessionId(Uuid::new_v4()),
+            creator: SessionId::new(),
             visibility: Visibility::Private,
         });
         assert!(!next.games.is_empty());

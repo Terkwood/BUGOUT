@@ -1,6 +1,5 @@
 use super::{FetchErr, WriteErr};
-use crate::game_lobby::GameLobby;
-
+use lobby_model::GameLobby;
 use redis::Client;
 use redis::Commands;
 use std::rc::Rc;

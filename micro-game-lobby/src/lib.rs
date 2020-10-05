@@ -1,10 +1,10 @@
 extern crate bincode;
 extern crate community_redis_streams;
+extern crate core_model;
 extern crate crossbeam_channel;
 extern crate log;
 extern crate redis;
 
-pub mod api;
 pub mod components;
 mod game_lobby;
 mod repo;
