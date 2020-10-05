@@ -1,9 +1,9 @@
+extern crate color_model;
+extern crate core_model;
 extern crate rand;
 extern crate redis_streams;
 
-mod api;
 mod components;
-mod model;
 mod repo;
 mod service;
 pub mod stream;

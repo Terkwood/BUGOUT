@@ -1,7 +1,8 @@
-use crate::api::GameReady;
 use crate::components::Repos;
-use crate::model::*;
 use crate::repo::*;
+use api::GameReady;
+use color_model::*;
+use core_model::*;
 
 /// Call this when you receive a ChooseColorPref event
 /// It will provide an aggregated view of choices for that game,
@@ -138,21 +139,22 @@ mod tests {
 
     #[test]
     fn test_by_session_id_complete() {
-        let sid = SessionId::random();
-        let cid = ClientId::random();
-        let gid = GameId::random();
+        let sid = SessionId::new();
+        let cid = ClientId::new();
+        let gid = GameId::new();
         let one_pref = SessionColorPref {
             session_id: sid.clone(),
             color_pref: ColorPref::Black,
             client_id: cid.clone(),
         };
-        let another_sid = SessionId::random();
-        let another_cid = ClientId::random();
+        let another_sid = SessionId::new();
+        let another_cid = ClientId::new();
         let another_pref = SessionColorPref {
             session_id: another_sid.clone(),
             color_pref: ColorPref::Black,
             client_id: another_cid.clone(),
         };
+        let board_size = 9;
 
         let repos = Repos {
             prefs: Rc::new(PrefsTwo(one_pref.clone(), another_pref.clone())),
@@ -160,6 +162,7 @@ mod tests {
                 sessions: (sid.clone(), another_sid.clone()),
                 game_id: gid.clone(),
                 event_id: EventId::new(),
+                board_size,
             })),
         };
 
@@ -175,20 +178,22 @@ mod tests {
 
     #[test]
     fn test_by_session_id_partial() {
-        let sid = SessionId::random();
-        let cid = ClientId::random();
-        let gid = GameId::random();
+        let sid = SessionId::new();
+        let cid = ClientId::new();
+        let gid = GameId::new();
         let pref = SessionColorPref {
             session_id: sid.clone(),
             color_pref: ColorPref::Black,
             client_id: cid.clone(),
         };
+        let board_size = 9;
         let repos = Repos {
             prefs: Rc::new(PrefsOne(pref.clone())),
             game_ready: Rc::new(SGReady(GameReady {
-                sessions: (sid.clone(), SessionId::random()),
+                sessions: (sid.clone(), SessionId::new()),
                 game_id: gid.clone(),
                 event_id: EventId::new(),
+                board_size,
             })),
         };
 
@@ -197,8 +202,8 @@ mod tests {
     }
     #[test]
     fn test_by_session_id_not_ready() {
-        let sid = SessionId::random();
-        let cid = ClientId::random();
+        let sid = SessionId::new();
+        let cid = ClientId::new();
         let repos = Repos {
             prefs: Rc::new(PrefsOne(SessionColorPref {
                 session_id: sid.clone(),
@@ -214,27 +219,29 @@ mod tests {
 
     #[test]
     fn test_by_game_ready_two_prefs() {
-        let sid = SessionId::random();
-        let gid = GameId::random();
+        let sid = SessionId::new();
+        let gid = GameId::new();
 
-        let another_sid = SessionId::random();
+        let another_sid = SessionId::new();
         let sessions = (sid.clone(), another_sid.clone());
 
+        let board_size = 9;
         let game_ready = GameReady {
             sessions: sessions.clone(),
             game_id: gid.clone(),
             event_id: EventId::new(),
+            board_size,
         };
 
         let first_pref = SessionColorPref {
             session_id: sid.clone(),
             color_pref: ColorPref::Black,
-            client_id: ClientId::random(),
+            client_id: ClientId::new(),
         };
         let second_pref = SessionColorPref {
             session_id: another_sid.clone(),
             color_pref: ColorPref::Black,
-            client_id: ClientId::random(),
+            client_id: ClientId::new(),
         };
 
         let repos = Repos {
@@ -253,21 +260,23 @@ mod tests {
     }
     #[test]
     fn test_by_game_ready_one_pref() {
-        let sid = SessionId::random();
-        let gid = GameId::random();
+        let sid = SessionId::new();
+        let gid = GameId::new();
 
-        let sessions = (sid.clone(), SessionId::random());
+        let sessions = (sid.clone(), SessionId::new());
 
+        let board_size = 9;
         let game_ready = GameReady {
             sessions: sessions.clone(),
             game_id: gid.clone(),
             event_id: EventId::new(),
+            board_size,
         };
 
         let pref = SessionColorPref {
             session_id: sid.clone(),
             color_pref: ColorPref::Black,
-            client_id: ClientId::random(),
+            client_id: ClientId::new(),
         };
 
         let repos = Repos {
@@ -280,15 +289,17 @@ mod tests {
     }
     #[test]
     fn test_by_game_ready_no_prefs() {
-        let sid = SessionId::random();
-        let gid = GameId::random();
+        let sid = SessionId::new();
+        let gid = GameId::new();
 
-        let sessions = (sid, SessionId::random());
+        let sessions = (sid, SessionId::new());
 
+        let board_size = 9;
         let game_ready = GameReady {
             sessions: sessions.clone(),
             game_id: gid,
             event_id: EventId::new(),
+            board_size,
         };
 
         let repos = Repos {

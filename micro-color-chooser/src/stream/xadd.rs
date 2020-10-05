@@ -1,5 +1,5 @@
 use super::topics;
-use crate::api::ColorsChosen;
+use color_model::api::ColorsChosen;
 use redis::{streams::StreamMaxlen, Client, Commands};
 use std::collections::BTreeMap;
 use std::rc::Rc;

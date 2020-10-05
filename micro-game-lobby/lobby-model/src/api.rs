@@ -1,4 +1,5 @@
 use crate::*;
+use core_model::*;
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
