@@ -7,7 +7,6 @@ use serde_derive::{Deserialize, Serialize};
 pub use lobby_model::api::GameReady;
 
 #[derive(Clone, Debug, Deserialize)]
-
 pub struct ChooseColorPref {
     pub client_id: ClientId,
     pub color_pref: ColorPref,
@@ -15,7 +14,6 @@ pub struct ChooseColorPref {
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
-
 pub struct ColorsChosen {
     pub game_id: GameId,
     pub black: ClientId,
