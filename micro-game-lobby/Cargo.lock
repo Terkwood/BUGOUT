@@ -129,6 +129,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "core-model"
+version = "0.1.1"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/color-choose-model#4e9bf5c392643e2bc571d4eed4e4ad00acf97c25"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "uuid",
+]
+
+[[package]]
 name = "crossbeam"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -376,6 +386,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3baa92041a6fec78c687fa0cc2b3fae8884f743d672cf551bed1d6dac6988d0f"
 
 [[package]]
+name = "lobby-model"
+version = "0.1.0"
+dependencies = [
+ "core-model",
+ "serde",
+ "serde_derive",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -428,13 +447,11 @@ dependencies = [
  "crossbeam",
  "crossbeam-channel",
  "env_logger",
+ "lobby-model",
  "log",
  "redis",
  "redis-streams",
  "redis_streams",
- "serde",
- "serde_derive",
- "uuid",
 ]
 
 [[package]]
@@ -576,9 +593,9 @@ checksum = "d1e4df3c96bec4c7ce0e32fe5960c98ffc869443ec9592a0411ca1ee96e5e2f0"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.13"
+version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53f5ffe53a6b28e37c9c1ce74893477864d64f74778a93a4beb43c8fa167f639"
+checksum = "1e0704ee1a7e00d7bb417d0770ea303c1bccbabf0ef1667dae92b5967f5f8a71"
 dependencies = [
  "unicode-xid",
 ]
@@ -731,18 +748,18 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "serde"
-version = "1.0.110"
+version = "1.0.116"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99e7b308464d16b56eba9964e4972a3eee817760ab60d88c3f86e1fecb08204c"
+checksum = "96fe57af81d28386a513cbc6858332abc6117cfdb5999647c6444b8f43a370a5"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.110"
+version = "1.0.116"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "818fbf6bfa9a42d3bfcaca148547aa00c7b915bec71d1757aa2d44ca68771984"
+checksum = "f630a6370fd8e457873b4bd2ffdae75408bc291ba72be773772a4c2a065d9ae8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -769,9 +786,9 @@ checksum = "c7cb5678e1615754284ec264d9bb5b4c27d2018577fd90ac0ceb578591ed5ee4"
 
 [[package]]
 name = "syn"
-version = "1.0.22"
+version = "1.0.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1425de3c33b0941002740a420b1a906a350b88d08b82b2c8a01035a3f9447bac"
+checksum = "9c51d92969d209b54a98397e1b91c8ae82d8c87a7bb87df0b29aa2ad81454228"
 dependencies = [
  "proc-macro2",
  "quote",

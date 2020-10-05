@@ -17,10 +17,3 @@ pub struct ColorsChosen {
     pub black: ClientId,
     pub white: ClientId,
 }
-
-#[derive(Deserialize, Debug, Clone, Serialize)]
-pub struct GameReady {
-    pub game_id: GameId,
-    pub sessions: (SessionId, SessionId),
-    pub event_id: EventId,
-}

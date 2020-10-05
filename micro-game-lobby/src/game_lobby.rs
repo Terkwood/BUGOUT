@@ -1,54 +1,43 @@
 use crate::*;
-use serde_derive::{Deserialize, Serialize};
-use std::collections::HashSet;
 
-/// A structure representing all games which are
-/// waiting for a second player to join
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GameLobby {
-    pub games: HashSet<Game>,
+pub trait GameLobbyOps {
+    fn open(&self, game: Game) -> Self;
+    fn ready(&self, game: &Game) -> Self;
+    fn abandon(&self, session_id: &SessionId) -> Self;
 }
 
-impl GameLobby {
-    pub fn open(&self, game: Game) -> Self {
+impl GameLobbyOps for GameLobby {
+    fn open(&self, game: Game) -> Self {
         let mut r = self.clone();
         r.games.insert(game);
         r
     }
 
-    pub fn ready(&self, game: &Game) -> Self {
+    fn ready(&self, game: &Game) -> Self {
         let mut r = self.clone();
         r.games.remove(&game);
         r
     }
 
-    pub fn abandon(&self, session_id: &SessionId) -> Self {
+    fn abandon(&self, session_id: &SessionId) -> Self {
         let mut r = self.clone();
         if let Some(game) = r.games.clone().iter().find(|g| &g.creator == session_id) {
             r.games.remove(game);
         }
         r
     }
+}
 
-    pub fn as_bytes(&self) -> Result<Vec<u8>, Box<bincode::ErrorKind>> {
+trait AsBytes {
+    fn as_bytes(&self) -> Result<Vec<u8>, Box<bincode::ErrorKind>>;
+}
+
+impl AsBytes for GameLobby {
+    fn as_bytes(&self) -> Result<Vec<u8>, Box<bincode::ErrorKind>> {
         bincode::serialize(self)
     }
 }
-impl Default for GameLobby {
-    fn default() -> Self {
-        GameLobby {
-            games: HashSet::new(),
-        }
-    }
-}
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub struct Game {
-    pub game_id: GameId,
-    pub visibility: Visibility,
-    pub creator: SessionId,
-    pub board_size: u16,
-}
 #[cfg(test)]
 mod tests {
     use super::*;
