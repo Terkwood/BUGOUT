@@ -2,8 +2,7 @@ use super::*;
 use core_model::*;
 use serde_derive::{Deserialize, Serialize};
 
-/// This service listens for the same game ready
-/// event that is announced by game lobby
+/// emitted by the game lobby
 pub use lobby_model::api::GameReady;
 
 #[derive(Clone, Debug, Deserialize)]
