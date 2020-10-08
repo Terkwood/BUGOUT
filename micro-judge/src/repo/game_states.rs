@@ -1,7 +1,8 @@
 use crate::io::redis_keys::{game_states_key, RedisKeyNamespace};
 use crate::io::{FetchErr, WriteErr};
 
-use crate::model::{GameId, GameState};
+use core_model::GameId;
+use move_model::GameState;
 use redis::{Client, Commands};
 
 const EXPIRY_SECS: usize = 86400;

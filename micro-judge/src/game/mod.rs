@@ -1,5 +1,6 @@
-use crate::model::*;
 pub use capturing::captures_for;
+use core_model::EventId;
+use move_model::*;
 
 use log::info;
 
@@ -9,7 +10,7 @@ pub enum Judgement {
     Accepted(MoveMade),
     Rejected,
 }
-pub fn judge(mm: &MakeMoveCommand, game_state: &GameState) -> Judgement {
+pub fn judge(mm: &MakeMove, game_state: &GameState) -> Judgement {
     info!("Judge {:?}", mm);
     if validate_move(mm, game_state) {
         let captured: Vec<Coord> = mm
@@ -36,7 +37,7 @@ pub fn judge(mm: &MakeMoveCommand, game_state: &GameState) -> Judgement {
     }
 }
 
-fn validate_move(make_move: &MakeMoveCommand, game_state: &GameState) -> bool {
+fn validate_move(make_move: &MakeMove, game_state: &GameState) -> bool {
     let correct_player = make_move.player == game_state.player_up;
     let coord = make_move.coord;
     let passing = coord.is_none();

@@ -3,8 +3,8 @@ use super::redis_keys::RedisKeyNamespace;
 use super::topics::*;
 use super::WriteErr;
 use crate::game::*;
-use crate::model::*;
 use crate::repo::game_states::GameStatesRepo;
+use move_model::*;
 use redis::{Client, Commands};
 use std::rc::Rc;
 
