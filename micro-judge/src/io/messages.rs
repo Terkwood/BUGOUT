@@ -1,7 +1,8 @@
 use super::stream::GROUP_NAME;
 use super::topics::*;
-use crate::model::*;
+use core_model::*;
 use log::error;
+use move_model::*;
 use redis::streams::StreamReadOptions;
 use redis::{Client, Commands};
 use redis_streams::*;
@@ -15,7 +16,7 @@ pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, HashMap<String, V
 
 #[derive(Clone)]
 pub enum StreamData {
-    MM(MakeMoveCommand),
+    MM(MakeMove),
     GS(GameId, GameState),
 }
 
@@ -105,7 +106,7 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
 
 fn deser_make_move_command(
     xread_result: HashMap<String, Vec<u8>>,
-) -> Result<MakeMoveCommand, uuid::Error> {
+) -> Result<MakeMove, uuid::Error> {
     let values_as_strings: HashMap<String, String> = xread_result
         .iter()
         .map(|(k, v)| (k.clone(), String::from_utf8(v.clone()).expect("bytes")))
@@ -120,7 +121,7 @@ fn deser_make_move_command(
         (Some(x), Some(y)) => Some(Coord { x, y }),
         _ => None,
     };
-    Ok(MakeMoveCommand {
+    Ok(MakeMove {
         game_id: GameId(Uuid::from_str(&values_as_strings["game_id"])?),
         req_id: ReqId(Uuid::from_str(&values_as_strings["req_id"])?),
         player: Player::from_str(&values_as_strings["player"]),

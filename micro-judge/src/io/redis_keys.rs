@@ -1,4 +1,4 @@
-use crate::model::GameId;
+use core_model::GameId;
 const DEFAULT_NAMESPACE: &str = "BUGOUT";
 #[derive(Clone, Debug)]
 pub struct RedisKeyNamespace(pub String);

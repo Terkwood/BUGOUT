@@ -10,9 +10,10 @@
 /// ```
 extern crate micro_judge;
 
+use core_model::*;
 use micro_judge::io::{redis_keys, stream, topics};
-use micro_judge::model::*;
 use micro_judge::repo::game_states::GameStatesRepo;
+use move_model::*;
 use redis::Commands;
 use redis_keys::RedisKeyNamespace;
 use std::panic;

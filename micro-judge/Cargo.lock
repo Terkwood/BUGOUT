@@ -166,6 +166,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "core-model"
+version = "0.1.1"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=56208ae#56208aee8ab9a2639e9666660eafaf69d3a68c12"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "uuid",
+]
+
+[[package]]
 name = "crossbeam-utils"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -395,9 +405,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.8"
+version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14b6052be84e6b71ab17edffc2eeabf5c2c3ae1fdb464aae35ac50c67a44e1f7"
+checksum = "4fabed175da42fed1fa0746b0ea71f412aa9d35e76e95e59b192c64b9dc2bf8b"
 dependencies = [
  "cfg-if",
 ]
@@ -427,25 +437,15 @@ checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
 name = "micro_judge"
-version = "0.1.13"
+version = "0.1.14"
 dependencies = [
  "bincode",
+ "core-model",
  "env_logger",
  "log",
- "micro_model_moves",
+ "move-model",
  "redis 0.16.1-alpha.0 (git+https://github.com/mitsuhiko/redis-rs)",
  "redis_streams",
- "uuid",
-]
-
-[[package]]
-name = "micro_model_moves"
-version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#279debbd844efb14901f508b037ae7c42913d60b"
-dependencies = [
- "bincode",
- "serde",
- "serde_derive",
  "uuid",
 ]
 
@@ -489,6 +489,17 @@ dependencies = [
  "net2",
  "winapi 0.2.8",
  "ws2_32-sys",
+]
+
+[[package]]
+name = "move-model"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=56208ae#56208aee8ab9a2639e9666660eafaf69d3a68c12"
+dependencies = [
+ "bincode",
+ "core-model",
+ "serde",
+ "serde_derive",
 ]
 
 [[package]]
@@ -795,18 +806,18 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.114"
+version = "1.0.116"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5317f7588f0a5078ee60ef675ef96735a1442132dc645eb1d12c018620ed8cd3"
+checksum = "96fe57af81d28386a513cbc6858332abc6117cfdb5999647c6444b8f43a370a5"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.114"
+version = "1.0.116"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a0be94b04690fbaed37cddffc5c134bf537c8e3329d53e982fe04c374978f8e"
+checksum = "f630a6370fd8e457873b4bd2ffdae75408bc291ba72be773772a4c2a065d9ae8"
 dependencies = [
  "proc-macro2",
  "quote",

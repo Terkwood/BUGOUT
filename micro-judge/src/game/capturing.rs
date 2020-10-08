@@ -1,4 +1,4 @@
-use crate::model::*;
+use move_model::*;
 use std::collections::HashSet;
 
 pub fn captures_for(player: Player, placement: Coord, board: &Board) -> HashSet<Coord> {
