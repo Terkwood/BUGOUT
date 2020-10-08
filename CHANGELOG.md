@@ -1,6 +1,6 @@
 # v0.8.10 (maybe v0.9.0 if gateway finished)
 
-- Create shared model crates and use them in micro-sync (#342, #339, #343, #344, #345, #346)
+- Create shared model crates and use them in micro-sync (#342, #339, #343, #344, #345, #346, #347)
 - Create micro-sync (history provider) service (#331, #335, #337, #338)
 - Fix memory leak in micro-changelog (#336)
 - Create micro-color-chooser (#334)
