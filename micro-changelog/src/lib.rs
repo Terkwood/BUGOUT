@@ -1,10 +1,3 @@
-extern crate bincode;
-extern crate env_logger;
-extern crate log;
-pub extern crate micro_model_moves;
-extern crate redis;
-extern crate redis_streams;
-
 mod model;
 pub mod repo;
 pub mod stream;

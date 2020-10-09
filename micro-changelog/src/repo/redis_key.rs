@@ -1,4 +1,4 @@
-use micro_model_moves::GameId;
+use core_model::GameId;
 
 const DEFAULT_NAMESPACE: &str = "BUGOUT";
 pub const ENTRY_IDS: &str = "/BUGOUT/micro_changelog/entry_ids";

@@ -1,9 +1,10 @@
 extern crate micro_changelog;
 
-use micro_changelog::micro_model_moves::*;
+use core_model::*;
 use micro_changelog::repo::redis_key::*;
 use micro_changelog::stream::*;
 use micro_changelog::*;
+use move_model::*;
 use redis::{Client, Commands};
 use std::collections::HashMap;
 use std::rc::Rc;

@@ -1,21 +1,22 @@
 pub mod game_states_repo;
 pub mod redis_key;
 
-use crate::redis;
+use redis::RedisError;
+use std::boxed::Box;
 
 #[derive(Debug)]
 pub enum WriteErr {
-    Redis(redis::RedisError),
+    Redis(RedisError),
     Serialization(std::boxed::Box<bincode::ErrorKind>),
     EIDRepo,
 }
-impl From<std::boxed::Box<bincode::ErrorKind>> for WriteErr {
-    fn from(ek: std::boxed::Box<bincode::ErrorKind>) -> Self {
+impl From<Box<bincode::ErrorKind>> for WriteErr {
+    fn from(ek: Box<bincode::ErrorKind>) -> Self {
         WriteErr::Serialization(ek)
     }
 }
-impl From<redis::RedisError> for WriteErr {
-    fn from(r: redis::RedisError) -> Self {
+impl From<RedisError> for WriteErr {
+    fn from(r: RedisError) -> Self {
         WriteErr::Redis(r)
     }
 }
