@@ -390,7 +390,7 @@ impl Handler for WsSession {
 
                 Ok({
                     let payload = BackendCommands::AttachBot(micro_model_bot::gateway::AttachBot {
-                        game_id: micro_model_moves::GameId(game_id.0),
+                        game_id: micro_model_moves::GameId(game_id),
                         player,
                         board_size,
                     });
