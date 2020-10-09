@@ -7,6 +7,7 @@ version = "0.15.0-a"
 [dependencies]
 bincode = "1.3.1"
 chrono = {version = "0.4.19", features = ["serde"]}
+core-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "f2d039e"}
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.4"
 dotenv = "0.15.0"
@@ -17,8 +18,10 @@ harsh = "0.1.6"
 lazy_static = "1.4.0"
 log = "0.4.11"
 micro_model_bot = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
+## needed for attachbot
 micro_model_moves = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
 mio-extras = "2.0.6"
+move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "f2d039e"}
 r2d2_redis = "0.13.0"
 rand = "0.7.3"
 rdkafka = "0.23.1"

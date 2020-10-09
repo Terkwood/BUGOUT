@@ -4,6 +4,8 @@ use crate::compact_ids::CompactId;
 use crate::env::*;
 use crate::idle_status::IdleStatus;
 use crate::model::*;
+use core_model::*;
+use move_model::Player;
 
 /// Events which will be sent to the browser
 /// from gateway
@@ -35,7 +37,7 @@ impl ClientEvents {
             ClientEvents::GameReady(e) => Some(e.game_id),
             ClientEvents::WaitForOpponent(w) => Some(w.game_id),
             ClientEvents::YourColor(y) => Some(y.game_id),
-            ClientEvents::BotAttached(b) => Some(b.game_id.0),
+            ClientEvents::BotAttached(b) => Some(GameId(b.game_id.0)),
             _ => None, // priv game rejected, see https://github.com/Terkwood/BUGOUT/issues/90
         }
     }
@@ -48,7 +50,7 @@ impl Link {
         Link(format!(
             "{}/?join={}",
             LINK_TO.to_string(),
-            CompactId::encode(game_id).0
+            CompactId::encode(game_id.0).0
         ))
     }
 }

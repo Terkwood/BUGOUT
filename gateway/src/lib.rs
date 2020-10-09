@@ -1,24 +1,5 @@
 #[macro_use]
 extern crate lazy_static;
-extern crate chrono;
-extern crate crossbeam;
-extern crate crossbeam_channel;
-extern crate dotenv;
-extern crate env_logger;
-extern crate envy;
-extern crate harsh;
-extern crate log;
-extern crate micro_model_bot;
-extern crate micro_model_moves;
-extern crate mio_extras;
-extern crate r2d2_redis;
-extern crate rand;
-extern crate redis_streams;
-extern crate serde;
-extern crate serde_derive;
-extern crate serde_json;
-extern crate time;
-extern crate ws;
 
 pub mod backend;
 pub mod backend_commands;

@@ -2,6 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::compact_ids::CompactId;
 use crate::model::*;
+use core_model::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ReconnectCommand {

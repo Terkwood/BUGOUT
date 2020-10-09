@@ -1,6 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 
 use crate::model::*;
+use core_model::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JoinPrivateGameBackendCommand {

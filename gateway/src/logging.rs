@@ -1,7 +1,7 @@
 use rand::seq::SliceRandom;
 
-use crate::model::Player;
 use crate::websocket::WsSession;
+use move_model::Player;
 
 pub fn emoji(player: &Player) -> String {
     match player {
@@ -21,11 +21,11 @@ pub fn session_code(ws_session: &WsSession) -> String {
         "{} {}",
         ws_session
             .client_id
-            .map(|cid| crate::short_uuid(cid))
+            .map(|cid| crate::short_uuid(cid.0))
             .unwrap_or(crate::EMPTY_SHORT_UUID.to_string()),
         ws_session
             .current_game
-            .map(|gid| crate::short_uuid(gid))
+            .map(|gid| crate::short_uuid(gid.0))
             .unwrap_or(crate::EMPTY_SHORT_UUID.to_string())
     )
     .to_string()

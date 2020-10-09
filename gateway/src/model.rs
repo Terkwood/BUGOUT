@@ -1,28 +1,10 @@
+use core_model::*;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
-
-pub type GameId = Uuid;
-pub type ReqId = Uuid;
-pub type EventId = Uuid;
-pub type ClientId = Uuid;
-pub type SessionId = Uuid;
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Identity {
     #[serde(rename = "clientId")]
     pub client_id: ClientId,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
-pub struct Coord {
-    pub x: u16,
-    pub y: u16,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
-pub enum Player {
-    BLACK,
-    WHITE,
 }
 
 impl Player {

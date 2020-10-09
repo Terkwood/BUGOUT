@@ -164,6 +164,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce90df4c658c62f12d78f7508cf92f9173e5184a539c10bfe54a3107b3ffd0f2"
 
 [[package]]
+name = "core-model"
+version = "0.1.1"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "uuid",
+]
+
+[[package]]
 name = "crossbeam"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -430,6 +440,7 @@ version = "0.15.0-a"
 dependencies = [
  "bincode",
  "chrono",
+ "core-model",
  "crossbeam",
  "crossbeam-channel",
  "dotenv",
@@ -442,6 +453,7 @@ dependencies = [
  "micro_model_bot",
  "micro_model_moves",
  "mio-extras",
+ "move-model",
  "r2d2_redis",
  "rand",
  "rdkafka",
@@ -698,6 +710,17 @@ dependencies = [
  "net2",
  "winapi 0.2.8",
  "ws2_32-sys",
+]
+
+[[package]]
+name = "move-model"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
+dependencies = [
+ "bincode",
+ "core-model",
+ "serde",
+ "serde_derive",
 ]
 
 [[package]]

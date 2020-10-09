@@ -17,6 +17,7 @@ use crate::idle_status::RequestIdleStatus;
 use crate::logging::*;
 use crate::model::*;
 use crate::router::RouterCommand;
+use core_model::*;
 
 const PING: Token = Token(1);
 const EXPIRE: Token = Token(2);
@@ -50,7 +51,7 @@ impl WsSession {
         req_idle_status_in: crossbeam_channel::Sender<RequestIdleStatus>,
     ) -> WsSession {
         WsSession {
-            session_id: uuid::Uuid::new_v4(),
+            session_id: SessionId::new(),
             ws_out,
             ping_timeout: None,
             expire_timeout: None,
@@ -145,6 +146,7 @@ impl Handler for WsSession {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
+        use move_model::Coord;
         let msg_text = &&msg.into_text()?;
         let deserialized: Result<ClientCommands> = serde_json::from_str(msg_text)
             .map_err(|_err| ws::Error::new(ws::ErrorKind::Internal, "json"));
@@ -370,11 +372,13 @@ impl Handler for WsSession {
                 player: lp,
                 board_size,
             })) => {
+                use core_model::GameId;
                 info!("📌 {} ATACHBOT", session_code(self));
 
+                use move_model::Player;
                 let player = match lp {
-                    Player::BLACK => micro_model_moves::Player::BLACK,
-                    _ => micro_model_moves::Player::WHITE,
+                    Player::BLACK => Player::BLACK,
+                    _ => Player::WHITE,
                 };
                 let game_id = uuid::Uuid::new_v4();
                 if let Err(e) = self.router_commands_in.send(RouterCommand::RouteGame {
@@ -386,7 +390,7 @@ impl Handler for WsSession {
 
                 Ok({
                     let payload = BackendCommands::AttachBot(micro_model_bot::gateway::AttachBot {
-                        game_id: micro_model_moves::GameId(game_id),
+                        game_id: micro_model_moves::GameId(game_id.0),
                         player,
                         board_size,
                     });
@@ -473,6 +477,7 @@ impl Handler for WsSession {
     }
 
     fn on_timeout(&mut self, event: Token) -> Result<()> {
+        use move_model::Player;
         match event {
             // PING timeout has occured, send a ping and reschedule
             PING => {
