@@ -3,8 +3,9 @@ pub mod topics;
 
 use crate::repo::*;
 use crate::Components;
+use core_model::*;
 use messages::*;
-use micro_model_moves::*;
+use move_model::*;
 use redis::Commands;
 pub use topics::StreamTopics;
 

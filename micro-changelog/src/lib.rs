@@ -1,7 +1,7 @@
 extern crate bincode;
 extern crate env_logger;
 extern crate log;
-pub extern crate micro_model_moves;
+extern crate move_model;
 extern crate redis;
 extern crate redis_streams;
 

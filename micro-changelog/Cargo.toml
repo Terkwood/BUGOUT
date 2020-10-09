@@ -6,9 +6,10 @@ version = "0.1.8"
 
 [dependencies]
 bincode = "1.2.1"
+core-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "f2d039e"}
 env_logger = "0.7.1"
 log = "0.4.8"
-micro_model_moves = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
+move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "f2d039e"}
 redis = {git = "https://github.com/mitsuhiko/redis-rs"}
 redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "0.3.1", rev = "0e2fdb7"}
 uuid = {version = "0.8.1", features = ["serde"]}

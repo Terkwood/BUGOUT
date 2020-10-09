@@ -1,6 +1,7 @@
 use super::{FetchErr, WriteErr};
 use crate::Components;
-use micro_model_moves::{GameId, GameState};
+use core_model::GameId;
+use move_model::GameState;
 use redis::Commands;
 
 const EXPIRY_SECS: usize = 86400;

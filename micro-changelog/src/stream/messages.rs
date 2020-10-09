@@ -1,6 +1,7 @@
 use super::StreamTopics;
+use core_model::GameId;
 use log::{error, warn};
-use micro_model_moves::{GameId, GameState, MoveMade};
+use move_model::{GameState, MoveMade};
 use redis::streams::StreamReadOptions;
 use redis::Commands;
 use redis_streams::XReadEntryId;
