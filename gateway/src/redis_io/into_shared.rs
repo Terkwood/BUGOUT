@@ -1,5 +1,5 @@
 use crate::backend_commands::*;
-use crate::model::{Coord, Move, ProvideHistoryCommand};
+use crate::model::{Coord, Move, Player, ProvideHistoryCommand};
 
 use color_model as color;
 use core_model as core;
@@ -47,7 +47,10 @@ impl IntoShared<core::ClientId> for uuid::Uuid {
 }
 impl IntoShared<moves::Player> for crate::model::Player {
     fn into_shared(&self) -> moves::Player {
-        todo!()
+        match self {
+            Player::BLACK => moves::Player::BLACK,
+            Player::WHITE => moves::Player::WHITE,
+        }
     }
 }
 impl IntoShared<Option<moves::Coord>> for Option<Coord> {
@@ -67,13 +70,12 @@ impl IntoShared<sync::Move> for Move {
 
 impl IntoShared<sync::api::ReqSync> for ReqSyncBackendCommand {
     fn into_shared(&self) -> sync::api::ReqSync {
-        use crate::model::Player;
         sync::api::ReqSync {
             session_id: self.session_id.into_shared(),
             req_id: self.req_id.into_shared(),
             game_id: self.game_id.into_shared(),
             player_up: self.player_up.into_shared(),
-            last_move: todo!(),
+            last_move: self.last_move.map(|m| m.into_shared()),
             turn: self.turn,
         }
     }
