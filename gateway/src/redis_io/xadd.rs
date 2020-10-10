@@ -7,6 +7,7 @@ use crate::redis_io::RedisPool;
 use crate::topics;
 use micro_model_bot::gateway::AttachBot;
 
+use super::IntoShared;
 use crossbeam_channel::{select, Receiver};
 use log::error;
 use r2d2_redis::redis;
@@ -96,8 +97,6 @@ impl XAddCommands for RedisXAddCommands {
     }
 
     fn xadd_provide_history(&self, command: ProvideHistoryCommand) {
-        let mut conn = self.pool.get().unwrap();
-
         let s: Result<Vec<u8>, Box<bincode::ErrorKind>> = todo!();
         self.old_school_xadd(s, topics::PROVIDE_HISTORY_TOPIC)
     }
@@ -236,32 +235,5 @@ mod tests {
             TestResult::Move(_) => assert!(true),
             _ => assert!(false)
         } }
-    }
-}
-
-trait IntoShared<T> {
-    fn into_shared(&self) -> T;
-}
-
-impl IntoShared<lobby_model::api::JoinPrivateGame> for JoinPrivateGameBackendCommand {
-    fn into_shared(&self) -> lobby_model::api::JoinPrivateGame {
-        use core_model as cm;
-
-        lobby_model::api::JoinPrivateGame {
-            game_id: cm::GameId(self.game_id),
-            client_id: cm::ClientId(self.client_id),
-            session_id: cm::SessionId(self.session_id),
-        }
-    }
-}
-
-impl IntoShared<lobby_model::api::FindPublicGame> for FindPublicGameBackendCommand {
-    fn into_shared(&self) -> lobby_model::api::FindPublicGame {
-        todo!()
-    }
-}
-impl IntoShared<lobby_model::api::CreateGame> for CreateGameBackendCommand {
-    fn into_shared(&self) -> lobby_model::api::CreateGame {
-        todo!()
     }
 }
