@@ -1,8 +1,3 @@
-extern crate core_model;
-extern crate move_model;
-extern crate redis_streams;
-extern crate sync_model;
-
 mod components;
 pub mod player;
 mod repo;
@@ -12,6 +7,8 @@ mod time;
 mod to_history;
 
 pub use components::Components;
+pub use sync_model::core_model;
+pub use sync_model::move_model;
 pub use to_history::ToHistory;
 
 use redis::Client;

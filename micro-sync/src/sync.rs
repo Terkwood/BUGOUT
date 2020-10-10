@@ -1,5 +1,5 @@
+use crate::move_model::Player;
 use crate::player::other_player;
-use move_model::Player;
 use sync_model::api::ReqSync;
 
 /// Note that the check for last_move.is_some() makes

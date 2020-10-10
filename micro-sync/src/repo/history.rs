@@ -1,7 +1,7 @@
 use super::*;
-use core_model::*;
 use redis::{Client, Commands};
 use std::rc::Rc;
+use sync_model::core_model::*;
 use sync_model::Move;
 
 pub trait HistoryRepo {
