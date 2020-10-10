@@ -133,29 +133,38 @@ mod tests {
     enum TestResult {
         Bot(AttachBot),
         Move(MakeMoveCommand),
+        Hist(ProvideHistoryCommand),
+        Join(JoinPrivateGameBackendCommand),
+        Find(FindPublicGameBackendCommand),
+        Create(CreateGameBackendCommand),
+    }
+    impl FakeXAddCmd {
+        fn sssend(&self, tr: TestResult) {
+            self.st.send(tr).expect("send")
+        }
     }
     impl XAddCommands for FakeXAddCmd {
         fn xadd_attach_bot(&self, attach_bot: AttachBot) {
-            self.st.send(TestResult::Bot(attach_bot)).expect("send")
+            self.sssend(TestResult::Bot(attach_bot))
         }
         fn xadd_make_move(&self, command: MakeMoveCommand) {
-            self.st.send(TestResult::Move(command)).expect("send")
+            self.sssend(TestResult::Move(command))
         }
 
         fn xadd_provide_history(&self, command: ProvideHistoryCommand) {
-            todo!()
+            self.sssend(TestResult::Hist(command))
         }
 
         fn xadd_join_private_game(&self, command: JoinPrivateGameBackendCommand) {
-            todo!()
+            self.sssend(TestResult::Join(command))
         }
 
         fn xadd_find_public_game(&self, command: FindPublicGameBackendCommand) {
-            todo!()
+            self.sssend(TestResult::Find(command))
         }
 
         fn xadd_create_game(&self, command: CreateGameBackendCommand) {
-            todo!()
+            self.sssend(TestResult::Create(command))
         }
     }
 
