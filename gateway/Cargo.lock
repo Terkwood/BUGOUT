@@ -683,7 +683,7 @@ dependencies = [
 [[package]]
 name = "micro_model_bot"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#da55a1079edefaefa71eb7685afc5c54d7ecbe9b"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#41b59ba006f1def6a04670eaaf113f458b1c72c7"
 dependencies = [
  "bincode",
  "micro_model_moves",
@@ -694,7 +694,7 @@ dependencies = [
 [[package]]
 name = "micro_model_moves"
 version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#da55a1079edefaefa71eb7685afc5c54d7ecbe9b"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#41b59ba006f1def6a04670eaaf113f458b1c72c7"
 dependencies = [
  "bincode",
  "serde",
@@ -1064,7 +1064,7 @@ dependencies = [
 [[package]]
 name = "redis_conn_pool"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#da55a1079edefaefa71eb7685afc5c54d7ecbe9b"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#41b59ba006f1def6a04670eaaf113f458b1c72c7"
 dependencies = [
  "r2d2_redis",
  "redis",
@@ -1280,8 +1280,8 @@ dependencies = [
 
 [[package]]
 name = "sync-model"
-version = "0.1.1"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=da55a10#da55a1079edefaefa71eb7685afc5c54d7ecbe9b"
+version = "0.1.2"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=41b59ba#41b59ba006f1def6a04670eaaf113f458b1c72c7"
 dependencies = [
  "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
  "move-model",
