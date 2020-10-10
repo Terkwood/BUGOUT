@@ -99,41 +99,58 @@ impl XAddCommands for RedisXAddCommands {
         let mut conn = self.pool.get().unwrap();
 
         let s: Result<Vec<u8>, Box<bincode::ErrorKind>> = todo!();
-        match s {
-            Err(e) => error!("provide history ser error {:?}", e),
-            Ok(bin) => {
-                let mut redis_cmd = redis::cmd("XADD");
-                redis_cmd
-                    .arg(topics::PROVIDE_HISTORY_TOPIC)
-                    .arg("MAXLEN")
-                    .arg("~")
-                    .arg("1000")
-                    .arg("*")
-                    .arg("data")
-                    .arg(bin);
-                if let Err(e) = redis_cmd.query::<String>(&mut *conn) {
-                    error!("provide history redis err {:?}", e)
-                }
-            }
-        }
+        self.old_school_xadd(s, topics::PROVIDE_HISTORY_TOPIC)
     }
 
     fn xadd_join_private_game(&self, command: JoinPrivateGameBackendCommand) {
-        todo!()
+        self.old_school_xadd(
+            bincode::serialize(&command.into_shared()),
+            topics::JOIN_PRIVATE_GAME_TOPIC,
+        )
     }
 
     fn xadd_find_public_game(&self, command: FindPublicGameBackendCommand) {
-        todo!()
+        self.old_school_xadd(
+            bincode::serialize(&command.into_shared()),
+            topics::FIND_PUBLIC_GAME_TOPIC,
+        )
     }
 
     fn xadd_create_game(&self, command: CreateGameBackendCommand) {
-        todo!()
+        self.old_school_xadd(
+            bincode::serialize(&command.into_shared()),
+            topics::CREATE_GAME_TOPIC,
+        )
     }
 }
 
 impl RedisXAddCommands {
     pub fn create(pool: Arc<RedisPool>) -> Self {
         RedisXAddCommands { pool }
+    }
+
+    fn old_school_xadd(&self, bin: Result<Vec<u8>, Box<bincode::ErrorKind>>, topic: &str) {
+        match self.pool.get() {
+            Err(e) => error!("xadd {}: cannot get conn {:?}", topic, e),
+            Ok(mut conn) => {
+                if let Ok(b) = bin {
+                    let mut redis_cmd = redis::cmd("XADD");
+                    redis_cmd
+                        .arg(topic)
+                        .arg("MAXLEN")
+                        .arg("~")
+                        .arg("1000")
+                        .arg("*")
+                        .arg("data")
+                        .arg(b);
+                    if let Err(e) = redis_cmd.query::<String>(&mut *conn) {
+                        error!("xadd {}: redis execution err. {:?}", topic, e)
+                    }
+                } else {
+                    error!("xadd {}: serialization error", topic)
+                }
+            }
+        }
     }
 }
 
@@ -235,5 +252,16 @@ impl IntoShared<lobby_model::api::JoinPrivateGame> for JoinPrivateGameBackendCom
             client_id: cm::ClientId(self.client_id),
             session_id: cm::SessionId(self.session_id),
         }
+    }
+}
+
+impl IntoShared<lobby_model::api::FindPublicGame> for FindPublicGameBackendCommand {
+    fn into_shared(&self) -> lobby_model::api::FindPublicGame {
+        todo!()
+    }
+}
+impl IntoShared<lobby_model::api::CreateGame> for CreateGameBackendCommand {
+    fn into_shared(&self) -> lobby_model::api::CreateGame {
+        todo!()
     }
 }
