@@ -1,5 +1,7 @@
 use crate::backend_commands::BackendCommands as BC;
-use crate::backend_commands::JoinPrivateGameBackendCommand;
+use crate::backend_commands::{
+    CreateGameBackendCommand, FindPublicGameBackendCommand, JoinPrivateGameBackendCommand,
+};
 use crate::model::{Coord, MakeMoveCommand, ProvideHistoryCommand};
 use crate::redis_io::RedisPool;
 use crate::topics::{ATTACH_BOT_TOPIC, MAKE_MOVE_TOPIC};
@@ -15,6 +17,8 @@ pub trait XAddCommands {
     fn xadd_make_move(&self, command: MakeMoveCommand);
     fn xadd_provide_history(&self, command: ProvideHistoryCommand);
     fn xadd_join_private_game(&self, command: JoinPrivateGameBackendCommand);
+    fn xadd_find_public_game(&self, command: FindPublicGameBackendCommand);
+    fn xadd_create_game(&self, command: CreateGameBackendCommand);
 }
 
 pub fn start(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
@@ -98,6 +102,14 @@ impl XAddCommands for RedisXAddCommands {
     fn xadd_join_private_game(&self, command: JoinPrivateGameBackendCommand) {
         todo!()
     }
+
+    fn xadd_find_public_game(&self, command: FindPublicGameBackendCommand) {
+        todo!()
+    }
+
+    fn xadd_create_game(&self, command: CreateGameBackendCommand) {
+        todo!()
+    }
 }
 
 impl RedisXAddCommands {
@@ -135,6 +147,14 @@ mod tests {
         }
 
         fn xadd_join_private_game(&self, command: JoinPrivateGameBackendCommand) {
+            todo!()
+        }
+
+        fn xadd_find_public_game(&self, command: FindPublicGameBackendCommand) {
+            todo!()
+        }
+
+        fn xadd_create_game(&self, command: CreateGameBackendCommand) {
             todo!()
         }
     }
