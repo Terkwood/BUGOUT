@@ -97,8 +97,10 @@ impl XAddCommands for RedisXAddCommands {
     }
 
     fn xadd_provide_history(&self, command: ProvideHistoryCommand) {
-        let s: Result<Vec<u8>, Box<bincode::ErrorKind>> = todo!();
-        self.old_school_xadd(s, topics::PROVIDE_HISTORY_TOPIC)
+        self.old_school_xadd(
+            bincode::serialize(&command.into_shared()),
+            topics::PROVIDE_HISTORY_TOPIC,
+        )
     }
 
     fn xadd_join_private_game(&self, command: JoinPrivateGameBackendCommand) {

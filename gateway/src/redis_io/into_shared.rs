@@ -114,6 +114,7 @@ impl IntoShared<lobby::Visibility> for Visibility {
         }
     }
 }
+
 impl IntoShared<lobby::api::CreateGame> for CreateGameBackendCommand {
     fn into_shared(&self) -> lobby::api::CreateGame {
         lobby::api::CreateGame {
