@@ -42,7 +42,7 @@ pub struct CreateGameBackendCommand {
     #[serde(rename = "sessionId")]
     pub session_id: SessionId,
     #[serde(rename = "boardSize")]
-    pub board_size: u8,
+    pub board_size: u16,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]

@@ -265,7 +265,7 @@ impl Handler for WsSession {
                             client_id,
                             visibility: Visibility::Private,
                             session_id: self.session_id,
-                            board_size,
+                            board_size: board_size as u16,
                         }))
                         .map_err(|e| ws::Error::from(Box::new(e)))
                     {

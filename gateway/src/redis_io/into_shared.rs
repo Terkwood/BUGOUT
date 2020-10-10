@@ -1,5 +1,5 @@
 use crate::backend_commands::*;
-use crate::model::{Coord, Move, Player, ProvideHistoryCommand};
+use crate::model::{Coord, Move, Player, ProvideHistoryCommand, Visibility};
 
 use color_model as color;
 use core_model as core;
@@ -25,26 +25,31 @@ impl IntoShared<core::GameId> for uuid::Uuid {
         core::GameId(self.clone())
     }
 }
+
 impl IntoShared<core::ReqId> for uuid::Uuid {
     fn into_shared(&self) -> core::ReqId {
         core::ReqId(self.clone())
     }
 }
+
 impl IntoShared<core::EventId> for uuid::Uuid {
     fn into_shared(&self) -> core::EventId {
         core::EventId(self.clone())
     }
 }
+
 impl IntoShared<core::SessionId> for uuid::Uuid {
     fn into_shared(&self) -> core::SessionId {
         core::SessionId(self.clone())
     }
 }
+
 impl IntoShared<core::ClientId> for uuid::Uuid {
     fn into_shared(&self) -> core::ClientId {
         core::ClientId(self.clone())
     }
 }
+
 impl IntoShared<moves::Player> for crate::model::Player {
     fn into_shared(&self) -> moves::Player {
         match self {
@@ -53,11 +58,13 @@ impl IntoShared<moves::Player> for crate::model::Player {
         }
     }
 }
+
 impl IntoShared<Option<moves::Coord>> for Option<Coord> {
     fn into_shared(&self) -> Option<moves::Coord> {
         self.map(|Coord { x, y }| moves::Coord { x, y })
     }
 }
+
 impl IntoShared<sync::Move> for Move {
     fn into_shared(&self) -> sync::Move {
         sync::Move {
@@ -99,10 +106,23 @@ impl IntoShared<lobby::api::FindPublicGame> for FindPublicGameBackendCommand {
         }
     }
 }
-
+impl IntoShared<lobby::Visibility> for Visibility {
+    fn into_shared(&self) -> lobby::Visibility {
+        match self {
+            Visibility::Private => lobby::Visibility::Private,
+            Visibility::Public => lobby::Visibility::Public,
+        }
+    }
+}
 impl IntoShared<lobby::api::CreateGame> for CreateGameBackendCommand {
     fn into_shared(&self) -> lobby::api::CreateGame {
-        todo!()
+        lobby::api::CreateGame {
+            client_id: self.client_id.into_shared(),
+            game_id: None, // TODO think think about it 🤔,
+            visibility: self.visibility.into_shared(),
+            session_id: self.session_id.into_shared(),
+            board_size: self.board_size,
+        }
     }
 }
 
