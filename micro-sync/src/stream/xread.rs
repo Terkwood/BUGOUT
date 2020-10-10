@@ -1,6 +1,6 @@
 use super::{topics, GROUP_NAME};
+use crate::core_model::GameId;
 use crate::stream::StreamInput;
-use core_model::GameId;
 use log::error;
 use redis::streams::{StreamReadOptions, StreamReadReply};
 use redis::{Client, Commands};

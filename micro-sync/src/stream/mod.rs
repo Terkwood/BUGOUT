@@ -15,6 +15,7 @@ use log::{error, warn};
 use move_model::*;
 use sync_model::api::*;
 use sync_model::Move;
+use sync_model::*;
 
 const GROUP_NAME: &str = "micro-sync";
 

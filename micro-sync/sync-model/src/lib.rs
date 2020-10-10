@@ -1,6 +1,5 @@
-extern crate core_model;
-extern crate move_model;
-extern crate serde_derive;
+pub use core_model;
+pub use move_model;
 
 pub mod api;
 
