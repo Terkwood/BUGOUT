@@ -176,16 +176,6 @@ checksum = "ce90df4c658c62f12d78f7508cf92f9173e5184a539c10bfe54a3107b3ffd0f2"
 
 [[package]]
 name = "core-model"
-version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=af087ee#af087ee538fa85e38057036ea657b33002175276"
-dependencies = [
- "serde",
- "serde_derive",
- "uuid",
-]
-
-[[package]]
-name = "core-model"
 version = "0.1.1"
 source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/color-choose-model#edda46e424e03cf65ca6c0fc7ba0de006ef12f3d"
 dependencies = [
@@ -486,7 +476,7 @@ dependencies = [
  "micro_model_bot",
  "micro_model_moves",
  "mio-extras",
- "move-model 0.2.0 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
+ "move-model",
  "r2d2_redis",
  "rand",
  "rdkafka",
@@ -693,7 +683,7 @@ dependencies = [
 [[package]]
 name = "micro_model_bot"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#5493c3d92c75b882e38b4efc25013be87d7c5dfc"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#da55a1079edefaefa71eb7685afc5c54d7ecbe9b"
 dependencies = [
  "bincode",
  "micro_model_moves",
@@ -704,7 +694,7 @@ dependencies = [
 [[package]]
 name = "micro_model_moves"
 version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#5493c3d92c75b882e38b4efc25013be87d7c5dfc"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#da55a1079edefaefa71eb7685afc5c54d7ecbe9b"
 dependencies = [
  "bincode",
  "serde",
@@ -764,17 +754,6 @@ dependencies = [
  "net2",
  "winapi 0.2.8",
  "ws2_32-sys",
-]
-
-[[package]]
-name = "move-model"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=af087ee#af087ee538fa85e38057036ea657b33002175276"
-dependencies = [
- "bincode",
- "core-model 0.1.0",
- "serde",
- "serde_derive",
 ]
 
 [[package]]
@@ -1085,7 +1064,7 @@ dependencies = [
 [[package]]
 name = "redis_conn_pool"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#5493c3d92c75b882e38b4efc25013be87d7c5dfc"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#da55a1079edefaefa71eb7685afc5c54d7ecbe9b"
 dependencies = [
  "r2d2_redis",
  "redis",
@@ -1301,11 +1280,11 @@ dependencies = [
 
 [[package]]
 name = "sync-model"
-version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
+version = "0.1.1"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=da55a10#da55a1079edefaefa71eb7685afc5c54d7ecbe9b"
 dependencies = [
- "core-model 0.1.0",
- "move-model 0.2.0 (git+https://github.com/Terkwood/BUGOUT?rev=af087ee)",
+ "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
+ "move-model",
  "serde",
  "serde_derive",
 ]

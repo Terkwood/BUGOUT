@@ -30,7 +30,7 @@ redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "0.2.0", 
 serde = "1.0.116"
 serde_derive = "1.0.116"
 serde_json = "1.0.58"
-sync-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "f2d039e"}
+sync-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "da55a10"}
 time = "0.2.22"
 uuid = {version = "0.8.1", features = ["v4", "serde"]}
 ws = "0.9.1"

@@ -12,7 +12,10 @@ pub trait IntoShared<T> {
 
 impl IntoShared<sync::api::ProvideHistory> for ProvideHistoryCommand {
     fn into_shared(&self) -> sync::api::ProvideHistory {
-        todo!()
+        sync::api::ProvideHistory {
+            game_id: core::GameId(self.game_id),
+            req_id: core::ReqId(self.req_id),
+        }
     }
 }
 
