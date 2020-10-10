@@ -4,7 +4,7 @@ use crate::backend_commands::{
 };
 use crate::model::{Coord, MakeMoveCommand, ProvideHistoryCommand};
 use crate::redis_io::RedisPool;
-use crate::topics::{ATTACH_BOT_TOPIC, MAKE_MOVE_TOPIC};
+use crate::topics;
 use micro_model_bot::gateway::AttachBot;
 
 use crossbeam_channel::{select, Receiver};
@@ -58,7 +58,7 @@ impl XAddCommands for RedisXAddCommands {
             Ok(bin) => {
                 let mut redis_cmd = redis::cmd("XADD");
                 redis_cmd
-                    .arg(ATTACH_BOT_TOPIC)
+                    .arg(topics::ATTACH_BOT_TOPIC)
                     .arg("MAXLEN")
                     .arg("~")
                     .arg("1000")
@@ -76,7 +76,7 @@ impl XAddCommands for RedisXAddCommands {
 
         let mut redis_cmd = redis::cmd("XADD");
         redis_cmd
-            .arg(MAKE_MOVE_TOPIC)
+            .arg(topics::MAKE_MOVE_TOPIC)
             .arg("MAXLEN")
             .arg("~")
             .arg("1000")
@@ -96,7 +96,25 @@ impl XAddCommands for RedisXAddCommands {
     }
 
     fn xadd_provide_history(&self, command: ProvideHistoryCommand) {
-        todo!()
+        let mut conn = self.pool.get().unwrap();
+
+        match todo!() {
+            Err(e) => error!("provide history ser error {:?}", e),
+            Ok(bin) => {
+                let mut redis_cmd = redis::cmd("XADD");
+                redis_cmd
+                    .arg(topics::PROVIDE_HISTORY_TOPIC)
+                    .arg("MAXLEN")
+                    .arg("~")
+                    .arg("1000")
+                    .arg("*")
+                    .arg("data")
+                    .arg(bin);
+                if let Err(e) = redis_cmd.query::<String>(&mut *conn) {
+                    error!("provide history redis err {:?}", e)
+                }
+            }
+        }
     }
 
     fn xadd_join_private_game(&self, command: JoinPrivateGameBackendCommand) {
@@ -200,5 +218,20 @@ mod tests {
             TestResult::Move(_) => assert!(true),
             _ => assert!(false)
         } }
+    }
+}
+
+trait IntoShared<T> {
+    fn into_shared(&self) -> T;
+}
+impl IntoShared<lobby_model::api::JoinPrivateGame> for JoinPrivateGameBackendCommand {
+    fn into_shared(&self) -> lobby_model::api::JoinPrivateGame {
+        use core_model as cm;
+
+        lobby_model::api::JoinPrivateGame {
+            game_id: cm::GameId(self.game_id),
+            client_id: cm::ClientId(self.client_id),
+            session_id: cm::SessionId(self.session_id),
+        }
     }
 }

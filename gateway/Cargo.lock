@@ -449,6 +449,7 @@ dependencies = [
  "futures",
  "harsh",
  "lazy_static",
+ "lobby-model",
  "log",
  "micro_model_bot",
  "micro_model_moves",
@@ -589,6 +590,16 @@ dependencies = [
  "libc",
  "pkg-config",
  "vcpkg",
+]
+
+[[package]]
+name = "lobby-model"
+version = "0.1.1"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=07ff00e#07ff00e95d244418d0b8e2a8bf7a4fb7acb7f07d"
+dependencies = [
+ "core-model",
+ "serde",
+ "serde_derive",
 ]
 
 [[package]]
@@ -1225,9 +1236,9 @@ checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
 
 [[package]]
 name = "syn"
-version = "1.0.42"
+version = "1.0.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c51d92969d209b54a98397e1b91c8ae82d8c87a7bb87df0b29aa2ad81454228"
+checksum = "1e2e59c50ed8f6b050b071aa7b6865293957a9af6b58b94f97c1c9434ad440ea"
 dependencies = [
  "proc-macro2",
  "quote",
