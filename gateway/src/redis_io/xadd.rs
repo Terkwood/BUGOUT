@@ -1,5 +1,5 @@
 use crate::backend_commands::BackendCommands;
-use crate::model::{Coord, MakeMoveCommand};
+use crate::model::{Coord, MakeMoveCommand, ProvideHistoryCommand};
 use crate::redis_io::RedisPool;
 use crate::topics::{ATTACH_BOT_TOPIC, MAKE_MOVE_TOPIC};
 use micro_model_bot::gateway::AttachBot;
@@ -12,6 +12,7 @@ use std::sync::Arc;
 pub trait XAddCommands {
     fn xadd_attach_bot(&self, attach_bot: AttachBot);
     fn xadd_make_move(&self, command: MakeMoveCommand);
+    fn xadd_provide_history(&self, command: ProvideHistoryCommand);
 }
 
 pub fn start(commands_out: Receiver<BackendCommands>, cmds: &dyn XAddCommands) {
@@ -81,6 +82,10 @@ impl XAddCommands for RedisXAddCommands {
             error!("make move {:?}", e)
         }
     }
+
+    fn xadd_provide_history(&self, command: ProvideHistoryCommand) {
+        todo!()
+    }
 }
 
 impl RedisXAddCommands {
@@ -111,6 +116,10 @@ mod tests {
         }
         fn xadd_make_move(&self, command: MakeMoveCommand) {
             self.st.send(TestResult::Move(command)).expect("send")
+        }
+
+        fn xadd_provide_history(&self, command: ProvideHistoryCommand) {
+            todo!()
         }
     }
 
