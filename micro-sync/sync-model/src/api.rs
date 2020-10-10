@@ -23,13 +23,13 @@ pub struct SyncReply {
     pub moves: Vec<Move>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ProvideHistory {
     pub game_id: GameId,
     pub req_id: ReqId,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct HistoryProvided {
     pub game_id: GameId,
     pub reply_to: ReqId,
