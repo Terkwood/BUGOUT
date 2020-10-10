@@ -1,4 +1,5 @@
-use crate::backend_commands::BackendCommands;
+use crate::backend_commands::BackendCommands as BC;
+use crate::backend_commands::JoinPrivateGameBackendCommand;
 use crate::model::{Coord, MakeMoveCommand, ProvideHistoryCommand};
 use crate::redis_io::RedisPool;
 use crate::topics::{ATTACH_BOT_TOPIC, MAKE_MOVE_TOPIC};
@@ -13,19 +14,26 @@ pub trait XAddCommands {
     fn xadd_attach_bot(&self, attach_bot: AttachBot);
     fn xadd_make_move(&self, command: MakeMoveCommand);
     fn xadd_provide_history(&self, command: ProvideHistoryCommand);
+    fn xadd_join_private_game(&self, command: JoinPrivateGameBackendCommand);
 }
 
-pub fn start(commands_out: Receiver<BackendCommands>, cmds: &dyn XAddCommands) {
+pub fn start(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
     loop {
         select! {
             recv(commands_out) -> backend_command_msg => match backend_command_msg {
                 Err(e) => error!("backend command xadd {:?}",e),
                 Ok(command) => match command {
-                    BackendCommands::AttachBot(attach_bot) => {
+                    BC::AttachBot(attach_bot) => {
                         cmds.xadd_attach_bot(attach_bot)
                     }
-                    BackendCommands::MakeMove(c) => cmds.xadd_make_move(c),
-                    BackendCommands::ClientHeartbeat(_) => (),
+                    BC::MakeMove(c) => cmds.xadd_make_move(c),
+                    BC::ClientHeartbeat(_) => (),
+                    BC::ProvideHistory(ph) => cmds.xadd_provide_history(ph),
+                    BC::ReqSync(_) => todo!(),
+                    BC::JoinPrivateGame(jpg) => cmds.xadd_join_private_game(jpg),
+                    BC::FindPublicGame(_) => todo!(),
+                    BC::CreateGame(_) => todo!(),
+                    BC::ChooseColorPref(_) => todo!(),
                     _ => error!("cannot match backend command to xadd"),
                 }
             }
@@ -86,6 +94,10 @@ impl XAddCommands for RedisXAddCommands {
     fn xadd_provide_history(&self, command: ProvideHistoryCommand) {
         todo!()
     }
+
+    fn xadd_join_private_game(&self, command: JoinPrivateGameBackendCommand) {
+        todo!()
+    }
 }
 
 impl RedisXAddCommands {
@@ -121,17 +133,21 @@ mod tests {
         fn xadd_provide_history(&self, command: ProvideHistoryCommand) {
             todo!()
         }
+
+        fn xadd_join_private_game(&self, command: JoinPrivateGameBackendCommand) {
+            todo!()
+        }
     }
 
     #[test]
     fn test_loop() {
         let (test_in, test_out): (Sender<TestResult>, Receiver<TestResult>) = unbounded();
-        let (cmds_in, cmds_out): (Sender<BackendCommands>, Receiver<BackendCommands>) = unbounded();
+        let (cmds_in, cmds_out): (Sender<BC>, Receiver<BC>) = unbounded();
 
         thread::spawn(move || start(cmds_out, &FakeXAddCmd { st: test_in }));
 
         cmds_in
-            .send(BackendCommands::AttachBot(AttachBot {
+            .send(BC::AttachBot(AttachBot {
                 game_id: micro_model_moves::GameId(Uuid::nil()),
                 board_size: Some(9),
                 player: micro_model_moves::Player::WHITE,
@@ -139,7 +155,7 @@ mod tests {
             .expect("send test");
 
         cmds_in
-            .send(BackendCommands::MakeMove(MakeMoveCommand {
+            .send(BC::MakeMove(MakeMoveCommand {
                 game_id: Uuid::nil(),
                 req_id: Uuid::nil(),
                 player: Player::BLACK,
