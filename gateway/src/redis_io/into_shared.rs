@@ -1,16 +1,4 @@
-use crate::backend_commands::BackendCommands as BC;
-use crate::backend_commands::{
-    CreateGameBackendCommand, FindPublicGameBackendCommand, JoinPrivateGameBackendCommand,
-};
-use crate::model::{Coord, MakeMoveCommand, ProvideHistoryCommand};
-use crate::redis_io::RedisPool;
-use crate::topics;
-use micro_model_bot::gateway::AttachBot;
-
-use crossbeam_channel::{select, Receiver};
-use log::error;
-use r2d2_redis::redis;
-use std::sync::Arc;
+use crate::backend_commands::*;
 
 pub trait IntoShared<T> {
     fn into_shared(&self) -> T;

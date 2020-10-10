@@ -165,6 +165,16 @@ checksum = "ce90df4c658c62f12d78f7508cf92f9173e5184a539c10bfe54a3107b3ffd0f2"
 
 [[package]]
 name = "core-model"
+version = "0.1.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=af087ee#af087ee538fa85e38057036ea657b33002175276"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "uuid",
+]
+
+[[package]]
+name = "core-model"
 version = "0.1.1"
 source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
 dependencies = [
@@ -440,7 +450,7 @@ version = "0.15.0-a"
 dependencies = [
  "bincode",
  "chrono",
- "core-model",
+ "core-model 0.1.1",
  "crossbeam",
  "crossbeam-channel",
  "dotenv",
@@ -454,7 +464,7 @@ dependencies = [
  "micro_model_bot",
  "micro_model_moves",
  "mio-extras",
- "move-model",
+ "move-model 0.2.0 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
  "r2d2_redis",
  "rand",
  "rdkafka",
@@ -462,6 +472,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "sync-model",
  "time 0.2.22",
  "uuid",
  "ws",
@@ -597,7 +608,7 @@ name = "lobby-model"
 version = "0.1.1"
 source = "git+https://github.com/Terkwood/BUGOUT?rev=07ff00e#07ff00e95d244418d0b8e2a8bf7a4fb7acb7f07d"
 dependencies = [
- "core-model",
+ "core-model 0.1.1",
  "serde",
  "serde_derive",
 ]
@@ -726,10 +737,21 @@ dependencies = [
 [[package]]
 name = "move-model"
 version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=af087ee#af087ee538fa85e38057036ea657b33002175276"
+dependencies = [
+ "bincode",
+ "core-model 0.1.0",
+ "serde",
+ "serde_derive",
+]
+
+[[package]]
+name = "move-model"
+version = "0.2.0"
 source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
 dependencies = [
  "bincode",
- "core-model",
+ "core-model 0.1.1",
  "serde",
  "serde_derive",
 ]
@@ -1243,6 +1265,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-xid",
+]
+
+[[package]]
+name = "sync-model"
+version = "0.1.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
+dependencies = [
+ "core-model 0.1.0",
+ "move-model 0.2.0 (git+https://github.com/Terkwood/BUGOUT?rev=af087ee)",
+ "serde",
+ "serde_derive",
 ]
 
 [[package]]
