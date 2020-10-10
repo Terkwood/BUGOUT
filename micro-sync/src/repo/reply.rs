@@ -1,5 +1,5 @@
 use super::*;
-use core_model::*;
+use crate::core_model::*;
 use redis::Client;
 use std::rc::Rc;
 use sync_model::api::ReqSync;

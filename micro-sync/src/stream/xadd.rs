@@ -1,5 +1,5 @@
 use super::topics;
-use move_model::MakeMove;
+use crate::move_model::MakeMove;
 use redis::{streams::StreamMaxlen, Client, Commands};
 use std::collections::BTreeMap;
 use std::rc::Rc;
