@@ -98,7 +98,8 @@ impl XAddCommands for RedisXAddCommands {
     fn xadd_provide_history(&self, command: ProvideHistoryCommand) {
         let mut conn = self.pool.get().unwrap();
 
-        match todo!() {
+        let s: Result<Vec<u8>, Box<bincode::ErrorKind>> = todo!();
+        match s {
             Err(e) => error!("provide history ser error {:?}", e),
             Ok(bin) => {
                 let mut redis_cmd = redis::cmd("XADD");
@@ -224,6 +225,7 @@ mod tests {
 trait IntoShared<T> {
     fn into_shared(&self) -> T;
 }
+
 impl IntoShared<lobby_model::api::JoinPrivateGame> for JoinPrivateGameBackendCommand {
     fn into_shared(&self) -> lobby_model::api::JoinPrivateGame {
         use core_model as cm;
