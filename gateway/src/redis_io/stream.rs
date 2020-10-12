@@ -16,6 +16,7 @@ pub enum StreamData {
     SyncReply(sync::api::SyncReply),
     WaitForOpponent(lobby::api::WaitForOpponent),
     GameReady(lobby::api::GameReady),
+    PrivGameRejected(lobby::api::PrivateGameRejected),
     ColorsChosen(color::api::ColorsChosen),
 }
 
@@ -37,32 +38,9 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
                                     error!("err tracking EID bot attached {:?}", e)
                                 }
                             }
-                            (
-                                xid,
-                                StreamData::MoveMade(micro_model_moves::MoveMade {
-                                    game_id,
-                                    coord,
-                                    reply_to,
-                                    player,
-                                    captured,
-                                    event_id,
-                                }),
-                            ) => {
+                            (xid, StreamData::MoveMade(m)) => {
                                 if let Err(e) =
-                                    events_in.send(BackendEvents::MoveMade(MoveMadeEvent {
-                                        game_id: game_id.0,
-                                        coord: coord.map(|c| Coord { x: c.x, y: c.y }),
-                                        reply_to: reply_to.0,
-                                        player: match player {
-                                            micro_model_moves::Player::BLACK => Player::BLACK,
-                                            _ => Player::WHITE,
-                                        },
-                                        captured: captured
-                                            .iter()
-                                            .map(|c| Coord { x: c.x, y: c.y })
-                                            .collect(),
-                                        event_id: event_id.0,
-                                    }))
+                                    events_in.send(BackendEvents::from(StreamData::MoveMade(m)))
                                 {
                                     error!("send err move made {:?}", e)
                                 }
@@ -77,6 +55,7 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
                             (_, StreamData::SyncReply(_)) => todo!(),
                             (_, StreamData::WaitForOpponent(_)) => todo!(),
                             (_, StreamData::GameReady(_)) => todo!(),
+                            (_, StreamData::PrivGameRejected(_)) => todo!(),
                             (_, StreamData::ColorsChosen(_)) => todo!(),
                         }
                     }
@@ -89,4 +68,36 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
 pub struct StreamOpts {
     pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub xreader: Box<dyn XReader>,
+}
+
+impl From<StreamData> for BackendEvents {
+    fn from(stream_data: StreamData) -> Self {
+        match stream_data {
+            StreamData::MoveMade(micro_model_moves::MoveMade {
+                game_id,
+                coord,
+                reply_to,
+                player,
+                captured,
+                event_id,
+            }) => BackendEvents::MoveMade(MoveMadeEvent {
+                game_id: game_id.0,
+                coord: coord.map(|c| Coord { x: c.x, y: c.y }),
+                reply_to: reply_to.0,
+                player: match player {
+                    micro_model_moves::Player::BLACK => Player::BLACK,
+                    _ => Player::WHITE,
+                },
+                captured: captured.iter().map(|c| Coord { x: c.x, y: c.y }).collect(),
+                event_id: event_id.0,
+            }),
+            StreamData::BotAttached(b) => BackendEvents::BotAttached(b),
+            StreamData::HistoryProvided(h) => todo!(),
+            StreamData::SyncReply(s) => todo!(),
+            StreamData::WaitForOpponent(w) => todo!(),
+            StreamData::GameReady(g) => todo!(),
+            StreamData::PrivGameRejected(p) => todo!(),
+            StreamData::ColorsChosen(c) => todo!(),
+        }
+    }
 }
