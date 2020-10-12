@@ -97,28 +97,28 @@ impl XAddCommands for RedisXAddCommands {
     }
 
     fn xadd_provide_history(&self, command: ProvideHistoryCommand) {
-        self.old_school_xadd(
+        self.xadd_classic(
             bincode::serialize(&command.into_shared()),
             topics::PROVIDE_HISTORY_TOPIC,
         )
     }
 
     fn xadd_join_private_game(&self, command: JoinPrivateGameBackendCommand) {
-        self.old_school_xadd(
+        self.xadd_classic(
             bincode::serialize(&command.into_shared()),
             topics::JOIN_PRIVATE_GAME_TOPIC,
         )
     }
 
     fn xadd_find_public_game(&self, command: FindPublicGameBackendCommand) {
-        self.old_school_xadd(
+        self.xadd_classic(
             bincode::serialize(&command.into_shared()),
             topics::FIND_PUBLIC_GAME_TOPIC,
         )
     }
 
     fn xadd_create_game(&self, command: CreateGameBackendCommand) {
-        self.old_school_xadd(
+        self.xadd_classic(
             bincode::serialize(&command.into_shared()),
             topics::CREATE_GAME_TOPIC,
         )
@@ -130,7 +130,7 @@ impl RedisXAddCommands {
         RedisXAddCommands { pool }
     }
 
-    fn old_school_xadd(&self, bin: Result<Vec<u8>, Box<bincode::ErrorKind>>, topic: &str) {
+    fn xadd_classic(&self, bin: Result<Vec<u8>, Box<bincode::ErrorKind>>, topic: &str) {
         match self.pool.get() {
             Err(e) => error!("xadd {}: cannot get conn {:?}", topic, e),
             Ok(mut conn) => {
