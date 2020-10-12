@@ -1,5 +1,6 @@
 use super::entry_id_repo::*;
 use super::xread::XReader;
+use crate::backend_events as be;
 use crate::backend_events::BackendEvents;
 use crate::model::{Coord, MoveMadeEvent, Player};
 use color_model as color;
@@ -92,8 +93,22 @@ impl From<StreamData> for BackendEvents {
                 event_id: event_id.0,
             }),
             StreamData::BotAttached(b) => BackendEvents::BotAttached(b),
-            StreamData::HistoryProvided(h) => todo!(),
-            StreamData::SyncReply(s) => todo!(),
+            StreamData::HistoryProvided(h) => {
+                BackendEvents::HistoryProvided(crate::model::HistoryProvidedEvent {
+                    game_id: h.game_id.0,
+                    reply_to: h.reply_to.0,
+                    moves: todo!(),
+                    event_id: h.event_id.0,
+                })
+            }
+            StreamData::SyncReply(s) => BackendEvents::SyncReply(be::SyncReplyBackendEvent {
+                game_id: s.game_id.0,
+                reply_to: s.reply_to.0,
+                session_id: s.session_id.0,
+                turn: s.turn,
+                player_up: todo!(),
+                moves: todo!(),
+            }),
             StreamData::WaitForOpponent(w) => todo!(),
             StreamData::GameReady(g) => todo!(),
             StreamData::PrivGameRejected(p) => todo!(),
