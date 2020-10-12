@@ -39,8 +39,8 @@ impl XReader for RedisXReader {
             .arg("STREAMS")
             .arg(BOT_ATTACHED_TOPIC)
             .arg(MOVE_MADE_TOPIC)
-            .arg(entry_ids.bot_attached_eid.to_string())
-            .arg(entry_ids.move_made_eid.to_string())
+            .arg(entry_ids.bot_attached_xid.to_string())
+            .arg(entry_ids.move_made_xid.to_string())
             .query::<XReadResult>(&mut *conn)?;
         let unsorted: HashMap<XReadEntryId, StreamData> = deser(xrr);
         let sorted_keys: Vec<XReadEntryId> = {
