@@ -2,9 +2,22 @@ use super::entry_id_repo::*;
 use super::xread::XReader;
 use crate::backend_events::BackendEvents;
 use crate::model::{Coord, MoveMadeEvent, Player};
-
+use color_model as color;
 use crossbeam_channel::Sender;
+use lobby_model as lobby;
 use log::error;
+use sync_model as sync;
+
+#[derive(Clone, Debug)]
+pub enum StreamData {
+    BotAttached(micro_model_bot::gateway::BotAttached),
+    MoveMade(micro_model_moves::MoveMade),
+    HistoryProvided(sync::api::HistoryProvided),
+    SyncReply(sync::api::SyncReply),
+    WaitForOpponent(lobby::api::WaitForOpponent),
+    GameReady(lobby::api::GameReady),
+    ColorsChosen(color::api::ColorsChosen),
+}
 
 pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
     loop {
@@ -15,18 +28,17 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
                 Ok(xrr) => {
                     for event in xrr {
                         match event {
-                            (entry_id, StreamData::BotAttached(b)) => {
+                            (xid, StreamData::BotAttached(b)) => {
                                 if let Err(e) = events_in.send(BackendEvents::BotAttached(b)) {
                                     error!("send err bot attached {:?}", e)
-                                } else if let Err(e) = opts
-                                    .entry_id_repo
-                                    .update(EntryIdType::BotAttached, entry_id)
+                                } else if let Err(e) =
+                                    opts.entry_id_repo.update(EntryIdType::BotAttached, xid)
                                 {
                                     error!("err tracking EID bot attached {:?}", e)
                                 }
                             }
                             (
-                                entry_id,
+                                xid,
                                 StreamData::MoveMade(micro_model_moves::MoveMade {
                                     game_id,
                                     coord,
@@ -56,11 +68,16 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
                                 }
 
                                 if let Err(e) =
-                                    opts.entry_id_repo.update(EntryIdType::MoveMade, entry_id)
+                                    opts.entry_id_repo.update(EntryIdType::MoveMade, xid)
                                 {
                                     error!("err tracking EID move made {:?}", e)
                                 }
                             }
+                            (_, StreamData::HistoryProvided(_)) => todo!(),
+                            (_, StreamData::SyncReply(_)) => todo!(),
+                            (_, StreamData::WaitForOpponent(_)) => todo!(),
+                            (_, StreamData::GameReady(_)) => todo!(),
+                            (_, StreamData::ColorsChosen(_)) => todo!(),
                         }
                     }
                 }
@@ -72,10 +89,4 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
 pub struct StreamOpts {
     pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub xreader: Box<dyn XReader>,
-}
-
-#[derive(Clone, Debug)]
-pub enum StreamData {
-    BotAttached(micro_model_bot::gateway::BotAttached),
-    MoveMade(micro_model_moves::MoveMade),
 }
