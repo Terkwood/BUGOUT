@@ -1,6 +1,7 @@
 use crate::backend::commands::BackendCommands as BC;
 use crate::backend::commands::{
-    CreateGameBackendCommand, FindPublicGameBackendCommand, JoinPrivateGameBackendCommand,
+    ChooseColorPrefBackendCommand, CreateGameBackendCommand, FindPublicGameBackendCommand,
+    JoinPrivateGameBackendCommand, ReqSyncBackendCommand,
 };
 use crate::model::{Coord, MakeMoveCommand, ProvideHistoryCommand};
 use crate::redis_io::RedisPool;
@@ -17,9 +18,11 @@ pub trait XAddCommands {
     fn xadd_attach_bot(&self, attach_bot: AttachBot);
     fn xadd_make_move(&self, command: MakeMoveCommand);
     fn xadd_provide_history(&self, command: ProvideHistoryCommand);
+    fn xadd_req_sync(&self, command: ReqSyncBackendCommand);
     fn xadd_join_private_game(&self, command: JoinPrivateGameBackendCommand);
     fn xadd_find_public_game(&self, command: FindPublicGameBackendCommand);
     fn xadd_create_game(&self, command: CreateGameBackendCommand);
+    fn xadd_choose_color_pref(&self, command: ChooseColorPrefBackendCommand);
 }
 
 pub fn start(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
@@ -34,11 +37,11 @@ pub fn start(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
                     BC::MakeMove(c) => cmds.xadd_make_move(c),
                     BC::ClientHeartbeat(_) => (),
                     BC::ProvideHistory(ph) => cmds.xadd_provide_history(ph),
-                    BC::ReqSync(_) => todo!(),
+                    BC::ReqSync(rs) => cmds.xadd_req_sync(rs),
                     BC::JoinPrivateGame(jpg) => cmds.xadd_join_private_game(jpg),
-                    BC::FindPublicGame(_) => todo!(),
-                    BC::CreateGame(_) => todo!(),
-                    BC::ChooseColorPref(_) => todo!(),
+                    BC::FindPublicGame(fpg) => cmds.xadd_find_public_game(fpg),
+                    BC::CreateGame(cg) => cmds.xadd_create_game(cg),
+                    BC::ChooseColorPref(cp) => cmds.xadd_choose_color_pref(cp),
                     _ => error!("cannot match backend command to xadd"),
                 }
             }
@@ -121,6 +124,20 @@ impl XAddCommands for RedisXAddCommands {
         self.xadd_classic(
             bincode::serialize(&command.into_shared()),
             topics::CREATE_GAME_TOPIC,
+        )
+    }
+
+    fn xadd_req_sync(&self, command: ReqSyncBackendCommand) {
+        self.xadd_classic(
+            bincode::serialize(&command.into_shared()),
+            topics::REQ_SYNC_TOPIC,
+        )
+    }
+
+    fn xadd_choose_color_pref(&self, command: ChooseColorPrefBackendCommand) {
+        self.xadd_classic(
+            bincode::serialize(&command.into_shared()),
+            topics::CHOOSE_COLOR_PREF_TOPIC,
         )
     }
 }

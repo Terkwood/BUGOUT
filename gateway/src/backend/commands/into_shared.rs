@@ -2,12 +2,23 @@ use crate::backend::commands::*;
 use crate::model::ProvideHistoryCommand;
 use uuid::Uuid;
 
+use color_model as color;
 use core_model as core;
 use lobby_model as lobby;
 use sync_model as sync;
 
 pub trait IntoShared<T> {
     fn into_shared(&self) -> T;
+}
+
+impl IntoShared<color::api::ChooseColorPref> for ChooseColorPrefBackendCommand {
+    fn into_shared(&self) -> color::api::ChooseColorPref {
+        color::api::ChooseColorPref {
+            session_id: self.session_id.into_shared(),
+            client_id: self.client_id.into_shared(),
+            color_pref: self.color_pref.into(),
+        }
+    }
 }
 
 impl IntoShared<sync::api::ReqSync> for ReqSyncBackendCommand {
