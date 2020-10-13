@@ -101,20 +101,28 @@ impl From<StreamData> for BackendEvents {
             StreamData::HistoryProvided(h) => {
                 BackendEvents::HistoryProvided(HistoryProvidedEvent::from(h))
             }
-            StreamData::SyncReply(s) => BackendEvents::SyncReply(be::SyncReplyBackendEvent {
-                game_id: s.game_id.0,
-                reply_to: s.reply_to.0,
-                session_id: s.session_id.0,
-                turn: s.turn,
-                player_up: Player::from(s.player_up),
-                moves: s.moves.iter().map(|m| Move::from(m.clone())).collect(),
-            }),
+            StreamData::SyncReply(s) => {
+                BackendEvents::SyncReply(be::SyncReplyBackendEvent::from(s))
+            }
             StreamData::WaitForOpponent(w) => {
                 be::BackendEvents::WaitForOpponent(be::WaitForOpponentBackendEvent::from(w))
             }
             StreamData::GameReady(g) => todo!(),
             StreamData::PrivGameRejected(p) => todo!(),
             StreamData::ColorsChosen(c) => todo!(),
+        }
+    }
+}
+
+impl From<sync::api::SyncReply> for be::SyncReplyBackendEvent {
+    fn from(s: sync::api::SyncReply) -> Self {
+        be::SyncReplyBackendEvent {
+            game_id: s.game_id.0,
+            reply_to: s.reply_to.0,
+            session_id: s.session_id.0,
+            turn: s.turn,
+            player_up: Player::from(s.player_up),
+            moves: s.moves.iter().map(|m| Move::from(m.clone())).collect(),
         }
     }
 }
