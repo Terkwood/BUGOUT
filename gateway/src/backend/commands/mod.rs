@@ -1,3 +1,5 @@
+pub mod from;
+
 use serde_derive::{Deserialize, Serialize};
 
 use crate::model::*;

@@ -6,7 +6,6 @@ pub mod stream;
 pub mod xadd;
 pub mod xread;
 
-pub use into_shared::IntoShared;
 pub use key_provider::*;
 pub use namespace::*;
 pub use xadd::start;
