@@ -39,8 +39,20 @@ impl XReader for RedisXReader {
             .arg("STREAMS")
             .arg(topics::BOT_ATTACHED_TOPIC)
             .arg(topics::MOVE_MADE_TOPIC)
+            .arg(topics::HISTORY_PROVIDED_TOPIC)
+            .arg(topics::SYNC_REPLY_TOPIC)
+            .arg(topics::WAIT_FOR_OPPONENT_TOPIC)
+            .arg(topics::GAME_READY_TOPIC)
+            .arg(topics::PRIVATE_GAME_REJECTED_TOPIC)
+            .arg(topics::COLORS_CHOSEN_TOPIC)
             .arg(entry_ids.bot_attached_xid.to_string())
             .arg(entry_ids.move_made_xid.to_string())
+            .arg(entry_ids.hist_prov_xid.to_string())
+            .arg(entry_ids.sync_reply_xid.to_string())
+            .arg(entry_ids.wait_opponent_xid.to_string())
+            .arg(entry_ids.game_ready_xid.to_string())
+            .arg(entry_ids.priv_game_reject_xid.to_string())
+            .arg(entry_ids.colors_chosen_xid.to_string())
             .query::<XReadResult>(&mut *conn)?;
         let unsorted: HashMap<XReadEntryId, StreamData> = deser(xrr);
         let sorted_keys: Vec<XReadEntryId> = {
