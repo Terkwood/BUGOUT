@@ -1,5 +1,4 @@
 pub mod entry_id_repo;
-mod into_shared;
 mod key_provider;
 mod namespace;
 pub mod stream;
