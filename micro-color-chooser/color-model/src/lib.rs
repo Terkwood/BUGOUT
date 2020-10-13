@@ -3,7 +3,7 @@ pub mod api;
 use core_model::*;
 use serde_derive::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ColorPref {
     Black,
     White,
