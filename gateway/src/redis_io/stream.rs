@@ -2,11 +2,12 @@ use super::entry_id_repo::*;
 use super::xread::XReader;
 use crate::backend_events as be;
 use crate::backend_events::BackendEvents;
-use crate::model::{Coord, Move, MoveMadeEvent, Player, Visibility};
+use crate::model::{Coord, HistoryProvidedEvent, Move, MoveMadeEvent, Player, Visibility};
 use color_model as color;
 use crossbeam_channel::Sender;
 use lobby_model as lobby;
 use log::error;
+use move_model as moves;
 use sync_model as sync;
 
 #[derive(Clone, Debug)]
@@ -89,15 +90,15 @@ impl From<StreamData> for BackendEvents {
                     micro_model_moves::Player::BLACK => Player::BLACK,
                     _ => Player::WHITE,
                 },
-                captured: captured.iter().map(|c| Coord { x: c.x, y: c.y }).collect(),
+                captured: captured.iter().map(|c| Coord::from(c.clone())).collect(),
                 event_id: event_id.0,
             }),
             StreamData::BotAttached(b) => BackendEvents::BotAttached(b),
             StreamData::HistoryProvided(h) => {
-                BackendEvents::HistoryProvided(crate::model::HistoryProvidedEvent {
+                BackendEvents::HistoryProvided(HistoryProvidedEvent {
                     game_id: h.game_id.0,
                     reply_to: h.reply_to.0,
-                    moves: todo!(),
+                    moves: h.moves.iter().map(|m| Move::from(m.clone())).collect(),
                     event_id: h.event_id.0,
                 })
             }
@@ -106,7 +107,7 @@ impl From<StreamData> for BackendEvents {
                 reply_to: s.reply_to.0,
                 session_id: s.session_id.0,
                 turn: s.turn,
-                player_up: todo!(),
+                player_up: Player::from(s.player_up),
                 moves: s.moves.iter().map(|m| Move::from(m.clone())).collect(),
             }),
             StreamData::WaitForOpponent(w) => {
@@ -141,8 +142,27 @@ impl From<sync::Move> for Move {
     fn from(m: sync::Move) -> Self {
         Self {
             turn: m.turn as i32,
-            player: todo!("from"),
-            coord: todo!("from"),
+            player: Player::from(m.player),
+            coord: m.coord.map(|c| Coord::from(c)),
         }
+    }
+}
+impl From<moves::Player> for Player {
+    fn from(p: moves::Player) -> Self {
+        match p {
+            moves::Player::BLACK => Player::BLACK,
+            moves::Player::WHITE => Player::WHITE,
+        }
+    }
+}
+impl From<moves::Coord> for Coord {
+    fn from(c: moves::Coord) -> Self {
+        Self { x: c.x, y: c.y }
+    }
+}
+
+impl From<micro_model_moves::Coord> for Coord {
+    fn from(c: micro_model_moves::Coord) -> Self {
+        Self { x: c.x, y: c.y }
     }
 }
