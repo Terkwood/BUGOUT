@@ -61,7 +61,7 @@ impl XReader for RedisXReader {
 }
 
 fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
-    let mut stream_data = HashMap::new();
+    let mut stream_data: HashMap<XReadEntryId, StreamData> = HashMap::new();
 
     for hash in xread_result.iter() {
         for (xread_topic, xread_data) in hash.iter() {
@@ -71,13 +71,13 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                         let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin> 
                             redis::FromRedisValue::from_redis_value(&v);
                         if let Ok(s) = shape {
-                            if let (Ok(seq_no), Some(bot_attached)) = (
+                            if let (Ok(xid), Some(bot_attached)) = (
                                 XReadEntryId::from_str(k),
                                 s.1.clone().and_then(|bytes| {
                                     micro_model_bot::gateway::BotAttached::from(&bytes).ok()
                                 }),
                             ) {
-                                stream_data.insert(seq_no, StreamData::BotAttached(bot_attached));
+                                stream_data.insert(xid, StreamData::BotAttached(bot_attached));
                             } else {
                                 warn!("Xread: Deser error   bot attached data")
                             }
@@ -92,12 +92,12 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                         let shape: Result<(String, String, String, Vec<u8>), _> = // game_id <uuid-str> data <bin>
                             redis::FromRedisValue::from_redis_value(&v);
                         if let Ok(s) = shape {
-                            if let (Ok(seq_no), Some(_game_id), Some(move_made)) = (
+                            if let (Ok(xid), Some(_game_id), Some(move_made)) = (
                                 XReadEntryId::from_str(k),
                                 Uuid::from_str(&s.1).ok(),
                                 bincode::deserialize::<move_model::MoveMade>(&s.3.clone()).ok(),
                             ) {
-                                stream_data.insert(seq_no, StreamData::MoveMade(move_made));
+                                stream_data.insert(xid, StreamData::MoveMade(move_made));
                             } else {
                                 error!("fail  move made xread inner")
                             }
@@ -112,14 +112,14 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                         let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin> 
                             redis::FromRedisValue::from_redis_value(&v);
                         if let Ok(s) = shape {
-                            if let (Ok(seq_no), Some(hist_prov)) = (
+                            if let (Ok(xid), Some(hist_prov)) = (
                                 XReadEntryId::from_str(k),
                                 bincode::deserialize::<sync_model::api::HistoryProvided>(
                                     &s.1.unwrap_or_default(),
                                 )
                                 .ok(),
                             ) {
-                                stream_data.insert(seq_no, StreamData::HistoryProvided(hist_prov));
+                                stream_data.insert(xid, StreamData::HistoryProvided(hist_prov));
                             } else {
                                 warn!("Xread: Deser error   hist prov data")
                             }
@@ -128,6 +128,30 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                         }
                     }
                 }
+            } else if &xread_topic[..] == topics::SYNC_REPLY_TOPIC {
+                for with_timestamps in xread_data {
+                    for (k, v) in with_timestamps {
+                        let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin> 
+                            redis::FromRedisValue::from_redis_value(&v);
+                        if let Ok(s) = shape {
+                            if let (Ok(xid), Some(sync_reply)) = (
+                                XReadEntryId::from_str(k),
+                                bincode::deserialize::<sync_model::api::SyncReply>(
+                                    &s.1.unwrap_or_default(),
+                                )
+                                .ok(),
+                            ) {
+                                stream_data.insert(xid, StreamData::SyncReply(sync_reply));
+                            } else {
+                                warn!("Xread: Deser error  sync reply data")
+                            }
+                        } else {
+                            error!("Fail XREAD sync reply")
+                        }
+                    }
+                }
+            } else if &xread_topic[..] == topics::WAIT_FOR_OPPONENT_TOPIC {
+                todo!()
             } else {
                 // TODO// TODO// TODO// TODO// TODO// TODO
                 // TODO// TODO// TODO// TODO// TODO// TODO
@@ -151,4 +175,36 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
     }
 
     stream_data
+}
+
+struct DeserErr;
+fn bin_data_process<'a, T>(
+    xread_data: &Vec<HashMap<String, redis::Value, StreamData>>,
+    mut stream_data: HashMap<XReadEntryId, StreamData>,
+    des: Box<dyn Fn(Vec<u8>) -> Result<T, DeserErr>>,
+) where
+    T: Deserialize<'a> + std::convert::Into<crate::redis_io::stream::StreamData>,
+{
+    for with_timestamps in xread_data {
+        for (k, v) in with_timestamps {
+            let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin> 
+                redis::FromRedisValue::from_redis_value(&v);
+            if let Ok(s) = shape {
+                if let (Ok(xid), Some(local)) =
+                    (XReadEntryId::from_str(k), des(s.1.unwrap_or_default()).ok())
+                {
+                    stream_data.insert(xid, local.into());
+                } else {
+                    warn!("Xread: Deser error  sync reply data")
+                }
+            } else {
+                error!("Fail XREAD sync reply")
+            }
+        }
+    }
+}
+impl From<sync_model::api::SyncReply> for StreamData {
+    fn from(h: sync_model::api::SyncReply) -> Self {
+        StreamData::SyncReply(h)
+    }
 }
