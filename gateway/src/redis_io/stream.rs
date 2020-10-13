@@ -8,6 +8,7 @@ use crossbeam_channel::Sender;
 use lobby_model as lobby;
 use log::error;
 use move_model as moves;
+use redis_streams::XReadEntryId;
 use sync_model as sync;
 
 #[derive(Clone, Debug)]
@@ -29,41 +30,44 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
             Ok(entry_ids) => match opts.xreader.xread_sorted(entry_ids) {
                 Err(e) => error!("cannot xread {:?}", e),
                 Ok(xrr) => {
-                    for event in xrr {
-                        match event {
-                            (xid, StreamData::BotAttached(b)) => {
-                                if let Err(e) = events_in.send(BackendEvents::BotAttached(b)) {
-                                    error!("send err bot attached {:?}", e)
-                                } else if let Err(e) =
-                                    opts.entry_id_repo.update(EntryIdType::BotAttached, xid)
-                                {
-                                    error!("err tracking EID bot attached {:?}", e)
-                                }
-                            }
-                            (xid, StreamData::MoveMade(m)) => {
-                                if let Err(e) =
-                                    events_in.send(BackendEvents::from(StreamData::MoveMade(m)))
-                                {
-                                    error!("send err move made {:?}", e)
-                                }
-
-                                if let Err(e) =
-                                    opts.entry_id_repo.update(EntryIdType::MoveMade, xid)
-                                {
-                                    error!("err tracking EID move made {:?}", e)
-                                }
-                            }
-                            (_, StreamData::HistoryProvided(_)) => todo!(),
-                            (_, StreamData::SyncReply(_)) => todo!(),
-                            (_, StreamData::WaitForOpponent(_)) => todo!(),
-                            (_, StreamData::GameReady(_)) => todo!(),
-                            (_, StreamData::PrivGameRejected(_)) => todo!(),
-                            (_, StreamData::ColorsChosen(_)) => todo!(),
-                        }
+                    for (xid, data) in xrr {
+                        process_event(xid, data, &events_in, &opts)
                     }
                 }
             },
         }
+    }
+}
+
+fn process_event(
+    xid: XReadEntryId,
+    data: StreamData,
+    events_in: &Sender<BackendEvents>,
+    opts: &StreamOpts,
+) {
+    match data {
+        StreamData::BotAttached(b) => {
+            if let Err(e) = events_in.send(BackendEvents::BotAttached(b)) {
+                error!("send err bot attached {:?}", e)
+            } else if let Err(e) = opts.entry_id_repo.update(EntryIdType::BotAttached, xid) {
+                error!("err tracking EID bot attached {:?}", e)
+            }
+        }
+        StreamData::MoveMade(m) => {
+            if let Err(e) = events_in.send(BackendEvents::from(StreamData::MoveMade(m))) {
+                error!("send err move made {:?}", e)
+            }
+
+            if let Err(e) = opts.entry_id_repo.update(EntryIdType::MoveMade, xid) {
+                error!("err tracking EID move made {:?}", e)
+            }
+        }
+        StreamData::HistoryProvided(_) => todo!(),
+        StreamData::SyncReply(_) => todo!(),
+        StreamData::WaitForOpponent(_) => todo!(),
+        StreamData::GameReady(_) => todo!(),
+        StreamData::PrivGameRejected(_) => todo!(),
+        StreamData::ColorsChosen(_) => todo!(),
     }
 }
 
