@@ -109,7 +109,14 @@ impl From<StreamData> for BackendEvents {
                 player_up: todo!(),
                 moves: todo!(),
             }),
-            StreamData::WaitForOpponent(w) => todo!(),
+            StreamData::WaitForOpponent(w) => {
+                BackendEvents::WaitForOpponent(be::WaitForOpponentBackendEvent {
+                    game_id: w.game_id.0,
+                    session_id: w.session_id.0,
+                    event_id: w.event_id.0,
+                    visibility: todo!("need to update lobby-model"),
+                })
+            }
             StreamData::GameReady(g) => todo!(),
             StreamData::PrivGameRejected(p) => todo!(),
             StreamData::ColorsChosen(c) => todo!(),
