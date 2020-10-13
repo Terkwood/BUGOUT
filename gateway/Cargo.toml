@@ -7,7 +7,7 @@ version = "0.15.0-a"
 [dependencies]
 bincode = "1.3.1"
 chrono = {version = "0.4.19", features = ["serde"]}
-color-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "07ff00e"}
+color-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20228d5"}
 core-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "f2d039e"}
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.4"
@@ -17,7 +17,7 @@ envy = "0.4.1"
 futures = "0.3.6"
 harsh = "0.1.6"
 lazy_static = "1.4.0"
-lobby-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "07ff00e"}
+lobby-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20228d5"}
 log = "0.4.11"
 micro_model_bot = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
 micro_model_moves = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}

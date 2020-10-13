@@ -2,7 +2,7 @@ use super::entry_id_repo::*;
 use super::xread::XReader;
 use crate::backend_events as be;
 use crate::backend_events::BackendEvents;
-use crate::model::{Coord, MoveMadeEvent, Player};
+use crate::model::{Coord, Move, MoveMadeEvent, Player, Visibility};
 use color_model as color;
 use crossbeam_channel::Sender;
 use lobby_model as lobby;
@@ -107,19 +107,42 @@ impl From<StreamData> for BackendEvents {
                 session_id: s.session_id.0,
                 turn: s.turn,
                 player_up: todo!(),
-                moves: todo!(),
+                moves: s.moves.iter().map(|m| Move::from(m.clone())).collect(),
             }),
             StreamData::WaitForOpponent(w) => {
-                BackendEvents::WaitForOpponent(be::WaitForOpponentBackendEvent {
-                    game_id: w.game_id.0,
-                    session_id: w.session_id.0,
-                    event_id: w.event_id.0,
-                    visibility: todo!("need to update lobby-model"),
-                })
+                be::BackendEvents::WaitForOpponent(be::WaitForOpponentBackendEvent::from(w))
             }
             StreamData::GameReady(g) => todo!(),
             StreamData::PrivGameRejected(p) => todo!(),
             StreamData::ColorsChosen(c) => todo!(),
+        }
+    }
+}
+
+impl From<lobby::api::WaitForOpponent> for be::WaitForOpponentBackendEvent {
+    fn from(w: lobby::api::WaitForOpponent) -> Self {
+        Self {
+            game_id: w.game_id.0,
+            session_id: w.session_id.0,
+            event_id: w.event_id.0,
+            visibility: Visibility::from(w.visibility),
+        }
+    }
+}
+impl From<lobby::Visibility> for Visibility {
+    fn from(v: lobby::Visibility) -> Self {
+        match v {
+            lobby::Visibility::Private => Visibility::Private,
+            lobby::Visibility::Public => Visibility::Public,
+        }
+    }
+}
+impl From<sync::Move> for Move {
+    fn from(m: sync::Move) -> Self {
+        Self {
+            turn: m.turn as i32,
+            player: todo!("from"),
+            coord: todo!("from"),
         }
     }
 }

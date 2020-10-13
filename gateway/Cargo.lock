@@ -146,11 +146,11 @@ dependencies = [
 
 [[package]]
 name = "color-model"
-version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=07ff00e#07ff00e95d244418d0b8e2a8bf7a4fb7acb7f07d"
+version = "0.1.2"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=20228d5#20228d5ada2628baba50ee654efc84a511f0682e"
 dependencies = [
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?branch=fix/color-choose-model)",
- "lobby-model 0.1.0",
+ "core-model",
+ "lobby-model 0.2.0 (git+https://github.com/Terkwood/BUGOUT?rev=ca55886)",
  "serde",
  "serde_derive",
 ]
@@ -173,16 +173,6 @@ name = "const_fn"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce90df4c658c62f12d78f7508cf92f9173e5184a539c10bfe54a3107b3ffd0f2"
-
-[[package]]
-name = "core-model"
-version = "0.1.1"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/color-choose-model#edda46e424e03cf65ca6c0fc7ba0de006ef12f3d"
-dependencies = [
- "serde",
- "serde_derive",
- "uuid",
-]
 
 [[package]]
 name = "core-model"
@@ -462,7 +452,7 @@ dependencies = [
  "bincode",
  "chrono",
  "color-model",
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
+ "core-model",
  "crossbeam",
  "crossbeam-channel",
  "dotenv",
@@ -471,7 +461,7 @@ dependencies = [
  "futures",
  "harsh",
  "lazy_static",
- "lobby-model 0.1.1",
+ "lobby-model 0.2.0 (git+https://github.com/Terkwood/BUGOUT?rev=20228d5)",
  "log",
  "micro_model_bot",
  "micro_model_moves",
@@ -617,20 +607,20 @@ dependencies = [
 
 [[package]]
 name = "lobby-model"
-version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/color-choose-model#edda46e424e03cf65ca6c0fc7ba0de006ef12f3d"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=20228d5#20228d5ada2628baba50ee654efc84a511f0682e"
 dependencies = [
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?branch=fix/color-choose-model)",
+ "core-model",
  "serde",
  "serde_derive",
 ]
 
 [[package]]
 name = "lobby-model"
-version = "0.1.1"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=07ff00e#07ff00e95d244418d0b8e2a8bf7a4fb7acb7f07d"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=ca55886#ca558868d70328a8f6a610a171b30130a962c3e3"
 dependencies = [
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
+ "core-model",
  "serde",
  "serde_derive",
 ]
@@ -762,7 +752,7 @@ version = "0.2.0"
 source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
 dependencies = [
  "bincode",
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
+ "core-model",
  "serde",
  "serde_derive",
 ]
@@ -1283,7 +1273,7 @@ name = "sync-model"
 version = "0.1.2"
 source = "git+https://github.com/Terkwood/BUGOUT?rev=41b59ba#41b59ba006f1def6a04670eaaf113f458b1c72c7"
 dependencies = [
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
+ "core-model",
  "move-model",
  "serde",
  "serde_derive",
