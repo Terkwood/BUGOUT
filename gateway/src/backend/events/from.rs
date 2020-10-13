@@ -64,8 +64,13 @@ impl From<lobby::api::GameReady> for be::GameReadyBackendEvent {
 }
 
 impl From<lobby::api::PrivateGameRejected> for be::PrivateGameRejectedBackendEvent {
-    fn from(_: lobby::api::PrivateGameRejected) -> Self {
-        todo!()
+    fn from(p: lobby::api::PrivateGameRejected) -> Self {
+        Self {
+            game_id: p.game_id.0,
+            session_id: p.session_id.0,
+            event_id: p.event_id.0,
+            client_id: p.client_id.0
+        }
     }
 }
 impl From<lobby::api::WaitForOpponent> for be::WaitForOpponentBackendEvent {
