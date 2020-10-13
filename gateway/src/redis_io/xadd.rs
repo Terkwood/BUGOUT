@@ -7,7 +7,7 @@ use crate::redis_io::RedisPool;
 use crate::topics;
 use micro_model_bot::gateway::AttachBot;
 
-use crate::backend::commands::from::IntoShared;
+use crate::backend::commands::IntoShared;
 use crossbeam_channel::{select, Receiver};
 use log::error;
 use r2d2_redis::redis;
