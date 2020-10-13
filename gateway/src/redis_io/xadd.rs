@@ -1,5 +1,5 @@
-use crate::backend_commands::BackendCommands as BC;
-use crate::backend_commands::{
+use crate::backend::commands::BackendCommands as BC;
+use crate::backend::commands::{
     CreateGameBackendCommand, FindPublicGameBackendCommand, JoinPrivateGameBackendCommand,
 };
 use crate::model::{Coord, MakeMoveCommand, ProvideHistoryCommand};

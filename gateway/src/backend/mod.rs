@@ -1,3 +1,4 @@
+pub mod commands;
 mod doubler;
 pub mod events;
 mod start;

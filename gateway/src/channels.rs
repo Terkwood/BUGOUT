@@ -1,7 +1,7 @@
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
+use crate::backend::commands::BackendCommands;
 use crate::backend::events::{BackendEvents, KafkaShutdownEvent};
-use crate::backend_commands::BackendCommands;
 use crate::idle_status::{IdleStatusResponse, KafkaActivityObserved, RequestIdleStatus};
 use crate::router::RouterCommand;
 

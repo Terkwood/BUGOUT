@@ -2,8 +2,6 @@
 extern crate lazy_static;
 
 pub mod backend;
-pub mod backend_commands;
-pub mod backend_events;
 pub mod channels;
 pub mod compact_ids;
 pub mod env;

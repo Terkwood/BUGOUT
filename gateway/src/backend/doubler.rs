@@ -1,4 +1,4 @@
-use crate::backend_commands::BackendCommands;
+use crate::backend::commands::BackendCommands;
 
 use crossbeam_channel::{select, Receiver, Sender};
 use log::error;
@@ -29,7 +29,7 @@ pub struct DoublerOpts {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backend_commands::*;
+    use crate::backend::commands::*;
     use crate::model::*;
 
     use crossbeam_channel::{select, unbounded};

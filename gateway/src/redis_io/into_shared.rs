@@ -1,4 +1,4 @@
-use crate::backend_commands::*;
+use crate::backend::commands::*;
 use crate::model::{Coord, Move, Player, ProvideHistoryCommand, Visibility};
 
 use color_model as color;
