@@ -1,5 +1,5 @@
 use crate::backend::commands::*;
-use crate::model::{Coord, Move, Player, ProvideHistoryCommand, Visibility};
+use crate::model::{ColorPref, Coord, Move, Player, ProvideHistoryCommand, Visibility};
 
 use color_model as color;
 use core_model as core;
@@ -179,6 +179,19 @@ impl IntoShared<lobby::api::CreateGame> for CreateGameBackendCommand {
 
 impl IntoShared<color::api::ChooseColorPref> for ChooseColorPrefBackendCommand {
     fn into_shared(&self) -> color::api::ChooseColorPref {
-        todo!()
+        color::api::ChooseColorPref {
+            client_id: self.client_id.into_shared(),
+            color_pref: self.color_pref.into(),
+            session_id: self.session_id.into_shared(),
+        }
+    }
+}
+impl From<ColorPref> for color::ColorPref {
+    fn from(c: ColorPref) -> Self {
+        match c {
+            ColorPref::Black => color::ColorPref::Black,
+            ColorPref::White => color::ColorPref::White,
+            ColorPref::Any => color::ColorPref::Any,
+        }
     }
 }
