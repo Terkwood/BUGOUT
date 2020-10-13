@@ -31,6 +31,7 @@ pub struct WaitForOpponent {
     pub game_id: GameId,
     pub session_id: SessionId,
     pub event_id: EventId,
+    pub visibility: Visibility,
 }
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct GameReady {

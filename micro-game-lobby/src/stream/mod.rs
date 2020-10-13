@@ -42,6 +42,7 @@ fn consume(_eid: XReadEntryId, event: &StreamInput, reg: &Components) {
 }
 
 fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
+    let visibility = Visibility::Public;
     let session_id = &fpg.session_id;
     if let Ok(lobby) = reg.game_lobby_repo.get() {
         if let Some(queued) = lobby
@@ -55,7 +56,7 @@ fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
             if let Err(_) = reg.game_lobby_repo.put(lobby.open(Game {
                 board_size: PUBLIC_GAME_BOARD_SIZE,
                 creator: session_id.clone(),
-                visibility: Visibility::Public,
+                visibility,
                 game_id: game_id.clone(),
             })) {
                 error!("game lobby write F2");
@@ -64,6 +65,7 @@ fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
                     event_id: EventId::new(),
                     game_id,
                     session_id: session_id.clone(),
+                    visibility,
                 })) {
                     error!("XADD: Wait for oppo")
                 }
@@ -91,6 +93,7 @@ fn consume_cg(cg: &CreateGame, reg: &Components) {
                 game_id: game_id.clone(),
                 session_id: session_id.clone(),
                 event_id: EventId::new(),
+                visibility: cg.visibility,
             })) {
                 error!("XADD Game ready")
             }
