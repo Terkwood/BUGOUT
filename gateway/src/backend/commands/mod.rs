@@ -1,8 +1,10 @@
 pub mod from;
+mod into_shared;
 
-use serde_derive::{Deserialize, Serialize};
+pub use into_shared::*;
 
 use crate::model::*;
+use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JoinPrivateGameBackendCommand {

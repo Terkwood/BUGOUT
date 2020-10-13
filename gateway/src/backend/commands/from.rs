@@ -80,9 +80,9 @@ impl IntoShared<sync::core_model::ClientId> for uuid::Uuid {
     }
 }
 
-impl IntoShared<moves::Player> for crate::model::Player {
-    fn into_shared(&self) -> moves::Player {
-        match self {
+impl From<crate::model::Player> for moves::Player {
+    fn from(p: crate::model::Player) -> Self {
+        match p {
             Player::BLACK => moves::Player::BLACK,
             Player::WHITE => moves::Player::WHITE,
         }
