@@ -57,7 +57,7 @@ impl IntoShared<lobby::api::CreateGame> for CreateGameBackendCommand {
     fn into_shared(&self) -> lobby::api::CreateGame {
         lobby::api::CreateGame {
             client_id: self.client_id.into_shared(),
-            game_id: None, // TODO think think about it 🤔,
+            game_id: None,
             visibility: self.visibility.into(),
             session_id: self.session_id.into_shared(),
             board_size: self.board_size,
