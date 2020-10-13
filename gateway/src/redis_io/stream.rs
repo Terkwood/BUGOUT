@@ -99,12 +99,7 @@ impl From<StreamData> for BackendEvents {
             }),
             StreamData::BotAttached(b) => BackendEvents::BotAttached(b),
             StreamData::HistoryProvided(h) => {
-                BackendEvents::HistoryProvided(HistoryProvidedEvent {
-                    game_id: h.game_id.0,
-                    reply_to: h.reply_to.0,
-                    moves: h.moves.iter().map(|m| Move::from(m.clone())).collect(),
-                    event_id: h.event_id.0,
-                })
+                BackendEvents::HistoryProvided(HistoryProvidedEvent::from(h))
             }
             StreamData::SyncReply(s) => BackendEvents::SyncReply(be::SyncReplyBackendEvent {
                 game_id: s.game_id.0,
@@ -120,6 +115,16 @@ impl From<StreamData> for BackendEvents {
             StreamData::GameReady(g) => todo!(),
             StreamData::PrivGameRejected(p) => todo!(),
             StreamData::ColorsChosen(c) => todo!(),
+        }
+    }
+}
+impl From<sync::api::HistoryProvided> for HistoryProvidedEvent {
+    fn from(h: sync::api::HistoryProvided) -> Self {
+        HistoryProvidedEvent {
+            game_id: h.game_id.0,
+            reply_to: h.reply_to.0,
+            moves: h.moves.iter().map(|m| Move::from(m.clone())).collect(),
+            event_id: h.event_id.0,
         }
     }
 }
