@@ -7,8 +7,8 @@ version = "0.15.0-a"
 [dependencies]
 bincode = "1.3.1"
 chrono = {version = "0.4.19", features = ["serde"]}
-color-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20228d5"}
-core-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20228d5"}
+color-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "6e5474c"}
+core-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "6e5474c"}
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.4"
 dotenv = "0.15.0"
@@ -17,12 +17,12 @@ envy = "0.4.1"
 futures = "0.3.6"
 harsh = "0.1.6"
 lazy_static = "1.4.0"
-lobby-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20228d5"}
+lobby-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "6e5474c"}
 log = "0.4.11"
 micro_model_bot = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
 micro_model_moves = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
 mio-extras = "2.0.6"
-move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20228d5"}
+move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "6e5474c"}
 r2d2_redis = "0.13.0"
 rand = "0.7.3"
 rdkafka = "0.23.1"
@@ -30,7 +30,7 @@ redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "0.2.0", 
 serde = "1.0.116"
 serde_derive = "1.0.116"
 serde_json = "1.0.58"
-sync-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20228d5"}
+sync-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "6e5474c"}
 time = "0.2.22"
 uuid = {version = "0.8.1", features = ["v4", "serde"]}
 ws = "0.9.1"

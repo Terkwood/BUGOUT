@@ -188,9 +188,11 @@ mod tests {
         Bot(AttachBot),
         Move(MakeMoveCommand),
         Hist(ProvideHistoryCommand),
+        RSyn(ReqSyncBackendCommand),
         Join(JoinPrivateGameBackendCommand),
         Find(FindPublicGameBackendCommand),
         Create(CreateGameBackendCommand),
+        ChCol(ChooseColorPrefBackendCommand),
     }
     impl FakeXAddCmd {
         fn sssend(&self, tr: TestResult) {
@@ -219,6 +221,14 @@ mod tests {
 
         fn xadd_create_game(&self, command: CreateGameBackendCommand) {
             self.sssend(TestResult::Create(command))
+        }
+
+        fn xadd_req_sync(&self, command: ReqSyncBackendCommand) {
+            self.sssend(TestResult::RSyn(command))
+        }
+
+        fn xadd_choose_color_pref(&self, command: ChooseColorPrefBackendCommand) {
+            self.sssend(TestResult::ChCol(command))
         }
     }
 
