@@ -1,12 +1,8 @@
 use crate::backend::events as be;
-use crate::backend::events::BackendEvents;
 use crate::model::{Coord, HistoryProvidedEvent, Move, MoveMadeEvent, Player, Visibility};
 use color_model as color;
-use crossbeam_channel::Sender;
 use lobby_model as lobby;
-use log::error;
 use move_model as moves;
-use redis_streams::XReadEntryId;
 use sync_model as sync;
 
 impl From<micro_model_moves::MoveMade> for MoveMadeEvent {
