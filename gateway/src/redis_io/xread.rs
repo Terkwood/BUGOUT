@@ -1,10 +1,10 @@
 use super::stream::StreamData;
 use super::{AllEntryIds, RedisPool};
 use crate::topics;
-use redis_streams::XReadEntryId;
-
 use log::{error, warn};
 use r2d2_redis::redis;
+use redis_streams::XReadEntryId;
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -106,6 +106,28 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                         }
                     }
                 }
+            } else if &xread_topic[..] == topics::HISTORY_PROVIDED_TOPIC {
+                for with_timestamps in xread_data {
+                    for (k, v) in with_timestamps {
+                        let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin> 
+                            redis::FromRedisValue::from_redis_value(&v);
+                        if let Ok(s) = shape {
+                            if let (Ok(seq_no), Some(hist_prov)) = (
+                                XReadEntryId::from_str(k),
+                                bincode::deserialize::<sync_model::api::HistoryProvided>(
+                                    &s.1.unwrap_or_default(),
+                                )
+                                .ok(),
+                            ) {
+                                stream_data.insert(seq_no, StreamData::HistoryProvided(hist_prov));
+                            } else {
+                                warn!("Xread: Deser error   hist prov data")
+                            }
+                        } else {
+                            error!("Fail XREAD hist prov")
+                        }
+                    }
+                }
             } else {
                 // TODO// TODO// TODO// TODO// TODO// TODO
                 // TODO// TODO// TODO// TODO// TODO// TODO
@@ -129,4 +151,34 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
     }
 
     stream_data
+}
+
+fn bin_data_process<'a, 'b, T>(
+    xread_data: &Vec<HashMap<String, redis::Value, std::collections::hash_map::RandomState>>,
+    mut stream_data: HashMap<XReadEntryId, StreamData, std::collections::hash_map::RandomState>,
+) where
+    T: Deserialize<'a> + std::convert::Into<crate::redis_io::stream::StreamData>,
+{
+    for with_timestamps in xread_data {
+        for (k, v) in with_timestamps {
+            let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin> 
+                redis::FromRedisValue::from_redis_value(&v);
+            XReadEntryId::from_str(k).map(|xid| {
+                shape.iter().for_each(|(_data_field_name, payload)| {
+                    payload
+                        .and_then(|p| bincode::deserialize::<T>(&p).ok())
+                        .iter()
+                        .for_each(|local| {
+                            stream_data.insert(xid, local.into());
+                        })
+                });
+            });
+        }
+    }
+}
+
+impl From<sync_model::api::HistoryProvided> for StreamData {
+    fn from(h: sync_model::api::HistoryProvided) -> Self {
+        StreamData::HistoryProvided(h)
+    }
 }
