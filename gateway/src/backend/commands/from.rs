@@ -177,12 +177,12 @@ impl IntoShared<lobby::api::CreateGame> for CreateGameBackendCommand {
     }
 }
 
-impl IntoShared<color::api::ChooseColorPref> for ChooseColorPrefBackendCommand {
-    fn into_shared(&self) -> color::api::ChooseColorPref {
+impl From<ChooseColorPrefBackendCommand> for color::api::ChooseColorPref {
+    fn from(c: ChooseColorPrefBackendCommand) -> Self {
         color::api::ChooseColorPref {
-            client_id: self.client_id.into_shared(),
-            color_pref: self.color_pref.into(),
-            session_id: self.session_id.into_shared(),
+            client_id: c.client_id.into_shared(),
+            color_pref: c.color_pref.into(),
+            session_id: c.session_id.into_shared(),
         }
     }
 }
