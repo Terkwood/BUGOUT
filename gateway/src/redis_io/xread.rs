@@ -152,33 +152,3 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
 
     stream_data
 }
-
-fn bin_data_process<'a, 'b, T>(
-    xread_data: &Vec<HashMap<String, redis::Value, std::collections::hash_map::RandomState>>,
-    mut stream_data: HashMap<XReadEntryId, StreamData, std::collections::hash_map::RandomState>,
-) where
-    T: Deserialize<'a> + std::convert::Into<crate::redis_io::stream::StreamData>,
-{
-    for with_timestamps in xread_data {
-        for (k, v) in with_timestamps {
-            let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin> 
-                redis::FromRedisValue::from_redis_value(&v);
-            XReadEntryId::from_str(k).map(|xid| {
-                shape.iter().for_each(|(_data_field_name, payload)| {
-                    payload
-                        .and_then(|p| bincode::deserialize::<T>(&p).ok())
-                        .iter()
-                        .for_each(|local| {
-                            stream_data.insert(xid, local.into());
-                        })
-                });
-            });
-        }
-    }
-}
-
-impl From<sync_model::api::HistoryProvided> for StreamData {
-    fn from(h: sync_model::api::HistoryProvided) -> Self {
-        StreamData::HistoryProvided(h)
-    }
-}
