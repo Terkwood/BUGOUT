@@ -44,35 +44,32 @@ fn process_event(
     events_in: &Sender<BackendEvents>,
     opts: &StreamOpts,
 ) {
-    match data {
-        StreamData::BotAttached(b) => {
-            if let Err(e) = events_in.send(BackendEvents::BotAttached(b)) {
-                error!("send err bot attached {:?}", e)
-            } else if let Err(e) = opts.entry_id_repo.update(EntryIdType::BotAttached, xid) {
-                error!("err tracking EID bot attached {:?}", e)
-            }
-        }
-        StreamData::MoveMade(m) => {
-            if let Err(e) = events_in.send(BackendEvents::from(StreamData::MoveMade(m))) {
-                error!("send err move made {:?}", e)
-            }
-
-            if let Err(e) = opts.entry_id_repo.update(EntryIdType::MoveMade, xid) {
-                error!("err tracking EID move made {:?}", e)
-            }
-        }
-        StreamData::HistoryProvided(_) => todo!(),
-        StreamData::SyncReply(_) => todo!(),
-        StreamData::WaitForOpponent(_) => todo!(),
-        StreamData::GameReady(_) => todo!(),
-        StreamData::PrivGameRejected(_) => todo!(),
-        StreamData::ColorsChosen(_) => todo!(),
+    let xid_type = EntryIdType::from(&data);
+    if let Err(e) = events_in.send(BackendEvents::from(data)) {
+        error!("send backend event {:?}", e)
+    } else if let Err(e) = opts.entry_id_repo.update(xid_type, xid) {
+        error!("err tracking XID {:?}", e)
     }
 }
 
 pub struct StreamOpts {
     pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub xreader: Box<dyn XReader>,
+}
+
+impl From<&StreamData> for EntryIdType {
+    fn from(data: &StreamData) -> Self {
+        match data {
+            StreamData::BotAttached(_) => EntryIdType::BotAttached,
+            StreamData::MoveMade(_) => EntryIdType::MoveMade,
+            StreamData::HistoryProvided(_) => EntryIdType::HistProv,
+            StreamData::SyncReply(_) => EntryIdType::SyncReply,
+            StreamData::WaitForOpponent(_) => EntryIdType::WaitOpponent,
+            StreamData::GameReady(_) => EntryIdType::GameReady,
+            StreamData::PrivGameRejected(_) => EntryIdType::PrivGameReject,
+            StreamData::ColorsChosen(_) => EntryIdType::ColorsChosen,
+        }
+    }
 }
 
 impl From<StreamData> for BackendEvents {
