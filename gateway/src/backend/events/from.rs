@@ -5,8 +5,8 @@ use lobby_model as lobby;
 use move_model as moves;
 use sync_model as sync;
 
-impl From<micro_model_moves::MoveMade> for MoveMadeEvent {
-    fn from(m: micro_model_moves::MoveMade) -> Self {
+impl From<moves::MoveMade> for MoveMadeEvent {
+    fn from(m: moves::MoveMade) -> Self {
         MoveMadeEvent {
             game_id: m.game_id.0,
             coord: m.coord.map(|c| Coord::from(c)),

@@ -7,13 +7,14 @@ use color_model as color;
 use crossbeam_channel::Sender;
 use lobby_model as lobby;
 use log::error;
+use move_model as moves;
 use redis_streams::XReadEntryId;
 use sync_model as sync;
 
 #[derive(Clone, Debug)]
 pub enum StreamData {
     BotAttached(micro_model_bot::gateway::BotAttached),
-    MoveMade(micro_model_moves::MoveMade),
+    MoveMade(moves::MoveMade),
     HistoryProvided(sync::api::HistoryProvided),
     SyncReply(sync::api::SyncReply),
     WaitForOpponent(lobby::api::WaitForOpponent),

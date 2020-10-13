@@ -95,8 +95,7 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                             if let (Ok(seq_no), Some(_game_id), Some(move_made)) = (
                                 XReadEntryId::from_str(k),
                                 Uuid::from_str(&s.1).ok(),
-                                bincode::deserialize::<micro_model_moves::MoveMade>(&s.3.clone())
-                                    .ok(),
+                                bincode::deserialize::<move_model::MoveMade>(&s.3.clone()).ok(),
                             ) {
                                 stream_data.insert(seq_no, StreamData::MoveMade(move_made));
                             } else {
