@@ -1,9 +1,7 @@
 use crate::backend::commands::*;
-use crate::model::{ColorPref, Coord, Move, Player, ProvideHistoryCommand, Visibility};
-use uuid::Uuid;
+use crate::model::{ColorPref, Coord, Move, Player, Visibility};
 
 use color_model as color;
-use core_model as core;
 use lobby_model as lobby;
 use move_model as moves;
 use sync_model as sync;
@@ -32,6 +30,45 @@ impl From<ColorPref> for color::ColorPref {
             ColorPref::Black => color::ColorPref::Black,
             ColorPref::White => color::ColorPref::White,
             ColorPref::Any => color::ColorPref::Any,
+        }
+    }
+}
+
+impl From<Visibility> for lobby::Visibility {
+    fn from(v: Visibility) -> Self {
+        match v {
+            Visibility::Private => lobby::Visibility::Private,
+            Visibility::Public => lobby::Visibility::Public,
+        }
+    }
+}
+
+impl From<Player> for sync::move_model::Player {
+    fn from(p: Player) -> Self {
+        match p {
+            Player::BLACK => sync::move_model::Player::BLACK,
+            Player::WHITE => sync::move_model::Player::WHITE,
+        }
+    }
+}
+
+impl From<Coord> for sync::move_model::Coord {
+    fn from(c: Coord) -> Self {
+        sync::move_model::Coord { x: c.x, y: c.y }
+    }
+}
+impl From<Coord> for moves::Coord {
+    fn from(c: Coord) -> Self {
+        moves::Coord { x: c.x, y: c.y }
+    }
+}
+
+impl From<Move> for sync::Move {
+    fn from(m: Move) -> Self {
+        sync::Move {
+            player: m.player.into(),
+            turn: m.turn as u32,
+            coord: m.coord.map(|c| c.into()),
         }
     }
 }
