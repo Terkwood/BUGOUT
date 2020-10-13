@@ -79,24 +79,7 @@ pub struct StreamOpts {
 impl From<StreamData> for BackendEvents {
     fn from(stream_data: StreamData) -> Self {
         match stream_data {
-            StreamData::MoveMade(micro_model_moves::MoveMade {
-                game_id,
-                coord,
-                reply_to,
-                player,
-                captured,
-                event_id,
-            }) => BackendEvents::MoveMade(MoveMadeEvent {
-                game_id: game_id.0,
-                coord: coord.map(|c| Coord { x: c.x, y: c.y }),
-                reply_to: reply_to.0,
-                player: match player {
-                    micro_model_moves::Player::BLACK => Player::BLACK,
-                    _ => Player::WHITE,
-                },
-                captured: captured.iter().map(|c| Coord::from(c.clone())).collect(),
-                event_id: event_id.0,
-            }),
+            StreamData::MoveMade(m) => BackendEvents::MoveMade(MoveMadeEvent::from(m)),
             StreamData::BotAttached(b) => BackendEvents::BotAttached(b),
             StreamData::HistoryProvided(h) => {
                 BackendEvents::HistoryProvided(HistoryProvidedEvent::from(h))
@@ -113,7 +96,18 @@ impl From<StreamData> for BackendEvents {
         }
     }
 }
-
+impl From<micro_model_moves::MoveMade> for MoveMadeEvent {
+    fn from(m: micro_model_moves::MoveMade) -> Self {
+        MoveMadeEvent {
+            game_id: m.game_id.0,
+            coord: m.coord.map(|c| Coord::from(c)),
+            reply_to: m.reply_to.0,
+            player: Player::from(m.player),
+            captured: m.captured.iter().map(|c| Coord::from(c.clone())).collect(),
+            event_id: m.event_id.0,
+        }
+    }
+}
 impl From<sync::api::SyncReply> for be::SyncReplyBackendEvent {
     fn from(s: sync::api::SyncReply) -> Self {
         be::SyncReplyBackendEvent {
@@ -169,6 +163,14 @@ impl From<moves::Player> for Player {
         match p {
             moves::Player::BLACK => Player::BLACK,
             moves::Player::WHITE => Player::WHITE,
+        }
+    }
+}
+impl From<micro_model_moves::Player> for Player {
+    fn from(p: micro_model_moves::Player) -> Self {
+        match p {
+            micro_model_moves::Player::BLACK => Player::BLACK,
+            micro_model_moves::Player::WHITE => Player::WHITE,
         }
     }
 }
