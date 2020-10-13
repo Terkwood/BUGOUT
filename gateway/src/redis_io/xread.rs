@@ -1,6 +1,6 @@
 use super::stream::StreamData;
 use super::{AllEntryIds, RedisPool};
-use crate::topics::{BOT_ATTACHED_TOPIC, MOVE_MADE_TOPIC};
+use crate::topics;
 use redis_streams::XReadEntryId;
 
 use log::{error, warn};
@@ -37,8 +37,8 @@ impl XReader for RedisXReader {
             .arg("BLOCK")
             .arg(&BLOCK_MSEC.to_string())
             .arg("STREAMS")
-            .arg(BOT_ATTACHED_TOPIC)
-            .arg(MOVE_MADE_TOPIC)
+            .arg(topics::BOT_ATTACHED_TOPIC)
+            .arg(topics::MOVE_MADE_TOPIC)
             .arg(entry_ids.bot_attached_xid.to_string())
             .arg(entry_ids.move_made_xid.to_string())
             .query::<XReadResult>(&mut *conn)?;
@@ -65,7 +65,7 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
 
     for hash in xread_result.iter() {
         for (xread_topic, xread_data) in hash.iter() {
-            if &xread_topic[..] == BOT_ATTACHED_TOPIC {
+            if &xread_topic[..] == topics::BOT_ATTACHED_TOPIC {
                 for with_timestamps in xread_data {
                     for (k, v) in with_timestamps {
                         let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin> 
@@ -86,7 +86,7 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                         }
                     }
                 }
-            } else if &xread_topic[..] == MOVE_MADE_TOPIC {
+            } else if &xread_topic[..] == topics::MOVE_MADE_TOPIC {
                 for with_timestamps in xread_data {
                     for (k, v) in with_timestamps {
                         let shape: Result<(String, String, String, Vec<u8>), _> = // game_id <uuid-str> data <bin>
