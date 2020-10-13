@@ -107,6 +107,22 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                     }
                 }
             } else {
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+                // TODO// TODO// TODO// TODO// TODO// TODO
+
                 warn!("Ignoring topic {}", &xread_topic[..])
             }
         }
