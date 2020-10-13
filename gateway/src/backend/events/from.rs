@@ -40,14 +40,26 @@ impl From<sync::api::HistoryProvided> for HistoryProvidedEvent {
     }
 }
 impl From<color::api::ColorsChosen> for be::ColorsChosenEvent {
-    fn from(_: color::api::ColorsChosen) -> Self {
-        todo!()
+    fn from(c: color::api::ColorsChosen) -> Self {
+        Self {
+            game_id: c.game_id.0,
+            black: c.black.0,
+            white: c.white.0,
+        }
     }
 }
 
 impl From<lobby::api::GameReady> for be::GameReadyBackendEvent {
-    fn from(_: lobby::api::GameReady) -> Self {
-        todo!()
+    fn from(g: lobby::api::GameReady) -> Self {
+        Self {
+            game_id: g.game_id.0,
+            board_size: g.board_size as u8,
+            event_id: g.event_id.0,
+            sessions: crate::model::GameSessions {
+                first: g.sessions.0.0,
+                second: g.sessions.1.0,
+            },
+        }
     }
 }
 
