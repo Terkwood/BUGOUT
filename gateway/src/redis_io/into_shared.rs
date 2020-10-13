@@ -50,6 +50,36 @@ impl IntoShared<core::ClientId> for uuid::Uuid {
     }
 }
 
+impl IntoShared<sync::core_model::GameId> for uuid::Uuid {
+    fn into_shared(&self) -> sync::core_model::GameId {
+        sync::core_model::GameId(self.clone())
+    }
+}
+
+impl IntoShared<sync::core_model::ReqId> for uuid::Uuid {
+    fn into_shared(&self) -> sync::core_model::ReqId {
+        sync::core_model::ReqId(self.clone())
+    }
+}
+
+impl IntoShared<sync::core_model::EventId> for uuid::Uuid {
+    fn into_shared(&self) -> sync::core_model::EventId {
+        sync::core_model::EventId(self.clone())
+    }
+}
+
+impl IntoShared<sync::core_model::SessionId> for uuid::Uuid {
+    fn into_shared(&self) -> sync::core_model::SessionId {
+        sync::core_model::SessionId(self.clone())
+    }
+}
+
+impl IntoShared<sync::core_model::ClientId> for uuid::Uuid {
+    fn into_shared(&self) -> sync::core_model::ClientId {
+        sync::core_model::ClientId(self.clone())
+    }
+}
+
 impl IntoShared<moves::Player> for crate::model::Player {
     fn into_shared(&self) -> moves::Player {
         match self {
@@ -58,10 +88,30 @@ impl IntoShared<moves::Player> for crate::model::Player {
         }
     }
 }
+impl IntoShared<sync::move_model::Player> for crate::model::Player {
+    fn into_shared(&self) -> sync::move_model::Player {
+        match self {
+            Player::BLACK => sync::move_model::Player::BLACK,
+            Player::WHITE => sync::move_model::Player::WHITE,
+        }
+    }
+}
 
-impl IntoShared<Option<moves::Coord>> for Option<Coord> {
-    fn into_shared(&self) -> Option<moves::Coord> {
-        self.map(|Coord { x, y }| moves::Coord { x, y })
+impl IntoShared<moves::Coord> for Coord {
+    fn into_shared(&self) -> moves::Coord {
+        moves::Coord {
+            x: self.x,
+            y: self.y,
+        }
+    }
+}
+
+impl IntoShared<sync::move_model::Coord> for Coord {
+    fn into_shared(&self) -> sync::move_model::Coord {
+        sync::move_model::Coord {
+            x: self.x,
+            y: self.y,
+        }
     }
 }
 
@@ -70,7 +120,7 @@ impl IntoShared<sync::Move> for Move {
         sync::Move {
             player: self.player.into_shared(),
             turn: self.turn as u32,
-            coord: self.coord.into_shared(),
+            coord: self.coord.map(|c| c.into_shared()),
         }
     }
 }
@@ -91,9 +141,9 @@ impl IntoShared<sync::api::ReqSync> for ReqSyncBackendCommand {
 impl IntoShared<lobby::api::JoinPrivateGame> for JoinPrivateGameBackendCommand {
     fn into_shared(&self) -> lobby::api::JoinPrivateGame {
         lobby::api::JoinPrivateGame {
-            game_id: core::GameId(self.game_id),
-            client_id: core::ClientId(self.client_id),
-            session_id: core::SessionId(self.session_id),
+            game_id: self.game_id.into_shared(),
+            client_id: self.client_id.into_shared(),
+            session_id: self.session_id.into_shared(),
         }
     }
 }
@@ -101,8 +151,8 @@ impl IntoShared<lobby::api::JoinPrivateGame> for JoinPrivateGameBackendCommand {
 impl IntoShared<lobby::api::FindPublicGame> for FindPublicGameBackendCommand {
     fn into_shared(&self) -> lobby::api::FindPublicGame {
         lobby::api::FindPublicGame {
-            client_id: core::ClientId(self.client_id),
-            session_id: core::SessionId(self.session_id),
+            client_id: self.client_id.into_shared(),
+            session_id: self.session_id.into_shared(),
         }
     }
 }
