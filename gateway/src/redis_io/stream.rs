@@ -1,7 +1,7 @@
 use super::entry_id_repo::*;
 use super::xread::XReader;
-use crate::backend_events as be;
-use crate::backend_events::BackendEvents;
+use crate::backend::events as be;
+use crate::backend::events::BackendEvents;
 use crate::model::{Coord, HistoryProvidedEvent, Move, MoveMadeEvent, Player, Visibility};
 use color_model as color;
 use crossbeam_channel::Sender;
