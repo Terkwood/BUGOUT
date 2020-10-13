@@ -129,27 +129,11 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                     }
                 }
             } else if &xread_topic[..] == topics::SYNC_REPLY_TOPIC {
-                for with_timestamps in xread_data {
-                    for (k, v) in with_timestamps {
-                        let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin> 
-                            redis::FromRedisValue::from_redis_value(&v);
-                        if let Ok(s) = shape {
-                            if let (Ok(xid), Some(sync_reply)) = (
-                                XReadEntryId::from_str(k),
-                                bincode::deserialize::<sync_model::api::SyncReply>(
-                                    &s.1.unwrap_or_default(),
-                                )
-                                .ok(),
-                            ) {
-                                stream_data.insert(xid, StreamData::SyncReply(sync_reply));
-                            } else {
-                                warn!("Xread: Deser error  sync reply data")
-                            }
-                        } else {
-                            error!("Fail XREAD sync reply")
-                        }
-                    }
-                }
+                bin_data_process(
+                    xread_data,
+                    &mut stream_data,
+                    Box::new(|bytes| bincode::deserialize::<sync_model::api::SyncReply>(&bytes)),
+                )
             } else if &xread_topic[..] == topics::WAIT_FOR_OPPONENT_TOPIC {
                 todo!()
             } else {
@@ -177,11 +161,10 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
     stream_data
 }
 
-struct DeserErr;
 fn bin_data_process<'a, T>(
-    xread_data: &Vec<HashMap<String, redis::Value, StreamData>>,
-    mut stream_data: HashMap<XReadEntryId, StreamData>,
-    des: Box<dyn Fn(Vec<u8>) -> Result<T, DeserErr>>,
+    xread_data: &Vec<HashMap<String, redis::Value, std::collections::hash_map::RandomState>>,
+    stream_data: &mut HashMap<XReadEntryId, StreamData>,
+    des: Box<dyn Fn(Vec<u8>) -> Result<T, Box<bincode::ErrorKind>>>,
 ) where
     T: Deserialize<'a> + std::convert::Into<crate::redis_io::stream::StreamData>,
 {
