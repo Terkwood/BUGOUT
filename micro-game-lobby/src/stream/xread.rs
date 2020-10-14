@@ -1,5 +1,3 @@
-use crate::repo::AllEntryIds;
-use crate::repo::EntryIdType;
 use crate::topics::*;
 use community_redis_streams::{StreamCommands, StreamReadOptions, StreamReadReply};
 use lobby_model::api::*;
@@ -9,16 +7,13 @@ use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-const BLOCK_MSEC: usize = 5000;
+const BLOCK_MS: usize = 5000;
 
 /// xread_sorted performs a redis xread then sorts the results
 ///
 /// entry_ids: the minimum entry ids from which to read
 pub trait XRead {
-    fn xread_sorted(
-        &self,
-        entry_ids: AllEntryIds,
-    ) -> Result<Vec<(XReadEntryId, StreamInput)>, XReadErr>;
+    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, XReadErr>;
 }
 
 #[derive(Debug)]
@@ -26,23 +21,25 @@ pub enum XReadErr {
     Deser(XReadDeserErr),
     Other,
 }
+const READ_OP: &str = "<";
+pub const GROUP_NAME: &str = "micro-game-lobby";
 impl XRead for Rc<Client> {
-    fn xread_sorted(
-        &self,
-        entry_ids: AllEntryIds,
-    ) -> Result<std::vec::Vec<(XReadEntryId, StreamInput)>, XReadErr> {
+    fn xread_sorted(&self) -> Result<std::vec::Vec<(XReadEntryId, StreamInput)>, XReadErr> {
         if let Ok(mut conn) = self.get_connection() {
-            let opts = StreamReadOptions::default().block(BLOCK_MSEC);
-            let xrr: Result<StreamReadReply, _> = conn.xread_options(
-                &[FIND_PUBLIC_GAME, CREATE_GAME, JOIN_PRIVATE_GAME],
+            let opts = StreamReadOptions::default()
+                .block(BLOCK_MS)
+                .group(GROUP_NAME, "singleton");
+            let xrr = conn.xread_options(
                 &[
-                    entry_ids.find_public_game.to_string(),
-                    entry_ids.create_game.to_string(),
-                    entry_ids.join_private_game.to_string(),
-                    entry_ids.session_disconnected.to_string(),
+                    FIND_PUBLIC_GAME,
+                    CREATE_GAME,
+                    JOIN_PRIVATE_GAME,
+                    SESSION_DISCONNECTED,
                 ],
+                &[READ_OP, READ_OP, READ_OP, READ_OP],
                 opts,
             );
+
             if let Ok(x) = xrr {
                 match deser(x) {
                     Ok(unsorted) => {
@@ -124,15 +121,4 @@ pub enum StreamInput {
     CG(CreateGame),
     JPG(JoinPrivateGame),
     SD(SessionDisconnected),
-}
-
-impl From<&crate::stream::StreamInput> for EntryIdType {
-    fn from(s: &crate::stream::StreamInput) -> Self {
-        match s {
-            StreamInput::FPG(_) => EntryIdType::FindPublicGameCmd,
-            StreamInput::CG(_) => EntryIdType::CreateGameCmd,
-            StreamInput::JPG(_) => EntryIdType::JoinPrivateGameCmd,
-            StreamInput::SD(_) => EntryIdType::SessionDisconnectedEv,
-        }
-    }
 }

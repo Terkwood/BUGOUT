@@ -6,7 +6,6 @@ pub use xread::*;
 
 use crate::components::Components;
 use crate::game_lobby::GameLobbyOps;
-use crate::repo::EntryIdType;
 use crate::PUBLIC_GAME_BOARD_SIZE;
 use core_model::*;
 use lobby_model::api::*;
@@ -17,19 +16,16 @@ use redis_streams::XReadEntryId;
 
 pub fn process(reg: &Components) {
     loop {
-        match reg.entry_id_repo.fetch_all() {
-            Ok(all_eids) => match reg.xread.xread_sorted(all_eids) {
-                Ok(xrr) => {
-                    for (eid, data) in xrr {
-                        info!("🧮 Processing {:?}", &data);
-                        consume(eid, &data, &reg);
-                        increment(eid, &data, reg);
-                        info!("🛎 OK {:?}", &data);
-                    }
+        match reg.xread.xread_sorted() {
+            Ok(xrr) => {
+                for (eid, data) in xrr {
+                    info!("🧮 Processing {:?}", &data);
+                    consume(eid, &data, &reg);
+
+                    info!("🛎 OK {:?}", &data);
                 }
-                Err(e) => error!("Stream err {:?}", e),
-            },
-            Err(e) => error!("Failed to fetch EIDs {:?}", e),
+            }
+            Err(e) => error!("Stream err {:?}", e),
         }
     }
 }
@@ -153,12 +149,6 @@ fn ready_xadd(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Co
     }
 }
 
-fn increment(eid: XReadEntryId, event: &StreamInput, reg: &Components) {
-    if let Err(e) = reg.entry_id_repo.update(EntryIdType::from(event), eid) {
-        error!("eid write {:?}", e)
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -166,78 +156,10 @@ mod test {
     use crate::repo::*;
     use crossbeam_channel::{select, unbounded, Sender};
     use redis_streams::XReadEntryId;
-    use std::sync::atomic::{AtomicU64, Ordering};
     use std::sync::{Arc, Mutex};
     use std::time::Duration;
 
     use std::thread;
-    static FAKE_FPG_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static FAKE_CG_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static FAKE_JPG_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static FAKE_SD_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static FAKE_FPG_SEQ: AtomicU64 = AtomicU64::new(0);
-    static FAKE_CG_SEQ: AtomicU64 = AtomicU64::new(0);
-    static FAKE_JPG_SEQ: AtomicU64 = AtomicU64::new(0);
-    static FAKE_SD_SEQ: AtomicU64 = AtomicU64::new(0);
-    struct FakeEIDRepo {
-        call_in: Sender<EIDRepoCalled>,
-    }
-    #[derive(Debug)]
-    enum EIDRepoCalled {
-        Fetch,
-        Update(EntryIdType, XReadEntryId),
-    }
-    impl EntryIdRepo for FakeEIDRepo {
-        fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
-            self.call_in.send(EIDRepoCalled::Fetch).expect("send");
-            Ok(AllEntryIds {
-                find_public_game: XReadEntryId {
-                    millis_time: FAKE_FPG_MILLIS.load(Ordering::Relaxed),
-                    seq_no: FAKE_FPG_SEQ.load(Ordering::Relaxed),
-                },
-                create_game: XReadEntryId {
-                    millis_time: FAKE_CG_MILLIS.load(Ordering::Relaxed),
-                    seq_no: FAKE_CG_SEQ.load(Ordering::Relaxed),
-                },
-                join_private_game: XReadEntryId {
-                    millis_time: FAKE_JPG_MILLIS.load(Ordering::Relaxed),
-                    seq_no: FAKE_JPG_SEQ.load(Ordering::Relaxed),
-                },
-                session_disconnected: XReadEntryId {
-                    millis_time: FAKE_SD_MILLIS.load(Ordering::Relaxed),
-                    seq_no: FAKE_SD_SEQ.load(Ordering::Relaxed),
-                },
-            })
-        }
-        fn update(
-            &self,
-            eid_type: EntryIdType,
-            eid: redis_streams::XReadEntryId,
-        ) -> Result<(), WriteErr> {
-            self.call_in
-                .send(EIDRepoCalled::Update(eid_type, eid))
-                .expect("send");
-            match eid_type {
-                EntryIdType::FindPublicGameCmd => {
-                    FAKE_FPG_MILLIS.swap(eid.millis_time, Ordering::Relaxed);
-                    FAKE_FPG_SEQ.swap(eid.seq_no, Ordering::Relaxed);
-                }
-                EntryIdType::CreateGameCmd => {
-                    FAKE_CG_MILLIS.swap(eid.millis_time, Ordering::Relaxed);
-                    FAKE_CG_SEQ.swap(eid.seq_no, Ordering::Relaxed);
-                }
-                EntryIdType::JoinPrivateGameCmd => {
-                    FAKE_JPG_MILLIS.swap(eid.millis_time, Ordering::Relaxed);
-                    FAKE_JPG_SEQ.swap(eid.seq_no, Ordering::Relaxed);
-                }
-                EntryIdType::SessionDisconnectedEv => {
-                    FAKE_SD_MILLIS.swap(eid.millis_time, Ordering::Relaxed);
-                    FAKE_SD_SEQ.swap(eid.seq_no, Ordering::Relaxed);
-                }
-            }
-            Ok(())
-        }
-    }
 
     struct FakeGameLobbyRepo {
         pub contents: Arc<Mutex<GameLobby>>,
@@ -263,22 +185,9 @@ mod test {
         /// that the underlying data is pre-sorted
         fn xread_sorted(
             &self,
-            entry_ids: AllEntryIds,
         ) -> Result<Vec<(redis_streams::XReadEntryId, super::StreamInput)>, XReadErr> {
             {
-                let data: Vec<_> = self
-                    .sorted_data
-                    .lock()
-                    .expect("lock")
-                    .iter()
-                    .filter(|(eid, stream_data)| match stream_data {
-                        StreamInput::CG(_) => entry_ids.create_game < *eid,
-                        StreamInput::FPG(_) => entry_ids.find_public_game < *eid,
-                        StreamInput::JPG(_) => entry_ids.join_private_game < *eid,
-                        StreamInput::SD(_) => entry_ids.session_disconnected < *eid,
-                    })
-                    .cloned()
-                    .collect();
+                let data: Vec<_> = self.sorted_data.lock().expect("lock").to_vec();
                 if data.is_empty() {
                     // stop the test thread from spinning like crazy
                     std::thread::sleep(Duration::from_millis(20))
@@ -295,7 +204,6 @@ mod test {
     }
     #[test]
     fn test_process() {
-        let (eid_call_in, eid_call_out) = unbounded();
         let (xadd_call_in, xadd_call_out) = unbounded();
         let (put_game_lobby_in, put_game_lobby_out) = unbounded();
 
@@ -317,9 +225,6 @@ mod test {
         let fgl = fake_game_lobby_contents.clone();
         thread::spawn(move || {
             let components = Components {
-                entry_id_repo: Box::new(FakeEIDRepo {
-                    call_in: eid_call_in,
-                }),
                 game_lobby_repo: Box::new(FakeGameLobbyRepo {
                     contents: fgl,
                     put_in: put_game_lobby_in,
@@ -333,15 +238,6 @@ mod test {
         });
 
         let timeout = Duration::from_millis(166);
-        // assert that fetch_all is being called faithfully
-        select! {
-            recv(eid_call_out) -> msg => match msg {
-                Ok(EIDRepoCalled::Fetch) => assert!(true),
-                Ok(_) => panic!("out of order"),
-                Err(_) => panic!("eid repo should fetch"),
-            },
-            default(timeout) => panic!("EID fetch time out")
-        }
 
         // emit some events in a time-ordered fashion
         // (we need to use time-ordered push since the
@@ -384,22 +280,6 @@ mod test {
                 _ => panic!("wrong output")
             },
             default(timeout) => panic!("WAIT timeout")
-        }
-
-        loop {
-            // The EID repo record for Find Public Game
-            // should have been advanced
-            select! {
-                recv(eid_call_out) -> msg => match msg {
-                    Ok(EIDRepoCalled::Update(EntryIdType::FindPublicGameCmd, eid)) => {
-                        assert_eq!(eid.millis_time, fake_time_ms);
-                        break
-                    },
-                    Ok(_) => continue,
-                    Err(_) => panic!("eid repo should update"),
-                },
-                default(timeout) => panic!("EID time out")
-            }
         }
 
         fake_time_ms += incr_ms;
