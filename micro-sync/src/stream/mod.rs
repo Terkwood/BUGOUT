@@ -11,7 +11,7 @@ use crate::player::other_player;
 use crate::sync::is_client_ahead_by_one_turn;
 use crate::ToHistory;
 use core_model::*;
-use log::{error, warn};
+use log::{error, info, warn};
 use move_model::*;
 use sync_model::api::*;
 use sync_model::Move;
@@ -54,6 +54,7 @@ fn process_event(event: &StreamInput, components: &Components) {
 }
 
 fn process_req_sync(rs: &ReqSync, components: &Components) {
+    info!("Stream: Req Sync {:?}", rs);
     match components.history_repo.get(&rs.game_id) {
         Ok(maybe_history) => {
             let history = maybe_history.unwrap_or_default();
@@ -113,6 +114,7 @@ fn process_req_sync(rs: &ReqSync, components: &Components) {
 }
 
 fn process_prov_hist(ph: &ProvideHistory, components: &Components) {
+    info!("Stream: Provide History {:?}", ph);
     let maybe_hist_r = components.history_repo.get(&ph.game_id);
     match maybe_hist_r {
         Ok(Some(moves)) => {
@@ -133,6 +135,7 @@ fn process_prov_hist(ph: &ProvideHistory, components: &Components) {
 }
 
 fn process_game_state(game_id: &GameId, game_state: &GameState, components: &Components) {
+    info!("Stream: Game State {:?} {:?}", game_id, game_state);
     if let Err(_e) = components
         .history_repo
         .put(&game_id, game_state.to_history())
@@ -142,6 +145,7 @@ fn process_game_state(game_id: &GameId, game_state: &GameState, components: &Com
 }
 
 fn process_move_made(move_made: &MoveMade, components: &Components) {
+    info!("Stream: Move Made {:?}", move_made);
     // Check ReplyOnMove repo to see if we have a req_sync associated with this
     // game_id & req_id combination.
     match components

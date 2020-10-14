@@ -23,6 +23,7 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                 for time_ordered_event in xrr {
                     match time_ordered_event {
                         (entry_id, StreamData::MA(move_acc)) => {
+                            info!("Stream: Move Accepted {:?}", &move_acc);
                             match update_game_state(&move_acc, &components) {
                                 Err(e) => error!("err updating game state {:?}", e),
                                 Ok(gs) => {
@@ -47,10 +48,9 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                             }
                         }
                         (entry_id, StreamData::GS(game_id, gs)) => {
+                            info!("Stream: Game State {:?}", &game_id);
                             if let Err(e) = game_states_repo::write(&game_id, &gs, &components) {
                                 error!("Error saving game state {:#?}", e)
-                            } else {
-                                info!("wrote game state: {:?} {:?}", game_id, gs);
                             }
 
                             gs_processed.push(entry_id);
@@ -117,6 +117,7 @@ fn update_game_state(
         og
     })?;
     game_states_repo::write(&game_id, &new_game_state, &components)?;
+    info!("Updated {:?} {:?}", &game_id, &new_game_state);
     Ok(new_game_state)
 }
 

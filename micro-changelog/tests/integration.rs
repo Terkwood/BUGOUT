@@ -100,7 +100,7 @@ fn test_process_move() {
     assert_eq!(xread_game_states_changelog.len(), 1);
     let by_timestamp = xread_game_states_changelog[0].get(GAME_STATES_TOPIC);
     assert!(by_timestamp.is_some());
-    println!("by timestamp {:#?}", by_timestamp);
+
     let game_state_payload_vec: Vec<(String, String, String, Option<Vec<u8>>)> =
         by_timestamp.unwrap()[0].values().cloned().collect();
     let payload = &game_state_payload_vec[0];
