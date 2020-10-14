@@ -166,7 +166,6 @@ mod test {
 
     struct FakeGameLobbyRepo {
         pub contents: Arc<Mutex<GameLobby>>,
-        pub put_in: Sender<GameLobby>,
     }
 
     impl GameLobbyRepo for FakeGameLobbyRepo {
@@ -176,7 +175,7 @@ mod test {
         fn put(&self, game_lobby: GameLobby) -> Result<(), WriteErr> {
             let mut data = self.contents.lock().expect("lock");
             *data = game_lobby.clone();
-            Ok(self.put_in.send(game_lobby).expect("send"))
+            Ok(())
         }
     }
 
@@ -212,36 +211,20 @@ mod test {
     #[test]
     fn test_process() {
         let (xadd_call_in, xadd_call_out) = unbounded();
-        let (put_game_lobby_in, put_game_lobby_out) = unbounded();
 
         let sorted_fake_stream = Arc::new(Mutex::new(vec![]));
 
-        let timeout = Duration::from_millis(166);
+        let timeout = Duration::from_millis(160);
 
         // set up a loop to process game lobby requests
         let fake_game_lobby_contents = Arc::new(Mutex::new(GameLobby::default()));
-        let fgl = fake_game_lobby_contents.clone();
-        std::thread::spawn(move || loop {
-            select! {
-                recv(put_game_lobby_out) -> msg => {
-                    match msg {
-                        Ok(GameLobby { games }) => *fgl.lock().expect("mutex lock") = GameLobby { games },
-                        Err(_) => ()
-                    }
-                    thread::sleep(timeout)
-                }
-            }
-        });
 
         let sfs = sorted_fake_stream.clone();
         let fgl = fake_game_lobby_contents.clone();
 
         thread::spawn(move || {
             let components = Components {
-                game_lobby_repo: Box::new(FakeGameLobbyRepo {
-                    contents: fgl,
-                    put_in: put_game_lobby_in,
-                }),
+                game_lobby_repo: Box::new(FakeGameLobbyRepo { contents: fgl }),
                 xread: Box::new(FakeXRead {
                     sorted_data: sfs.clone(),
                 }),
@@ -269,7 +252,7 @@ mod test {
             }),
         ));
 
-        thread::sleep(timeout);
+        thread::sleep(timeout * 2);
         // The game lobby repo should now contain one game
         assert_eq!(
             fake_game_lobby_contents
