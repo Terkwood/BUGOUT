@@ -187,12 +187,16 @@ mod test {
             &self,
         ) -> Result<Vec<(redis_streams::XReadEntryId, super::StreamInput)>, XReadErr> {
             {
-                let data: Vec<_> = self.sorted_data.lock().expect("lock").to_vec();
+                let mut data: Vec<_> = self.sorted_data.lock().expect("lock").to_vec();
                 if data.is_empty() {
                     // stop the test thread from spinning like crazy
-                    std::thread::sleep(Duration::from_millis(20))
+                    std::thread::sleep(Duration::from_millis(20));
+                    Ok(vec![])
+                } else {
+                    let result = data.clone();
+                    data.clear();
+                    Ok(result)
                 }
-                Ok(data)
             }
         }
     }
@@ -209,6 +213,8 @@ mod test {
 
         let sorted_fake_stream = Arc::new(Mutex::new(vec![]));
 
+        let timeout = Duration::from_millis(166);
+
         // set up a loop to process game lobby requests
         let fake_game_lobby_contents = Arc::new(Mutex::new(GameLobby::default()));
         let fgl = fake_game_lobby_contents.clone();
@@ -216,13 +222,14 @@ mod test {
             select! {
                 recv(put_game_lobby_out) -> msg => match msg {
                     Ok(GameLobby { games }) => *fgl.lock().expect("mutex lock") = GameLobby { games },
-                    Err(_) => panic!("fail")
+                    Err(_) => thread::sleep(timeout)
                 }
             }
         });
 
         let sfs = sorted_fake_stream.clone();
         let fgl = fake_game_lobby_contents.clone();
+
         thread::spawn(move || {
             let components = Components {
                 game_lobby_repo: Box::new(FakeGameLobbyRepo {
@@ -236,8 +243,6 @@ mod test {
             };
             process(&components);
         });
-
-        let timeout = Duration::from_millis(166);
 
         // emit some events in a time-ordered fashion
         // (we need to use time-ordered push since the
