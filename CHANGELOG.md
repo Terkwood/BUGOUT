@@ -4,6 +4,7 @@
 - Create micro-sync (history provider) service (#331, #335, #337, #338)
 - Fix memory leak in micro-changelog (#336)
 - Create micro-color-chooser (#334)
+- Use XREADGROUP in micro-game-lobby 
 
 # v0.8.9
 
