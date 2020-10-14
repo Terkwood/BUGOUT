@@ -437,7 +437,7 @@ checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
 name = "micro_judge"
-version = "0.1.14"
+version = "0.1.15"
 dependencies = [
  "bincode",
  "core-model",
@@ -682,6 +682,26 @@ dependencies = [
 [[package]]
 name = "redis"
 version = "0.16.1-alpha.0"
+source = "git+https://github.com/mitsuhiko/redis-rs?rev=aaecd6734a4c1f0bc59c96429d0e2102348e23ef#aaecd6734a4c1f0bc59c96429d0e2102348e23ef"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "bytes",
+ "combine",
+ "dtoa",
+ "futures-util",
+ "itoa",
+ "percent-encoding",
+ "pin-project-lite",
+ "sha1",
+ "tokio",
+ "tokio-util",
+ "url",
+]
+
+[[package]]
+name = "redis"
+version = "0.16.1-alpha.0"
 source = "git+https://github.com/mitsuhiko/redis-rs#6df31842bc8edbecb2808e4bc98fbe4fa28bbcce"
 dependencies = [
  "async-std",
@@ -694,26 +714,6 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "r2d2",
- "sha1",
- "tokio",
- "tokio-util",
- "url",
-]
-
-[[package]]
-name = "redis"
-version = "0.16.1-alpha.0"
-source = "git+https://github.com/mitsuhiko/redis-rs?rev=aaecd6734a4c1f0bc59c96429d0e2102348e23ef#aaecd6734a4c1f0bc59c96429d0e2102348e23ef"
-dependencies = [
- "async-std",
- "async-trait",
- "bytes",
- "combine",
- "dtoa",
- "futures-util",
- "itoa",
- "percent-encoding",
- "pin-project-lite",
  "sha1",
  "tokio",
  "tokio-util",

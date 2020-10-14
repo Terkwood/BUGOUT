@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use std::rc::Rc;
 
 pub trait XAdd {
-    fn xadd(&self, data: ColorsChosen) -> Result<(), XAddErr>;
+    fn xadd(&self, data: &ColorsChosen) -> Result<(), XAddErr>;
 }
 #[derive(Debug)]
 pub enum XAddErr {
@@ -19,7 +19,7 @@ const MAP_KEY: &str = "data";
 const MAX_LEN: usize = 1000;
 
 impl XAdd for Rc<Client> {
-    fn xadd(&self, data: ColorsChosen) -> Result<(), XAddErr> {
+    fn xadd(&self, data: &ColorsChosen) -> Result<(), XAddErr> {
         let ser_bytes_result = bincode::serialize(&data);
 
         if let Ok(bytes) = ser_bytes_result {

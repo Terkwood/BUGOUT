@@ -126,8 +126,8 @@ pub enum StreamInput {
     SD(SessionDisconnected),
 }
 
-impl From<crate::stream::StreamInput> for EntryIdType {
-    fn from(s: crate::stream::StreamInput) -> Self {
+impl From<&crate::stream::StreamInput> for EntryIdType {
+    fn from(s: &crate::stream::StreamInput) -> Self {
         match s {
             StreamInput::FPG(_) => EntryIdType::FindPublicGameCmd,
             StreamInput::CG(_) => EntryIdType::CreateGameCmd,
