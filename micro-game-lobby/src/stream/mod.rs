@@ -206,7 +206,7 @@ mod test {
     struct FakeXAdd(Sender<StreamOutput>);
     impl XAdd for FakeXAdd {
         fn xadd(&self, data: StreamOutput) -> Result<(), XAddErr> {
-            Ok(self.0.send(data).expect("send"))
+            Ok(self.0.send(data).unwrap_or_default())
         }
     }
     #[test]
@@ -223,9 +223,12 @@ mod test {
         let fgl = fake_game_lobby_contents.clone();
         std::thread::spawn(move || loop {
             select! {
-                recv(put_game_lobby_out) -> msg => match msg {
-                    Ok(GameLobby { games }) => *fgl.lock().expect("mutex lock") = GameLobby { games },
-                    Err(_) => thread::sleep(timeout)
+                recv(put_game_lobby_out) -> msg => {
+                    match msg {
+                        Ok(GameLobby { games }) => *fgl.lock().expect("mutex lock") = GameLobby { games },
+                        Err(_) => ()
+                    }
+                    thread::sleep(timeout)
                 }
             }
         });
