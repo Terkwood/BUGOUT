@@ -1,6 +1,7 @@
 # NEXT: v0.9.0
 
-- gateway: coordinate multiplayer events using redis streams (#332, #349, #350, #351, #353, #354, #355, #356)
+- Add log statements (#356)
+- Gateway: coordinate multiplayer events using redis streams (#332, #349, #350, #351, #353, #354, #355)
 - Create shared model crates (#342, #339, #343, #344, #345, #346, #347, #348)
 - Create micro-sync (history provider) service (#331, #335, #337, #338)
 - Fix memory leak in micro-changelog (#336)
