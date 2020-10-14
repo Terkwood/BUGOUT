@@ -1,8 +1,8 @@
 use crate::topics::*;
-use community_redis_streams::{StreamCommands, StreamReadOptions, StreamReadReply};
 use lobby_model::api::*;
 use log::{error, warn};
-use redis::Client;
+use redis::streams::{StreamReadOptions, StreamReadReply};
+use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::rc::Rc;

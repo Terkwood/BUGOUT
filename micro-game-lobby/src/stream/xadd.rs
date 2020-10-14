@@ -1,7 +1,7 @@
 use crate::topics::*;
-use community_redis_streams::{StreamCommands, StreamMaxlen};
 use lobby_model::api::*;
 use redis::Client;
+use redis::{streams::StreamMaxlen, Commands};
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
@@ -31,7 +31,7 @@ impl XAdd for Rc<Client> {
             let mut m: BTreeMap<&str, &[u8]> = BTreeMap::new();
             m.insert(MAP_KEY, &bytes);
             if let Ok(mut conn) = self.get_connection() {
-                conn.xadd_maxlen_map(key, StreamMaxlen::Aprrox(MAX_LEN), AUTO_ID, m)
+                conn.xadd_maxlen_map(key, StreamMaxlen::Approx(MAX_LEN), AUTO_ID, m)
                     .map_err(|e| XAddErr::Redis(e))
             } else {
                 Err(XAddErr::Conn)

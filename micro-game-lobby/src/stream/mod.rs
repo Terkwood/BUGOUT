@@ -1,6 +1,8 @@
+mod xack;
 mod xadd;
 mod xread;
 
+pub use xack::*;
 pub use xadd::*;
 pub use xread::*;
 
@@ -18,11 +20,12 @@ pub fn process(reg: &Components) {
     loop {
         match reg.xread.xread_sorted() {
             Ok(xrr) => {
-                for (eid, data) in xrr {
+                let mut to_ack = vec![];
+                for (xid, data) in xrr {
                     info!("🧮 Processing {:?}", &data);
-                    consume(eid, &data, &reg);
-
+                    consume(xid, &data, &reg);
                     info!("🛎 OK {:?}", &data);
+                    to_ack.push((xid, data));
                 }
             }
             Err(e) => error!("Stream err {:?}", e),

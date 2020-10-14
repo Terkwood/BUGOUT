@@ -627,8 +627,7 @@ dependencies = [
  "env_logger",
  "lobby-model",
  "log",
- "redis",
- "redis-streams",
+ "redis 0.17.0",
  "redis_streams",
 ]
 
@@ -891,6 +890,27 @@ dependencies = [
  "itoa",
  "percent-encoding",
  "pin-project-lite",
+ "sha1",
+ "tokio",
+ "tokio-util",
+ "url",
+]
+
+[[package]]
+name = "redis"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95357caf2640abc54651b93c98a8df4fe1ccbf44b8e601ccdf43d5c1451f29ac"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "bytes",
+ "combine",
+ "dtoa",
+ "futures-util",
+ "itoa",
+ "percent-encoding",
+ "pin-project-lite",
  "r2d2",
  "sha1",
  "tokio",
@@ -899,20 +919,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "redis-streams"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1bf9a0dcc9fdc411774d9f2c535da132081810aae6570514889c74c2ca0145c1"
-dependencies = [
- "redis",
-]
-
-[[package]]
 name = "redis_streams"
 version = "0.3.0"
 source = "git+https://github.com/Terkwood/BUGOUT?rev=92b8d91abba494737caca525ecb2a4f0d7044dbd#92b8d91abba494737caca525ecb2a4f0d7044dbd"
 dependencies = [
- "redis",
+ "redis 0.16.0",
  "uuid",
 ]
 
