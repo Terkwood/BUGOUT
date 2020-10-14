@@ -6,7 +6,7 @@ use crate::model::{ColorsChosenEvent, HistoryProvidedEvent, MoveMadeEvent};
 use color_model as color;
 use crossbeam_channel::Sender;
 use lobby_model as lobby;
-use log::error;
+use log::{error, info};
 use move_model as moves;
 use redis_streams::XReadEntryId;
 use sync_model as sync;
@@ -31,7 +31,10 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
                 Err(e) => error!("cannot xread {:?}", e),
                 Ok(xrr) => {
                     for (xid, data) in xrr {
-                        process_event(xid, data, &events_in, &opts)
+                        info!("📥 Stream: {:?}", &data);
+                        let dc = data.clone();
+                        process_event(xid, data, &events_in, &opts);
+                        info!("🏞 OK {:?}", dc)
                     }
                 }
             },
