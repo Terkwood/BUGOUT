@@ -36,7 +36,9 @@ impl IntoShared<sync::api::ReqSync> for ReqSyncBackendCommand {
 
 impl IntoShared<lobby::api::SessionDisconnected> for SessionDisconnected {
     fn into_shared(&self) -> lobby::api::SessionDisconnected {
-        todo!()
+        lobby::api::SessionDisconnected {
+            session_id: self.session_id.into_shared(),
+        }
     }
 }
 
