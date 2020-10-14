@@ -32,7 +32,10 @@ pub fn start(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
             recv(commands_out) -> backend_command_msg => match backend_command_msg {
                 Err(e) => error!("backend command xadd {:?}",e),
                 Ok(command) => {
-                    info!("Send command: {:?}", &command);
+                    match &command {
+                        BC::ClientHeartbeat(_) => (), // no one cares
+                        _ => info!("Send command: {:?}", &command)
+                    }
                     match command {
                         BC::AttachBot(attach_bot) => cmds.xadd_attach_bot(attach_bot),
                         BC::MakeMove(c) => cmds.xadd_make_move(c),
