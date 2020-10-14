@@ -6,7 +6,7 @@ pub fn double_commands(opts: DoublerOpts) {
     loop {
         select! {
             recv(opts.session_commands_out) -> msg => match msg {
-                Ok(  backend_command ) => {
+                Ok(backend_command) => {
                     if let Err(e) = opts.redis_commands_in.send(backend_command.clone()) {
                         error!("err doubler 0 {:?}",e)
                     }
