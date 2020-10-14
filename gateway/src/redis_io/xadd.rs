@@ -1,7 +1,7 @@
 use crate::backend::commands::BackendCommands as BC;
 use crate::backend::commands::{
     ChooseColorPrefBackendCommand, CreateGameBackendCommand, FindPublicGameBackendCommand,
-    JoinPrivateGameBackendCommand, ReqSyncBackendCommand,
+    JoinPrivateGameBackendCommand, ReqSyncBackendCommand, SessionDisconnected,
 };
 use crate::model::{Coord, MakeMoveCommand, ProvideHistoryCommand};
 use crate::redis_io::RedisPool;
@@ -23,6 +23,7 @@ pub trait XAddCommands {
     fn xadd_find_public_game(&self, command: FindPublicGameBackendCommand);
     fn xadd_create_game(&self, command: CreateGameBackendCommand);
     fn xadd_choose_color_pref(&self, command: ChooseColorPrefBackendCommand);
+    fn xadd_session_disconnected(&self, command: SessionDisconnected);
 }
 
 pub fn start(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
@@ -42,6 +43,7 @@ pub fn start(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
                         BC::FindPublicGame(fpg) => cmds.xadd_find_public_game(fpg),
                         BC::CreateGame(cg) => cmds.xadd_create_game(cg),
                         BC::ChooseColorPref(cp) => cmds.xadd_choose_color_pref(cp),
+                        BC::SessionDisconnected(sd) => cmds.xadd_session_disconnected(sd),
                         _ => error!("cannot match backend command to xadd"),
                     }
                 }
@@ -141,6 +143,13 @@ impl XAddCommands for RedisXAddCommands {
             topics::CHOOSE_COLOR_PREF_TOPIC,
         )
     }
+
+    fn xadd_session_disconnected(&self, command: SessionDisconnected) {
+        self.xadd_classic(
+            bincode::serialize(&command.into_shared()),
+            topics::SESSION_DISCONNECTED_TOPIC,
+        )
+    }
 }
 
 impl RedisXAddCommands {
@@ -194,6 +203,7 @@ mod tests {
         Find(FindPublicGameBackendCommand),
         Create(CreateGameBackendCommand),
         ChCol(ChooseColorPrefBackendCommand),
+        SessDisconn(SessionDisconnected),
     }
     impl FakeXAddCmd {
         fn sssend(&self, tr: TestResult) {
@@ -230,6 +240,10 @@ mod tests {
 
         fn xadd_choose_color_pref(&self, command: ChooseColorPrefBackendCommand) {
             self.sssend(TestResult::ChCol(command))
+        }
+
+        fn xadd_session_disconnected(&self, command: SessionDisconnected) {
+            self.sssend(TestResult::SessDisconn(command))
         }
     }
 

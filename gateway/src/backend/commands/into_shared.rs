@@ -34,6 +34,12 @@ impl IntoShared<sync::api::ReqSync> for ReqSyncBackendCommand {
     }
 }
 
+impl IntoShared<lobby::api::SessionDisconnected> for SessionDisconnected {
+    fn into_shared(&self) -> lobby::api::SessionDisconnected {
+        todo!()
+    }
+}
+
 impl IntoShared<lobby::api::JoinPrivateGame> for JoinPrivateGameBackendCommand {
     fn into_shared(&self) -> lobby::api::JoinPrivateGame {
         lobby::api::JoinPrivateGame {
