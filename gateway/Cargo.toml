@@ -17,7 +17,7 @@ envy = "0.4.1"
 futures = "0.3.6"
 harsh = "0.1.6"
 lazy_static = "1.4.0"
-lobby-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "6e5474c"}
+lobby-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "78b0242"}
 log = "0.4.11"
 micro_model_bot = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
 micro_model_moves = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
