@@ -12,7 +12,7 @@ use core_model::*;
 use lobby_model::api::*;
 use lobby_model::*;
 
-use log::{error, warn};
+use log::{error, info, warn};
 use redis_streams::XReadEntryId;
 
 pub fn process(reg: &Components) {
@@ -21,8 +21,10 @@ pub fn process(reg: &Components) {
             Ok(all_eids) => match reg.xread.xread_sorted(all_eids) {
                 Ok(xrr) => {
                     for (eid, data) in xrr {
+                        info!("🧮 Processing {:?}", &data);
                         consume(eid, &data, &reg);
-                        increment(eid, data, reg);
+                        increment(eid, &data, reg);
+                        info!("🛎 OK {:?}", &data);
                     }
                 }
                 Err(e) => error!("Stream err {:?}", e),
@@ -151,7 +153,7 @@ fn ready_xadd(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Co
     }
 }
 
-fn increment(eid: XReadEntryId, event: StreamInput, reg: &Components) {
+fn increment(eid: XReadEntryId, event: &StreamInput, reg: &Components) {
     if let Err(e) = reg.entry_id_repo.update(EntryIdType::from(event), eid) {
         error!("eid write {:?}", e)
     }

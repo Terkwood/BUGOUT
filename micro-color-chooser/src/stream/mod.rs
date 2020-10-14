@@ -12,7 +12,7 @@ use crate::service::{choose, game_color_prefs};
 use color_model::api::*;
 use color_model::*;
 
-use log::error;
+use log::{error, info};
 use redis_streams::XReadEntryId;
 
 #[derive(Clone)]
@@ -39,18 +39,12 @@ pub fn process(components: &mut Components) {
             Ok(xrr) => {
                 for time_ordered_event in xrr {
                     let (result, pxid) = match time_ordered_event {
-                        (
-                            xid,
-                            StreamInput::CCP(ChooseColorPref {
-                                client_id,
-                                color_pref,
-                                session_id,
-                            }),
-                        ) => {
+                        (xid, StreamInput::CCP(ccp)) => {
+                            info!("Stream: Choose Color Pref {:?}", &ccp);
                             let scp = SessionColorPref {
-                                color_pref,
-                                session_id: session_id.clone(),
-                                client_id,
+                                color_pref: ccp.color_pref,
+                                session_id: ccp.session_id.clone(),
+                                client_id: ccp.client_id,
                             };
 
                             if let Err(_e) = components.prefs_repo.put(&scp) {
@@ -58,11 +52,13 @@ pub fn process(components: &mut Components) {
                             }
 
                             (
-                                game_color_prefs::by_session_id(&session_id, &repos),
+                                game_color_prefs::by_session_id(&ccp.session_id, &repos),
                                 Processed::CCP(xid),
                             )
                         }
                         (xid, StreamInput::GR(gr)) => {
+                            info!("Stream: Game Ready {:?}", &gr);
+
                             if let Err(_e) = components.game_ready_repo.put(gr.clone()) {
                                 error!("write to session game repo 0")
                             }
@@ -81,13 +77,13 @@ pub fn process(components: &mut Components) {
                         Ok(GameColorPref::Complete { game_id, prefs }) => {
                             let colors_chosen =
                                 choose(&prefs.0, &prefs.1, &game_id, &mut components.random);
-                            if let Err(_e) = components.xadd.xadd(colors_chosen) {
+                            if let Err(_e) = components.xadd.xadd(&colors_chosen) {
                                 error!("error writing to colors chose stream")
                             }
+
+                            info!("🎨 Completed: {:?}", colors_chosen)
                         }
-                        Ok(_) => {
-                            // do nothing until we know what both sides prefer
-                        }
+                        Ok(other) => info!("⌚ Do Nothing: {:?}", other),
                         Err(_e) => error!("fetch error checking game color prefs by session ID"),
                     }
 
@@ -227,8 +223,8 @@ mod tests {
 
     struct FakeXAdd(Sender<ColorsChosen>);
     impl XAdd for FakeXAdd {
-        fn xadd(&self, data: ColorsChosen) -> Result<(), XAddErr> {
-            Ok(self.0.send(data).expect("send"))
+        fn xadd(&self, data: &ColorsChosen) -> Result<(), XAddErr> {
+            Ok(self.0.send(data.clone()).expect("send"))
         }
     }
 

@@ -19,6 +19,7 @@ pub fn process(opts: StreamOpts) {
             for time_ordered_event in xread_result {
                 match time_ordered_event {
                     (entry_id, StreamData::MM(mm)) => {
+                        info!("Stream: Move Made {:?}", &mm);
                         let fetched_gs = opts.game_states_repo.fetch(&mm.game_id);
                         match fetched_gs {
                             Ok(Some(game_state)) => match judge(&mm, &game_state) {
@@ -29,9 +30,11 @@ pub fn process(opts: StreamOpts) {
                                         &opts.topics.move_accepted_ev,
                                     ) {
                                         error!("Error XADD to move_accepted {:?}", e)
+                                    } else {
+                                        info!("👩‍⚖️ {:?} OK", &mm.game_id)
                                     }
                                 }
-                                Judgement::Rejected => error!("MOVE REJECTED: {:#?}", mm),
+                                Judgement::Rejected => warn!("MOVE REJECTED: {:#?}", mm),
                             },
                             Ok(None) => warn!("No game state for game {}", mm.game_id.0),
                             Err(e) => error!("Deser error ({:?})!", e),
@@ -40,13 +43,14 @@ pub fn process(opts: StreamOpts) {
                         mm_processed.push(entry_id);
                     }
                     (entry_id, StreamData::GS(game_id, game_state)) => {
+                        info!("Stream: Game State {:?}", &game_id);
                         if let Err(e) = &opts.game_states_repo.write(&game_id, &game_state) {
                             error!("error writing game state {:?}  -- advancing eid pointer", e)
                         }
 
                         gs_processed.push(entry_id);
 
-                        info!("Tracking {:?} {:?}", game_id, game_state);
+                        info!("💾 Game State Saved {:?}", &game_id);
                     }
                 }
             }
