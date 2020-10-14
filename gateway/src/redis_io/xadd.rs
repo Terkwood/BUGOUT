@@ -10,7 +10,7 @@ use micro_model_bot::gateway::AttachBot;
 
 use crate::backend::commands::IntoShared;
 use crossbeam_channel::{select, Receiver};
-use log::error;
+use log::{error, info};
 use r2d2_redis::redis;
 use std::sync::Arc;
 
@@ -30,19 +30,20 @@ pub fn start(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
         select! {
             recv(commands_out) -> backend_command_msg => match backend_command_msg {
                 Err(e) => error!("backend command xadd {:?}",e),
-                Ok(command) => match command {
-                    BC::AttachBot(attach_bot) => {
-                        cmds.xadd_attach_bot(attach_bot)
+                Ok(command) => {
+                    info!("Send command: {:?}", &command);
+                    match command {
+                        BC::AttachBot(attach_bot) => cmds.xadd_attach_bot(attach_bot),
+                        BC::MakeMove(c) => cmds.xadd_make_move(c),
+                        BC::ClientHeartbeat(_) => (),
+                        BC::ProvideHistory(ph) => cmds.xadd_provide_history(ph),
+                        BC::ReqSync(rs) => cmds.xadd_req_sync(rs),
+                        BC::JoinPrivateGame(jpg) => cmds.xadd_join_private_game(jpg),
+                        BC::FindPublicGame(fpg) => cmds.xadd_find_public_game(fpg),
+                        BC::CreateGame(cg) => cmds.xadd_create_game(cg),
+                        BC::ChooseColorPref(cp) => cmds.xadd_choose_color_pref(cp),
+                        _ => error!("cannot match backend command to xadd"),
                     }
-                    BC::MakeMove(c) => cmds.xadd_make_move(c),
-                    BC::ClientHeartbeat(_) => (),
-                    BC::ProvideHistory(ph) => cmds.xadd_provide_history(ph),
-                    BC::ReqSync(rs) => cmds.xadd_req_sync(rs),
-                    BC::JoinPrivateGame(jpg) => cmds.xadd_join_private_game(jpg),
-                    BC::FindPublicGame(fpg) => cmds.xadd_find_public_game(fpg),
-                    BC::CreateGame(cg) => cmds.xadd_create_game(cg),
-                    BC::ChooseColorPref(cp) => cmds.xadd_choose_color_pref(cp),
-                    _ => error!("cannot match backend command to xadd"),
                 }
             }
         }
