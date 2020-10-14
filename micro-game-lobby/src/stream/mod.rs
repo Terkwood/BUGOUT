@@ -252,7 +252,7 @@ mod test {
             }),
         ));
 
-        thread::sleep(timeout * 2);
+        thread::sleep(timeout);
         // The game lobby repo should now contain one game
         assert_eq!(
             fake_game_lobby_contents
