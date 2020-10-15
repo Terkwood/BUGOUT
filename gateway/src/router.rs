@@ -7,7 +7,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
-use crate::backend_events::BackendEvents;
+use crate::backend::events::BackendEvents;
 use crate::client_events::{ClientEvents, YourColorEvent};
 use crate::idle_status::IdleStatusResponse;
 use crate::model::*;

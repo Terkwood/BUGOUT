@@ -1,6 +1,10 @@
-use serde_derive::{Deserialize, Serialize};
+pub mod from;
+mod into_shared;
+
+pub use into_shared::*;
 
 use crate::model::*;
+use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JoinPrivateGameBackendCommand {
@@ -42,7 +46,7 @@ pub struct CreateGameBackendCommand {
     #[serde(rename = "sessionId")]
     pub session_id: SessionId,
     #[serde(rename = "boardSize")]
-    pub board_size: u8,
+    pub board_size: u16,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]

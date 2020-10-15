@@ -9,8 +9,8 @@ use rdkafka::consumer::{CommitMode, Consumer};
 use rdkafka::message::Message;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
-use crate::backend_commands::*;
-use crate::backend_events::*;
+use crate::backend::commands::*;
+use crate::backend::events::*;
 use crate::env::BROKERS;
 use crate::idle_status::KafkaActivityObserved;
 use crate::model::*;

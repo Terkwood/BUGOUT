@@ -10,7 +10,7 @@ use crossbeam_channel::unbounded;
 use ws::util::Token;
 use ws::{CloseCode, Error, ErrorKind, Frame, Handler, Handshake, Message, OpCode, Result, Sender};
 
-use crate::backend_commands::*;
+use crate::backend::commands::*;
 use crate::client_commands::*;
 use crate::client_events::*;
 use crate::idle_status::RequestIdleStatus;
@@ -265,7 +265,7 @@ impl Handler for WsSession {
                             client_id,
                             visibility: Visibility::Private,
                             session_id: self.session_id,
-                            board_size,
+                            board_size: board_size as u16,
                         }))
                         .map_err(|e| ws::Error::from(Box::new(e)))
                     {

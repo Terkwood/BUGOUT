@@ -1,4 +1,4 @@
-use crate::backend_events::*;
+use crate::backend::events::*;
 use crate::model::ClientId;
 use crate::redis_io::RedisPool;
 use crate::wakeup::RedisWakeup;

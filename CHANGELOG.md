@@ -1,6 +1,8 @@
-# v0.8.10 (maybe v0.9.0 if gateway finished)
+# NEXT: v0.9.0
 
-- Create shared model crates and use them in micro-sync (#342, #339, #343, #344, #345, #346, #347, #348)
+- Add log statements (#356)
+- Gateway: coordinate multiplayer events using redis streams (#332, #349, #350, #351, #353, #354, #355)
+- Create shared model crates (#342, #339, #343, #344, #345, #346, #347, #348)
 - Create micro-sync (history provider) service (#331, #335, #337, #338)
 - Include session-disconnected stream in game-lobby reads (#359)
 - Fix memory leak in micro-changelog (#336)
