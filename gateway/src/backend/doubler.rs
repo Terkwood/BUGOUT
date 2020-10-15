@@ -1,4 +1,4 @@
-use crate::backend_commands::BackendCommands;
+use crate::backend::commands::BackendCommands;
 
 use crossbeam_channel::{select, Receiver, Sender};
 use log::error;
@@ -6,7 +6,7 @@ pub fn double_commands(opts: DoublerOpts) {
     loop {
         select! {
             recv(opts.session_commands_out) -> msg => match msg {
-                Ok(  backend_command ) => {
+                Ok(backend_command) => {
                     if let Err(e) = opts.redis_commands_in.send(backend_command.clone()) {
                         error!("err doubler 0 {:?}",e)
                     }
@@ -29,7 +29,7 @@ pub struct DoublerOpts {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backend_commands::*;
+    use crate::backend::commands::*;
     use crate::model::*;
 
     use crossbeam_channel::{select, unbounded};

@@ -155,9 +155,9 @@ impl Default for Captures {
 /// other data structures
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 pub struct Move {
-    player: Player,
-    coord: Option<Coord>,
-    turn: i32,
+    pub player: Player,
+    pub coord: Option<Coord>,
+    pub turn: i32,
 }
 
 impl std::fmt::Display for Player {
