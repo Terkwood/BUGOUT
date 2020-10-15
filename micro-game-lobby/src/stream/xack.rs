@@ -1,4 +1,5 @@
 use crate::stream::StreamInput;
+use crate::topics;
 use crate::Components;
 use log::error;
 use redis::{Client, Commands};
@@ -13,35 +14,19 @@ pub trait XAck {
 
 impl XAck for std::rc::Rc<Client> {
     fn ack_find_public_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-        todo!()
+        ack(self, topics::FIND_PUBLIC_GAME, xids)
     }
 
     fn ack_join_priv_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-        todo!()
+        ack(self, topics::JOIN_PRIVATE_GAME, xids)
     }
 
     fn ack_create_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-        todo!()
+        ack(self, topics::CREATE_GAME, xids)
     }
 
     fn ack_session_disconnected(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-        todo!()
-    }
-}
-
-fn nah_xack(
-    key: &str,
-    group: &str,
-    ids: &[XReadEntryId],
-    client: &Client,
-) -> Result<(), redis::RedisError> {
-    let c = client.get_connection();
-    if let Ok(mut conn) = c {
-        let idstrs: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
-        let _: usize = conn.xack(key, group, &idstrs)?;
-        Ok(())
-    } else {
-        c.map(|_| ())
+        ack(self, topics::SESSION_DISCONNECTED, xids)
     }
 }
 
@@ -110,10 +95,13 @@ impl Default for Unacknowledged {
 }
 
 fn ack(client: &Client, key: &str, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-    let mut conn = client.get_connection().expect("conn");
-    let idstrs: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
-    let _: usize = conn.xack(key, super::GROUP_NAME, &idstrs)?;
-    Ok(())
+    if let Ok(mut conn) = client.get_connection() {
+        let idstrs: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
+        let _: usize = conn.xack(key, super::GROUP_NAME, &idstrs)?;
+        Ok(())
+    } else {
+        Err(StreamAckErr)
+    }
 }
 
 impl From<redis::RedisError> for StreamAckErr {
