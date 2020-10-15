@@ -20,19 +20,21 @@ use redis_streams::XReadEntryId;
 pub const GROUP_NAME: &str = "micro-game-lobby";
 
 pub fn process(reg: &Components) {
+    let mut unacked = Unacknowledged::default();
     loop {
         match reg.xread.xread_sorted() {
             Ok(xrr) => {
-                let mut to_ack = vec![];
                 for (xid, data) in xrr {
                     info!("🧮 Processing {:?}", &data);
                     consume(xid, &data, &reg);
                     info!("🛎 OK {:?}", &data);
-                    to_ack.push((xid, data));
+                    unacked.push(xid, data);
                 }
             }
             Err(e) => error!("Stream err {:?}", e),
         }
+
+        unacked.ack_all(&reg)
     }
 }
 

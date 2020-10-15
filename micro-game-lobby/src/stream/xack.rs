@@ -1,30 +1,30 @@
-use crate::components::Components;
 use crate::stream::StreamInput;
+use crate::Components;
 use log::error;
 use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
 
 pub trait XAck {
-    fn ack_find_public_game(&self, xid: &[XReadEntryId]) -> Result<(), StreamAckErr>;
-    fn ack_join_priv_game(&self, xid: &[XReadEntryId]) -> Result<(), StreamAckErr>;
-    fn ack_create_game(&self, xid: &[XReadEntryId]) -> Result<(), StreamAckErr>;
-    fn ack_session_disconnected(&self, xid: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    fn ack_find_public_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    fn ack_join_priv_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    fn ack_create_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    fn ack_session_disconnected(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
 }
 
 impl XAck for std::rc::Rc<Client> {
-    fn ack_find_public_game(&self, xid: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+    fn ack_find_public_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         todo!()
     }
 
-    fn ack_join_priv_game(&self, xid: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+    fn ack_join_priv_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         todo!()
     }
 
-    fn ack_create_game(&self, xid: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+    fn ack_create_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         todo!()
     }
 
-    fn ack_session_disconnected(&self, xid: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+    fn ack_session_disconnected(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         todo!()
     }
 }
@@ -56,9 +56,9 @@ pub struct Unacknowledged {
 }
 
 impl Unacknowledged {
-    pub fn ack_all(&mut self, xack: &dyn XAck) {
+    pub fn ack_all(&mut self, reg: &Components) {
         if !self.fpg.is_empty() {
-            if let Err(_e) = xack.ack_find_public_game(&self.fpg) {
+            if let Err(_e) = reg.xack.ack_find_public_game(&self.fpg) {
                 error!("ack for fpg failed")
             } else {
                 self.fpg.clear();
@@ -66,21 +66,21 @@ impl Unacknowledged {
         }
 
         if !self.jpg.is_empty() {
-            if let Err(_e) = xack.ack_join_priv_game(&self.jpg) {
+            if let Err(_e) = reg.xack.ack_join_priv_game(&self.jpg) {
                 error!("ack for jpg failed")
             } else {
                 self.jpg.clear();
             }
         }
         if !self.cg.is_empty() {
-            if let Err(_e) = xack.ack_create_game(&self.cg) {
+            if let Err(_e) = reg.xack.ack_create_game(&self.cg) {
                 error!("ack for create game failed")
             } else {
                 self.cg.clear();
             }
         }
         if !self.sd.is_empty() {
-            if let Err(_e) = xack.ack_session_disconnected(&self.sd) {
+            if let Err(_e) = reg.xack.ack_session_disconnected(&self.sd) {
                 error!("ack for session disconn failed")
             } else {
                 self.sd.clear();

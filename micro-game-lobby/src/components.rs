@@ -22,7 +22,7 @@ impl Components {
             game_lobby_repo: Box::new(client.clone()),
             xread: Box::new(client.clone()),
             xadd: Box::new(client.clone()),
-            xack: Box::new(client)
+            xack: Box::new(client),
         }
     }
 }
