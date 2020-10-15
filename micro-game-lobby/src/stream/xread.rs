@@ -6,6 +6,7 @@ use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::rc::Rc;
+use super::GROUP_NAME;
 
 const BLOCK_MS: usize = 5000;
 
