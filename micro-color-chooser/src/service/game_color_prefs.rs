@@ -3,6 +3,7 @@ use crate::repo::*;
 use api::GameReady;
 use color_model::*;
 use core_model::*;
+use log::trace;
 
 /// Call this when you receive a ChooseColorPref event
 /// It will provide an aggregated view of choices for that game,
@@ -14,7 +15,8 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
         Some(game_ready) => {
             let first_pref = repos.prefs.get(&game_ready.sessions.0);
             let second_pref = repos.prefs.get(&game_ready.sessions.1);
-
+            trace!("first pref {:?}", &first_pref);
+            trace!("second pref {:?}", &second_pref);
             match (first_pref, second_pref) {
                 (Ok(Some(first)), Ok(Some(second))) => Ok(GameColorPref::Complete {
                     game_id: game_ready.game_id.clone(),
@@ -29,7 +31,8 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
                     pref: partial,
                 }),
                 (Ok(None), Ok(None)) => Ok(GameColorPref::NotReady),
-                _ => Err(FetchErr),
+                (Err(e), _) => Err(e),
+                (_, Err(e)) => Err(e),
             }
         }
     })
