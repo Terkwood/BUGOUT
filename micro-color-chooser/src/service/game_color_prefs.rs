@@ -14,6 +14,7 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
         Some(game_ready) => {
             let first_pref = repos.prefs.get(&game_ready.sessions.0);
             let second_pref = repos.prefs.get(&game_ready.sessions.1);
+
             match (first_pref, second_pref) {
                 (Ok(Some(first)), Ok(Some(second))) => Ok(GameColorPref::Complete {
                     game_id: game_ready.game_id.clone(),

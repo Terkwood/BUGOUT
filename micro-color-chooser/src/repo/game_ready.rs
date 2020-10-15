@@ -37,7 +37,7 @@ impl GameReadyRepo for Rc<Client> {
         let s = bincode::serialize(&game_ready);
         if let (Ok(mut conn), Ok(bytes)) = (c, s) {
             let first_key = redis_key(&game_ready.sessions.0);
-            let second_key = redis_key(&game_ready.sessions.0);
+            let second_key = redis_key(&game_ready.sessions.1);
 
             let first_done: Result<(), _> = conn.set(&first_key, bytes.clone());
             if let Ok(_) = first_done {
