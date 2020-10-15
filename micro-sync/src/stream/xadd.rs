@@ -1,5 +1,5 @@
 use super::topics;
-use crate::move_model::MakeMove;
+use crate::move_model::{Coord, MakeMove};
 use redis::{streams::StreamMaxlen, Client, Commands};
 use std::collections::BTreeMap;
 use std::rc::Rc;
@@ -68,19 +68,47 @@ impl XAdd for Rc<Client> {
     }
 
     fn add_make_move(&self, data: MakeMove) -> Result<(), XAddErr> {
-        let ser_bytes_result = bincode::serialize(&data);
-
-        if let Ok(bytes) = ser_bytes_result {
-            let mut m: BTreeMap<&str, &[u8]> = BTreeMap::new();
-            m.insert(MAP_KEY, &bytes);
-            if let Ok(mut conn) = self.get_connection() {
-                conn.xadd_maxlen_map(topics::MAKE_MOVE, StreamMaxlen::Approx(MAX_LEN), AUTO_ID, m)
-                    .map_err(|e| XAddErr::Redis(e))
-            } else {
-                Err(XAddErr::Conn)
+        // See _clean_add_make_move to satisfy #363
+        // and get rid of this complex data format
+        if let Ok(mut conn) = self.get_connection() {
+            let mut cmd = redis::cmd("XADD");
+            cmd.arg(topics::MAKE_MOVE)
+                .arg("MAXLEN")
+                .arg("~")
+                .arg("1000")
+                .arg("*")
+                .arg("game_id")
+                .arg(data.game_id.0.to_string())
+                .arg("player")
+                .arg(data.player.to_string())
+                .arg("req_id")
+                .arg(data.req_id.0.to_string());
+            if let Some(Coord { x, y }) = data.coord {
+                cmd.arg("coord_x").arg(x).arg("coord_y").arg(y);
             }
+            cmd.query::<String>(&mut conn)
+                .map(|_| ())
+                .map_err(|e| XAddErr::Redis(e))
         } else {
-            Err(XAddErr::Ser)
+            Err(XAddErr::Conn)
         }
+    }
+}
+
+/// This can be used to satisfy https://github.com/Terkwood/BUGOUT/issues/363
+fn _clean_add_make_move(client: &Client, data: MakeMove) -> Result<(), XAddErr> {
+    let ser_bytes_result = bincode::serialize(&data);
+
+    if let Ok(bytes) = ser_bytes_result {
+        let mut m: BTreeMap<&str, &[u8]> = BTreeMap::new();
+        m.insert(MAP_KEY, &bytes);
+        if let Ok(mut conn) = client.get_connection() {
+            conn.xadd_maxlen_map(topics::MAKE_MOVE, StreamMaxlen::Approx(MAX_LEN), AUTO_ID, m)
+                .map_err(|e| XAddErr::Redis(e))
+        } else {
+            Err(XAddErr::Conn)
+        }
+    } else {
+        Err(XAddErr::Ser)
     }
 }
