@@ -27,7 +27,6 @@ pub fn process(reg: &Components) {
                 for (xid, data) in xrr {
                     info!("🧮 Processing {:?}", &data);
                     consume(xid, &data, &reg);
-                    info!("🛎 OK {:?}", &data);
                     unacked.push(xid, data);
                 }
             }
