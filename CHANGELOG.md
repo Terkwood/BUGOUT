@@ -2,6 +2,7 @@
 
 - Create shared model crates and use them in micro-sync (#342, #339, #343, #344, #345, #346, #347, #348)
 - Create micro-sync (history provider) service (#331, #335, #337, #338)
+- Include session-disconnected stream in game-lobby reads (#359)
 - Fix memory leak in micro-changelog (#336)
 - Create micro-color-chooser (#334)
 - Use XREADGROUP in micro-game-lobby (#358) 
