@@ -34,7 +34,12 @@ impl XRead for Rc<Client> {
         if let Ok(mut conn) = self.get_connection() {
             let opts = StreamReadOptions::default().block(BLOCK_MSEC);
             let xrr: Result<StreamReadReply, _> = conn.xread_options(
-                &[FIND_PUBLIC_GAME, CREATE_GAME, JOIN_PRIVATE_GAME],
+                &[
+                    FIND_PUBLIC_GAME,
+                    CREATE_GAME,
+                    JOIN_PRIVATE_GAME,
+                    SESSION_DISCONNECTED,
+                ],
                 &[
                     entry_ids.find_public_game.to_string(),
                     entry_ids.create_game.to_string(),
