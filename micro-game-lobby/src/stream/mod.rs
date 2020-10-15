@@ -194,14 +194,14 @@ mod test {
             &self,
         ) -> Result<Vec<(redis_streams::XReadEntryId, super::StreamInput)>, XReadErr> {
             {
-                let mut data: Vec<_> = self.sorted_data.lock().expect("lock").to_vec();
+                let mut data = self.sorted_data.lock().expect("lock");
                 if data.is_empty() {
                     // stop the test thread from spinning like crazy
-                    std::thread::sleep(Duration::from_millis(20));
+                    std::thread::sleep(Duration::from_millis(1));
                     Ok(vec![])
                 } else {
                     let result = data.clone();
-                    data.clear();
+                    *data = vec![];
                     Ok(result)
                 }
             }
@@ -210,7 +210,8 @@ mod test {
     struct FakeXAdd(Sender<StreamOutput>);
     impl XAdd for FakeXAdd {
         fn xadd(&self, data: StreamOutput) -> Result<(), XAddErr> {
-            Ok(self.0.send(data).unwrap_or_default())
+            self.0.send(data).expect("send");
+            Ok(())
         }
     }
 
@@ -227,13 +228,11 @@ mod test {
     struct FakeXAck(Sender<ItWasAcked>);
     impl XAck for FakeXAck {
         fn ack_find_public_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            Ok(self
-                .0
-                .send(ItWasAcked {
-                    ack_type: AckType::FPG,
-                    xids: xids.to_vec(),
-                })
-                .expect("send"))
+            if let Err(_) = self.0.send(ItWasAcked {
+                ack_type: AckType::FPG,
+                xids: xids.to_vec(),
+            }) {}
+            Ok(())
         }
 
         fn ack_join_priv_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
