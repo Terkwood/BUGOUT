@@ -229,6 +229,7 @@ mod test {
                     sorted_data: sfs.clone(),
                 }),
                 xadd: Box::new(FakeXAdd(xadd_call_in)),
+                xack: todo!(),
             };
             process(&components);
         });
