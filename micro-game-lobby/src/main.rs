@@ -1,6 +1,6 @@
-use micro_game_lobby::*;
-use log::info;
 use components::Components;
+use log::info;
+use micro_game_lobby::*;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
