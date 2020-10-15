@@ -1,3 +1,4 @@
+use super::GROUP_NAME;
 use crate::topics::*;
 use lobby_model::api::*;
 use log::{error, warn};
@@ -6,7 +7,6 @@ use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::rc::Rc;
-use super::GROUP_NAME;
 
 const BLOCK_MS: usize = 5000;
 
@@ -22,7 +22,8 @@ pub enum XReadErr {
     Deser(XReadDeserErr),
     Other,
 }
-const READ_OP: &str = "<";
+const READ_OP: &str = ">";
+
 impl XRead for Rc<Client> {
     fn xread_sorted(&self) -> Result<std::vec::Vec<(XReadEntryId, StreamInput)>, XReadErr> {
         if let Ok(mut conn) = self.get_connection() {
