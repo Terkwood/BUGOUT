@@ -17,13 +17,16 @@ impl GameReadyRepo for Rc<Client> {
     fn get(&self, session_id: &SessionId) -> Result<Option<GameReady>, FetchErr> {
         if let Ok(mut conn) = self.get_connection() {
             let key = redis_key(session_id);
-            let data: Result<Vec<u8>, _> = conn.get(&key).map_err(|_| FetchErr);
+            let data: Result<Option<Vec<u8>>, _> = conn.get(&key).map_err(|_| FetchErr);
 
-            if let Ok(_) = data {
-                touch_ttl(&mut conn, &key)
+            match data {
+                Ok(Some(bytes)) => {
+                    touch_ttl(&mut conn, &key);
+                    bincode::deserialize(&bytes).map_err(|_| FetchErr)
+                }
+                Ok(None) => Ok(None),
+                Err(_) => Err(FetchErr),
             }
-
-            data.and_then(|bytes| bincode::deserialize(&bytes).map_err(|_| FetchErr))
         } else {
             Err(FetchErr)
         }
