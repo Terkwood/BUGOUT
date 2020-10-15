@@ -15,7 +15,7 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
         Some(game_ready) => {
             let first_pref = repos.prefs.get(&game_ready.sessions.0);
             let second_pref = repos.prefs.get(&game_ready.sessions.1);
-            trace!("first pref {:?}", &first_pref);
+            trace!("first pref  {:?}", &first_pref);
             trace!("second pref {:?}", &second_pref);
             match (first_pref, second_pref) {
                 (Ok(Some(first)), Ok(Some(second))) => Ok(GameColorPref::Complete {
@@ -45,6 +45,8 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
 pub fn by_game_ready(game_ready: &GameReady, repos: &Repos) -> Result<GameColorPref, FetchErr> {
     let first_pref = repos.prefs.get(&game_ready.sessions.0)?;
     let second_pref = repos.prefs.get(&game_ready.sessions.1)?;
+    trace!("first pref  {:?}", &first_pref);
+    trace!("second pref {:?}", &second_pref);
 
     Ok(match (first_pref, second_pref) {
         (Some(first), Some(second)) => GameColorPref::Complete {
