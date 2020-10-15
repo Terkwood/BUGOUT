@@ -213,9 +213,63 @@ mod test {
             Ok(self.0.send(data).unwrap_or_default())
         }
     }
+
+    enum AckType {
+        FPG,
+        CG,
+        JPG,
+        SD,
+    }
+    struct ItWasAcked {
+        ack_type: AckType,
+        xids: Vec<XReadEntryId>,
+    }
+    struct FakeXAck(Sender<ItWasAcked>);
+    impl XAck for FakeXAck {
+        fn ack_find_public_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            Ok(self
+                .0
+                .send(ItWasAcked {
+                    ack_type: AckType::FPG,
+                    xids: xids.to_vec(),
+                })
+                .expect("send"))
+        }
+
+        fn ack_join_priv_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            Ok(self
+                .0
+                .send(ItWasAcked {
+                    ack_type: AckType::JPG,
+                    xids: xids.to_vec(),
+                })
+                .expect("send"))
+        }
+
+        fn ack_create_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            Ok(self
+                .0
+                .send(ItWasAcked {
+                    ack_type: AckType::CG,
+                    xids: xids.to_vec(),
+                })
+                .expect("send"))
+        }
+
+        fn ack_session_disconnected(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            Ok(self
+                .0
+                .send(ItWasAcked {
+                    ack_type: AckType::SD,
+                    xids: xids.to_vec(),
+                })
+                .expect("send"))
+        }
+    }
     #[test]
     fn test_process() {
-        let (xadd_call_in, xadd_call_out) = unbounded();
+        let (xadd_in, xadd_out) = unbounded();
+        let (xack_in, xack_out) = unbounded();
 
         let sorted_fake_stream = Arc::new(Mutex::new(vec![]));
 
@@ -233,8 +287,8 @@ mod test {
                 xread: Box::new(FakeXRead {
                     sorted_data: sfs.clone(),
                 }),
-                xadd: Box::new(FakeXAdd(xadd_call_in)),
-                xack: todo!(),
+                xadd: Box::new(FakeXAdd(xadd_in)),
+                xack: Box::new(FakeXAck(xack_in)),
             };
             process(&components);
         });
@@ -275,7 +329,7 @@ mod test {
         // There should be an XADD triggered for a wait-for-opponent
         // message
         select! {
-            recv(xadd_call_out) -> msg => match msg {
+            recv(xadd_out) -> msg => match msg {
                 Ok(StreamOutput::WFO(_)) => assert!(true),
                 _ => panic!("wrong output")
             },
@@ -293,7 +347,7 @@ mod test {
 
         // There should now be GameReady in stream
         select! {
-            recv(xadd_call_out) -> msg => match msg {
+            recv(xadd_out) -> msg => match msg {
                 Ok(StreamOutput::GR(_)) => assert!(true),
                 _ => assert!(false)
             },
