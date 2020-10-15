@@ -304,8 +304,9 @@ mod test {
         let session_w = SessionId::new();
         let client_b = ClientId::new();
         let client_w = ClientId::new();
+        let xid0 = quick_eid(fake_time_ms);
         sorted_fake_stream.lock().expect("lock").push((
-            quick_eid(fake_time_ms),
+            xid0,
             StreamInput::FPG(FindPublicGame {
                 client_id: client_w.clone(),
                 session_id: session_w.clone(),
@@ -313,6 +314,17 @@ mod test {
         ));
 
         thread::sleep(timeout);
+        // We should have seen a single XACK  for a find public game record
+        select! {
+            recv(xack_out) -> msg => match msg {
+                Ok(ItWasAcked { ack_type: AckType::FPG , xids }) =>  {
+                    assert_eq!(xids.len(), 1);
+                    assert_eq!(xids[0], xid0)
+                }
+                _ => panic!("fpg ack")
+            }
+        }
+
         // The game lobby repo should now contain one game
         assert_eq!(
             fake_game_lobby_contents
