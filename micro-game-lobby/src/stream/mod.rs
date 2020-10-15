@@ -1,36 +1,39 @@
+mod init;
+mod xack;
 mod xadd;
 mod xread;
 
+pub use init::*;
+pub use xack::*;
 pub use xadd::*;
 pub use xread::*;
 
 use crate::components::Components;
 use crate::game_lobby::GameLobbyOps;
-use crate::repo::EntryIdType;
 use crate::PUBLIC_GAME_BOARD_SIZE;
 use core_model::*;
 use lobby_model::api::*;
 use lobby_model::*;
-
 use log::{error, info, warn};
 use redis_streams::XReadEntryId;
 
+pub const GROUP_NAME: &str = "micro-game-lobby";
+
 pub fn process(reg: &Components) {
+    let mut unacked = Unacknowledged::default();
     loop {
-        match reg.entry_id_repo.fetch_all() {
-            Ok(all_eids) => match reg.xread.xread_sorted(all_eids) {
-                Ok(xrr) => {
-                    for (eid, data) in xrr {
-                        info!("🧮 Processing {:?}", &data);
-                        consume(eid, &data, &reg);
-                        increment(eid, &data, reg);
-                        info!("🛎 OK {:?}", &data);
-                    }
+        match reg.xread.xread_sorted() {
+            Ok(xrr) => {
+                for (xid, data) in xrr {
+                    info!("🧮 Processing {:?}", &data);
+                    consume(xid, &data, &reg);
+                    unacked.push(xid, data);
                 }
-                Err(e) => error!("Stream err {:?}", e),
-            },
-            Err(e) => error!("Failed to fetch EIDs {:?}", e),
+            }
+            Err(e) => error!("Stream err {:?}", e),
         }
+
+        unacked.ack_all(&reg)
     }
 }
 
@@ -153,12 +156,6 @@ fn ready_xadd(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Co
     }
 }
 
-fn increment(eid: XReadEntryId, event: &StreamInput, reg: &Components) {
-    if let Err(e) = reg.entry_id_repo.update(EntryIdType::from(event), eid) {
-        error!("eid write {:?}", e)
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -166,82 +163,13 @@ mod test {
     use crate::repo::*;
     use crossbeam_channel::{select, unbounded, Sender};
     use redis_streams::XReadEntryId;
-    use std::sync::atomic::{AtomicU64, Ordering};
     use std::sync::{Arc, Mutex};
     use std::time::Duration;
 
     use std::thread;
-    static FAKE_FPG_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static FAKE_CG_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static FAKE_JPG_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static FAKE_SD_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static FAKE_FPG_SEQ: AtomicU64 = AtomicU64::new(0);
-    static FAKE_CG_SEQ: AtomicU64 = AtomicU64::new(0);
-    static FAKE_JPG_SEQ: AtomicU64 = AtomicU64::new(0);
-    static FAKE_SD_SEQ: AtomicU64 = AtomicU64::new(0);
-    struct FakeEIDRepo {
-        call_in: Sender<EIDRepoCalled>,
-    }
-    #[derive(Debug)]
-    enum EIDRepoCalled {
-        Fetch,
-        Update(EntryIdType, XReadEntryId),
-    }
-    impl EntryIdRepo for FakeEIDRepo {
-        fn fetch_all(&self) -> Result<AllEntryIds, FetchErr> {
-            self.call_in.send(EIDRepoCalled::Fetch).expect("send");
-            Ok(AllEntryIds {
-                find_public_game: XReadEntryId {
-                    millis_time: FAKE_FPG_MILLIS.load(Ordering::Relaxed),
-                    seq_no: FAKE_FPG_SEQ.load(Ordering::Relaxed),
-                },
-                create_game: XReadEntryId {
-                    millis_time: FAKE_CG_MILLIS.load(Ordering::Relaxed),
-                    seq_no: FAKE_CG_SEQ.load(Ordering::Relaxed),
-                },
-                join_private_game: XReadEntryId {
-                    millis_time: FAKE_JPG_MILLIS.load(Ordering::Relaxed),
-                    seq_no: FAKE_JPG_SEQ.load(Ordering::Relaxed),
-                },
-                session_disconnected: XReadEntryId {
-                    millis_time: FAKE_SD_MILLIS.load(Ordering::Relaxed),
-                    seq_no: FAKE_SD_SEQ.load(Ordering::Relaxed),
-                },
-            })
-        }
-        fn update(
-            &self,
-            eid_type: EntryIdType,
-            eid: redis_streams::XReadEntryId,
-        ) -> Result<(), WriteErr> {
-            self.call_in
-                .send(EIDRepoCalled::Update(eid_type, eid))
-                .expect("send");
-            match eid_type {
-                EntryIdType::FindPublicGameCmd => {
-                    FAKE_FPG_MILLIS.swap(eid.millis_time, Ordering::Relaxed);
-                    FAKE_FPG_SEQ.swap(eid.seq_no, Ordering::Relaxed);
-                }
-                EntryIdType::CreateGameCmd => {
-                    FAKE_CG_MILLIS.swap(eid.millis_time, Ordering::Relaxed);
-                    FAKE_CG_SEQ.swap(eid.seq_no, Ordering::Relaxed);
-                }
-                EntryIdType::JoinPrivateGameCmd => {
-                    FAKE_JPG_MILLIS.swap(eid.millis_time, Ordering::Relaxed);
-                    FAKE_JPG_SEQ.swap(eid.seq_no, Ordering::Relaxed);
-                }
-                EntryIdType::SessionDisconnectedEv => {
-                    FAKE_SD_MILLIS.swap(eid.millis_time, Ordering::Relaxed);
-                    FAKE_SD_SEQ.swap(eid.seq_no, Ordering::Relaxed);
-                }
-            }
-            Ok(())
-        }
-    }
 
     struct FakeGameLobbyRepo {
         pub contents: Arc<Mutex<GameLobby>>,
-        pub put_in: Sender<GameLobby>,
     }
 
     impl GameLobbyRepo for FakeGameLobbyRepo {
@@ -251,7 +179,7 @@ mod test {
         fn put(&self, game_lobby: GameLobby) -> Result<(), WriteErr> {
             let mut data = self.contents.lock().expect("lock");
             *data = game_lobby.clone();
-            Ok(self.put_in.send(game_lobby).expect("send"))
+            Ok(())
         }
     }
 
@@ -263,85 +191,105 @@ mod test {
         /// that the underlying data is pre-sorted
         fn xread_sorted(
             &self,
-            entry_ids: AllEntryIds,
         ) -> Result<Vec<(redis_streams::XReadEntryId, super::StreamInput)>, XReadErr> {
             {
-                let data: Vec<_> = self
-                    .sorted_data
-                    .lock()
-                    .expect("lock")
-                    .iter()
-                    .filter(|(eid, stream_data)| match stream_data {
-                        StreamInput::CG(_) => entry_ids.create_game < *eid,
-                        StreamInput::FPG(_) => entry_ids.find_public_game < *eid,
-                        StreamInput::JPG(_) => entry_ids.join_private_game < *eid,
-                        StreamInput::SD(_) => entry_ids.session_disconnected < *eid,
-                    })
-                    .cloned()
-                    .collect();
+                let mut data = self.sorted_data.lock().expect("lock");
                 if data.is_empty() {
                     // stop the test thread from spinning like crazy
-                    std::thread::sleep(Duration::from_millis(20))
+                    std::thread::sleep(Duration::from_millis(1));
+                    Ok(vec![])
+                } else {
+                    let result = data.clone();
+                    *data = vec![];
+                    Ok(result)
                 }
-                Ok(data)
             }
         }
     }
     struct FakeXAdd(Sender<StreamOutput>);
     impl XAdd for FakeXAdd {
         fn xadd(&self, data: StreamOutput) -> Result<(), XAddErr> {
-            Ok(self.0.send(data).expect("send"))
+            self.0.send(data).expect("send");
+            Ok(())
+        }
+    }
+
+    enum AckType {
+        FPG,
+        CG,
+        JPG,
+        SD,
+    }
+    struct ItWasAcked {
+        ack_type: AckType,
+        xids: Vec<XReadEntryId>,
+    }
+    struct FakeXAck(Sender<ItWasAcked>);
+    impl XAck for FakeXAck {
+        fn ack_find_public_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            if let Err(_) = self.0.send(ItWasAcked {
+                ack_type: AckType::FPG,
+                xids: xids.to_vec(),
+            }) {}
+            Ok(())
+        }
+
+        fn ack_join_priv_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            Ok(self
+                .0
+                .send(ItWasAcked {
+                    ack_type: AckType::JPG,
+                    xids: xids.to_vec(),
+                })
+                .expect("send"))
+        }
+
+        fn ack_create_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            Ok(self
+                .0
+                .send(ItWasAcked {
+                    ack_type: AckType::CG,
+                    xids: xids.to_vec(),
+                })
+                .expect("send"))
+        }
+
+        fn ack_session_disconnected(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+            Ok(self
+                .0
+                .send(ItWasAcked {
+                    ack_type: AckType::SD,
+                    xids: xids.to_vec(),
+                })
+                .expect("send"))
         }
     }
     #[test]
     fn test_process() {
-        let (eid_call_in, eid_call_out) = unbounded();
-        let (xadd_call_in, xadd_call_out) = unbounded();
-        let (put_game_lobby_in, put_game_lobby_out) = unbounded();
+        let (xadd_in, xadd_out) = unbounded();
+        let (xack_in, xack_out) = unbounded();
 
         let sorted_fake_stream = Arc::new(Mutex::new(vec![]));
 
+        let timeout = Duration::from_millis(160);
+
         // set up a loop to process game lobby requests
         let fake_game_lobby_contents = Arc::new(Mutex::new(GameLobby::default()));
-        let fgl = fake_game_lobby_contents.clone();
-        std::thread::spawn(move || loop {
-            select! {
-                recv(put_game_lobby_out) -> msg => match msg {
-                    Ok(GameLobby { games }) => *fgl.lock().expect("mutex lock") = GameLobby { games },
-                    Err(_) => panic!("fail")
-                }
-            }
-        });
 
         let sfs = sorted_fake_stream.clone();
         let fgl = fake_game_lobby_contents.clone();
+
         thread::spawn(move || {
             let components = Components {
-                entry_id_repo: Box::new(FakeEIDRepo {
-                    call_in: eid_call_in,
-                }),
-                game_lobby_repo: Box::new(FakeGameLobbyRepo {
-                    contents: fgl,
-                    put_in: put_game_lobby_in,
-                }),
+                game_lobby_repo: Box::new(FakeGameLobbyRepo { contents: fgl }),
                 xread: Box::new(FakeXRead {
                     sorted_data: sfs.clone(),
                 }),
-                xadd: Box::new(FakeXAdd(xadd_call_in)),
+                xadd: Box::new(FakeXAdd(xadd_in)),
+                xack: Box::new(FakeXAck(xack_in)),
             };
             process(&components);
         });
-
-        let timeout = Duration::from_millis(166);
-        // assert that fetch_all is being called faithfully
-        select! {
-            recv(eid_call_out) -> msg => match msg {
-                Ok(EIDRepoCalled::Fetch) => assert!(true),
-                Ok(_) => panic!("out of order"),
-                Err(_) => panic!("eid repo should fetch"),
-            },
-            default(timeout) => panic!("EID fetch time out")
-        }
 
         // emit some events in a time-ordered fashion
         // (we need to use time-ordered push since the
@@ -354,8 +302,9 @@ mod test {
         let session_w = SessionId::new();
         let client_b = ClientId::new();
         let client_w = ClientId::new();
+        let xid0 = quick_eid(fake_time_ms);
         sorted_fake_stream.lock().expect("lock").push((
-            quick_eid(fake_time_ms),
+            xid0,
             StreamInput::FPG(FindPublicGame {
                 client_id: client_w.clone(),
                 session_id: session_w.clone(),
@@ -363,6 +312,17 @@ mod test {
         ));
 
         thread::sleep(timeout);
+        // We should have seen a single XACK  for a find public game record
+        select! {
+            recv(xack_out) -> msg => match msg {
+                Ok(ItWasAcked { ack_type: AckType::FPG , xids }) =>  {
+                    assert_eq!(xids.len(), 1);
+                    assert_eq!(xids[0], xid0)
+                }
+                _ => panic!("fpg ack")
+            }
+        }
+
         // The game lobby repo should now contain one game
         assert_eq!(
             fake_game_lobby_contents
@@ -379,27 +339,11 @@ mod test {
         // There should be an XADD triggered for a wait-for-opponent
         // message
         select! {
-            recv(xadd_call_out) -> msg => match msg {
+            recv(xadd_out) -> msg => match msg {
                 Ok(StreamOutput::WFO(_)) => assert!(true),
                 _ => panic!("wrong output")
             },
             default(timeout) => panic!("WAIT timeout")
-        }
-
-        loop {
-            // The EID repo record for Find Public Game
-            // should have been advanced
-            select! {
-                recv(eid_call_out) -> msg => match msg {
-                    Ok(EIDRepoCalled::Update(EntryIdType::FindPublicGameCmd, eid)) => {
-                        assert_eq!(eid.millis_time, fake_time_ms);
-                        break
-                    },
-                    Ok(_) => continue,
-                    Err(_) => panic!("eid repo should update"),
-                },
-                default(timeout) => panic!("EID time out")
-            }
         }
 
         fake_time_ms += incr_ms;
@@ -413,7 +357,7 @@ mod test {
 
         // There should now be GameReady in stream
         select! {
-            recv(xadd_call_out) -> msg => match msg {
+            recv(xadd_out) -> msg => match msg {
                 Ok(StreamOutput::GR(_)) => assert!(true),
                 _ => assert!(false)
             },

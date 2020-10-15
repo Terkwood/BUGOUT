@@ -7,6 +7,7 @@
 - Include session-disconnected stream in game-lobby reads (#359)
 - Fix memory leak in micro-changelog (#336)
 - Create micro-color-chooser (#334)
+- Use XREADGROUP in micro-game-lobby (#358) 
 
 # v0.8.9
 
