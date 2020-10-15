@@ -618,7 +618,7 @@ dependencies = [
 
 [[package]]
 name = "micro-game-lobby"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "bincode",
  "core-model",
