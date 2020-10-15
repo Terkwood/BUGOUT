@@ -22,7 +22,6 @@ pub enum XReadErr {
     Other,
 }
 const READ_OP: &str = "<";
-pub const GROUP_NAME: &str = "micro-game-lobby";
 impl XRead for Rc<Client> {
     fn xread_sorted(&self) -> Result<std::vec::Vec<(XReadEntryId, StreamInput)>, XReadErr> {
         if let Ok(mut conn) = self.get_connection() {

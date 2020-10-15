@@ -23,7 +23,7 @@
 	"extensions": [
 		"matklad.rust-analyzer",
 		"bungcip.better-toml",
-		"vadimcn.vscode-lldb",
+		//"vadimcn.vscode-lldb",
 		"ms-vscode.hexeditor",
 		"mutantdino.resourcemonitor"
 	],

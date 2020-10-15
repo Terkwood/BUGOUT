@@ -14,9 +14,10 @@ use crate::PUBLIC_GAME_BOARD_SIZE;
 use core_model::*;
 use lobby_model::api::*;
 use lobby_model::*;
-
 use log::{error, info, warn};
 use redis_streams::XReadEntryId;
+
+pub const GROUP_NAME: &str = "micro-game-lobby";
 
 pub fn process(reg: &Components) {
     loop {
