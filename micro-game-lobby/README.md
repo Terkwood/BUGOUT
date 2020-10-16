@@ -19,3 +19,9 @@ You need to use something like [the fancy build script](../fancy-build.sh) to bu
 ```sh
 COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build micro-game-lobby
 ```
+
+And you must run `docker-compose up` using buildkit support:
+
+```sh
+COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose up
+```
