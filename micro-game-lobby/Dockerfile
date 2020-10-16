@@ -14,15 +14,14 @@ RUN --mount=type=cache,target=/app-src/target \
     --mount=type=cache,target=/usr/local/cargo/registry \
     [ "cargo", "build", "--release" ]
 
-RUN ls target
-RUN ls target/release
-RUN ls target/release/micro-game-lobby
+RUN --mount=type=cache,target=/app-src/target \
+    ["cp", "/app-src/target/release/micro-game-lobby", "/usr/local/bin/micro-game-lobby"]
 
 FROM debian:stable-slim
 
 WORKDIR /app
 
-COPY --from=builder /app-src/target/release/micro-game-lobby /app/.
+COPY --from=builder /usr/local/bin/micro-game-lobby /app/.
 
 ENV RUST_LOG trace
 
