@@ -137,7 +137,7 @@ services:
     depends_on:
       - "redis"
   micro-game-lobby:
-    build: micro-game-lobby/.
+    image: bugout_micro-game-lobby
     links:
       - "redis"
     depends_on:

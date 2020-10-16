@@ -130,7 +130,7 @@ fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
 }
 
 fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
-    trace!("hello from consume_sd !!  yes.");
+    trace!("..hello from consume_sd !!  yes.");
     if let Ok(game_lobby) = reg.game_lobby_repo.get() {
         let u = game_lobby.abandon(&sd.session_id);
         if let Err(_) = reg.game_lobby_repo.put(&u) {
