@@ -1,6 +1,7 @@
 use super::*;
 use color_model::api::GameReady;
 use core_model::SessionId;
+use log::trace;
 use redis::Commands;
 
 /// Associates SessionIds with GameIds and allows retrieval by SessionId
@@ -22,6 +23,7 @@ impl GameReadyRepo for Rc<Client> {
             match data {
                 Ok(Some(bytes)) => {
                     touch_ttl(&mut conn, &key);
+                    trace!("Fetch game ready for {:?}", &session_id);
                     bincode::deserialize(&bytes).map_err(|_| FetchErr::Deser)
                 }
                 Ok(None) => Ok(None),

@@ -15,7 +15,7 @@ impl PrefsRepo for Rc<Client> {
             match data {
                 Ok(Some(bytes)) => {
                     touch_ttl(&mut conn, &key);
-                    trace!("Get Pref {} -> {:?}", &key, &bytes);
+                    trace!("Get Pref {}]", &key);
                     bincode::deserialize(&bytes).map_err(|_| FetchErr::Deser)
                 }
                 Ok(None) => Ok(None),

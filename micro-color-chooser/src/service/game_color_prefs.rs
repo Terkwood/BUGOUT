@@ -10,9 +10,11 @@ use log::trace;
 /// based on all available data from both game_ready repo
 /// and prefs repo.
 pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorPref, FetchErr> {
+    trace!("agg by session ID {:?}", &session_id);
     repos.game_ready.get(session_id).and_then(|sg| match sg {
         None => Ok(GameColorPref::NotReady),
         Some(game_ready) => {
+            trace!("...got game ready {:?}", &game_ready);
             let first_pref = repos.prefs.get(&game_ready.sessions.0);
             let second_pref = repos.prefs.get(&game_ready.sessions.1);
             trace!("first pref  {:?}", &first_pref);
@@ -43,6 +45,7 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
 /// based on all available data from both game_ready repo
 /// and prefs repo.
 pub fn by_game_ready(game_ready: &GameReady, repos: &Repos) -> Result<GameColorPref, FetchErr> {
+    trace!("agg by game ready {:?}", &game_ready);
     let first_pref = repos.prefs.get(&game_ready.sessions.0)?;
     let second_pref = repos.prefs.get(&game_ready.sessions.1)?;
     trace!("first pref  {:?}", &first_pref);
