@@ -137,11 +137,7 @@ services:
     depends_on:
       - "redis"
   micro-game-lobby:
-    build:
-      context: micro-game-lobby/.
-      cache_from: 
-        - rust
-    image: bugout_micro-game-lobby
+    build: micro-game-lobby/.
     links:
       - "redis"
     depends_on:

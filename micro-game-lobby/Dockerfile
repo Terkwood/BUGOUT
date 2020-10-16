@@ -1,18 +1,30 @@
 # syntax=docker/dockerfile:experimental
-FROM rust
+FROM rust as builder
 
 RUN rustup default stable  
 
-WORKDIR /var/BUGOUT/micro-game-lobby
+WORKDIR /app-src
 
-COPY Cargo.toml /var/BUGOUT/micro-game-lobby/.
-COPY src/ /var/BUGOUT/micro-game-lobby/src
-COPY lobby-model/ /var/BUGOUT/micro-game-lobby/lobby-model
+COPY . /app-src/.
 
-RUN --mount=type=cache,target=/usr/local/cargo,from=rust,source=/usr/local/cargo \
-    --mount=type=cache,target=target \
-    [ "cargo", "install", "--path", "." ]
+RUN cat Cargo.toml
+
+RUN --mount=type=cache,target=/app-src/target \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/usr/local/cargo/registry \
+    [ "cargo", "build", "--release" ]
+
+RUN ls target
+RUN ls target/release
+RUN ls target/release/micro-game-lobby
+
+FROM debian:stable-slim
+
+WORKDIR /app
+
+COPY --from=builder /app-src/target/release/micro-game-lobby /app/.
 
 ENV RUST_LOG trace
+
 
 CMD ["micro-game-lobby"]
