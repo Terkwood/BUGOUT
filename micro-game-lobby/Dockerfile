@@ -8,6 +8,6 @@ COPY . /var/BUGOUT/micro-game-lobby/.
 
 RUN cargo install --path .
 
-ENV RUST_LOG info
+ENV RUST_LOG trace
 
 CMD ["micro-game-lobby"]
