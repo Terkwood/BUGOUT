@@ -1,5 +1,6 @@
 use super::*;
 use core_model::SessionId;
+use log::trace;
 pub trait PrefsRepo {
     fn get(&self, session_id: &SessionId) -> Result<Option<SessionColorPref>, FetchErr>;
     fn put(&self, scp: &SessionColorPref) -> Result<(), WriteErr>;
@@ -14,6 +15,7 @@ impl PrefsRepo for Rc<Client> {
             match data {
                 Ok(Some(bytes)) => {
                     touch_ttl(&mut conn, &key);
+                    trace!("Get Pref {} -> {:?}", &key, &bytes);
                     bincode::deserialize(&bytes).map_err(|_| FetchErr::Deser)
                 }
                 Ok(None) => Ok(None),
@@ -29,7 +31,7 @@ impl PrefsRepo for Rc<Client> {
         let s = bincode::serialize(scp);
         if let (Ok(mut conn), Ok(bytes)) = (c, s) {
             let key = redis_key(&scp.session_id);
-
+            trace!("Put Pref {} -> {:?}", key, &scp);
             let done: Result<(), _> = conn.set(&key, bytes.clone());
             if let Ok(_) = done {
                 touch_ttl(&mut conn, &key)
