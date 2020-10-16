@@ -2,7 +2,7 @@
 # To see the cloud configs, look at dc-giant.yml
 # and dc-tiny.yml
 
-version: '2'
+version: '3'
 services:
   zookeeper:
     image: wurstmeister/zookeeper
@@ -137,6 +137,9 @@ services:
     depends_on:
       - "redis"
   micro-game-lobby:
+    build:
+      context: .
+      cache_from: bugout_micro-game-lobby/latest
     image: bugout_micro-game-lobby
     links:
       - "redis"
