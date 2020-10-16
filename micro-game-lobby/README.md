@@ -13,3 +13,9 @@ reduce docker build times:
 
 - https://www.docker.com/blog/faster-builds-in-compose-thanks-to-buildkit-support/
 - https://stackoverflow.com/a/59633394
+
+You need to use something like [the fancy build script](../fancy-build.sh) to build this in docker compose:
+
+```sh
+COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build micro-game-lobby
+```
