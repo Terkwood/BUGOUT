@@ -34,6 +34,7 @@ impl PrefsRepo for Rc<Client> {
         if let (Ok(mut conn), Ok(bytes)) = (c, s) {
             let key = redis_key(&scp.session_id);
 
+            trace!("Write serialized bytes {:?}", &bytes);
             let done: Result<(), _> = conn.set(&key, bytes.clone());
             if let Ok(_) = done {
                 touch_ttl(&mut conn, &key)
