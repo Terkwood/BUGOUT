@@ -9,7 +9,7 @@
 - Create micro-sync (history provider) service (#331, #335, #337, #338)
 - Include session-disconnected stream in game-lobby reads (#359)
 - Fix memory leak in micro-changelog (#336)
-- Create micro-color-chooser (#334, #365, #366, #367)
+- Create micro-color-chooser (#334, #365, #366, #367, #371, #377)
 - Use XREADGROUP in micro-game-lobby (#358) 
 
 # v0.8.9
