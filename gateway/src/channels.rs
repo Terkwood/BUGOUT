@@ -1,8 +1,8 @@
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
 use crate::backend::commands::BackendCommands;
-use crate::backend::events::{BackendEvents, KafkaShutdownEvent};
-use crate::idle_status::{IdleStatusResponse, KafkaActivityObserved, RequestIdleStatus};
+use crate::backend::events::BackendEvents;
+use crate::idle_status::{IdleStatusResponse, RequestIdleStatus};
 use crate::router::RouterCommand;
 
 #[derive(Clone)]
@@ -13,14 +13,10 @@ pub struct MainChannels {
     pub backend_events_out: Receiver<BackendEvents>,
     pub router_commands_in: Sender<RouterCommand>,
     pub router_commands_out: Receiver<RouterCommand>,
-    pub shutdown_in: Sender<KafkaShutdownEvent>,
-    pub shutdown_out: Receiver<KafkaShutdownEvent>,
     pub req_idle_in: Sender<RequestIdleStatus>,
     pub req_idle_out: Receiver<RequestIdleStatus>,
     pub idle_resp_in: Sender<IdleStatusResponse>,
     pub idle_resp_out: Receiver<IdleStatusResponse>,
-    pub kafka_activity_in: Sender<KafkaActivityObserved>,
-    pub kafka_activity_out: Receiver<KafkaActivityObserved>,
 }
 
 impl MainChannels {
@@ -40,11 +36,6 @@ impl MainChannels {
             Receiver<RouterCommand>,
         ) = unbounded();
 
-        let (shutdown_in, shutdown_out): (
-            Sender<KafkaShutdownEvent>,
-            Receiver<KafkaShutdownEvent>,
-        ) = unbounded();
-
         let (req_idle_in, req_idle_out): (Sender<RequestIdleStatus>, Receiver<RequestIdleStatus>) =
             unbounded();
 
@@ -53,14 +44,7 @@ impl MainChannels {
             Receiver<IdleStatusResponse>,
         ) = unbounded();
 
-        let (kafka_activity_in, kafka_activity_out): (
-            Sender<KafkaActivityObserved>,
-            Receiver<KafkaActivityObserved>,
-        ) = unbounded();
-
         MainChannels {
-            kafka_activity_in,
-            kafka_activity_out,
             idle_resp_in,
             idle_resp_out,
             req_idle_in,
@@ -71,8 +55,6 @@ impl MainChannels {
             router_commands_out,
             session_commands_in,
             session_commands_out,
-            shutdown_in,
-            shutdown_out,
         }
     }
 }
