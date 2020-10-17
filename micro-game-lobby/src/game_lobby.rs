@@ -58,6 +58,26 @@ mod tests {
     }
 
     #[test]
+    fn lobby_open() {
+        let lobby = GameLobby::default();
+
+        let one = lobby.open(Game {
+            game_id: GameId::new(),
+            board_size: 19,
+            creator: SessionId::new(),
+            visibility: Visibility::Public,
+        });
+        assert_eq!(one.games.len(), 1);
+        let two = one.open(Game {
+            game_id: GameId::new(),
+            board_size: 13,
+            creator: SessionId::new(),
+            visibility: Visibility::Private,
+        });
+        assert_eq!(two.games.len(), 2)
+    }
+
+    #[test]
     fn lobby_abandon() {
         let lobby = GameLobby::default();
 
