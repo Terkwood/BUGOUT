@@ -58,12 +58,13 @@ fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
             ready_xadd(session_id, &lobby, queued, reg)
         } else {
             let game_id = GameId::new();
-            if let Err(_) = reg.game_lobby_repo.put(&lobby.open(Game {
+            let updated: GameLobby = lobby.open(Game {
                 board_size: PUBLIC_GAME_BOARD_SIZE,
                 creator: session_id.clone(),
                 visibility,
                 game_id: game_id.clone(),
-            })) {
+            });
+            if let Err(_) = reg.game_lobby_repo.put(&updated) {
                 error!("game lobby write F2");
             } else {
                 if let Err(_) = reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
@@ -73,6 +74,8 @@ fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
                     visibility,
                 })) {
                     error!("XADD: Wait for oppo")
+                } else {
+                    trace!("Public game open. Lobby: {:?}", &updated)
                 }
             }
         }
@@ -85,13 +88,13 @@ fn consume_cg(cg: &CreateGame, reg: &Components) {
     let session_id = &cg.session_id;
     let game_id = cg.game_id.clone().unwrap_or(GameId::new());
     if let Ok(lobby) = reg.game_lobby_repo.get() {
-        let updated_gl = lobby.open(Game {
+        let updated: GameLobby = lobby.open(Game {
             game_id: game_id.clone(),
             board_size: cg.board_size,
             creator: session_id.clone(),
             visibility: cg.visibility,
         });
-        if let Err(_) = reg.game_lobby_repo.put(&updated_gl) {
+        if let Err(_) = reg.game_lobby_repo.put(&updated) {
             error!("game lobby write F1");
         } else {
             if let Err(_) = reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
@@ -101,6 +104,8 @@ fn consume_cg(cg: &CreateGame, reg: &Components) {
                 visibility: cg.visibility,
             })) {
                 error!("XADD Game ready")
+            } else {
+                trace!("Game created. Lobby: {:?}", &updated)
             }
         }
     } else {
@@ -154,6 +159,8 @@ fn ready_xadd(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Co
             sessions: (queued.creator.clone(), session_id.clone()),
         })) {
             error!("XADD Game ready")
+        } else {
+            trace!("Game ready. Lobby: {:?}", &updated)
         }
     }
 }
