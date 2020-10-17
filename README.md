@@ -34,7 +34,7 @@ npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).  Then:
 
 ```sh
 cd browser
-npm run watch
+npm run start
 ```
 
 The tinybrain utility currently does not use docker-compose.  This utility wraps [KataGo](https://github.com/lightvector/KataGo)
