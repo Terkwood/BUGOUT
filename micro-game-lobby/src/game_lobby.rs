@@ -44,7 +44,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn lobby_execute_bytes() {
+    fn lobby_as_bytes() {
         let lobby = GameLobby::default();
         assert!(lobby.as_bytes().is_ok());
         let next = lobby.open(Game {
@@ -55,5 +55,17 @@ mod tests {
         });
         assert!(!next.games.is_empty());
         assert!(next.as_bytes().is_ok());
+    }
+
+    #[test]
+    fn lobby_abandon() {
+        let lobby = GameLobby::default();
+        let one = lobby.open(Game {
+            game_id: GameId::new(),
+            board_size: 19,
+            creator: SessionId::new(),
+            visibility: Visibility::Public,
+        });
+        assert_eq!(one.games.len(), 1)
     }
 }
