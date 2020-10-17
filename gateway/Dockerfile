@@ -1,23 +1,23 @@
-FROM rust
+# syntax=docker/dockerfile:experimental
+FROM rust as builder
 
 RUN rustup default stable  
 
-RUN apt-get update -y 
-RUN apt-get install -y clang 
+WORKDIR /app-src
 
-WORKDIR /var/
+COPY . /app-src/.
 
-# supports the librdkafka submodule
-RUN git clone https://github.com/Terkwood/BUGOUT
-WORKDIR /var/BUGOUT/gateway
-RUN git submodule update --init
+RUN --mount=type=cache,target=/app-src/target \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/usr/local/cargo/registry \
+    [ "cargo", "build", "--release" ]
 
-RUN git fetch && git pull
-RUN git rev-parse HEAD
+RUN --mount=type=cache,target=/app-src/target \
+    ["cp", "/app-src/target/release/gateway", "/usr/local/bin/gateway"]
 
-COPY . /var/BUGOUT/gateway/.
+FROM debian:stable-slim
 
-RUN cargo install --path .
+COPY --from=builder /usr/local/bin/gateway /usr/local/bin/gateway
 
 ENV RUST_LOG info
 

@@ -6,7 +6,6 @@ pub mod channels;
 pub mod compact_ids;
 pub mod env;
 pub mod idle_status;
-pub mod kafka_io;
 pub mod redis_io;
 pub mod router;
 pub mod websocket;

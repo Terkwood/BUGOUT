@@ -1,10 +1,7 @@
 use crate::backend::commands::BackendCommands;
-use crate::kafka_io;
 use crate::redis_io;
-use redis_io::RedisPool;
-
 use crossbeam_channel::{unbounded, Receiver, Sender};
-use futures::executor::block_on;
+use redis_io::RedisPool;
 use std::sync::Arc;
 use std::thread;
 
@@ -44,20 +41,12 @@ pub fn start_all(opts: BackendInitOptions) {
     });
 
     let soc = opts.session_commands_out;
-    thread::spawn(move || {
-        double_commands(super::doubler::DoublerOpts {
-            session_commands_out: soc,
-            kafka_commands_in,
-            redis_commands_in,
-        })
-    });
 
-    block_on(kafka_io::start(
-        opts.backend_events_in.clone(),
-        opts.shutdown_in.clone(),
-        opts.kafka_activity_in.clone(),
-        kafka_commands_out,
-    ))
+    double_commands(super::doubler::DoublerOpts {
+        session_commands_out: soc,
+        kafka_commands_in,
+        redis_commands_in,
+    })
 }
 
 pub struct BackendInitOptions {
