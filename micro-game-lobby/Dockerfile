@@ -7,8 +7,6 @@ WORKDIR /app-src
 
 COPY . /app-src/.
 
-RUN cat Cargo.toml
-
 RUN --mount=type=cache,target=/app-src/target \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/usr/local/cargo/registry \
