@@ -19,6 +19,6 @@ FROM debian:stable-slim
 
 COPY --from=builder /usr/local/bin/micro-color-chooser /usr/local/bin/micro-color-chooser
 
-ENV RUST_LOG info
+ENV RUST_LOG trace
 
 CMD ["micro-color-chooser"]
