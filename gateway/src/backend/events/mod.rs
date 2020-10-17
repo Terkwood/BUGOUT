@@ -1,14 +1,11 @@
 mod from;
 
-use std::time::SystemTime;
-
-use serde_derive::{Deserialize, Serialize};
-
 use crate::client_events::*;
 use crate::compact_ids::CompactId;
 use crate::model::*;
+use serde_derive::{Deserialize, Serialize};
 
-/// Events produced by either Kafka or Redis Streams
+/// Events produced by Redis Streams
 #[derive(Debug)]
 pub enum BackendEvents {
     MoveMade(MoveMadeEvent),
@@ -21,9 +18,6 @@ pub enum BackendEvents {
     BotAttached(micro_model_bot::gateway::BotAttached),
     SyncReply(SyncReplyBackendEvent),
 }
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct KafkaShutdownEvent(pub SystemTime);
 
 impl BackendEvents {
     pub fn to_client_event(self) -> ClientEvents {
