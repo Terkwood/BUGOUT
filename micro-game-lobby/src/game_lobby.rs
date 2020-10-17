@@ -78,6 +78,23 @@ mod tests {
     }
 
     #[test]
+    fn lobby_ready() {
+        let lobby = GameLobby::default();
+
+        let game = Game {
+            game_id: GameId::new(),
+            board_size: 19,
+            creator: SessionId::new(),
+            visibility: Visibility::Public,
+        };
+
+        let one = lobby.open(game.clone());
+        assert_eq!(one.games.len(), 1);
+        let done = one.ready(&game);
+        assert!(done.games.is_empty())
+    }
+
+    #[test]
     fn lobby_abandon() {
         let lobby = GameLobby::default();
 
