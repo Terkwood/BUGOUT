@@ -6,11 +6,14 @@ pub use prefs::*;
 
 use color_model::*;
 use log::error;
-use redis::{Client, Commands, Connection};
+use redis::{Client, Commands, Connection, RedisError};
 use std::rc::Rc;
 
 #[derive(Debug)]
-pub struct FetchErr;
+pub enum FetchErr {
+    Redis(RedisError),
+    Deser(Box<bincode::ErrorKind>),
+}
 
 #[derive(Debug)]
 pub struct WriteErr;
@@ -28,12 +31,17 @@ pub fn touch_ttl(conn: &mut Connection, key: &str) {
 }
 
 impl From<redis::RedisError> for FetchErr {
-    fn from(_: redis::RedisError) -> Self {
-        Self
+    fn from(e: redis::RedisError) -> Self {
+        FetchErr::Redis(e)
     }
 }
 impl From<redis::RedisError> for WriteErr {
     fn from(_: redis::RedisError) -> Self {
         Self
+    }
+}
+impl From<Box<bincode::ErrorKind>> for FetchErr {
+    fn from(e: Box<bincode::ErrorKind>) -> Self {
+        FetchErr::Deser(e)
     }
 }

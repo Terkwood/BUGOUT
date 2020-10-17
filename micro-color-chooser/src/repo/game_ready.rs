@@ -15,20 +15,22 @@ pub trait GameReadyRepo {
 
 impl GameReadyRepo for Rc<Client> {
     fn get(&self, session_id: &SessionId) -> Result<Option<GameReady>, FetchErr> {
-        if let Ok(mut conn) = self.get_connection() {
-            let key = redis_key(session_id);
-            let data: Result<Option<Vec<u8>>, _> = conn.get(&key).map_err(|_| FetchErr);
+        match self.get_connection() {
+            Ok(mut conn) => {
+                let key = redis_key(session_id);
+                let data: Option<Vec<u8>> = conn.get(&key)?;
 
-            match data {
-                Ok(Some(bytes)) => {
+                if let Some(bytes) = data {
                     touch_ttl(&mut conn, &key);
-                    bincode::deserialize(&bytes).map_err(|_| FetchErr)
+                    match bincode::deserialize(&bytes) {
+                        Ok(game_ready) => Ok(Some(game_ready)),
+                        Err(e) => Err(FetchErr::Deser(e)),
+                    }
+                } else {
+                    Ok(None)
                 }
-                Ok(None) => Ok(None),
-                Err(_) => Err(FetchErr),
             }
-        } else {
-            Err(FetchErr)
+            Err(e) => Err(FetchErr::Redis(e)),
         }
     }
 
@@ -37,7 +39,7 @@ impl GameReadyRepo for Rc<Client> {
         let s = bincode::serialize(&game_ready);
         if let (Ok(mut conn), Ok(bytes)) = (c, s) {
             let first_key = redis_key(&game_ready.sessions.0);
-            let second_key = redis_key(&game_ready.sessions.0);
+            let second_key = redis_key(&game_ready.sessions.1);
 
             let first_done: Result<(), _> = conn.set(&first_key, bytes.clone());
             if let Ok(_) = first_done {
