@@ -22,10 +22,10 @@ Keep an eye on the [pinned issues](https://github.com/Terkwood/BUGOUT/issues) in
 
 ## Getting Started
 
-BUGOUT relies on [docker-compose](https://docs.docker.com/compose/install/) to run _most_ of its services.
+BUGOUT relies on [docker-compose](https://docs.docker.com/compose/install/) to run _most_ of its services. It will invoke some build kit-related options, so please use the included script to start the system. 
 
 ```sh
-docker-compose up
+sh compose.sh up
 ```
 
 If you're hacking BUGOUT, you will want to host the
