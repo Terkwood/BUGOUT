@@ -18,11 +18,9 @@ services:
     volumes:
       - ${PWD}/gateway/.env:/var/BUGOUT/gateway/.env
     links:
-      - "kafka"
+      - "redis"
     depends_on:
-      - "kafka"
-    environment:
-      - BROKERS
+      - "redis"
   micro-judge:
     build: micro-judge/.
     links:
