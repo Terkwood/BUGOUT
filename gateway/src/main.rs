@@ -16,13 +16,7 @@ fn main() {
     env::init();
     let mc = MainChannels::create();
     let pool = redis_io::create_pool();
-    idle_status::start_monitor(
-        mc.idle_resp_in,
-        mc.shutdown_out,
-        mc.req_idle_out,
-        mc.kafka_activity_out,
-        &pool,
-    );
+    idle_status::start_monitor(mc.idle_resp_in, mc.req_idle_out);
 
     router::start(
         mc.router_commands_out,

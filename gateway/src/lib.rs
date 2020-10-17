@@ -6,7 +6,6 @@ pub mod channels;
 pub mod compact_ids;
 pub mod env;
 pub mod idle_status;
-pub mod kafka_io;
 pub mod redis_io;
 pub mod router;
 pub mod websocket;
@@ -16,7 +15,6 @@ mod client_events;
 mod logging;
 mod model;
 mod topics;
-mod wakeup;
 use uuid::Uuid;
 
 /// A spacer used for formatting

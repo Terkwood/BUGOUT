@@ -514,8 +514,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
-name = "micro_changelog"
-version = "0.1.9"
+name = "micro-changelog"
+version = "0.1.10"
 dependencies = [
  "bincode",
  "core-model",
