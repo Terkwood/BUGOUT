@@ -5,4 +5,4 @@ sh cargo-clean-build.sh micro-judge
 sh cargo-clean-build.sh micro-changelog
 sh compose.sh build micro-game-lobby
 sh compose.sh micro-color-chooser
-sh cargo-clean-build.sh micro-sync
+sh compose.sh micro-sync
