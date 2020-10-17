@@ -15,8 +15,6 @@ pub enum IdleStatus {
 pub struct RequestIdleStatus(pub ClientId);
 pub struct IdleStatusResponse(pub ClientId, pub IdleStatus);
 
-pub struct KafkaActivityObserved;
-
 const STATUS: IdleStatus = IdleStatus::Online;
 
 pub fn start_monitor(

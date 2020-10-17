@@ -1,6 +1,6 @@
 # gateway
 
-WebSocket server which negotiates between BUGOUT frontend and an internal kafka cluster serving the [judge](../judge/README.md).
+WebSocket server which negotiates between BUGOUT frontend and an internal redis streams instance which brokers communication among the various micro-services.
 
 ## Client commands accepted
 
@@ -10,11 +10,12 @@ WebSocket server which negotiates between BUGOUT frontend and an internal kafka 
 - Join Private Game
 - Reconnect
 - Provide History
+- Req Sync
 - Beep (client-originated keepalive)
 
 ## Overloaded router functionality
 
-Ensures that connected browsers receive updates from kafka, based on a client ID. Maintains crib notes on game states.
+Ensures that connected browsers receive updates from redis, based on a client ID. Maintains crib notes on game states.
 
 ## Premade game creation
 
