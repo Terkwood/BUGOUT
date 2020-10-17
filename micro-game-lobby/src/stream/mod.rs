@@ -130,7 +130,6 @@ fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
 }
 
 fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
-    trace!("..hello from consume_sd !!  yes.");
     if let Ok(game_lobby) = reg.game_lobby_repo.get() {
         let updated = game_lobby.abandon(&sd.session_id);
         if let Err(_) = reg.game_lobby_repo.put(&updated) {
@@ -144,8 +143,8 @@ fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
 }
 
 fn ready_xadd(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Components) {
-    let updated_gl = lobby.ready(queued);
-    if let Err(_) = reg.game_lobby_repo.put(&updated_gl) {
+    let updated = lobby.ready(queued);
+    if let Err(_) = reg.game_lobby_repo.put(&updated) {
         error!("game lobby write F1");
     } else {
         if let Err(_) = reg.xadd.xadd(StreamOutput::GR(GameReady {
