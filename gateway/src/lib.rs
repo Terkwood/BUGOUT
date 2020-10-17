@@ -15,7 +15,6 @@ mod client_events;
 mod logging;
 mod model;
 mod topics;
-mod wakeup;
 use uuid::Uuid;
 
 /// A spacer used for formatting

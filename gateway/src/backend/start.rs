@@ -8,10 +8,7 @@ use std::thread;
 use super::*;
 
 pub fn start_all(opts: BackendInitOptions) {
-    let (kafka_commands_in, kafka_commands_out): (
-        Sender<BackendCommands>,
-        Receiver<BackendCommands>,
-    ) = unbounded();
+    let (kafka_commands_in, _): (Sender<BackendCommands>, Receiver<BackendCommands>) = unbounded();
 
     let (redis_commands_in, redis_commands_out): (
         Sender<BackendCommands>,
