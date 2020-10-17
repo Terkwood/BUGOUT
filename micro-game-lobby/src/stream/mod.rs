@@ -14,7 +14,7 @@ use crate::PUBLIC_GAME_BOARD_SIZE;
 use core_model::*;
 use lobby_model::api::*;
 use lobby_model::*;
-use log::{error, info, trace, warn};
+use log::{error, info, warn};
 use redis_streams::XReadEntryId;
 
 pub const GROUP_NAME: &str = "micro-game-lobby";
@@ -58,7 +58,7 @@ fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
             ready_xadd(session_id, &lobby, queued, reg)
         } else {
             let game_id = GameId::new();
-            if let Err(_) = reg.game_lobby_repo.put(&lobby.open(Game {
+            if let Err(_) = reg.game_lobby_repo.put(lobby.open(Game {
                 board_size: PUBLIC_GAME_BOARD_SIZE,
                 creator: session_id.clone(),
                 visibility,
@@ -91,7 +91,7 @@ fn consume_cg(cg: &CreateGame, reg: &Components) {
             creator: session_id.clone(),
             visibility: cg.visibility,
         });
-        if let Err(_) = reg.game_lobby_repo.put(&updated_gl) {
+        if let Err(_) = reg.game_lobby_repo.put(updated_gl) {
             error!("game lobby write F1");
         } else {
             if let Err(_) = reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
@@ -130,13 +130,10 @@ fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
 }
 
 fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
-    trace!("..hello from consume_sd !!  yes.");
     if let Ok(game_lobby) = reg.game_lobby_repo.get() {
         let u = game_lobby.abandon(&sd.session_id);
-        if let Err(_) = reg.game_lobby_repo.put(&u) {
+        if let Err(_) = reg.game_lobby_repo.put(u) {
             error!("game lobby write F1");
-        } else {
-            trace!("session {} abandoned: {:?}", sd.session_id.0, &u);
         }
     } else {
         error!("SD GAME REPO GET")
@@ -145,7 +142,7 @@ fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
 
 fn ready_xadd(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Components) {
     let updated_gl = lobby.ready(queued);
-    if let Err(_) = reg.game_lobby_repo.put(&updated_gl) {
+    if let Err(_) = reg.game_lobby_repo.put(updated_gl) {
         error!("game lobby write F1");
     } else {
         if let Err(_) = reg.xadd.xadd(StreamOutput::GR(GameReady {
@@ -179,7 +176,7 @@ mod test {
         fn get(&self) -> Result<GameLobby, FetchErr> {
             Ok(self.contents.lock().expect("mutex lock").clone())
         }
-        fn put(&self, game_lobby: &GameLobby) -> Result<(), WriteErr> {
+        fn put(&self, game_lobby: GameLobby) -> Result<(), WriteErr> {
             let mut data = self.contents.lock().expect("lock");
             *data = game_lobby.clone();
             Ok(())

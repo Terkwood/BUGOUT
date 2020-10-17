@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 pub trait GameLobbyRepo {
     fn get(&self) -> Result<GameLobby, FetchErr>;
-    fn put(&self, game_lobby: &GameLobby) -> Result<(), WriteErr>;
+    fn put(&self, game_lobby: GameLobby) -> Result<(), WriteErr>;
 }
 
 impl GameLobbyRepo for Rc<Client> {
@@ -24,7 +24,7 @@ impl GameLobbyRepo for Rc<Client> {
             Err(FetchErr::Conn)
         }
     }
-    fn put(&self, game_lobby: &GameLobby) -> Result<(), WriteErr> {
+    fn put(&self, game_lobby: GameLobby) -> Result<(), WriteErr> {
         if let (Ok(mut conn), Ok(bytes)) = (self.get_connection(), bincode::serialize(&game_lobby))
         {
             conn.set(super::GAME_LOBBY_KEY, bytes).map_err(|_| WriteErr)
