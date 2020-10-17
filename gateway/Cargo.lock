@@ -440,7 +440,7 @@ dependencies = [
 
 [[package]]
 name = "gateway"
-version = "0.15.0-b"
+version = "0.15.0-c"
 dependencies = [
  "bincode",
  "chrono",
