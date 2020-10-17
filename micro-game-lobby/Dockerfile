@@ -17,8 +17,11 @@ RUN --mount=type=cache,target=/app-src/target \
 
 FROM debian:stable-slim
 
+WORKDIR /app
+
 COPY --from=builder /usr/local/bin/micro-game-lobby /usr/local/bin/micro-game-lobby
 
-ENV RUST_LOG info
+ENV RUST_LOG trace
+
 
 CMD ["micro-game-lobby"]
