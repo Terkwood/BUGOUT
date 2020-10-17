@@ -44,7 +44,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn lobby_execute_bytes() {
+    fn lobby_as_bytes() {
         let lobby = GameLobby::default();
         assert!(lobby.as_bytes().is_ok());
         let next = lobby.open(Game {
@@ -55,5 +55,59 @@ mod tests {
         });
         assert!(!next.games.is_empty());
         assert!(next.as_bytes().is_ok());
+    }
+
+    #[test]
+    fn lobby_open() {
+        let lobby = GameLobby::default();
+
+        let one = lobby.open(Game {
+            game_id: GameId::new(),
+            board_size: 19,
+            creator: SessionId::new(),
+            visibility: Visibility::Public,
+        });
+        assert_eq!(one.games.len(), 1);
+        let two = one.open(Game {
+            game_id: GameId::new(),
+            board_size: 13,
+            creator: SessionId::new(),
+            visibility: Visibility::Private,
+        });
+        assert_eq!(two.games.len(), 2)
+    }
+
+    #[test]
+    fn lobby_ready() {
+        let lobby = GameLobby::default();
+
+        let game = Game {
+            game_id: GameId::new(),
+            board_size: 19,
+            creator: SessionId::new(),
+            visibility: Visibility::Public,
+        };
+
+        let one = lobby.open(game.clone());
+        assert_eq!(one.games.len(), 1);
+        let done = one.ready(&game);
+        assert!(done.games.is_empty())
+    }
+
+    #[test]
+    fn lobby_abandon() {
+        let lobby = GameLobby::default();
+
+        let sid = SessionId::new();
+        let creator = sid.clone();
+        let one = lobby.open(Game {
+            game_id: GameId::new(),
+            board_size: 19,
+            creator,
+            visibility: Visibility::Public,
+        });
+        assert_eq!(one.games.len(), 1);
+        let done = one.abandon(&sid);
+        assert!(done.games.is_empty());
     }
 }
