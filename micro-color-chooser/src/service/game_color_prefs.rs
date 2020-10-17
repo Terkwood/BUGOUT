@@ -29,7 +29,8 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
                     pref: partial,
                 }),
                 (Ok(None), Ok(None)) => Ok(GameColorPref::NotReady),
-                _ => Err(FetchErr),
+                (Err(e), _) => Err(e),
+                (_, Err(e)) => Err(e),
             }
         }
     })
