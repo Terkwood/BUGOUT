@@ -314,12 +314,12 @@ pub fn start(
                     Ok(BackendEvents::WaitForOpponent(w)) => {
                         router.forward_by_session_id(w.session_id, BackendEvents::WaitForOpponent(w).to_client_event())
                     }
-                    Ok(BackendEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white})) => {
+                    Ok(BackendEvents::ColorsChosen(ColorsChosenEvent { game_id, black, white })) => {
                         // We want to forward by session ID
                         // so that we don't send TWO yourcolor events
                         // to each client
-                        router.forward_by_session_id(black, ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK }));
-                        router.forward_by_session_id(white, ClientEvents::YourColor(YourColorEvent{ game_id, your_color: Player::WHITE }));
+                        router.forward_by_client_id(black, ClientEvents::YourColor (YourColorEvent{ game_id, your_color: Player::BLACK }));
+                        router.forward_by_client_id(white, ClientEvents::YourColor(YourColorEvent{ game_id, your_color: Player::WHITE }));
                     },
                     Ok(BackendEvents::SyncReply(sr)) => {
                         let sess = sr.session_id.clone();

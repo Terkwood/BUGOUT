@@ -51,8 +51,8 @@ pub enum ColorPref {
 pub struct ColorsChosenEvent {
     #[serde(rename = "gameId")]
     pub game_id: GameId,
-    pub black: SessionId,
-    pub white: SessionId,
+    pub black: ClientId,
+    pub white: ClientId,
 }
 
 /// A request for a move to be made in a given game.
