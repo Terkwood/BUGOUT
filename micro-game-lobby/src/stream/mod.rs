@@ -132,11 +132,11 @@ fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
 fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
     trace!("..hello from consume_sd !!  yes.");
     if let Ok(game_lobby) = reg.game_lobby_repo.get() {
-        let u = game_lobby.abandon(&sd.session_id);
-        if let Err(_) = reg.game_lobby_repo.put(&u) {
+        let updated = game_lobby.abandon(&sd.session_id);
+        if let Err(_) = reg.game_lobby_repo.put(&updated) {
             error!("game lobby write F1");
         } else {
-            trace!("session {} abandoned: {:?}", sd.session_id.0, &u);
+            trace!("session {} abandoned: {:?}", sd.session_id.0, &updated);
         }
     } else {
         error!("SD GAME REPO GET")
