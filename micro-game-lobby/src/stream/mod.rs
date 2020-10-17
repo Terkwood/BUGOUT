@@ -55,7 +55,7 @@ fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
             .iter()
             .find(|g| g.visibility == Visibility::Public)
         {
-            ready_xadd(session_id, &lobby, queued, reg)
+            put_ready_then_xadd(session_id, &lobby, queued, reg)
         } else {
             let game_id = GameId::new();
             let updated: GameLobby = lobby.open(Game {
@@ -125,7 +125,7 @@ fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
             .iter()
             .find(|g| g.visibility == Visibility::Private && g.game_id == jpg.game_id)
         {
-            ready_xadd(&jpg.session_id, &lobby, queued, reg)
+            put_ready_then_xadd(&jpg.session_id, &lobby, queued, reg)
         } else {
             warn!("Ignoring game rejection event")
         }
@@ -136,7 +136,7 @@ fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
 
 fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
     if let Ok(game_lobby) = reg.game_lobby_repo.get() {
-        let updated = game_lobby.abandon(&sd.session_id);
+        let updated: GameLobby = game_lobby.abandon(&sd.session_id);
         if let Err(_) = reg.game_lobby_repo.put(&updated) {
             error!("game lobby write F1");
         } else {
@@ -147,8 +147,8 @@ fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
     }
 }
 
-fn ready_xadd(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Components) {
-    let updated = lobby.ready(queued);
+fn put_ready_then_xadd(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Components) {
+    let updated: GameLobby = lobby.ready(queued);
     if let Err(_) = reg.game_lobby_repo.put(&updated) {
         error!("game lobby write F1");
     } else {
