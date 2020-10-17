@@ -1,5 +1,6 @@
 # NEXT: v0.9.0
 
+- Remove Kafka-related functionalities (#375, #373, #372)
 - Add docker buildkit support (#369)
 - Match micro-sync make move payload to system (#352, #364)
 - Add log statements (#356)
@@ -8,7 +9,7 @@
 - Create micro-sync (history provider) service (#331, #335, #337, #338)
 - Include session-disconnected stream in game-lobby reads (#359)
 - Fix memory leak in micro-changelog (#336)
-- Create micro-color-chooser (#334, #365, #366)
+- Create micro-color-chooser (#334, #365, #366, #367)
 - Use XREADGROUP in micro-game-lobby (#358) 
 
 # v0.8.9
