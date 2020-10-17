@@ -60,12 +60,17 @@ mod tests {
     #[test]
     fn lobby_abandon() {
         let lobby = GameLobby::default();
+
+        let sid = SessionId::new();
+        let creator = sid.clone();
         let one = lobby.open(Game {
             game_id: GameId::new(),
             board_size: 19,
-            creator: SessionId::new(),
+            creator,
             visibility: Visibility::Public,
         });
-        assert_eq!(one.games.len(), 1)
+        assert_eq!(one.games.len(), 1);
+        let done = one.abandon(&sid);
+        assert!(done.games.is_empty());
     }
 }
