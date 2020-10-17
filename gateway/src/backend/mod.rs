@@ -16,15 +16,11 @@ pub fn start(channels: &MainChannels, redis_pool: Arc<RedisPool>) {
 
     let bei = channels.backend_events_in.clone();
     let pool_d = redis_pool.clone();
-    thread::spawn(move || {
-        redis_io::stream::process(
-            bei,
-            redis_io::stream::StreamOpts {
-                entry_id_repo: redis_io::entry_id_repo::RedisEntryIdRepo::create_boxed(
-                    pool_d.clone(),
-                ),
-                xreader: Box::new(redis_io::xread::RedisXReader { pool: pool_d }),
-            },
-        )
-    });
+    redis_io::stream::process(
+        bei,
+        redis_io::stream::StreamOpts {
+            entry_id_repo: redis_io::entry_id_repo::RedisEntryIdRepo::create_boxed(pool_d.clone()),
+            xreader: Box::new(redis_io::xread::RedisXReader { pool: pool_d }),
+        },
+    )
 }
