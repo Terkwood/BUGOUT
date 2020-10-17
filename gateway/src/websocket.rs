@@ -225,7 +225,7 @@ impl Handler for WsSession {
                     }))
                     .map_err(|e| ws::Error::from(Box::new(e)))
                 {
-                    error!("ERROR on kafka send provhist {:?}", e)
+                    error!("ERROR on backend send for provhist {:?}", e)
                 }
 
                 Ok(self.observe_game())
@@ -243,7 +243,7 @@ impl Handler for WsSession {
                         },
                     )) {
                         error!(
-                            "😠 {} {:<8} kafka sending find public game command {}",
+                            "😠 {} {:<8} backend sending find public game command {}",
                             session_code(self),
                             "ERROR",
                             e
@@ -269,7 +269,7 @@ impl Handler for WsSession {
                         }))
                         .map_err(|e| ws::Error::from(Box::new(e)))
                     {
-                        error!("ERROR on kafka send join private game {:?}", e)
+                        error!("ERROR on backend send join private game {:?}", e)
                     }
                 }
                 Ok(self.observe_game())
@@ -291,7 +291,7 @@ impl Handler for WsSession {
                             ))
                             .map_err(|e| ws::Error::from(Box::new(e)))
                         {
-                            error!("ERROR on kafka send join private game {:?}", e)
+                            error!("ERROR on backend send join private game {:?}", e)
                         }
                     }
                 } else {
@@ -463,7 +463,7 @@ impl Handler for WsSession {
                 session_id: self.session_id,
             }))
         {
-            error!("Couldn't send client disconnect to kafka {}", e)
+            error!("Couldn't send client disconnect to backend {}", e)
         }
     }
 
