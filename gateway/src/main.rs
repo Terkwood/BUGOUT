@@ -32,5 +32,5 @@ fn main() {
         .unwrap()
     });
 
-    backend::start_all(&mc, pool)
+    backend::start(&mc, pool)
 }
