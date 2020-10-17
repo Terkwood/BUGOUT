@@ -19,6 +19,6 @@ FROM debian:stable-slim
 
 COPY --from=builder /usr/local/bin/micro-game-lobby /usr/local/bin/micro-game-lobby
 
-ENV RUST_LOG trace
+ENV RUST_LOG info
 
 CMD ["micro-game-lobby"]
