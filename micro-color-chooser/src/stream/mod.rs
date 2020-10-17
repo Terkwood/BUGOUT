@@ -84,7 +84,7 @@ pub fn process(components: &mut Components) {
                             info!("🎨 Completed: {:?}", colors_chosen)
                         }
                         Ok(other) => info!("⌚ Do Nothing: {:?}", other),
-                        Err(e) => error!("fetch error checking game color prefs {:?}", e),
+                        Err(_e) => error!("fetch error checking game color prefs by session ID"),
                     }
 
                     match pxid {

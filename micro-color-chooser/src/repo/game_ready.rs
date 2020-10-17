@@ -1,7 +1,6 @@
 use super::*;
 use color_model::api::GameReady;
 use core_model::SessionId;
-use log::trace;
 use redis::Commands;
 
 /// Associates SessionIds with GameIds and allows retrieval by SessionId
@@ -18,19 +17,18 @@ impl GameReadyRepo for Rc<Client> {
     fn get(&self, session_id: &SessionId) -> Result<Option<GameReady>, FetchErr> {
         if let Ok(mut conn) = self.get_connection() {
             let key = redis_key(session_id);
-            let data: Result<Option<Vec<u8>>, _> = conn.get(&key).map_err(|_| FetchErr::Fetch);
+            let data: Result<Option<Vec<u8>>, _> = conn.get(&key).map_err(|_| FetchErr);
 
             match data {
                 Ok(Some(bytes)) => {
                     touch_ttl(&mut conn, &key);
-                    trace!("Fetch game ready for {:?}", &session_id);
-                    bincode::deserialize(&bytes).map_err(|_| FetchErr::Deser)
+                    bincode::deserialize(&bytes).map_err(|_| FetchErr)
                 }
                 Ok(None) => Ok(None),
-                Err(_) => Err(FetchErr::Fetch),
+                Err(_) => Err(FetchErr),
             }
         } else {
-            Err(FetchErr::Conn)
+            Err(FetchErr)
         }
     }
 
@@ -39,7 +37,7 @@ impl GameReadyRepo for Rc<Client> {
         let s = bincode::serialize(&game_ready);
         if let (Ok(mut conn), Ok(bytes)) = (c, s) {
             let first_key = redis_key(&game_ready.sessions.0);
-            let second_key = redis_key(&game_ready.sessions.1);
+            let second_key = redis_key(&game_ready.sessions.0);
 
             let first_done: Result<(), _> = conn.set(&first_key, bytes.clone());
             if let Ok(_) = first_done {

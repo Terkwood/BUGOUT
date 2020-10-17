@@ -3,22 +3,17 @@ use crate::repo::*;
 use api::GameReady;
 use color_model::*;
 use core_model::*;
-use log::trace;
 
 /// Call this when you receive a ChooseColorPref event
 /// It will provide an aggregated view of choices for that game,
 /// based on all available data from both game_ready repo
 /// and prefs repo.
 pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorPref, FetchErr> {
-    trace!("agg by session ID {:?}", &session_id);
     repos.game_ready.get(session_id).and_then(|sg| match sg {
         None => Ok(GameColorPref::NotReady),
         Some(game_ready) => {
-            trace!("...got game ready {:?}", &game_ready);
             let first_pref = repos.prefs.get(&game_ready.sessions.0);
             let second_pref = repos.prefs.get(&game_ready.sessions.1);
-            trace!("first pref  {:?}", &first_pref);
-            trace!("second pref {:?}", &second_pref);
             match (first_pref, second_pref) {
                 (Ok(Some(first)), Ok(Some(second))) => Ok(GameColorPref::Complete {
                     game_id: game_ready.game_id.clone(),
@@ -33,8 +28,7 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
                     pref: partial,
                 }),
                 (Ok(None), Ok(None)) => Ok(GameColorPref::NotReady),
-                (Err(e), _) => Err(e),
-                (_, Err(e)) => Err(e),
+                _ => Err(FetchErr),
             }
         }
     })
@@ -45,11 +39,8 @@ pub fn by_session_id(session_id: &SessionId, repos: &Repos) -> Result<GameColorP
 /// based on all available data from both game_ready repo
 /// and prefs repo.
 pub fn by_game_ready(game_ready: &GameReady, repos: &Repos) -> Result<GameColorPref, FetchErr> {
-    trace!("agg by game ready {:?}", &game_ready);
     let first_pref = repos.prefs.get(&game_ready.sessions.0)?;
     let second_pref = repos.prefs.get(&game_ready.sessions.1)?;
-    trace!("first pref  {:?}", &first_pref);
-    trace!("second pref {:?}", &second_pref);
 
     Ok(match (first_pref, second_pref) {
         (Some(first), Some(second)) => GameColorPref::Complete {

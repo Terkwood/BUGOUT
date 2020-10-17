@@ -4,7 +4,7 @@ edition = "2018"
 license = "MIT"
 name = "micro-color-chooser"
 repository = "https://github.com/Terkwood/BUGOUT"
-version = "0.1.6"
+version = "0.1.5"
 
 [dev-dependencies]
 crossbeam-channel = "0.5.0"
@@ -16,6 +16,6 @@ core-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "f2d039e"}
 env_logger = "0.7.1"
 log = "0.4.11"
 rand = "0.7.3"
-redis = {version = "0.17.0", features = ["r2d2"]}
+redis = { version = "0.17.0", features = ["r2d2"] }
 redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "0.3.1", rev = "0e2fdb7"}
-uuid = {version = "0.8.1", features = ["serde", "v4"]}
+uuid = { version = "0.8.1", features = ["serde", "v4"] }
