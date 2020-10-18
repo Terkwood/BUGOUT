@@ -5,3 +5,4 @@ pub const GAME_READY: &str = "bugout-game-ready-ev";
 pub const PRIVATE_GAME_REJECTED: &str = "bugout-private-game-rejected-ev";
 pub const JOIN_PRIVATE_GAME: &str = "bugout-join-private-game-cmd";
 pub const SESSION_DISCONNECTED: &str = "bugout-session-disconnected-ev";
+pub const GAME_STATES_CHANGELOG: &str = "bugout-game-states";
