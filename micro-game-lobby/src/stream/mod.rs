@@ -15,6 +15,7 @@ use core_model::*;
 use lobby_model::api::*;
 use lobby_model::*;
 use log::{error, info, trace, warn};
+use move_model::GameState;
 use redis_streams::XReadEntryId;
 
 pub const GROUP_NAME: &str = "micro-game-lobby";
@@ -105,13 +106,15 @@ fn consume_cg(cg: &CreateGame, reg: &Components) {
             })) {
                 error!("XADD Game ready")
             } else {
-                trace!("Game created. Lobby: {:?}", &updated)
+                trace!("Game created. Lobby: {:?}", &updated);
+                changelog_init(&game_id)
             }
         }
     } else {
         error!("CG GAME REPO GET")
     }
 }
+fn changelog_init(game_id: &GameId) {}
 
 /// Consumes the command to join a private game.
 /// In the event that the game is invalid,
