@@ -12,4 +12,4 @@ log = "0.4.11"
 move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20e6620"}
 redis = {git = "https://github.com/mitsuhiko/redis-rs"}
 redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "0.3.1", rev = "0e2fdb7"}
-uuid = {version = "0.8.1", features = ["serde"]}
+uuid = { version = "0.8.1", features = ["serde"] }
