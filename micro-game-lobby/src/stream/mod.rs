@@ -20,7 +20,6 @@ use redis_streams::XReadEntryId;
 
 pub const GROUP_NAME: &str = "micro-game-lobby";
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum StreamOutput {
     WFO(WaitForOpponent),
@@ -28,7 +27,6 @@ pub enum StreamOutput {
     PGR(PrivateGameRejected),
     LOG(GameState),
 }
-
 
 pub fn process(reg: &Components) {
     let mut unacked = Unacknowledged::default();
@@ -144,24 +142,6 @@ fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
     }
 }
 
-fn init_changelog(game_id: &GameId, board_size: u16, reg: &Components) {
-    if let Err(chgerr) = reg.xadd.xadd(StreamOutput::LOG(
-        GameState {
-            game_id: game_id.clone(),
-            board: move_model::Board {
-                size: board_size,
-                ..Default::default()
-            },
-            captures: move_model::Captures::default(),
-            turn: 1,
-            moves: vec![],
-            player_up: move_model::Player::BLACK,
-        },
-    )) {
-        error!("could not write game state changelog {:?}", chgerr)
-    }
-}
-
 fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
     if let Ok(game_lobby) = reg.game_lobby_repo.get() {
         let updated: GameLobby = game_lobby.abandon(&sd.session_id);
@@ -191,6 +171,22 @@ fn ready_game(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Co
             trace!("Game ready. Lobby: {:?}", &updated);
             init_changelog(&queued.game_id, queued.board_size, &reg)
         }
+    }
+}
+
+fn init_changelog(game_id: &GameId, board_size: u16, reg: &Components) {
+    if let Err(chgerr) = reg.xadd.xadd(StreamOutput::LOG(GameState {
+        game_id: game_id.clone(),
+        board: move_model::Board {
+            size: board_size,
+            ..Default::default()
+        },
+        captures: move_model::Captures::default(),
+        turn: 1,
+        moves: vec![],
+        player_up: move_model::Player::BLACK,
+    })) {
+        error!("could not write game state changelog {:?}", chgerr)
     }
 }
 
