@@ -19,7 +19,7 @@ pub enum XAddErr {
 }
 
 const AUTO_ID: &str = "*";
-const MAP_KEY: &str = "data";
+const DATA_KEY: &str = "data";
 const GAME_ID_KEY: &str = "game_id";
 const MAX_LEN: usize = 1000;
 impl XAdd for Rc<Client> {
@@ -30,39 +30,26 @@ impl XAdd for Rc<Client> {
             StreamOutput::WFO(w) => (WAIT_FOR_OPPONENT, bincode::serialize(&w)),
             StreamOutput::LOG(_, state) => (GAME_STATES_CHANGELOG, bincode::serialize(&state)),
         };
-        match &data {
-            StreamOutput::LOG(game_id, _) => {
-                if let Ok(bytes) = bytes_result {
-                    let mut m: BTreeMap<&str, &[u8]> = BTreeMap::new();
-                    m.insert(MAP_KEY, &bytes);
-                    m.insert(GAME_ID_KEY, game_id.0.as_bytes());
+        if let Ok(bytes) = bytes_result {
+            let mut m: BTreeMap<&str, &[u8]> = BTreeMap::new();
 
-                    if let Ok(mut conn) = self.get_connection() {
-                        conn.xadd_maxlen_map(key, StreamMaxlen::Approx(MAX_LEN), AUTO_ID, m)
-                            .map_err(|e| XAddErr::Redis(e))
-                    } else {
-                        Err(XAddErr::Conn)
-                    }
-                } else {
-                    Err(XAddErr::Ser)
-                }
+            m.insert(DATA_KEY, &bytes);
+            if let StreamOutput::LOG(game_id, _) = &data {
+                m.insert(GAME_ID_KEY, game_id.0.as_bytes());
             }
-            _ => {
-                if let Ok(bytes) = bytes_result {
-                    let mut m: BTreeMap<&str, &[u8]> = BTreeMap::new();
-                    m.insert(MAP_KEY, &bytes);
-
-                    if let Ok(mut conn) = self.get_connection() {
-                        conn.xadd_maxlen_map(key, StreamMaxlen::Approx(MAX_LEN), AUTO_ID, m)
-                            .map_err(|e| XAddErr::Redis(e))
-                    } else {
-                        Err(XAddErr::Conn)
-                    }
-                } else {
-                    Err(XAddErr::Ser)
-                }
-            }
+            xadd_io(&self, key, m)
+        } else {
+            Err(XAddErr::Ser)
         }
+    }
+}
+
+fn xadd_io(client: &Client, key: &str, m: BTreeMap<&str, &[u8]>) -> Result<(), XAddErr> {
+    if let Ok(mut conn) = client.get_connection() {
+        conn.xadd_maxlen_map(key, StreamMaxlen::Approx(MAX_LEN), AUTO_ID, m)
+            .map_err(|e| XAddErr::Redis(e))
+    } else {
+        Err(XAddErr::Conn)
     }
 }
 
