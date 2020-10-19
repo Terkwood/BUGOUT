@@ -42,15 +42,18 @@ pub fn process(opts: StreamOpts) {
 
                         mm_processed.push(entry_id);
                     }
-                    (entry_id, StreamData::GS(game_id, game_state)) => {
-                        info!("Stream: Game State {:?}", &game_id);
-                        if let Err(e) = &opts.game_states_repo.write(&game_id, &game_state) {
+                    (entry_id, StreamData::GS(game_state)) => {
+                        info!("Stream: Game State {:?}", &game_state.game_id);
+                        if let Err(e) = &opts
+                            .game_states_repo
+                            .write(&game_state.game_id, &game_state)
+                        {
                             error!("error writing game state {:?}  -- advancing eid pointer", e)
                         }
 
                         gs_processed.push(entry_id);
 
-                        info!("💾 Game State Saved {:?}", &game_id);
+                        info!("💾 Game State Saved {:?}", &game_state.game_id);
                     }
                 }
             }
