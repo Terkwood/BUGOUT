@@ -95,7 +95,14 @@ fn test_emitted_game_states() {
 
     let mut conn = test_client.get_connection().unwrap();
 
-    let expected_game_state = GameState::default();
+    let expected_game_state = GameState {
+        game_id: game_id.clone(),
+        board: Board::default(),
+        captures: Captures::default(),
+        turn: 1,
+        moves: vec![],
+        player_up: Player::BLACK,
+    };
     redis::cmd("XADD")
         .arg(TEST_GAME_STATES_TOPIC)
         .arg("MAXLEN")
@@ -162,7 +169,14 @@ fn test_moves_processed() {
 
     let mut conn = test_client.get_connection().unwrap();
 
-    let initial_game_state = GameState::default();
+    let initial_game_state = GameState {
+        game_id: game_id.clone(),
+        board: Board::default(),
+        captures: Captures::default(),
+        turn: 1,
+        moves: vec![],
+        player_up: Player::BLACK,
+    };
     redis::cmd("XADD")
         .arg(TEST_GAME_STATES_TOPIC)
         .arg("MAXLEN")

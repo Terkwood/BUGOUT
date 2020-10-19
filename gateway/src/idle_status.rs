@@ -1,6 +1,5 @@
 use crate::model::ClientId;
-use crossbeam::{Receiver, Sender};
-use crossbeam_channel::select;
+use crossbeam_channel::{select, Receiver, Sender};
 use log::error;
 use serde_derive::{Deserialize, Serialize};
 use std::thread;

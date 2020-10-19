@@ -68,7 +68,7 @@ impl WsSession {
     fn send_to_backend(
         &self,
         backend_command: BackendCommands,
-    ) -> std::result::Result<(), crossbeam::SendError<BackendCommands>> {
+    ) -> std::result::Result<(), crossbeam_channel::SendError<BackendCommands>> {
         self.session_commands_in.send(backend_command)
     }
 

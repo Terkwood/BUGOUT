@@ -6,12 +6,12 @@ version = "0.2.0"
 
 [dependencies]
 bincode = "1.2.1"
-core-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "6e5474c"}
+core-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20e6620"}
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.2"
 env_logger = "0.7.1"
 lobby-model = {path = "lobby-model"}
 log = "0.4.8"
-move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "6e5474c"}
+move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20e6620"}
 redis = {version = "0.17.0", features = ["r2d2"]}
 redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "0.3.0", rev = "92b8d91abba494737caca525ecb2a4f0d7044dbd"}

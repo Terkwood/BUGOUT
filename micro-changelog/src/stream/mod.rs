@@ -95,26 +95,33 @@ fn update_game_state(
     let game_id = move_acc.game_id.clone();
     let old_game_state = game_states_repo::fetch(&move_acc.game_id, &components);
     let new_game_state = old_game_state.map(|maybe_og| {
-        let mut og = maybe_og.unwrap_or(GameState::default());
-        og.turn += 1;
-        og.player_up = match move_acc.player {
+        let mut orig = maybe_og.unwrap_or(GameState {
+            game_id: move_acc.game_id.clone(),
+            board: Board::default(),
+            captures: Captures::default(),
+            turn: 1,
+            moves: vec![],
+            player_up: Player::BLACK,
+        });
+        orig.turn += 1;
+        orig.player_up = match move_acc.player {
             Player::BLACK => Player::WHITE,
             _ => Player::BLACK,
         };
         let caps = move_acc.captured.len() as u16;
         match move_acc.player {
-            Player::BLACK => og.captures.black += caps,
-            Player::WHITE => og.captures.white += caps,
+            Player::BLACK => orig.captures.black += caps,
+            Player::WHITE => orig.captures.white += caps,
         }
         for c in &move_acc.captured {
-            og.board.pieces.remove(c);
+            orig.board.pieces.remove(c);
         }
         if let Some(c) = &move_acc.coord {
-            og.board.pieces.insert(*c, move_acc.player);
+            orig.board.pieces.insert(*c, move_acc.player);
         }
 
-        og.moves.push(move_acc.clone());
-        og
+        orig.moves.push(move_acc.clone());
+        orig
     })?;
     game_states_repo::write(&game_id, &new_game_state, &components)?;
     info!("Updated {:?} {:?}", &game_id, &new_game_state);

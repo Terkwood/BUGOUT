@@ -1,5 +1,4 @@
-use crossbeam::{Receiver, Sender};
-use crossbeam_channel::select;
+use crossbeam_channel::{select, Receiver, Sender};
 use log::{error, info, warn};
 use std::collections::HashMap;
 use std::ops::Add;
