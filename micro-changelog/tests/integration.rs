@@ -109,6 +109,7 @@ fn test_process_move() {
     assert_eq!(payload.2, "data");
 
     let expected_game_state = GameState {
+        game_id: game_id.clone(),
         board: Board {
             pieces: [(placement, Player::BLACK)].iter().cloned().collect(),
             size: 19,
