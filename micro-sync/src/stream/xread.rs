@@ -1,5 +1,4 @@
 use super::{topics, GROUP_NAME};
-use crate::core_model::GameId;
 use crate::stream::StreamInput;
 use log::error;
 use redis::streams::{StreamReadOptions, StreamReadReply};
@@ -7,7 +6,6 @@ use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::rc::Rc;
-use uuid::Uuid;
 
 const INIT_ACK_CAPACITY: usize = 25;
 const BLOCK_MS: usize = 5000;
