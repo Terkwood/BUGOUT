@@ -242,8 +242,8 @@ dependencies = [
 
 [[package]]
 name = "core-model"
-version = "0.1.1"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=5d842a2#5d842a2bf2ccf71149d39a700a740585fa6fd643"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=20e6620#20e6620ff0bd149d1e2af1855c1294e1630cf59c"
 dependencies = [
  "serde",
  "serde_derive",
@@ -564,7 +564,7 @@ checksum = "2448f6066e80e3bfc792e9c98bf705b4b0fc6e8ef5b43e5889aff0eaa9c58743"
 
 [[package]]
 name = "lobby-model"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "core-model",
  "serde",
@@ -618,7 +618,7 @@ dependencies = [
 
 [[package]]
 name = "micro-game-lobby"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "bincode",
  "core-model",
