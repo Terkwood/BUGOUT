@@ -234,7 +234,7 @@ dependencies = [
 [[package]]
 name = "core-model"
 version = "0.1.1"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=6e5474c#6e5474c2a203d2be0f0521b06b796803bce23d0c"
 dependencies = [
  "serde",
  "serde_derive",
@@ -515,7 +515,7 @@ checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
 name = "micro-changelog"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "bincode",
  "core-model",
@@ -572,7 +572,7 @@ dependencies = [
 [[package]]
 name = "move-model"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=6e5474c#6e5474c2a203d2be0f0521b06b796803bce23d0c"
 dependencies = [
  "bincode",
  "core-model",
