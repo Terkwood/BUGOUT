@@ -22,7 +22,7 @@ const GROUP_NAME: &str = "micro-sync";
 #[derive(Clone, Debug)]
 pub enum StreamInput {
     PH(ProvideHistory),
-    GS(GameId, GameState),
+    GS(GameState),
     RS(ReqSync),
     MM(MoveMade),
 }
@@ -48,7 +48,7 @@ fn process_event(event: &StreamInput, components: &Components) {
     match event {
         StreamInput::RS(rs) => process_req_sync(rs, components),
         StreamInput::PH(ph) => process_prov_hist(ph, components),
-        StreamInput::GS(game_id, game_state) => process_game_state(game_id, game_state, components),
+        StreamInput::GS(game_state) => process_game_state(game_state, components),
         StreamInput::MM(mm) => process_move_made(mm, components),
     }
 }
@@ -134,11 +134,11 @@ fn process_prov_hist(ph: &ProvideHistory, components: &Components) {
     }
 }
 
-fn process_game_state(game_id: &GameId, game_state: &GameState, components: &Components) {
-    info!("Stream: Game State {:?} {:?}", game_id, game_state);
+fn process_game_state(game_state: &GameState, components: &Components) {
+    info!("Stream: Game State   {:?}", game_state);
     if let Err(_e) = components
         .history_repo
-        .put(&game_id, game_state.to_history())
+        .put(&game_state.game_id, game_state.to_history())
     {
         error!("write to history repo")
     }
@@ -735,17 +735,14 @@ mod test {
             },
         ];
         let fake_player_up = Player::BLACK;
-        let xid_gs = fakes.emit_sleep(StreamInput::GS(
-            fake_game_id.clone(),
-            GameState {
-                moves: fake_moves,
-                player_up: fake_player_up,
-                board: Board::default(),
-                captures: Captures::default(),
-                game_id: fake_game_id.clone(),
-                turn: 1,
-            },
-        ));
+        let xid_gs = fakes.emit_sleep(StreamInput::GS(GameState {
+            moves: fake_moves,
+            player_up: fake_player_up,
+            board: Board::default(),
+            captures: Captures::default(),
+            game_id: fake_game_id.clone(),
+            turn: 1,
+        }));
 
         // history repo should now contain the moves from that game
         let actual_moves = fakes

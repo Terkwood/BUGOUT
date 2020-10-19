@@ -121,7 +121,7 @@ impl Unacknowledged {
     }
     pub fn push(&mut self, xid: XReadEntryId, event: StreamInput) {
         match event {
-            StreamInput::GS(_, _) => self.game_states.push(xid),
+            StreamInput::GS(_) => self.game_states.push(xid),
             StreamInput::MM(_) => self.move_made.push(xid),
             StreamInput::PH(_) => self.prov_hist.push(xid),
             StreamInput::RS(_) => self.req_sync.push(xid),
@@ -156,15 +156,8 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, Str
                 let maybe_data: Option<Vec<u8>> = e.get("data");
                 if let Some(data) = maybe_data {
                     let sd: Option<StreamInput> = if key == topics::GAME_STATES_CHANGELOG {
-                        let eg: Option<String> = e.get("game_id");
-                        let game_id = GameId(
-                            eg.as_ref()
-                                .map(|u_s| Uuid::parse_str(u_s).ok())
-                                .flatten()
-                                .unwrap_or(Uuid::nil()),
-                        );
                         bincode::deserialize(&data)
-                            .map(|gs| StreamInput::GS(game_id, gs))
+                            .map(|gs| StreamInput::GS(gs))
                             .ok()
                     } else if key == topics::REQ_SYNC {
                         bincode::deserialize(&data)
