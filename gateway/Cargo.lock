@@ -140,11 +140,11 @@ dependencies = [
 
 [[package]]
 name = "color-model"
-version = "0.1.3"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=6e5474c#6e5474c2a203d2be0f0521b06b796803bce23d0c"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=06c3cc4#06c3cc4576d9cacd72c792f365c3f866dcb60441"
 dependencies = [
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
- "lobby-model 0.2.0",
+ "core-model",
+ "lobby-model",
  "serde",
  "serde_derive",
 ]
@@ -170,18 +170,8 @@ checksum = "ce90df4c658c62f12d78f7508cf92f9173e5184a539c10bfe54a3107b3ffd0f2"
 
 [[package]]
 name = "core-model"
-version = "0.1.1"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=6e5474c#6e5474c2a203d2be0f0521b06b796803bce23d0c"
-dependencies = [
- "serde",
- "serde_derive",
- "uuid",
-]
-
-[[package]]
-name = "core-model"
-version = "0.1.1"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=20e6620#20e6620ff0bd149d1e2af1855c1294e1630cf59c"
 dependencies = [
  "serde",
  "serde_derive",
@@ -440,12 +430,12 @@ dependencies = [
 
 [[package]]
 name = "gateway"
-version = "0.15.0-d"
+version = "0.15.0-e"
 dependencies = [
  "bincode",
  "chrono",
  "color-model",
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=6e5474c)",
+ "core-model",
  "crossbeam",
  "crossbeam-channel",
  "dotenv",
@@ -454,12 +444,12 @@ dependencies = [
  "futures",
  "harsh",
  "lazy_static",
- "lobby-model 0.2.1",
+ "lobby-model",
  "log",
  "micro_model_bot",
  "micro_model_moves",
  "mio-extras",
- "move-model 0.2.0 (git+https://github.com/Terkwood/BUGOUT?rev=6e5474c)",
+ "move-model",
  "r2d2_redis",
  "rand",
  "redis_streams",
@@ -587,20 +577,10 @@ checksum = "2448f6066e80e3bfc792e9c98bf705b4b0fc6e8ef5b43e5889aff0eaa9c58743"
 
 [[package]]
 name = "lobby-model"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=ca55886#ca558868d70328a8f6a610a171b30130a962c3e3"
+version = "0.4.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=0dd79c5#0dd79c57de81213b2393713620080c61c3013b9a"
 dependencies = [
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
- "serde",
- "serde_derive",
-]
-
-[[package]]
-name = "lobby-model"
-version = "0.2.1"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=78b0242#78b02421ee2807c16637add8d8d137347caede02"
-dependencies = [
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=6e5474c)",
+ "core-model",
  "serde",
  "serde_derive",
 ]
@@ -653,7 +633,7 @@ dependencies = [
 [[package]]
 name = "micro_model_bot"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#78b02421ee2807c16637add8d8d137347caede02"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0dec7266b41c21982e74137a827845b81083c745"
 dependencies = [
  "bincode",
  "micro_model_moves",
@@ -664,7 +644,7 @@ dependencies = [
 [[package]]
 name = "micro_model_moves"
 version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#78b02421ee2807c16637add8d8d137347caede02"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0dec7266b41c21982e74137a827845b81083c745"
 dependencies = [
  "bincode",
  "serde",
@@ -728,22 +708,11 @@ dependencies = [
 
 [[package]]
 name = "move-model"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=6e5474c#6e5474c2a203d2be0f0521b06b796803bce23d0c"
+version = "0.4.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=20e6620#20e6620ff0bd149d1e2af1855c1294e1630cf59c"
 dependencies = [
  "bincode",
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=6e5474c)",
- "serde",
- "serde_derive",
-]
-
-[[package]]
-name = "move-model"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
-dependencies = [
- "bincode",
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
+ "core-model",
  "serde",
  "serde_derive",
 ]
@@ -981,7 +950,7 @@ dependencies = [
 [[package]]
 name = "redis_conn_pool"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#78b02421ee2807c16637add8d8d137347caede02"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0dec7266b41c21982e74137a827845b81083c745"
 dependencies = [
  "r2d2_redis",
  "redis",
@@ -1067,18 +1036,18 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.116"
+version = "1.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96fe57af81d28386a513cbc6858332abc6117cfdb5999647c6444b8f43a370a5"
+checksum = "b88fa983de7720629c9387e9f517353ed404164b1e482c970a90c1a4aaf7dc1a"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.116"
+version = "1.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f630a6370fd8e457873b4bd2ffdae75408bc291ba72be773772a4c2a065d9ae8"
+checksum = "cbd1ae72adb44aab48f325a02444a5fc079349a8d804c1fc922aed3f7454c74e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1186,9 +1155,9 @@ checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
 
 [[package]]
 name = "syn"
-version = "1.0.44"
+version = "1.0.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e03e57e4fcbfe7749842d53e24ccb9aa12b7252dbe5e91d2acad31834c8b8fdd"
+checksum = "ea9c5432ff16d6152371f808fb5a871cd67368171b09bb21b43df8e4a47a3556"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1197,11 +1166,11 @@ dependencies = [
 
 [[package]]
 name = "sync-model"
-version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=6e5474c#6e5474c2a203d2be0f0521b06b796803bce23d0c"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=fa195a9#fa195a9f5a80d7320526d6fb49bc5bca5dd82c90"
 dependencies = [
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
- "move-model 0.2.0 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
+ "core-model",
+ "move-model",
  "serde",
  "serde_derive",
 ]

@@ -108,14 +108,7 @@ impl From<moves::Player> for Player {
         }
     }
 }
-impl From<sync::move_model::Player> for Player {
-    fn from(p: sync::move_model::Player) -> Self {
-        match p {
-            sync::move_model::Player::BLACK => Player::BLACK,
-            sync::move_model::Player::WHITE => Player::WHITE,
-        }
-    }
-}
+ 
 impl From<micro_model_moves::Player> for Player {
     fn from(p: micro_model_moves::Player) -> Self {
         match p {
@@ -129,12 +122,7 @@ impl From<moves::Coord> for Coord {
         Self { x: c.x, y: c.y }
     }
 }
-impl From<sync::move_model::Coord> for Coord {
-    fn from(c: sync::move_model::Coord) -> Self {
-        Self { x: c.x, y: c.y }
-    }
-}
-
+ 
 impl From<micro_model_moves::Coord> for Coord {
     fn from(c: micro_model_moves::Coord) -> Self {
         Self { x: c.x, y: c.y }

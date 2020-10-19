@@ -111,33 +111,3 @@ impl IntoShared<core::ClientId> for Uuid {
         core::ClientId(self.clone())
     }
 }
-
-impl IntoShared<sync::core_model::GameId> for Uuid {
-    fn into_shared(&self) -> sync::core_model::GameId {
-        sync::core_model::GameId(self.clone())
-    }
-}
-
-impl IntoShared<sync::core_model::ReqId> for Uuid {
-    fn into_shared(&self) -> sync::core_model::ReqId {
-        sync::core_model::ReqId(self.clone())
-    }
-}
-
-impl IntoShared<sync::core_model::EventId> for Uuid {
-    fn into_shared(&self) -> sync::core_model::EventId {
-        sync::core_model::EventId(self.clone())
-    }
-}
-
-impl IntoShared<sync::core_model::SessionId> for Uuid {
-    fn into_shared(&self) -> sync::core_model::SessionId {
-        sync::core_model::SessionId(self.clone())
-    }
-}
-
-impl IntoShared<sync::core_model::ClientId> for Uuid {
-    fn into_shared(&self) -> sync::core_model::ClientId {
-        sync::core_model::ClientId(self.clone())
-    }
-}

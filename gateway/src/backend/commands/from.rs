@@ -43,20 +43,6 @@ impl From<Visibility> for lobby::Visibility {
     }
 }
 
-impl From<Player> for sync::move_model::Player {
-    fn from(p: Player) -> Self {
-        match p {
-            Player::BLACK => sync::move_model::Player::BLACK,
-            Player::WHITE => sync::move_model::Player::WHITE,
-        }
-    }
-}
-
-impl From<Coord> for sync::move_model::Coord {
-    fn from(c: Coord) -> Self {
-        sync::move_model::Coord { x: c.x, y: c.y }
-    }
-}
 impl From<Coord> for moves::Coord {
     fn from(c: Coord) -> Self {
         moves::Coord { x: c.x, y: c.y }
