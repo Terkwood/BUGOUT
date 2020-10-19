@@ -1,7 +1,5 @@
+use super::StreamOutput;
 use crate::topics::*;
-use core_model::GameId;
-use lobby_model::api::*;
-use move_model::GameState;
 use redis::Client;
 use redis::{streams::StreamMaxlen, Commands};
 use std::collections::BTreeMap;
@@ -27,7 +25,7 @@ impl XAdd for Rc<Client> {
             StreamOutput::GR(gr) => (GAME_READY, bincode::serialize(&gr)),
             StreamOutput::PGR(p) => (PRIVATE_GAME_REJECTED, bincode::serialize(&p)),
             StreamOutput::WFO(w) => (WAIT_FOR_OPPONENT, bincode::serialize(&w)),
-            StreamOutput::LOG(_, state) => (GAME_STATES_CHANGELOG, bincode::serialize(&state)),
+            StreamOutput::LOG(state) => (GAME_STATES_CHANGELOG, bincode::serialize(&state)),
         };
         if let Ok(bytes) = bytes_result {
             let mut m: BTreeMap<&str, &[u8]> = BTreeMap::new();
@@ -48,12 +46,4 @@ fn xadd_io(client: &Client, key: &str, m: BTreeMap<&str, &[u8]>) -> Result<(), X
     } else {
         Err(XAddErr::Conn)
     }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum StreamOutput {
-    WFO(WaitForOpponent),
-    GR(GameReady),
-    PGR(PrivateGameRejected),
-    LOG(GameId, GameState),
 }

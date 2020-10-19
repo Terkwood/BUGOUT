@@ -20,6 +20,16 @@ use redis_streams::XReadEntryId;
 
 pub const GROUP_NAME: &str = "micro-game-lobby";
 
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum StreamOutput {
+    WFO(WaitForOpponent),
+    GR(GameReady),
+    PGR(PrivateGameRejected),
+    LOG(GameState),
+}
+
+
 pub fn process(reg: &Components) {
     let mut unacked = Unacknowledged::default();
     loop {
@@ -136,8 +146,8 @@ fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
 
 fn init_changelog(game_id: &GameId, board_size: u16, reg: &Components) {
     if let Err(chgerr) = reg.xadd.xadd(StreamOutput::LOG(
-        game_id.clone(),
         GameState {
+            game_id: game_id.clone(),
             board: move_model::Board {
                 size: board_size,
                 ..Default::default()
