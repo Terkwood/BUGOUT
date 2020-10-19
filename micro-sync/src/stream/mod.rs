@@ -11,7 +11,7 @@ use crate::player::other_player;
 use crate::sync::is_client_ahead_by_one_turn;
 use crate::ToHistory;
 use core_model::*;
-use log::{error, info, warn};
+use log::{error, info, trace, warn};
 use move_model::*;
 use sync_model::api::*;
 use sync_model::Move;
@@ -135,7 +135,8 @@ fn process_prov_hist(ph: &ProvideHistory, components: &Components) {
 }
 
 fn process_game_state(game_state: &GameState, components: &Components) {
-    info!("Stream: Game State   {:?}", game_state);
+    info!("Stream: Game State   {:?}", game_state.game_id);
+    trace!("Full game state: {:?}", game_state);
     if let Err(_e) = components
         .history_repo
         .put(&game_state.game_id, game_state.to_history())
