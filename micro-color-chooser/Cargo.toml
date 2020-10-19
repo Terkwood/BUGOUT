@@ -4,7 +4,7 @@ edition = "2018"
 license = "MIT"
 name = "micro-color-chooser"
 repository = "https://github.com/Terkwood/BUGOUT"
-version = "0.1.6"
+version = "0.1.7"
 
 [dev-dependencies]
 crossbeam-channel = "0.5.0"
