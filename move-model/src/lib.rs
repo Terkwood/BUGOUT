@@ -44,17 +44,7 @@ pub struct GameState {
     pub turn: u16,
     pub player_up: Player,
     pub moves: Vec<MoveMade>,
-}
-impl Default for GameState {
-    fn default() -> Self {
-        GameState {
-            board: Board::default(),
-            captures: Captures::default(),
-            turn: 1,
-            player_up: Player::BLACK,
-            moves: vec![],
-        }
-    }
+    pub game_id: GameId,
 }
 
 impl GameState {
@@ -127,9 +117,20 @@ impl MoveMade {
 mod tests {
     use super::*;
     use uuid::Uuid;
+
+    fn new_game_state() -> GameState {
+        GameState {
+            game_id: GameId::new(),
+            board: Board::default(),
+            moves: vec![],
+            player_up: Player::BLACK,
+            captures: Captures::default(),
+            turn: 1,
+        }
+    }
     #[test]
     fn test_game_state_ser_basic() {
-        let gs = GameState::default();
+        let gs = new_game_state();
         let result = gs.serialize();
         assert!(result.is_ok());
         assert!(result.unwrap().len() > 0)
@@ -137,7 +138,7 @@ mod tests {
 
     #[test]
     fn test_game_state_serde_roundtrip() {
-        let mut gs = GameState::default();
+        let mut gs = new_game_state();
         gs.player_up = Player::WHITE;
         gs.moves.push(MoveMade {
             player: Player::BLACK,
