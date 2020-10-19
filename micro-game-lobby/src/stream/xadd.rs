@@ -20,7 +20,6 @@ pub enum XAddErr {
 
 const AUTO_ID: &str = "*";
 const DATA_KEY: &str = "data";
-const GAME_ID_KEY: &str = "game_id";
 const MAX_LEN: usize = 1000;
 impl XAdd for Rc<Client> {
     fn xadd(&self, data: StreamOutput) -> Result<(), XAddErr> {
@@ -34,9 +33,7 @@ impl XAdd for Rc<Client> {
             let mut m: BTreeMap<&str, &[u8]> = BTreeMap::new();
 
             m.insert(DATA_KEY, &bytes);
-            if let StreamOutput::LOG(game_id, _) = &data {
-                m.insert(GAME_ID_KEY, game_id.0.as_bytes());
-            }
+
             xadd_io(&self, key, m)
         } else {
             Err(XAddErr::Ser)
