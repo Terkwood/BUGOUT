@@ -740,7 +740,10 @@ mod test {
             GameState {
                 moves: fake_moves,
                 player_up: fake_player_up,
-                ..Default::default()
+                board: Board::default(),
+                captures: Captures::default(),
+                game_id: fake_game_id.clone(),
+                turn: 1,
             },
         ));
 

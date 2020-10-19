@@ -43,14 +43,17 @@ mod tests {
                 captured: Vec::new(),
                 event_id: EventId::new(),
                 reply_to: ReqId::new(),
-                game_id: fake_game_id,
+                game_id: fake_game_id.clone(),
             },
         ];
         let player_up = Player::BLACK;
         let game_state = GameState {
             moves: gs_moves,
             player_up,
-            ..Default::default()
+            captures: Captures::default(),
+            game_id: fake_game_id,
+            board: Board::default(),
+            turn: 1,
         };
 
         let actual = game_state.to_history();
