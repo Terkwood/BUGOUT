@@ -116,6 +116,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
+name = "cfg-if"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
 name = "chrono"
 version = "0.4.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -140,11 +146,11 @@ dependencies = [
 
 [[package]]
 name = "color-model"
-version = "0.1.3"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=6e5474c#6e5474c2a203d2be0f0521b06b796803bce23d0c"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=06c3cc4#06c3cc4576d9cacd72c792f365c3f866dcb60441"
 dependencies = [
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
- "lobby-model 0.2.0",
+ "core-model",
+ "lobby-model",
  "serde",
  "serde_derive",
 ]
@@ -170,18 +176,8 @@ checksum = "ce90df4c658c62f12d78f7508cf92f9173e5184a539c10bfe54a3107b3ffd0f2"
 
 [[package]]
 name = "core-model"
-version = "0.1.1"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=6e5474c#6e5474c2a203d2be0f0521b06b796803bce23d0c"
-dependencies = [
- "serde",
- "serde_derive",
- "uuid",
-]
-
-[[package]]
-name = "core-model"
-version = "0.1.1"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=20e6620#20e6620ff0bd149d1e2af1855c1294e1630cf59c"
 dependencies = [
  "serde",
  "serde_derive",
@@ -190,11 +186,11 @@ dependencies = [
 
 [[package]]
 name = "crossbeam"
-version = "0.7.3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69323bff1fb41c635347b8ead484a5ca6c3f11914d784170b158d8449ab07f8e"
+checksum = "fd01a6eb3daaafa260f6fc94c3a6c36390abc2080e38e3e34ced87393fb77d80"
 dependencies = [
- "cfg-if",
+ "cfg-if 1.0.0",
  "crossbeam-channel",
  "crossbeam-deque",
  "crossbeam-epoch",
@@ -204,59 +200,58 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-channel"
-version = "0.4.4"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b153fe7cbef478c567df0f972e02e6d736db11affe43dfc9c56a9374d1adfb87"
+checksum = "dca26ee1f8d361640700bde38b2c37d8c22b3ce2d360e1fc1c74ea4b0aa7d775"
 dependencies = [
+ "cfg-if 1.0.0",
  "crossbeam-utils",
- "maybe-uninit",
 ]
 
 [[package]]
 name = "crossbeam-deque"
-version = "0.7.3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f02af974daeee82218205558e51ec8768b48cf524bd01d550abe5573a608285"
+checksum = "94af6efb46fef72616855b036a624cf27ba656ffc9be1b9a3c931cfc7749a9a9"
 dependencies = [
+ "cfg-if 1.0.0",
  "crossbeam-epoch",
  "crossbeam-utils",
- "maybe-uninit",
 ]
 
 [[package]]
 name = "crossbeam-epoch"
-version = "0.8.2"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "058ed274caafc1f60c4997b5fc07bf7dc7cca454af7c6e81edffe5f33f70dace"
+checksum = "ec0f606a85340376eef0d6d8fec399e6d4a544d648386c6645eb6d0653b27d9f"
 dependencies = [
- "autocfg",
- "cfg-if",
+ "cfg-if 1.0.0",
+ "const_fn",
  "crossbeam-utils",
  "lazy_static",
- "maybe-uninit",
  "memoffset",
  "scopeguard",
 ]
 
 [[package]]
 name = "crossbeam-queue"
-version = "0.2.3"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "774ba60a54c213d409d5353bda12d49cd68d14e45036a285234c8d6f91f92570"
+checksum = "6b2a58563f049aa3bae172bc4120f093b5901161c629f280a1f40ba55317d774"
 dependencies = [
- "cfg-if",
+ "cfg-if 1.0.0",
  "crossbeam-utils",
- "maybe-uninit",
 ]
 
 [[package]]
 name = "crossbeam-utils"
-version = "0.7.2"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3c7c73a2d1e9fc0886a08b93e98eb643461230d5f1925e4036204d5f2e261a8"
+checksum = "ec91540d98355f690a86367e566ecad2e9e579f230230eb7c21398372be73ea5"
 dependencies = [
  "autocfg",
- "cfg-if",
+ "cfg-if 1.0.0",
+ "const_fn",
  "lazy_static",
 ]
 
@@ -295,9 +290,9 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
 name = "env_logger"
-version = "0.7.1"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44533bbbb3bb3c1fa17d9f2e4e38bbbaf8396ba82193c4cb1b6445d711445d36"
+checksum = "54532e3223c5af90a6a757c90b5c5521564b07e5e7a958681bcd2afad421cdcd"
 dependencies = [
  "atty",
  "humantime",
@@ -440,12 +435,12 @@ dependencies = [
 
 [[package]]
 name = "gateway"
-version = "0.15.0-d"
+version = "0.15.0-e"
 dependencies = [
  "bincode",
  "chrono",
  "color-model",
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=6e5474c)",
+ "core-model",
  "crossbeam",
  "crossbeam-channel",
  "dotenv",
@@ -454,12 +449,12 @@ dependencies = [
  "futures",
  "harsh",
  "lazy_static",
- "lobby-model 0.2.1",
+ "lobby-model",
  "log",
  "micro_model_bot",
  "micro_model_moves",
  "mio-extras",
- "move-model 0.2.0 (git+https://github.com/Terkwood/BUGOUT?rev=6e5474c)",
+ "move-model",
  "r2d2_redis",
  "rand",
  "redis_streams",
@@ -487,7 +482,7 @@ version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc587bc0ec293155d5bfa6b9891ec18a1e330c234f896ea47fbada4cadbe47e6"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
  "libc",
  "wasi 0.9.0+wasi-snapshot-preview1",
 ]
@@ -515,12 +510,9 @@ checksum = "cd179ae861f0c2e53da70d892f5f3029f9594be0c41dc5269cd371691b1dc2f9"
 
 [[package]]
 name = "humantime"
-version = "1.3.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df004cfca50ef23c36850aaaa59ad52cc70d0e90243c3c7737a4dd32dc7a3c4f"
-dependencies = [
- "quick-error",
-]
+checksum = "3c1ad908cc71012b7bea4d0c53ba96a8cba9962f048fa68d143376143d863b7a"
 
 [[package]]
 name = "idna"
@@ -539,7 +531,7 @@ version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63312a18f7ea8760cdd0a7c5aac1a619752a246b833545e3e36d1f81f7cd9e66"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
 ]
 
 [[package]]
@@ -587,20 +579,10 @@ checksum = "2448f6066e80e3bfc792e9c98bf705b4b0fc6e8ef5b43e5889aff0eaa9c58743"
 
 [[package]]
 name = "lobby-model"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=ca55886#ca558868d70328a8f6a610a171b30130a962c3e3"
+version = "0.4.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=0dd79c5#0dd79c57de81213b2393713620080c61c3013b9a"
 dependencies = [
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
- "serde",
- "serde_derive",
-]
-
-[[package]]
-name = "lobby-model"
-version = "0.2.1"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=78b0242#78b02421ee2807c16637add8d8d137347caede02"
-dependencies = [
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=6e5474c)",
+ "core-model",
  "serde",
  "serde_derive",
 ]
@@ -620,7 +602,7 @@ version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fabed175da42fed1fa0746b0ea71f412aa9d35e76e95e59b192c64b9dc2bf8b"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
 ]
 
 [[package]]
@@ -628,12 +610,6 @@ name = "matches"
 version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ffc5c5338469d4d3ea17d269fa8ea3512ad247247c30bd2df69e68309ed0a08"
-
-[[package]]
-name = "maybe-uninit"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
 
 [[package]]
 name = "memchr"
@@ -653,7 +629,7 @@ dependencies = [
 [[package]]
 name = "micro_model_bot"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#78b02421ee2807c16637add8d8d137347caede02"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0dec7266b41c21982e74137a827845b81083c745"
 dependencies = [
  "bincode",
  "micro_model_moves",
@@ -664,7 +640,7 @@ dependencies = [
 [[package]]
 name = "micro_model_moves"
 version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#78b02421ee2807c16637add8d8d137347caede02"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0dec7266b41c21982e74137a827845b81083c745"
 dependencies = [
  "bincode",
  "serde",
@@ -678,7 +654,7 @@ version = "0.6.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fce347092656428bc8eaf6201042cb551b8d67855af7374542a92a0fbfcac430"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
  "fuchsia-zircon",
  "fuchsia-zircon-sys",
  "iovec",
@@ -728,22 +704,11 @@ dependencies = [
 
 [[package]]
 name = "move-model"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=6e5474c#6e5474c2a203d2be0f0521b06b796803bce23d0c"
+version = "0.4.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=20e6620#20e6620ff0bd149d1e2af1855c1294e1630cf59c"
 dependencies = [
  "bincode",
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=6e5474c)",
- "serde",
- "serde_derive",
-]
-
-[[package]]
-name = "move-model"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=f2d039e#f2d039eb07edb7a94c679ed1f241f4cd2c6d6a0d"
-dependencies = [
- "bincode",
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
+ "core-model",
  "serde",
  "serde_derive",
 ]
@@ -754,7 +719,7 @@ version = "0.2.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ebc3ec692ed7c9a255596c67808dee269f64655d8baf7b4f0638e51ba1d6853"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
  "libc",
  "winapi 0.3.9",
 ]
@@ -807,7 +772,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c361aa727dd08437f2f1447be8b59a33b0edd15e0fcee698f935613d9efbca9b"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
  "cloudabi",
  "instant",
  "libc",
@@ -880,12 +845,6 @@ checksum = "1e0704ee1a7e00d7bb417d0770ea303c1bccbabf0ef1667dae92b5967f5f8a71"
 dependencies = [
  "unicode-xid",
 ]
-
-[[package]]
-name = "quick-error"
-version = "1.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
@@ -981,7 +940,7 @@ dependencies = [
 [[package]]
 name = "redis_conn_pool"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#78b02421ee2807c16637add8d8d137347caede02"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0dec7266b41c21982e74137a827845b81083c745"
 dependencies = [
  "r2d2_redis",
  "redis",
@@ -1067,18 +1026,18 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.116"
+version = "1.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96fe57af81d28386a513cbc6858332abc6117cfdb5999647c6444b8f43a370a5"
+checksum = "b88fa983de7720629c9387e9f517353ed404164b1e482c970a90c1a4aaf7dc1a"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.116"
+version = "1.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f630a6370fd8e457873b4bd2ffdae75408bc291ba72be773772a4c2a065d9ae8"
+checksum = "cbd1ae72adb44aab48f325a02444a5fc079349a8d804c1fc922aed3f7454c74e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1186,9 +1145,9 @@ checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
 
 [[package]]
 name = "syn"
-version = "1.0.44"
+version = "1.0.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e03e57e4fcbfe7749842d53e24ccb9aa12b7252dbe5e91d2acad31834c8b8fdd"
+checksum = "ea9c5432ff16d6152371f808fb5a871cd67368171b09bb21b43df8e4a47a3556"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1197,11 +1156,11 @@ dependencies = [
 
 [[package]]
 name = "sync-model"
-version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=6e5474c#6e5474c2a203d2be0f0521b06b796803bce23d0c"
+version = "0.2.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=fa195a9#fa195a9f5a80d7320526d6fb49bc5bca5dd82c90"
 dependencies = [
- "core-model 0.1.1 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
- "move-model 0.2.0 (git+https://github.com/Terkwood/BUGOUT?rev=f2d039e)",
+ "core-model",
+ "move-model",
  "serde",
  "serde_derive",
 ]
@@ -1401,7 +1360,7 @@ version = "0.2.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ac64ead5ea5f05873d7c12b545865ca2b8d28adfc50a49b84770a3a97265d42"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
  "wasm-bindgen-macro",
 ]
 
