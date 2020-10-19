@@ -237,7 +237,7 @@ mod test {
     struct FakeXAdd(Sender<StreamOutput>);
     impl XAdd for FakeXAdd {
         fn xadd(&self, data: StreamOutput) -> Result<(), XAddErr> {
-            self.0.send(data).expect("send");
+            if let Err(_) = self.0.send(data) {}
             Ok(())
         }
     }
