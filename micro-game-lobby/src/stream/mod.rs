@@ -14,7 +14,7 @@ use crate::PUBLIC_GAME_BOARD_SIZE;
 use core_model::*;
 use lobby_model::api::*;
 use lobby_model::*;
-use log::{error, info, trace, warn};
+use log::{error, info, trace};
 use move_model::GameState;
 use redis_streams::XReadEntryId;
 
@@ -135,7 +135,14 @@ fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
         {
             ready_game(&jpg.session_id, &lobby, queued, reg)
         } else {
-            warn!("Ignoring game rejection event")
+            if let Err(e) = reg.xadd.xadd(StreamOutput::PGR(PrivateGameRejected {
+                client_id: jpg.client_id.clone(),
+                event_id: EventId::new(),
+                game_id: jpg.game_id.clone(),
+                session_id: jpg.session_id.clone(),
+            })) {
+                error!("Error writing private game rejection to stream {:?}", e)
+            }
         }
     } else {
         error!("game lobby JPG get")
