@@ -1,7 +1,7 @@
 # NEXT: v0.9.0
 
 - Remove Kafka-related functionalities (#375, #373, #372)
-- Add docker buildkit support (#369)
+- Add docker buildkit support (#369, #389)
 - Match micro-sync make move payload to system (#352, #364)
 - Add log statements (#356)
 - Gateway: coordinate multiplayer events using redis streams (#332, #349, #350, #351, #353, #354, #355)
