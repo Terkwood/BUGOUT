@@ -17,7 +17,7 @@ pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, HashMap<String, V
 #[derive(Clone)]
 pub enum StreamData {
     MM(MakeMove),
-    GS(GameId, GameState),
+    GS(GameState),
 }
 
 pub fn read_sorted(
@@ -82,14 +82,11 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
             } else if &xread_topic[..] == game_states_topic {
                 for with_timestamps in xread_move_data {
                     for (k, v) in with_timestamps {
-                        if let (Ok(seq_no), Some(game_id), Some(game_state)) = (
+                        if let (Ok(seq_no), Some(game_state)) = (
                             XReadEntryId::from_str(k),
-                            v.get("game_id").and_then(|g| {
-                                Uuid::from_str(std::str::from_utf8(g).expect("utf8")).ok()
-                            }),
                             v.get("data").and_then(|gs| GameState::from(gs).ok()),
                         ) {
-                            stream_data.insert(seq_no, StreamData::GS(GameId(game_id), game_state));
+                            stream_data.insert(seq_no, StreamData::GS(game_state));
                         } else {
                             error!("Deser error around make move cmd")
                         }

@@ -618,7 +618,7 @@ dependencies = [
 
 [[package]]
 name = "micro-game-lobby"
-version = "0.1.12"
+version = "0.2.0"
 dependencies = [
  "bincode",
  "core-model",
@@ -627,6 +627,7 @@ dependencies = [
  "env_logger",
  "lobby-model",
  "log",
+ "move-model",
  "redis 0.17.0",
  "redis_streams",
 ]
@@ -671,6 +672,17 @@ dependencies = [
  "net2",
  "winapi 0.2.8",
  "ws2_32-sys",
+]
+
+[[package]]
+name = "move-model"
+version = "0.4.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=20e6620#20e6620ff0bd149d1e2af1855c1294e1630cf59c"
+dependencies = [
+ "bincode",
+ "core-model",
+ "serde",
+ "serde_derive",
 ]
 
 [[package]]

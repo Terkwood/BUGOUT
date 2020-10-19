@@ -15,9 +15,18 @@ use core_model::*;
 use lobby_model::api::*;
 use lobby_model::*;
 use log::{error, info, trace, warn};
+use move_model::GameState;
 use redis_streams::XReadEntryId;
 
 pub const GROUP_NAME: &str = "micro-game-lobby";
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum StreamOutput {
+    WFO(WaitForOpponent),
+    GR(GameReady),
+    PGR(PrivateGameRejected),
+    LOG(GameState),
+}
 
 pub fn process(reg: &Components) {
     let mut unacked = Unacknowledged::default();
@@ -55,7 +64,7 @@ fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
             .iter()
             .find(|g| g.visibility == Visibility::Public)
         {
-            put_ready_then_xadd(session_id, &lobby, queued, reg)
+            ready_game(session_id, &lobby, queued, reg)
         } else {
             let game_id = GameId::new();
             let updated: GameLobby = lobby.open(Game {
@@ -105,14 +114,13 @@ fn consume_cg(cg: &CreateGame, reg: &Components) {
             })) {
                 error!("XADD Game ready")
             } else {
-                trace!("Game created. Lobby: {:?}", &updated)
+                trace!("Game created. Lobby: {:?}", &updated);
             }
         }
     } else {
         error!("CG GAME REPO GET")
     }
 }
-
 /// Consumes the command to join a private game.
 /// In the event that the game is invalid,
 /// we will simply log a warning.
@@ -125,7 +133,7 @@ fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
             .iter()
             .find(|g| g.visibility == Visibility::Private && g.game_id == jpg.game_id)
         {
-            put_ready_then_xadd(&jpg.session_id, &lobby, queued, reg)
+            ready_game(&jpg.session_id, &lobby, queued, reg)
         } else {
             warn!("Ignoring game rejection event")
         }
@@ -147,7 +155,7 @@ fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
     }
 }
 
-fn put_ready_then_xadd(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Components) {
+fn ready_game(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Components) {
     let updated: GameLobby = lobby.ready(queued);
     if let Err(_) = reg.game_lobby_repo.put(&updated) {
         error!("game lobby write F1");
@@ -160,8 +168,25 @@ fn put_ready_then_xadd(session_id: &SessionId, lobby: &GameLobby, queued: &Game,
         })) {
             error!("XADD Game ready")
         } else {
-            trace!("Game ready. Lobby: {:?}", &updated)
+            trace!("Game ready. Lobby: {:?}", &updated);
+            init_changelog(&queued.game_id, queued.board_size, &reg)
         }
+    }
+}
+
+fn init_changelog(game_id: &GameId, board_size: u16, reg: &Components) {
+    if let Err(chgerr) = reg.xadd.xadd(StreamOutput::LOG(GameState {
+        game_id: game_id.clone(),
+        board: move_model::Board {
+            size: board_size,
+            ..Default::default()
+        },
+        captures: move_model::Captures::default(),
+        turn: 1,
+        moves: vec![],
+        player_up: move_model::Player::BLACK,
+    })) {
+        error!("could not write game state changelog {:?}", chgerr)
     }
 }
 
@@ -218,7 +243,7 @@ mod test {
     struct FakeXAdd(Sender<StreamOutput>);
     impl XAdd for FakeXAdd {
         fn xadd(&self, data: StreamOutput) -> Result<(), XAddErr> {
-            self.0.send(data).expect("send");
+            if let Err(_) = self.0.send(data) {}
             Ok(())
         }
     }
