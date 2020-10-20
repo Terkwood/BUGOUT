@@ -66,7 +66,15 @@
     },
     {
       "type": "shell",
-      "inline": ["cd /home/core/BUGOUT", "sh build-fcos.sh"]
+      "inline": ["sudo systemctl reboot"],
+      "pause_before": "20s"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "cd /home/core/BUGOUT",
+        "sh build-fcos.sh"
+      ]
     }
   ]
 }
