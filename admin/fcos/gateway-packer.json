@@ -59,6 +59,7 @@
       "inline": [
         "sudo systemctl stop rpm-ostreed",
         "sudo rpm-ostree upgrade",
+	"sudo rpm-ostree install python3",
         "sudo rpm-ostree install htop",
         "sudo rpm-ostree install tmux"
       ]
