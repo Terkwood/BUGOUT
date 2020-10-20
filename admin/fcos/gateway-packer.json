@@ -73,7 +73,6 @@
       "type": "shell",
       "inline": [
         "cd /home/core/BUGOUT",
-        "git switch wip-admin",
         "sh build-fcos.sh"
       ]
     }
