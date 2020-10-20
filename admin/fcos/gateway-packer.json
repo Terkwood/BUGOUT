@@ -59,10 +59,15 @@
       "inline": [
         "sudo systemctl stop rpm-ostreed",
         "sudo rpm-ostree upgrade",
-	"sudo rpm-ostree install python3",
+        "sudo rpm-ostree install docker-compose",
         "sudo rpm-ostree install htop",
         "sudo rpm-ostree install tmux"
       ]
+    },
+    {
+      "type": "shell",
+      "inline": ["sudo shutdown -r"],
+      "pause_before": "20s"
     },
     {
       "type": "shell",
