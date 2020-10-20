@@ -22,7 +22,7 @@
       "source_ami_filter": {
         "filters": {
           "virtualization-type": "hvm",
-          "name": "fedora-coreos-31.20200420.3.0",
+          "name": "fedora-coreos-32.20200923.3.0",
           "root-device-type": "ebs"
         },
         "owners": ["125523088429"],
@@ -51,11 +51,6 @@
     },
     {
       "type": "file",
-      "destination": "/home/core/BUGOUT/bugle/",
-      "source": "{{user `dotenv_src`}}/bugle/.env"
-    },
-    {
-      "type": "file",
       "destination": "/home/core/BUGOUT/botlink/",
       "source": "{{user `dotenv_src`}}/botlink/.env"
     },
@@ -70,7 +65,7 @@
     },
     {
       "type": "shell",
-      "inline": ["cd /home/core/BUGOUT", "sh build-tiny-dc-fcos.sh"]
+      "inline": ["cd /home/core/BUGOUT", "sh build-fcos.sh"]
     }
   ]
 }
