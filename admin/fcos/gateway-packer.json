@@ -66,7 +66,7 @@
     },
     {
       "type": "shell",
-      "inline": ["sudo shutdown -r"],
+      "inline": ["sudo systemctl reboot"],
       "pause_before": "20s"
     },
     {
