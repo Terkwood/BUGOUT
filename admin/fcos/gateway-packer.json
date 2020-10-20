@@ -51,11 +51,6 @@
     },
     {
       "type": "file",
-      "destination": "/home/core/BUGOUT/bugle/",
-      "source": "{{user `dotenv_src`}}/bugle/.env"
-    },
-    {
-      "type": "file",
       "destination": "/home/core/BUGOUT/botlink/",
       "source": "{{user `dotenv_src`}}/botlink/.env"
     },
