@@ -183,8 +183,6 @@ fn test_moves_processed() {
         .arg("~")
         .arg("1000")
         .arg("*")
-        .arg("game_id")
-        .arg(game_id.0.to_string())
         .arg("data")
         .arg(initial_game_state.serialize().unwrap())
         .query::<String>(&mut conn)
@@ -256,8 +254,6 @@ fn test_moves_processed() {
             .arg("~")
             .arg("1000")
             .arg("*")
-            .arg("game_id")
-            .arg(game_id.clone().0.to_string())
             .arg("data")
             .arg(current_game_state.serialize().unwrap())
             .query::<String>(&mut conn)
@@ -286,7 +282,7 @@ fn test_moves_processed() {
                     match c {
                         redis::Value::Bulk(ds) => match &ds[0] {
                             redis::Value::Bulk(es) => match &es[1] {
-                                redis::Value::Bulk(fs) => match &fs[3] {
+                                redis::Value::Bulk(fs) => match &fs[1] {
                                     redis::Value::Data(bin) => out.push(bin.clone()),
                                     _ => (),
                                 },
