@@ -95,19 +95,17 @@ fn test_process_move() {
         .arg("STREAMS")
         .arg(GAME_STATES_TOPIC)
         .arg("0-0")
-        .query::<Vec<HashMap<String, Vec<HashMap<String, (String, String, String, Option<Vec<u8>>)>>>>>(&mut conn)
+        .query::<Vec<HashMap<String, Vec<HashMap<String, (String, Option<Vec<u8>>)>>>>>(&mut conn)
         .unwrap();
     assert_eq!(xread_game_states_changelog.len(), 1);
     let by_timestamp = xread_game_states_changelog[0].get(GAME_STATES_TOPIC);
     assert!(by_timestamp.is_some());
 
-    let game_state_payload_vec: Vec<(String, String, String, Option<Vec<u8>>)> =
+    let game_state_payload_vec: Vec<(String, Option<Vec<u8>>)> =
         by_timestamp.unwrap()[0].values().cloned().collect();
     let payload = &game_state_payload_vec[0];
-    assert_eq!(payload.0, "game_id");
-    assert_eq!(payload.1, game_id.0.to_string());
-    assert_eq!(payload.2, "data");
 
+    assert_eq!(payload.0, "data");
     let expected_game_state = GameState {
         game_id: game_id.clone(),
         board: Board {
@@ -120,7 +118,7 @@ fn test_process_move() {
         captures: Captures { black: 0, white: 0 },
     };
     assert_eq!(
-        bincode::deserialize::<GameState>(&payload.3.as_ref().unwrap()).unwrap(),
+        bincode::deserialize::<GameState>(&payload.1.as_ref().unwrap()).unwrap(),
         expected_game_state
     );
 

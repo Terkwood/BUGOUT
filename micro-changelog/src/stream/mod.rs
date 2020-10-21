@@ -3,7 +3,6 @@ pub mod topics;
 
 use crate::repo::*;
 use crate::Components;
-use core_model::*;
 use messages::*;
 use move_model::*;
 use redis::Commands;
@@ -29,7 +28,6 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                                 Ok(gs) => {
                                     // These next two ops are concurrent in the kafka impl
                                     if let Err(e) = xadd_game_states_changelog(
-                                        &move_acc.game_id,
                                         gs,
                                         &topics.game_states_changelog,
                                         components,
@@ -165,7 +163,6 @@ fn xadd_move_made(
 }
 
 fn xadd_game_states_changelog(
-    game_id: &GameId,
     gs: GameState,
     stream_name: &str,
     components: &Components,
@@ -177,8 +174,6 @@ fn xadd_game_states_changelog(
         .arg("~")
         .arg("1000")
         .arg("*")
-        .arg("game_id")
-        .arg(game_id.0.to_string())
         .arg("data")
         .arg(gs.serialize()?)
         .query::<String>(&mut conn)?)
