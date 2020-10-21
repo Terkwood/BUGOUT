@@ -1,7 +1,7 @@
 use super::*;
+use crate::core_model::*;
 use redis::{Client, Commands};
 use std::rc::Rc;
-use crate::core_model::*;
 use sync_model::Move;
 
 pub trait HistoryRepo {
@@ -11,17 +11,18 @@ pub trait HistoryRepo {
 
 impl HistoryRepo for Rc<Client> {
     fn get(&self, game_id: &GameId) -> Result<Option<Vec<Move>>, FetchErr> {
-        if let Ok(mut conn) = self.get_connection() {
-            let key = redis_key(game_id);
-            let data: Result<Vec<u8>, _> = conn.get(&key).map_err(|_| FetchErr);
+        match self.get_connection() {
+            Ok(mut conn) => {
+                let key = redis_key(game_id);
+                let data: Result<Vec<u8>, _> = conn.get(&key).map_err(|e| FetchErr::Redis(e));
 
-            if data.is_ok() {
-                touch_ttl(&mut conn, &key)
+                if data.is_ok() {
+                    touch_ttl(&mut conn, &key)
+                }
+
+                data.and_then(|bytes| bincode::deserialize(&bytes).map_err(|e| FetchErr::Deser(e)))
             }
-
-            data.and_then(|bytes| bincode::deserialize(&bytes).map_err(|_| FetchErr))
-        } else {
-            Err(FetchErr)
+            Err(e) => Err(FetchErr::Redis(e)),
         }
     }
 

@@ -5,7 +5,7 @@ pub use history::*;
 pub use reply::*;
 
 use log::error;
-use redis::{Commands, Connection};
+use redis::{Commands, Connection, RedisError};
 
 const EXPIRY_SECS: usize = 86400;
 
@@ -19,12 +19,15 @@ pub fn touch_ttl(conn: &mut Connection, key: &str) {
     }
 }
 
-pub struct FetchErr;
+pub enum FetchErr {
+    Deser(Box<bincode::ErrorKind>),
+    Redis(RedisError),
+}
 pub struct WriteErr;
 
 impl From<redis::RedisError> for FetchErr {
-    fn from(_: redis::RedisError) -> Self {
-        Self
+    fn from(e: redis::RedisError) -> Self {
+        FetchErr::Redis(e)
     }
 }
 impl From<redis::RedisError> for WriteErr {
