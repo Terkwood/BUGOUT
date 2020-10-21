@@ -46,7 +46,7 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                             }
                         }
                         (entry_id, StreamData::GS(gs)) => {
-                            info!("Stream: Game State {:?}", &gs.game_id);
+                            info!("Stream: Game State {:?}", &gs);
                             if let Err(e) = game_states_repo::write(&gs.game_id, &gs, &components) {
                                 error!("Error saving game state {:#?}", e)
                             }
@@ -122,7 +122,6 @@ fn update_game_state(
         orig
     })?;
     game_states_repo::write(&game_id, &new_game_state, &components)?;
-    info!("Updated {:?} {:?}", &game_id, &new_game_state);
     Ok(new_game_state)
 }
 
@@ -155,8 +154,6 @@ fn xadd_move_made(
         .arg("~")
         .arg("1000")
         .arg("*")
-        .arg("game_id")
-        .arg(mm.game_id.0.to_string())
         .arg("data")
         .arg(mm.serialize()?)
         .query::<String>(&mut conn)?)

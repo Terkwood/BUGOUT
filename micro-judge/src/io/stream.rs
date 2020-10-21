@@ -135,8 +135,6 @@ fn xadd_move_accepted(
         .arg("~")
         .arg("1000")
         .arg("*")
-        .arg("game_id")
-        .arg(move_made.game_id.0.to_string())
         .arg("data")
         .arg(move_made.serialize()?)
         .query::<String>(&mut conn)?)
