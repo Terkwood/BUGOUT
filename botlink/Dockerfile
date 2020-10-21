@@ -17,6 +17,10 @@ RUN --mount=type=cache,target=/app-src/target \
 
 FROM debian:stable-slim
 
+RUN apt-get update
+
+RUN apt install -y libssl-dev
+
 COPY --from=builder /usr/local/bin/botlink /usr/local/bin/botlink
 
 ENV RUST_LOG info
