@@ -19,13 +19,17 @@ impl ReplyOnMoveRepo for Rc<Client> {
         match self.get_connection() {
             Ok(mut conn) => {
                 let key = redis_key(game_id, req_id);
-                let data: Result<Vec<u8>, _> = conn.get(&key).map_err(|e| FetchErr::Redis(e));
+                let data: Result<Option<Vec<u8>>, _> =
+                    conn.get(&key).map_err(|e| FetchErr::Redis(e));
 
                 if data.is_ok() {
                     touch_ttl(&mut conn, &key)
                 }
-
-                data.and_then(|bytes| bincode::deserialize(&bytes).map_err(|e| FetchErr::Deser(e)))
+                match data {
+                    Ok(Some(bytes)) => bincode::deserialize(&bytes).map_err(|e| FetchErr::Deser(e)),
+                    Ok(None) => Ok(None),
+                    Err(e) => Err(e),
+                }
             }
             Err(e) => Err(FetchErr::Redis(e)),
         }
