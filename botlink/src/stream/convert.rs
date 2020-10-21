@@ -1,5 +1,6 @@
 /// Putting this hack in place until we get motivated
 /// enough to deprecate micro_model_moves & micro_model_bot
+/// See https://github.com/Terkwood/BUGOUT/issues/406
 pub trait Convert<A> {
     fn convert(&self) -> A;
 }
