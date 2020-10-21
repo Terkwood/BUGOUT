@@ -1,24 +1,24 @@
 [package]
-name = "botlink"
-version = "0.1.5"
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
+name = "botlink"
+version = "0.1.6"
 
 [dependencies]
-tungstenite = "0.10.1"
-micro_model_bot = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
-micro_model_moves =  { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
+base64 = "0.12.1"
 bincode = "1.2.1"
-redis_streams = { git = "https://github.com/Terkwood/BUGOUT", rev = "fdad420", version = "0.2.0" }
-redis_conn_pool = { git = "https://github.com/Terkwood/BUGOUT", branch = "unstable" }
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.2"
-env_logger = "0.7.1"
-log = "0.4.8"
-lazy_static = "1.4.0"
 dotenv = "0.15.0"
-uuid =  { version = "0.8.1", features = ["v4", "serde"] }
-base64 = "0.12.1"
-futures-util = { version = "0.3.5", default-features = false, features = ["async-await", "sink", "std"] }
+env_logger = "0.7.1"
+futures-util = {version = "0.3.5", default-features = false, features = ["async-await", "sink", "std"]}
+lazy_static = "1.4.0"
+log = "0.4.8"
+micro_model_bot = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
+micro_model_moves = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
+redis_conn_pool = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
+redis_streams = {git = "https://github.com/Terkwood/BUGOUT", rev = "fdad420", version = "0.2.0"}
+tokio = {version = "0.2.20", default-features = false, features = ["io-std", "io-util", "macros", "stream", "time"]}
 tokio-tungstenite = "0.10.1"
-tokio = { version = "0.2.20", default-features = false, features = ["io-std", "io-util", "macros", "stream", "time"] }
+tungstenite = "0.10.1"
+uuid = {version = "0.8.1", features = ["v4", "serde"]}

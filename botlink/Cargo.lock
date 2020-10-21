@@ -83,7 +83,7 @@ dependencies = [
 
 [[package]]
 name = "botlink"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "base64 0.12.1",
  "bincode",
