@@ -99,7 +99,7 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
             } else if &xread_topic[..] == topics::MOVE_MADE_TOPIC {
                 for with_timestamps in xread_data {
                     for (k, v) in with_timestamps {
-                        let shape: Result<(String, Vec<u8>), _> = // game_id <uuid-str> data <bin>
+                        let shape: Result<(String, Vec<u8>), _> = // data <bin>
                             redis::FromRedisValue::from_redis_value(&v);
                         if let Ok(s) = shape {
                             if let (Ok(xid), Some(move_made)) = (
