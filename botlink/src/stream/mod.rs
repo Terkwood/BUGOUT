@@ -8,7 +8,7 @@ use crate::registry::Components;
 use crate::repo::{AttachedBotsRepo, BoardSizeRepo, EntryIdRepo, EntryIdType};
 use convert::Convert;
 use crossbeam_channel::Sender;
-use log::{error, info, trace};
+use log::{error, info};
 use micro_model_bot::gateway::AttachBot;
 use micro_model_bot::ComputeMove;
 use redis_streams::XReadEntryId;
@@ -93,7 +93,7 @@ fn process_attach_bot(ab: AttachBot, entry_id: XReadEntryId, opts: &mut StreamOp
     {
         error!("Error saving entry ID for attach bot {:?}", e)
     } else {
-        trace!("Stream: Attach bot {:?}", ab);
+        info!("Stream: Attach bot {:?}", ab);
         let mut game_state = move_model::GameState {
             game_id: core_model::GameId(ab.game_id.0),
             captures: move_model::Captures::default(),
@@ -106,7 +106,7 @@ fn process_attach_bot(ab: AttachBot, entry_id: XReadEntryId, opts: &mut StreamOp
             game_state.board.size = bs.into()
         }
 
-        trace!("Now xadd game state {:?}", &game_state);
+        info!("Now xadd game state {:?}", &game_state);
 
         if let Err(e) = opts.xadder.xadd_game_state(&game_state) {
             error!(
@@ -129,7 +129,10 @@ fn process_attach_bot(ab: AttachBot, entry_id: XReadEntryId, opts: &mut StreamOp
         {
             error!("Failed to write board size {:?}", e)
         } else {
-            trace!("board size was set to {}", game_state.board.size)
+            info!(
+                "{:?} board size  set : {}",
+                &game_state.game_id.0, game_state.board.size
+            )
         }
     }
 }
