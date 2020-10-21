@@ -25,12 +25,22 @@ impl Convert<micro_model_moves::Player> for move_model::Player {
 }
 impl Convert<micro_model_moves::Board> for move_model::Board {
     fn convert(&self) -> micro_model_moves::Board {
-        todo!()
+        micro_model_moves::Board {
+            pieces: self
+                .pieces
+                .iter()
+                .map(|(k, v)| (k.convert(), v.convert()))
+                .collect(),
+            size: self.size,
+        }
     }
 }
 impl Convert<micro_model_moves::Captures> for move_model::Captures {
     fn convert(&self) -> micro_model_moves::Captures {
-        todo!()
+        micro_model_moves::Captures {
+            black: self.black,
+            white: self.white,
+        }
     }
 }
 impl Convert<micro_model_moves::Coord> for move_model::Coord {
