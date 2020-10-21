@@ -2,14 +2,11 @@ use super::topics;
 use crate::repo::AllEntryIds;
 use log::{trace, warn};
 use micro_model_bot::gateway::AttachBot;
-use micro_model_moves::{GameId, GameState};
 use redis_conn_pool::redis;
 use redis_conn_pool::Pool;
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
-use std::str::FromStr;
 use std::sync::Arc;
-use uuid::Uuid;
 
 const BLOCK_MSEC: u32 = 5000;
 
@@ -67,7 +64,7 @@ impl XReader for RedisXReader {
 #[derive(Clone, Debug)]
 pub enum StreamData {
     AB(AttachBot),
-    GS(GameId, GameState),
+    GS(move_model::GameState),
 }
 
 fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
@@ -78,16 +75,15 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
             if &xread_topic[..] == topics::GAME_STATES_CHANGELOG {
                 for with_timestamps in xread_data {
                     for (k, v) in with_timestamps {
-                        let shape: Result<(String, String, String, Option<Vec<u8>>), _> = // game-id <uuidstr> data <bin>
+                        let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin>
                             redis::FromRedisValue::from_redis_value(&v);
                         if let Ok(s) = shape {
-                            if let (Ok(seq_no), Some(game_id), Some(game_state)) = (
+                            if let (Ok(seq_no), Some(game_state)) = (
                                 XReadEntryId::from_str(k),
-                                Uuid::from_str(&s.1).ok(),
-                                s.3.clone().and_then(|bytes| GameState::from(&bytes).ok()),
+                                s.1.clone()
+                                    .and_then(|bytes| move_model::GameState::from(&bytes).ok()),
                             ) {
-                                stream_data
-                                    .insert(seq_no, StreamData::GS(GameId(game_id), game_state));
+                                stream_data.insert(seq_no, StreamData::GS(game_state));
                             } else {
                                 warn!("Xread: Deser error around game states data")
                             }
