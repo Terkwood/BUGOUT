@@ -88,7 +88,7 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
                                 warn!("Xread: Deser error around game states data")
                             }
                         } else {
-                            warn!("Fail XREAD")
+                            warn!("Fail XREAD {:?}", &v)
                         }
                     }
                 }
