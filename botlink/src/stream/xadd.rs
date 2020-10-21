@@ -31,8 +31,6 @@ impl XAdder for RedisXAdder {
             .arg("~")
             .arg("1000")
             .arg("*")
-            .arg("game_id")
-            .arg(game_id.0.to_string())
             .arg("data")
             .arg(game_state.serialize()?)
             .query::<String>(&mut *conn)?;
