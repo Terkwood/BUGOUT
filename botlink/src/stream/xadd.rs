@@ -1,6 +1,6 @@
 use crate::stream::topics;
 use micro_model_bot::gateway::BotAttached;
-use micro_model_moves::{Coord, GameId, MakeMoveCommand};
+use micro_model_moves::{Coord, MakeMoveCommand};
 use move_model;
 use redis_conn_pool::redis::RedisError;
 use redis_conn_pool::{redis, Pool};
@@ -9,11 +9,7 @@ use log::info;
 use std::sync::Arc;
 
 pub trait XAdder: Send + Sync {
-    fn xadd_game_state(
-        &self,
-        game_id: &GameId,
-        game_state: &move_model::GameState,
-    ) -> Result<(), XAddError>;
+    fn xadd_game_state(&self, game_state: &move_model::GameState) -> Result<(), XAddError>;
     fn xadd_make_move_command(&self, command: &MakeMoveCommand) -> Result<(), XAddError>;
     fn xadd_bot_attached(&self, bot_attached: BotAttached) -> Result<(), XAddError>;
 }
@@ -28,11 +24,7 @@ pub struct RedisXAdder {
     pub pool: Arc<Pool>,
 }
 impl XAdder for RedisXAdder {
-    fn xadd_game_state(
-        &self,
-        game_id: &GameId,
-        game_state: &move_model::GameState,
-    ) -> Result<(), XAddError> {
+    fn xadd_game_state(&self, game_state: &move_model::GameState) -> Result<(), XAddError> {
         let mut conn = self.pool.get().expect("redis pool");
         redis::cmd("XADD")
             .arg(topics::GAME_STATES_CHANGELOG)
@@ -46,7 +38,7 @@ impl XAdder for RedisXAdder {
 
         info!(
             "🧳 {} {}",
-            &game_id.0.to_string()[0..8],
+            &game_state.game_id.0.to_string()[0..8],
             game_state.player_up.to_string()
         );
 

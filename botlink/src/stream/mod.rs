@@ -105,7 +105,7 @@ fn process_attach_bot(ab: AttachBot, entry_id: XReadEntryId, opts: &mut StreamOp
             game_state.board.size = bs.into()
         }
 
-        if let Err(e) = opts.xadder.xadd_game_state(&ab.game_id, &game_state) {
+        if let Err(e) = opts.xadder.xadd_game_state(&game_state) {
             error!(
                 "Error writing redis stream for game state changelog : {:?}",
                 e
@@ -219,18 +219,11 @@ mod tests {
     }
 
     struct FakeXAdder {
-        added_in: Sender<(GameId, move_model::GameState)>,
+        added_in: Sender<move_model::GameState>,
     }
     impl xadd::XAdder for FakeXAdder {
-        fn xadd_game_state(
-            &self,
-            game_id: &GameId,
-            game_state: &move_model::GameState,
-        ) -> Result<(), XAddError> {
-            Ok(self
-                .added_in
-                .send((game_id.clone(), game_state.clone()))
-                .expect("send add"))
+        fn xadd_game_state(&self, game_state: &move_model::GameState) -> Result<(), XAddError> {
+            Ok(self.added_in.send(game_state.clone()).expect("send add"))
         }
         fn xadd_bot_attached(
             &self,
@@ -294,8 +287,8 @@ mod tests {
         let (compute_move_in, _): (Sender<ComputeMove>, _) = unbounded();
         let (eid_update_in, eid_update_out) = unbounded();
         let (added_in, added_out): (
-            Sender<(GameId, move_model::GameState)>,
-            Receiver<(GameId, move_model::GameState)>,
+            Sender<move_model::GameState>,
+            Receiver<move_model::GameState>,
         ) = unbounded();
 
         let entry_id_repo = Box::new(FakeEntryIdRepo { eid_update_in });
@@ -338,7 +331,7 @@ mod tests {
             select! {
                 recv(added_out) -> msg => if let Ok(a) = msg {
                     let mut data =  incoming_game_state.lock().expect("locked gs");
-                    *data = Some((XReadEntryId{millis_time: 1, seq_no: 0}, StreamData::GS(a.1))); }
+                    *data = Some((XReadEntryId{millis_time: 1, seq_no: 0}, StreamData::GS(a))); }
             }
         });
 
