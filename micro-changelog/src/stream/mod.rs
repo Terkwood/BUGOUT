@@ -45,9 +45,9 @@ pub fn process(topics: StreamTopics, components: &crate::Components) {
                                 }
                             }
                         }
-                        (entry_id, StreamData::GS(game_id, gs)) => {
-                            info!("Stream: Game State {:?}", &game_id);
-                            if let Err(e) = game_states_repo::write(&game_id, &gs, &components) {
+                        (entry_id, StreamData::GS(gs)) => {
+                            info!("Stream: Game State {:?}", &gs.game_id);
+                            if let Err(e) = game_states_repo::write(&gs.game_id, &gs, &components) {
                                 error!("Error saving game state {:#?}", e)
                             }
 
