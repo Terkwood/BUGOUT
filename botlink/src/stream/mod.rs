@@ -106,8 +106,6 @@ fn process_attach_bot(ab: AttachBot, entry_id: XReadEntryId, opts: &mut StreamOp
             game_state.board.size = bs.into()
         }
 
-        info!("Now xadd game state {:?}", &game_state);
-
         if let Err(e) = opts.xadder.xadd_game_state(&game_state) {
             error!(
                 "Error writing redis stream for game state changelog : {:?}",
@@ -128,11 +126,6 @@ fn process_attach_bot(ab: AttachBot, entry_id: XReadEntryId, opts: &mut StreamOp
             .set_board_size(&ab.game_id, game_state.board.size)
         {
             error!("Failed to write board size {:?}", e)
-        } else {
-            info!(
-                "{:?} board size  set : {}",
-                &game_state.game_id.0, game_state.board.size
-            )
         }
     }
 }
