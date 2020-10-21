@@ -6,9 +6,7 @@ use r2d2_redis::redis;
 use redis_streams::XReadEntryId;
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::str::FromStr;
 use std::sync::Arc;
-use uuid::Uuid;
 
 /// performs a redis xread then sorts the results
 ///
@@ -101,13 +99,12 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
             } else if &xread_topic[..] == topics::MOVE_MADE_TOPIC {
                 for with_timestamps in xread_data {
                     for (k, v) in with_timestamps {
-                        let shape: Result<(String, String, String, Vec<u8>), _> = // game_id <uuid-str> data <bin>
+                        let shape: Result<(String, Vec<u8>), _> = // data <bin>
                             redis::FromRedisValue::from_redis_value(&v);
                         if let Ok(s) = shape {
-                            if let (Ok(xid), Some(_game_id), Some(move_made)) = (
+                            if let (Ok(xid), Some(move_made)) = (
                                 XReadEntryId::from_str(k),
-                                Uuid::from_str(&s.1).ok(),
-                                bincode::deserialize::<move_model::MoveMade>(&s.3.clone()).ok(),
+                                bincode::deserialize::<move_model::MoveMade>(&s.1.clone()).ok(),
                             ) {
                                 stream_data.insert(xid, StreamData::MoveMade(move_made));
                             } else {

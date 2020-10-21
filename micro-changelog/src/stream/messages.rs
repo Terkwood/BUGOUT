@@ -1,22 +1,18 @@
 use super::StreamTopics;
-use core_model::GameId;
 use log::{error, warn};
 use move_model::{GameState, MoveMade};
 use redis::streams::StreamReadOptions;
 use redis::Commands;
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
-use std::str::FromStr;
-use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 pub enum StreamData {
     MA(MoveMade),
-    GS(GameId, GameState),
+    GS(GameState),
 }
 
-pub type XReadResult =
-    Vec<HashMap<String, Vec<HashMap<String, (String, String, String, Option<Vec<u8>>)>>>>;
+pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, (String, Option<Vec<u8>>)>>>>;
 
 const BLOCK_MS: usize = 5000;
 
@@ -70,7 +66,7 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                     for (k, v) in with_timestamps {
                         if let (Ok(seq_no), Some(move_accepted)) = (
                             XReadEntryId::from_str(k),
-                            v.3.clone().and_then(|mm| {
+                            v.1.clone().and_then(|mm| {
                                 let move_made_deser: Option<MoveMade> =
                                     bincode::deserialize(&mm).ok();
                                 move_made_deser
@@ -85,12 +81,11 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
             } else if &xread_topic[..] == game_states_topic {
                 for with_timestamps in xread_move_data {
                     for (k, v) in with_timestamps {
-                        if let (Ok(seq_no), Some(game_id), Some(game_state)) = (
+                        if let (Ok(seq_no), Some(game_state)) = (
                             XReadEntryId::from_str(k),
-                            Uuid::from_str(&v.1).ok(),
-                            v.3.clone().and_then(|bytes| GameState::from(&bytes).ok()),
+                            v.1.clone().and_then(|bytes| GameState::from(&bytes).ok()),
                         ) {
-                            stream_data.insert(seq_no, StreamData::GS(GameId(game_id), game_state));
+                            stream_data.insert(seq_no, StreamData::GS(game_state));
                         } else {
                             error!("Xread: Deser error around game states data")
                         }

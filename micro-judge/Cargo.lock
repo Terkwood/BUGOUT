@@ -530,7 +530,7 @@ checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
 name = "micro-judge"
-version = "0.1.18"
+version = "0.2.0-a"
 dependencies = [
  "bincode",
  "core-model",
