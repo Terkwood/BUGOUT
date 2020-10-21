@@ -19,6 +19,7 @@ pub fn touch_ttl(conn: &mut Connection, key: &str) {
     }
 }
 
+#[derive(Debug)]
 pub enum FetchErr {
     Deser(Box<bincode::ErrorKind>),
     Redis(RedisError),

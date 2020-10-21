@@ -109,7 +109,7 @@ fn process_req_sync(rs: &ReqSync, components: &Components) {
                 }
             }
         }
-        Err(_) => error!("history lookup for req sync"),
+        Err(e) => error!("history lookup for req sync : {:?}", e),
     }
 }
 
@@ -130,7 +130,7 @@ fn process_prov_hist(ph: &ProvideHistory, components: &Components) {
             }
         }
         Ok(None) => warn!("no history for game {:?}", ph.game_id),
-        Err(_e) => error!("history lookup error"),
+        Err(e) => error!("history lookup error in prov hist: {:?}", e),
     }
 }
 
