@@ -26,8 +26,13 @@ impl XRead for Rc<Client> {
                 .block(BLOCK_MS)
                 .group(GROUP_NAME, CONSUMER_NAME);
             let ser = conn.xread_options(
-                &[topics::GAME_STATES_CHANGELOG, topics::PROVIDE_HISTORY],
-                &[">", ">"],
+                &[
+                    topics::GAME_STATES_CHANGELOG,
+                    topics::PROVIDE_HISTORY,
+                    topics::REQ_SYNC,
+                    topics::MOVE_MADE,
+                ],
+                &[">", ">", ">", ">"],
                 opts,
             )?;
 
