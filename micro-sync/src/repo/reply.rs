@@ -27,7 +27,7 @@ impl ReplyOnMoveRepo for Rc<Client> {
 
                 data.and_then(|bytes| bincode::deserialize(&bytes).map_err(|e| FetchErr::Deser(e)))
             }
-            Err(_) => todo!(),
+            Err(e) => Err(FetchErr::Redis(e)),
         }
     }
 
