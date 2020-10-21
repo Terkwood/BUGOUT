@@ -9,14 +9,15 @@ services:
     ports:
       - "6379"
     volumes:
-      - /mnt/stateful_partition/BUGOUT/redis:/data
+      - /mnt/stateful_partition/BUGOUT/redis:/data:z
+    privileged: true
     command: /bin/bash -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled && echo 65535 > /proc/sys/net/core/somaxconn ; redis-server'
   gateway:
     build: gateway/.
     ports:
       - "3012:3012"
     volumes:
-      - ${PWD}/gateway/.env:/var/BUGOUT/gateway/.env
+      - "./gateway/.env:/var/BUGOUT/gateway/.env:z"
     links:
       - "redis"
     depends_on:
@@ -56,7 +57,7 @@ services:
     depends_on:
       - "redis"
     volumes:
-      - "./botlink/.env:/var/BUGOUT/botlink/.env"
+      - "./botlink/.env:/var/BUGOUT/botlink/.env:z"
   reverse-proxy:
     image: abiosoft/caddy
     ports:
