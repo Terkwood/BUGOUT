@@ -629,7 +629,7 @@ dependencies = [
 [[package]]
 name = "micro_model_bot"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0dec7266b41c21982e74137a827845b81083c745"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#e9c8c4218477f91bd5dc3f512d20c806057e4d76"
 dependencies = [
  "bincode",
  "micro_model_moves",
@@ -640,7 +640,7 @@ dependencies = [
 [[package]]
 name = "micro_model_moves"
 version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0dec7266b41c21982e74137a827845b81083c745"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#e9c8c4218477f91bd5dc3f512d20c806057e4d76"
 dependencies = [
  "bincode",
  "serde",
@@ -809,9 +809,9 @@ dependencies = [
 
 [[package]]
 name = "pin-project-lite"
-version = "0.1.10"
+version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e555d9e657502182ac97b539fb3dae8b79cda19e3e4f8ffb5e8de4f18df93c95"
+checksum = "c917123afa01924fc84bb20c4c03f004d9c38e5127e3c039bbf7f4b9c76a2f6b"
 
 [[package]]
 name = "pin-utils"
@@ -940,7 +940,7 @@ dependencies = [
 [[package]]
 name = "redis_conn_pool"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0dec7266b41c21982e74137a827845b81083c745"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#e9c8c4218477f91bd5dc3f512d20c806057e4d76"
 dependencies = [
  "r2d2_redis",
  "redis",
