@@ -183,11 +183,11 @@ fn process_move_made(move_made: &MoveMade, components: &Components) {
                         error!("xadd sync reply")
                     }
                 }
-                Err(_) => error!("history fetch err in move made processor"),
+                Err(e) => error!("history fetch err in move made processor: {:?}", e),
             }
         }
         Ok(None) => (),
-        Err(_) => error!("error fetching from reply repo"),
+        Err(e) => error!("error fetching from reply repo: {:?}", e),
     }
 }
 
