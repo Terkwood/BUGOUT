@@ -27,12 +27,9 @@ pub fn process(opts: &mut StreamOpts) {
                                 process_attach_bot(ab, entry_id, opts)
                             }
                             (entry_id, StreamData::GS(game_state)) => {
-                                let local_player_up = game_state.player_up.convert();
-                                let game_id = micro_model_moves::GameId(game_state.game_id.0);
-                                match opts
-                                    .attached_bots_repo
-                                    .is_attached(&game_id, local_player_up)
-                                {
+                                let player_up = game_state.player_up.convert();
+                                let game_id = game_state.game_id.convert();
+                                match opts.attached_bots_repo.is_attached(&game_id, player_up) {
                                     Ok(bot_game) => {
                                         if bot_game {
                                             let convert_state = game_state.convert();
@@ -43,10 +40,7 @@ pub fn process(opts: &mut StreamOpts) {
                                                 error!("WS SEND ERROR {:?}", e)
                                             }
                                         } else {
-                                            info!(
-                                                "Ignoring {:?} {:?}",
-                                                game_id, game_state.player_up
-                                            )
+                                            info!("Ignoring {:?} {:?}", game_id, player_up)
                                         };
                                         if let Err(e) = opts
                                             .entry_id_repo
