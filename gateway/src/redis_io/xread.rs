@@ -6,9 +6,7 @@ use r2d2_redis::redis;
 use redis_streams::XReadEntryId;
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::str::FromStr;
 use std::sync::Arc;
-use uuid::Uuid;
 
 /// performs a redis xread then sorts the results
 ///
