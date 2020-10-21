@@ -14,8 +14,6 @@ services:
     command: /bin/bash -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled && echo 65535 > /proc/sys/net/core/somaxconn ; redis-server'
   gateway:
     build: gateway/.
-    ports:
-      - "3012:3012"
     volumes:
       - "./gateway/.env:/var/BUGOUT/gateway/.env:z"
     links:

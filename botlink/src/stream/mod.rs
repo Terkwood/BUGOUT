@@ -93,6 +93,7 @@ fn process_attach_bot(ab: AttachBot, entry_id: XReadEntryId, opts: &mut StreamOp
     {
         error!("Error saving entry ID for attach bot {:?}", e)
     } else {
+        info!("Stream: Attach bot {:?}", ab);
         let mut game_state = move_model::GameState {
             game_id: core_model::GameId(ab.game_id.0),
             captures: move_model::Captures::default(),
