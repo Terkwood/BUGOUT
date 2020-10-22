@@ -26,7 +26,10 @@ impl ReplyOnMoveRepo for Rc<Client> {
                     touch_ttl(&mut conn, &key)
                 }
                 match data {
-                    Ok(Some(bytes)) => bincode::deserialize(&bytes).map_err(|e| FetchErr::Deser(e)),
+                    Ok(Some(bytes)) => {
+                        let deser: Result<ReqSync, _> = bincode::deserialize(&bytes);
+                        deser.map(|hist| Some(hist)).map_err(|e| FetchErr::Deser(e))
+                    }
                     Ok(None) => Ok(None),
                     Err(e) => Err(e),
                 }
