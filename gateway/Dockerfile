@@ -19,6 +19,10 @@ FROM debian:stable-slim
 
 COPY --from=builder /usr/local/bin/gateway /usr/local/bin/gateway
 
+# Hack to make sure env is _potentially_ copied (but not required)
+# https://stackoverflow.com/questions/31528384/conditional-copy-add-in-dockerfile
+COPY Cargo.toml .en[v]
+
 ENV RUST_LOG info
 
 CMD ["gateway"]
