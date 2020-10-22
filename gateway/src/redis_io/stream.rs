@@ -31,7 +31,12 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
                 Err(e) => error!("cannot xread {:?}", e),
                 Ok(xrr) => {
                     for (xid, data) in xrr {
-                        info!("📥 Stream: {:?}", &data);
+                        match &data {
+                            StreamData::HistoryProvided(_) => info!("📥 Stream HistoryProvided"),
+                            StreamData::SyncReply(_) => info!("📥 Stream SyncReply"),
+                            _ => info!("📥 Stream: {:?}", &data),
+                        }
+
                         let dc = data.clone();
                         process_event(xid, data, &events_in, &opts);
                         info!("🏞 OK {:?}", dc)

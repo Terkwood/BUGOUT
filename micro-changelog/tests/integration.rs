@@ -71,8 +71,6 @@ fn test_process_move() {
         .arg("~")
         .arg("1000")
         .arg("*")
-        .arg("game_id")
-        .arg(game_id.0.to_string())
         .arg("data")
         .arg(move_made.serialize().unwrap())
         .query::<String>(&mut conn)
