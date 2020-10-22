@@ -1,5 +1,7 @@
 # v0.9.0
 
+This release focuses on providing multiplayer functionality through a memory-efficent design focusing on Redis and Rust. (#174)
+
 - Clean up admin scripts to account for reduced footprint (#404, #403, #399, #398, #397, #396)
 - Remove Kafka-related functionalities (#375, #373, #372)
 - Add docker buildkit support (#369, #389)
