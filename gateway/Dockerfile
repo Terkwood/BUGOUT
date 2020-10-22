@@ -5,7 +5,8 @@ RUN rustup default stable
 
 WORKDIR /app-src
 
-COPY Cargo.toml src/ /app-src/
+COPY Cargo.toml /app-src/.
+COPY src/ /app-src/src
 
 RUN --mount=type=cache,target=/app-src/target \
     --mount=type=cache,target=/usr/local/cargo/git \
