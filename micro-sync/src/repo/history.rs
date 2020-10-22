@@ -23,8 +23,8 @@ impl HistoryRepo for Rc<Client> {
 
                 match data {
                     Ok(Some(bytes)) => {
-                        let it: Result<Vec<Move>, _> = bincode::deserialize(&bytes);
-                        it.map_err(|e| FetchErr::Deser(e)).map(|hist| Some(hist))
+                        let deser: Result<Vec<Move>, _> = bincode::deserialize(&bytes);
+                        deser.map(|hist| Some(hist)).map_err(|e| FetchErr::Deser(e))
                     }
                     Ok(None) => Ok(None),
                     Err(e) => Err(e),
