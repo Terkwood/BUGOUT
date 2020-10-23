@@ -2,8 +2,7 @@
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 name = "redis_streams"
-version = "0.3.1"
+version = "0.4.0"
 
 [dependencies]
-redis = {git = "https://github.com/mitsuhiko/redis-rs", rev = "aaecd6734a4c1f0bc59c96429d0e2102348e23ef"}
 uuid = {version = "0.8.1", features = ["serde", "v4"]}
