@@ -1,9 +1,9 @@
-const EDITION = 'Prevention'
+const EDITION = 'Micro'
 
 const EventEmitter = require('events')
-const {ipcRenderer, remote} = require('electron')
-const {app} = remote
-const {h, render, Component} = require('preact')
+const { ipcRenderer, remote } = require('electron')
+const { app } = remote
+const { h, render, Component } = require('preact')
 const classNames = require('classnames')
 
 const MainView = require('./MainView')
@@ -120,12 +120,14 @@ class App extends Component {
 
         // Expose submodules
 
-        this.modules = {Board, EngineSyncer, dialog, fileformats,
-            gametree, helper, i18n, setting, sound}
+        this.modules = {
+            Board, EngineSyncer, dialog, fileformats,
+            gametree, helper, i18n, setting, sound
+        }
 
         // Bind state to settings
 
-        setting.events.on('change', ({key}) => this.updateSettingState(key))
+        setting.events.on('change', ({ key }) => this.updateSettingState(key))
         this.updateSettingState()
 
         // from GatewayConn
@@ -174,7 +176,7 @@ class App extends Component {
                 } else if (this.state.mode !== 'play') {
                     this.setMode('play')
                 } else if (this.state.fullScreen) {
-                    this.setState({fullScreen: false})
+                    this.setState({ fullScreen: false })
                 }
             }
         })
@@ -191,9 +193,9 @@ class App extends Component {
     componentDidUpdate(_, prevState = {}) {
         // Update title
 
-        let {basename} = require('path')
+        let { basename } = require('path')
         let title = this.appName
-        let {representedFilename, gameIndex, gameTrees} = this.state
+        let { representedFilename, gameIndex, gameTrees } = this.state
         let t = i18n.context('app')
 
         if (representedFilename)
@@ -215,7 +217,7 @@ class App extends Component {
         }
     }
 
-    updateSettingState(key = null, {buildMenu = true} = {}) {
+    updateSettingState(key = null, { buildMenu = true } = {}) {
         let data = {
             'app.zoom_factor': 'zoomFactor',
             'view.show_coordinates': 'showCoordinates',
@@ -232,14 +234,14 @@ class App extends Component {
         }
 
         if (key == null) {
-            for (let k in data) this.updateSettingState(k, {buildMenu: false})
+            for (let k in data) this.updateSettingState(k, { buildMenu: false })
             this.buildMenu()
             return
         }
 
         if (key in data) {
             if (buildMenu) this.buildMenu()
-            this.setState({[data[key]]: setting.get(key)})
+            this.setState({ [data[key]]: setting.get(key) })
         }
     }
 
@@ -256,12 +258,12 @@ class App extends Component {
     }
 
     setMode(mode) {
-        let stateChange = {mode}
+        let stateChange = { mode }
 
         if (['scoring', 'estimator'].includes(mode)) {
             // Guess dead stones
 
-            let {gameIndex, gameTrees, treePosition} = this.state
+            let { gameIndex, gameTrees, treePosition } = this.state
             let iterations = setting.get('score.estimator_iterations')
             let tree = gameTrees[gameIndex]
 
@@ -269,7 +271,7 @@ class App extends Component {
                 finished: mode === 'scoring',
                 iterations
             }).then(result => {
-                this.setState({deadStones: result})
+                this.setState({ deadStones: result })
             })
         }
 
@@ -278,7 +280,7 @@ class App extends Component {
     }
 
     openDrawer(drawer) {
-        this.setState({openDrawer: drawer})
+        this.setState({ openDrawer: drawer })
     }
 
     closeDrawer() {
@@ -287,12 +289,12 @@ class App extends Component {
 
     setBusy(busy) {
         let diff = busy ? 1 : -1;
-        this.setState(s => ({busy: Math.max(s.busy + diff, 0)}))
+        this.setState(s => ({ busy: Math.max(s.busy + diff, 0) }))
     }
 
     // History Management
 
-    recordHistory({prevGameIndex, prevTreePosition} = {}) {
+    recordHistory({ prevGameIndex, prevTreePosition } = {}) {
         let currentEntry = this.history[this.historyPointer]
         let newEntry = {
             gameIndex: this.state.gameIndex,
@@ -342,7 +344,7 @@ class App extends Component {
             gameCurrents: entry.gameTrees.map(_ => ({}))
         })
 
-        this.setCurrentTreePosition(gameTree, entry.treePosition, {clearCache: true})
+        this.setCurrentTreePosition(gameTree, entry.treePosition, { clearCache: true })
     }
 
     // File Management
@@ -378,7 +380,7 @@ class App extends Component {
         })
     }
 
-    async newFile({playSound = false, showInfo = false} = {}) {
+    async newFile({ playSound = false, showInfo = false } = {}) {
         let emptyTree = this.getEmptyGameTree()
 
         await this.loadGameTrees([emptyTree], {})
@@ -417,7 +419,7 @@ class App extends Component {
         this.setBusy(false)
     }
 
-    async loadGameTrees(gameTrees, {clearHistory = true} = {}) {
+    async loadGameTrees(gameTrees, { clearHistory = true } = {}) {
         this.setBusy(true)
         if (this.state.openDrawer !== 'gamechooser') this.closeDrawer()
         this.setMode('play')
@@ -434,8 +436,8 @@ class App extends Component {
                 gameCurrents: gameTrees.map(_ => ({}))
             })
 
-            let [firstTree, ] = gameTrees
-            this.setCurrentTreePosition(firstTree, firstTree.root.id, {clearCache: true})
+            let [firstTree,] = gameTrees
+            this.setCurrentTreePosition(firstTree, firstTree.root.id, { clearCache: true })
 
             this.treeHash = this.generateTreeHash()
             this.fileHash = this.generateFileHash()
@@ -467,14 +469,14 @@ class App extends Component {
     }
 
     getSGF() {
-        let {gameTrees} = this.state
+        let { gameTrees } = this.state
 
         gameTrees = gameTrees.map(tree => tree.mutate(draft => {
             draft.updateProperty(draft.root.id, 'AP', [`${this.appName}:${this.version}`])
             draft.updateProperty(draft.root.id, 'CA', ['UTF-8'])
         }))
 
-        this.setState({gameTrees})
+        this.setState({ gameTrees })
         this.recordHistory()
 
         return sgf.stringify(gameTrees.map(tree => tree.root), {
@@ -509,10 +511,10 @@ class App extends Component {
 
     // Playing
 
-    clickVertex(vertex, {button = 0} = {}) {
+    clickVertex(vertex, { button = 0 } = {}) {
         this.closeDrawer()
 
-        let {gameTrees, gameIndex, gameCurrents, treePosition} = this.state
+        let { gameTrees, gameIndex, gameCurrents, treePosition } = this.state
         let tree = gameTrees[gameIndex]
         let board = gametree.getBoard(tree, treePosition)
 
@@ -530,7 +532,7 @@ class App extends Component {
                     let color = this.inferredState.currentPlayer > 0 ? 'B' : 'W'
 
                     let multiplayerColorSatisfied = this.state.multiplayer.yourColor && this.state.multiplayer.yourColor.event && this.state.multiplayer.yourColor.event.yourColor && color === this.state.multiplayer.yourColor.event.yourColor[0]
-                    
+
                     let botColorSatisfied = this.state.multiplayer.botColor && this.state.multiplayer.botColor[0] !== color
                     if (this.state.multiplayer && (multiplayerColorSatisfied || botColorSatisfied)) {
                         this.makeMove(vertex, { sendToEngine: autoGenmove })
@@ -540,7 +542,7 @@ class App extends Component {
         } else if (['scoring', 'estimator'].includes(this.state.mode)) {
             if (button !== 0 || board.get(vertex) === 0) return
 
-            let {mode, deadStones} = this.state
+            let { mode, deadStones } = this.state
             let dead = deadStones.some(v => helper.vertexEquals(v, vertex))
             let stones = mode === 'estimator' ? board.getChain(vertex) : board.getRelatedChains(vertex)
 
@@ -550,20 +552,20 @@ class App extends Component {
                 deadStones = deadStones.filter(v => !stones.some(w => helper.vertexEquals(v, w)))
             }
 
-            this.setState({deadStones})
+            this.setState({ deadStones })
         }
 
         this.events.emit('vertexClick')
     }
 
-    makeMove(vertex, {player = null, sendToEngine = false} = {}) {
+    makeMove(vertex, { player = null, sendToEngine = false } = {}) {
         if (!['play'].includes(this.state.mode)) {
             this.closeDrawer()
             this.setMode('play')
         }
 
         let t = i18n.context('app.play')
-        let {gameTrees, gameIndex, treePosition} = this.state
+        let { gameTrees, gameIndex, treePosition } = this.state
         let tree = gameTrees[gameIndex]
         let node = tree.get(treePosition)
         let board = gametree.getBoard(tree, treePosition)
@@ -579,7 +581,7 @@ class App extends Component {
         if (!player) player = this.inferredState.currentPlayer
         let color = player > 0 ? 'B' : 'W'
         let capture = false, suicide = false, ko = false
-        let newNodeData = {[color]: [sgf.stringifyVertex(vertex)]}
+        let newNodeData = { [color]: [sgf.stringifyVertex(vertex)] }
 
         if (!pass) {
             // Check for ko
@@ -608,9 +610,9 @@ class App extends Component {
                 .some(v => board.get(v) == -player && board.getLiberties(v).length == 1)
 
             suicide = !capture
-            && vertexNeighbors.filter(v => board.get(v) == player)
-                .every(v => board.getLiberties(v).length == 1)
-            && vertexNeighbors.filter(v => board.get(v) == 0).length == 0
+                && vertexNeighbors.filter(v => board.get(v) == player)
+                    .every(v => board.getLiberties(v).length == 1)
+                && vertexNeighbors.filter(v => board.get(v) == 0).length == 0
 
             if (suicide && setting.get('game.show_suicide_warning')) {
                 if (dialog.showMessageBox(
@@ -664,38 +666,38 @@ class App extends Component {
 
         // Emit event
 
-        this.events.emit('moveMake', {pass, capture, suicide, ko, enterScoring})
+        this.events.emit('moveMake', { pass, capture, suicide, ko, enterScoring })
 
         if (sendToEngine && this.attachedEngineSyncers.some(x => x != null)) {
             // Send command to engine
 
             let passPlayer = pass ? player : null
-            setTimeout(() => this.generateMove({passPlayer}), setting.get('gtp.move_delay'))
+            setTimeout(() => this.generateMove({ passPlayer }), setting.get('gtp.move_delay'))
         }
     }
 
-    makeResign({player = null} = {}) {
-        let {gameTrees, gameIndex} = this.state
-        let {currentPlayer} = this.inferredState
+    makeResign({ player = null } = {}) {
+        let { gameTrees, gameIndex } = this.state
+        let { currentPlayer } = this.inferredState
         if (player == null) player = currentPlayer
         let color = player > 0 ? 'W' : 'B'
         let tree = gameTrees[gameIndex]
 
-        this.makeMove([-1, -1], {player})
+        this.makeMove([-1, -1], { player })
 
-        this.events.emit('resign', {player})
+        this.events.emit('resign', { player })
     }
 
     // Navigation
 
-    setCurrentTreePosition(tree, id, {clearCache = false} = {}) {
+    setCurrentTreePosition(tree, id, { clearCache = false } = {}) {
         if (clearCache) gametree.clearBoardCache()
 
         if (['scoring', 'estimator'].includes(this.state.mode)) {
-            this.setState({mode: 'play'})
+            this.setState({ mode: 'play' })
         }
 
-        let {gameTrees, gameCurrents} = this.state
+        let { gameTrees, gameCurrents } = this.state
         let gameIndex = gameTrees.findIndex(t => t.root.id === tree.root.id)
         let currents = gameCurrents[gameIndex]
 
@@ -719,13 +721,13 @@ class App extends Component {
             treePosition: id
         })
 
-        this.recordHistory({prevGameIndex, prevTreePosition})
+        this.recordHistory({ prevGameIndex, prevTreePosition })
 
         this.events.emit('navigate')
     }
-    
+
     // 😇 BUGOUT trimmed 😇
-    
+
 
     // Node Actions
 
@@ -786,7 +788,7 @@ class App extends Component {
                     //
                     // BUGOUT: do not update default setting
                     //
-                    
+
                     draft.updateProperty(draft.root.id, 'SZ', [value])
                 } else {
                     draft.removeProperty(draft.root.id, 'SZ')
@@ -845,11 +847,11 @@ class App extends Component {
     }
 
     getPlayer(tree, treePosition) {
-        let {data} = tree.get(treePosition)
+        let { data } = tree.get(treePosition)
 
         return data.PL != null ? (data.PL[0] === 'W' ? -1 : 1)
             : data.B != null || data.HA != null && +data.HA[0] >= 1 ? -1
-            : 1
+                : 1
     }
 
     setPlayer(tree, treePosition, sign) {
@@ -871,14 +873,14 @@ class App extends Component {
     // GTP Engines
 
     attachEngines(...engines) {
-        let {attachedEngines} = this.state
+        let { attachedEngines } = this.state
 
         if (helper.vertexEquals([...engines].reverse(), attachedEngines)) {
             // Just swap engines
 
             this.attachedEngineSyncers.reverse()
 
-            this.setState(({engineBusy, engineCommands}) => ({
+            this.setState(({ engineBusy, engineCommands }) => ({
                 engineCommands: engineCommands.reverse(),
                 engineBusy: engineBusy.reverse(),
                 attachedEngines: engines
@@ -899,7 +901,7 @@ class App extends Component {
             try {
                 let engine = engines[i]
 
-                let syncer = new EngineSyncer(engine, 
+                let syncer = new EngineSyncer(engine,
                     {
                         entryMethod: this.state.multiplayer && this.state.multiplayer.entryMethod,
                         joinPrivateGame: this.bugout.joinPrivateGame,
@@ -923,27 +925,27 @@ class App extends Component {
                 this.attachedEngineSyncers[i] = syncer
 
                 syncer.on('busy-changed', () => {
-                    this.setState(({engineBusy}) => {
+                    this.setState(({ engineBusy }) => {
                         let j = this.attachedEngineSyncers.indexOf(syncer)
                         engineBusy[j] = syncer.busy
 
-                        return {engineBusy}
+                        return { engineBusy }
                     })
                 })
 
                 syncer.controller.on('command-sent', evt => {
                     if (evt.command.name === 'list_commands') {
                         evt.getResponse().then(response =>
-                            this.setState(({engineCommands}) => {
+                            this.setState(({ engineCommands }) => {
                                 let j = this.attachedEngineSyncers.indexOf(syncer)
                                 engineCommands[j] = response.content.split('\n')
 
-                                return {engineCommands}
+                                return { engineCommands }
                             })
                         ).catch(helper.noop)
                     }
 
-                    this.handleCommandSent(Object.assign({syncer}, evt))
+                    this.handleCommandSent(Object.assign({ syncer }, evt))
                 })
 
 
@@ -954,7 +956,7 @@ class App extends Component {
             }
         }
 
-        this.setState({attachedEngines: engines})
+        this.setState({ attachedEngines: engines })
     }
 
     detachEngines() {
@@ -972,18 +974,18 @@ class App extends Component {
         this.setBusy(false)
     }
 
-    handleCommandSent({syncer, command, subscribe, getResponse}) {
+    handleCommandSent({ syncer, command, subscribe, getResponse }) {
         let sign = 1 - this.attachedEngineSyncers.indexOf(syncer) * 2
         if (sign > 1) sign = 0
 
         let t = i18n.context('app.engine')
-        let entry = {sign, name: syncer.engine.name, command, waiting: true}
-        
+        let entry = { sign, name: syncer.engine.name, command, waiting: true }
+
         let updateEntry = update => {
             Object.assign(entry, update)
         }
 
-        subscribe(({response, end}) => {
+        subscribe(({ response, end }) => {
             updateEntry({
                 response: Object.assign({}, response),
                 waiting: !end
@@ -991,15 +993,15 @@ class App extends Component {
         })
 
         getResponse()
-        .catch(_ => {
-            updateEntry({
-                response: {internal: true, content: t('connection failed')},
-                waiting: false
+            .catch(_ => {
+                updateEntry({
+                    response: { internal: true, content: t('connection failed') },
+                    waiting: false
+                })
             })
-        })
     }
 
-    async syncEngines({showErrorDialog = false} = {}) {
+    async syncEngines({ showErrorDialog = false } = {}) {
         if (this.attachedEngineSyncers.every(x => x == null)) return
         if (this.engineBusySyncing) return
 
@@ -1008,7 +1010,7 @@ class App extends Component {
 
         try {
             while (true) {
-                let {gameTrees, gameIndex, treePosition} = this.state
+                let { gameTrees, gameIndex, treePosition } = this.state
                 let tree = gameTrees[gameIndex]
 
                 await Promise.all(this.attachedEngineSyncers.map(syncer => {
@@ -1031,18 +1033,18 @@ class App extends Component {
         this.engineBusySyncing = false
     }
 
-    async generateMove({firstMove = true, followUp = false} = {}) {
+    async generateMove({ firstMove = true, followUp = false } = {}) {
         this.closeDrawer()
 
         if (!firstMove && !this.state.generatingMoves) {
             return
         } else if (firstMove) {
-            this.setState({generatingMoves: true})
+            this.setState({ generatingMoves: true })
         }
 
         let t = i18n.context('app.engine')
-        let {gameTrees, gameIndex} = this.state
-        let {currentPlayer} = this.inferredState
+        let { gameTrees, gameIndex } = this.state
+        let { currentPlayer } = this.inferredState
         let tree = gameTrees[gameIndex]
         let [color, opponent] = currentPlayer > 0 ? ['B', 'W'] : ['W', 'B']
         let [playerIndex, otherIndex] = currentPlayer > 0 ? [0, 1] : [1, 0]
@@ -1055,7 +1057,7 @@ class App extends Component {
 
                 let engines = [...this.state.attachedEngines].reverse()
                 this.attachEngines(...engines)
-                ;[playerSyncer, otherSyncer] = [otherSyncer, playerSyncer]
+                    ;[playerSyncer, otherSyncer] = [otherSyncer, playerSyncer]
             } else {
                 return
             }
@@ -1064,7 +1066,7 @@ class App extends Component {
         this.setBusy(true)
 
         try {
-            await this.syncEngines({showErrorDialog: false})
+            await this.syncEngines({ showErrorDialog: false })
         } catch (err) {
             this.stopGeneratingMoves()
             this.setBusy(false)
@@ -1072,27 +1074,27 @@ class App extends Component {
             return
         }
 
-        let {commands} = this.attachedEngineSyncers[playerIndex]
+        let { commands } = this.attachedEngineSyncers[playerIndex]
         let commandName = ['genmove_analyze', 'lz-genmove_analyze', 'genmove'].find(x => commands.includes(x))
         if (commandName == null) commandName = 'genmove'
 
         let responseContent = await (
             commandName === 'genmove'
-            ? playerSyncer.controller.sendCommand({name: commandName, args: [color]})
-                .then(res => res.content)
-            : new Promise((resolve, reject) => {
-                let interval = setting.get('board.analysis_interval').toString()
+                ? playerSyncer.controller.sendCommand({ name: commandName, args: [color] })
+                    .then(res => res.content)
+                : new Promise((resolve, reject) => {
+                    let interval = setting.get('board.analysis_interval').toString()
 
-                playerSyncer.controller.sendCommand(
-                    {name: commandName, args: [color, interval]},
-                    ({line}) => {
-                        if (line.indexOf('play ') !== 0) return
-                        resolve(line.slice('play '.length).trim())
-                    }
-                )
-                .then(() => resolve(null))
-                .catch(reject)
-            })
+                    playerSyncer.controller.sendCommand(
+                        { name: commandName, args: [color, interval] },
+                        ({ line }) => {
+                            if (line.indexOf('play ') !== 0) return
+                            resolve(line.slice('play '.length).trim())
+                        }
+                    )
+                        .then(() => resolve(null))
+                        .catch(reject)
+                })
         ).catch(() => null)
 
         let sign = color === 'B' ? 1 : -1
@@ -1130,11 +1132,11 @@ class App extends Component {
         )
         let doublePass = previousPass && pass
 
-        this.makeMove(vertex, {player: sign})
+        this.makeMove(vertex, { player: sign })
 
         if (followUp && otherSyncer != null && !doublePass) {
             await helper.wait(setting.get('gtp.move_delay'))
-            this.generateMove({passPlayer: pass ? sign : null, firstMove: false, followUp})
+            this.generateMove({ passPlayer: pass ? sign : null, firstMove: false, followUp })
         } else {
             this.stopGeneratingMoves()
         }
@@ -1147,7 +1149,7 @@ class App extends Component {
 
         let t = i18n.context('app.engine')
 
-        this.setState({generatingMoves: false})
+        this.setState({ generatingMoves: false })
     }
 
     // Render
@@ -1155,7 +1157,7 @@ class App extends Component {
     render(_, state) {
         // Calculate some inferred values
 
-        let {gameTrees, gameIndex, treePosition} = state
+        let { gameTrees, gameIndex, treePosition } = state
         let tree = gameTrees[gameIndex]
         let scoreBoard, areaMap
 
@@ -1173,7 +1175,7 @@ class App extends Component {
             }
 
             areaMap = state.mode === 'estimator'
-                ? influence.map(scoreBoard.arrangement, {discrete: true})
+                ? influence.map(scoreBoard.arrangement, { discrete: true })
                 : influence.areaMap(scoreBoard.arrangement)
         }
 
@@ -1203,7 +1205,7 @@ class App extends Component {
             h(GameLobbyModal, {
                 joinPrivateGame: this.bugout.joinPrivateGame.join,
                 idleStatus: state.multiplayer && state.multiplayer.idleStatus && state.multiplayer.idleStatus.status,
-                update: entryMethod => this.setState({ 
+                update: entryMethod => this.setState({
                     multiplayer: {
                         ...this.state.multiplayer,
                         entryMethod
@@ -1224,7 +1226,7 @@ class App extends Component {
             }),
             h(BoardSizeModal, {
                 data: state.multiplayer,
-                chooseBoardSize: boardSize => { 
+                chooseBoardSize: boardSize => {
                     this.setState({
                         multiplayer: {
                             ...this.state.multiplayer,
@@ -1237,8 +1239,8 @@ class App extends Component {
             h(WaitForYourColorModal, {
                 data: state.multiplayer
             }),
-            h(YourColorChosenModal, { yourColor: state.multiplayer && state.multiplayer.yourColor }), 
-            h(ReconnectModal, { data: state.multiplayer }), 
+            h(YourColorChosenModal, { yourColor: state.multiplayer && state.multiplayer.yourColor }),
+            h(ReconnectModal, { data: state.multiplayer }),
             h(IdleStatusModal, { data: state.multiplayer }),
             h(OpponentPassedModal),
             h(OpponentQuitModal),

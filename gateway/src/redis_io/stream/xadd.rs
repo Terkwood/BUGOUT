@@ -1,17 +1,13 @@
-use crate::backend::commands::BackendCommands as BC;
 use crate::backend::commands::{
     ChooseColorPrefBackendCommand, CreateGameBackendCommand, FindPublicGameBackendCommand,
     JoinPrivateGameBackendCommand, ReqSyncBackendCommand, SessionDisconnected,
 };
 use crate::model::{Coord, MakeMoveCommand, ProvideHistoryCommand};
-use crate::redis_io::RedisPool;
 use crate::topics;
 use micro_model_bot::gateway::AttachBot;
 
 use crate::backend::commands::IntoShared;
-use crossbeam_channel::{select, Receiver};
-use log::{error, info};
-use r2d2_redis::redis;
+use log::error;
 use std::sync::Arc;
 
 pub trait XAddCommands {
@@ -26,82 +22,57 @@ pub trait XAddCommands {
     fn xadd_session_disconnected(&self, command: SessionDisconnected);
 }
 
-pub fn start(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
-    loop {
-        select! {
-            recv(commands_out) -> backend_command_msg => match backend_command_msg {
-                Err(e) => error!("backend command xadd {:?}",e),
-                Ok(command) => {
-                    match &command {
-                        BC::ClientHeartbeat(_) => (), // no one cares
-                        _ => info!("Send command: {:?}", &command)
-                    }
-                    match command {
-                        BC::AttachBot(attach_bot) => cmds.xadd_attach_bot(attach_bot),
-                        BC::MakeMove(c) => cmds.xadd_make_move(c),
-                        BC::ClientHeartbeat(_) => (),
-                        BC::ProvideHistory(ph) => cmds.xadd_provide_history(ph),
-                        BC::ReqSync(rs) => cmds.xadd_req_sync(rs),
-                        BC::JoinPrivateGame(jpg) => cmds.xadd_join_private_game(jpg),
-                        BC::FindPublicGame(fpg) => cmds.xadd_find_public_game(fpg),
-                        BC::CreateGame(cg) => cmds.xadd_create_game(cg),
-                        BC::ChooseColorPref(cp) => cmds.xadd_choose_color_pref(cp),
-                        BC::SessionDisconnected(sd) => cmds.xadd_session_disconnected(sd),
-                        _ => error!("cannot match backend command to xadd"),
-                    }
-                }
-            }
-        }
-    }
-}
-
 pub struct RedisXAddCommands {
-    pub pool: Arc<RedisPool>,
+    pub client: Arc<redis::Client>,
 }
 
 impl XAddCommands for RedisXAddCommands {
     fn xadd_attach_bot(&self, attach_bot: AttachBot) {
-        let mut conn = self.pool.get().unwrap();
-
-        match attach_bot.serialize() {
-            Err(e) => error!("attach bot ser error {:?}", e),
-            Ok(bin) => {
-                let mut redis_cmd = redis::cmd("XADD");
-                redis_cmd
-                    .arg(topics::ATTACH_BOT_TOPIC)
-                    .arg("MAXLEN")
-                    .arg("~")
-                    .arg("1000")
-                    .arg("*")
-                    .arg("data")
-                    .arg(bin);
-                if let Err(e) = redis_cmd.query::<String>(&mut *conn) {
-                    error!("attach bot redis err {:?}", e)
+        if let Ok(mut conn) = self.client.get_connection() {
+            match attach_bot.serialize() {
+                Err(e) => error!("attach bot ser error {:?}", e),
+                Ok(bin) => {
+                    let mut redis_cmd = redis::cmd("XADD");
+                    redis_cmd
+                        .arg(topics::ATTACH_BOT_TOPIC)
+                        .arg("MAXLEN")
+                        .arg("~")
+                        .arg("1000")
+                        .arg("*")
+                        .arg("data")
+                        .arg(bin);
+                    if let Err(e) = redis_cmd.query::<String>(&mut conn) {
+                        error!("attach bot redis err {:?}", e)
+                    }
                 }
             }
+        } else {
+            error!("conn")
         }
     }
     fn xadd_make_move(&self, command: MakeMoveCommand) {
-        let mut conn = self.pool.get().unwrap();
-
-        let mut redis_cmd = redis::cmd("XADD");
-        redis_cmd
-            .arg(topics::MAKE_MOVE_TOPIC)
-            .arg("MAXLEN")
-            .arg("~")
-            .arg("1000")
-            .arg("*")
-            .arg("game_id")
-            .arg(command.game_id.to_string())
-            .arg("player")
-            .arg(command.player.to_string())
-            .arg("req_id")
-            .arg(command.req_id.to_string());
-        if let Some(Coord { x, y }) = command.coord {
-            redis_cmd.arg("coord_x").arg(x).arg("coord_y").arg(y);
-        }
-        if let Err(e) = redis_cmd.query::<String>(&mut *conn) {
-            error!("make move {:?}", e)
+        if let Ok(mut conn) = self.client.get_connection() {
+            let mut redis_cmd = redis::cmd("XADD");
+            redis_cmd
+                .arg(topics::MAKE_MOVE_TOPIC)
+                .arg("MAXLEN")
+                .arg("~")
+                .arg("1000")
+                .arg("*")
+                .arg("game_id")
+                .arg(command.game_id.to_string())
+                .arg("player")
+                .arg(command.player.to_string())
+                .arg("req_id")
+                .arg(command.req_id.to_string());
+            if let Some(Coord { x, y }) = command.coord {
+                redis_cmd.arg("coord_x").arg(x).arg("coord_y").arg(y);
+            }
+            if let Err(e) = redis_cmd.query::<String>(&mut conn) {
+                error!("make move {:?}", e)
+            }
+        } else {
+            error!("conn")
         }
     }
 
@@ -156,12 +127,12 @@ impl XAddCommands for RedisXAddCommands {
 }
 
 impl RedisXAddCommands {
-    pub fn create(pool: Arc<RedisPool>) -> Self {
-        RedisXAddCommands { pool }
+    pub fn create(client: Arc<redis::Client>) -> Self {
+        RedisXAddCommands { client }
     }
 
     fn xadd_classic(&self, bin: Result<Vec<u8>, Box<bincode::ErrorKind>>, topic: &str) {
-        match self.pool.get() {
+        match self.client.get_connection() {
             Err(e) => error!("xadd {}: cannot get conn {:?}", topic, e),
             Ok(mut conn) => {
                 if let Ok(b) = bin {
@@ -174,7 +145,7 @@ impl RedisXAddCommands {
                         .arg("*")
                         .arg("data")
                         .arg(b);
-                    if let Err(e) = redis_cmd.query::<String>(&mut *conn) {
+                    if let Err(e) = redis_cmd.query::<String>(&mut conn) {
                         error!("xadd {}: redis execution err. {:?}", topic, e)
                     }
                 } else {
@@ -189,6 +160,8 @@ impl RedisXAddCommands {
 mod tests {
     use super::*;
     use crate::model::*;
+
+    type BC = crate::backend::commands::BackendCommands;
 
     use crossbeam_channel::{select, unbounded, Receiver, Sender};
     use std::thread;
@@ -255,7 +228,9 @@ mod tests {
         let (test_in, test_out): (Sender<TestResult>, Receiver<TestResult>) = unbounded();
         let (cmds_in, cmds_out): (Sender<BC>, Receiver<BC>) = unbounded();
 
-        thread::spawn(move || start(cmds_out, &FakeXAddCmd { st: test_in }));
+        thread::spawn(move || {
+            super::super::write::write_loop(cmds_out, &FakeXAddCmd { st: test_in })
+        });
 
         cmds_in
             .send(BC::AttachBot(AttachBot {

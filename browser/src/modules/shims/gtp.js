@@ -8,7 +8,8 @@ const uuidv4 = require('uuid/v4')
 const ClientId = require('../multiplayer/clientid')
 const { IdleStatus, EntryMethod, emitReadyState, Player } = require('../multiplayer/bugout')
 
-const GATEWAY_HOST_LOCAL = "ws://localhost:3012/gateway"
+// for dev: host port 33012 should be mapped to container 3012
+const GATEWAY_HOST_LOCAL = "ws://localhost:33012/gateway"
 const GATEWAY_HOST_REMOTE = "wss://your.host.here:443/gateway"
 const GATEWAY_HOST = GATEWAY_HOST_LOCAL
 
@@ -28,7 +29,7 @@ class Controller extends EventEmitter {
         this.path = path
         this.args = args
         this.spawnOptions = spawnOptions
-        
+
         this._webSocketController = null
     }
 
@@ -38,7 +39,7 @@ class Controller extends EventEmitter {
 
     start() {
         if (this._webSocketController != null) return
-        
+
         this._webSocketController = new WebSocketController(GATEWAY_HOST, this.spawnOptions)
         this._webSocketController.on('command-sent', evt => this.emit('command-sent', evt))
         this._webSocketController.on('response-received', evt => this.emit('response-received', evt))
@@ -62,15 +63,15 @@ class Controller extends EventEmitter {
         this._webSocketController.stop()
     }
 
-    async sendCommand(command, subscriber = () => {}) {
+    async sendCommand(command, subscriber = () => { }) {
         if (this.webSocket == null) this.start()
 
         return await this._webSocketController.sendCommand(command, subscriber)
     }
 }
 
-const Command = { 
-    fromString: function(input) {
+const Command = {
+    fromString: function (input) {
         input = input.replace(/#.*?$/, '').trim()
 
         let inputs = input.split(/\s+/)
@@ -80,14 +81,14 @@ const Command = {
         else id = null
 
         let [name, ...args] = inputs
-        return {id, name, args}
+        return { id, name, args }
     },
-    toString: function({id = null, name, args = []}) {
+    toString: function ({ id = null, name, args = [] }) {
         return `${id != null ? id : ''} ${name} ${args.join(' ')}`.trim()
     }
 }
 
-const letterToPlayer = letter =>  letter === "B" ? "BLACK" : "WHITE"
+const letterToPlayer = letter => letter === "B" ? "BLACK" : "WHITE"
 const otherPlayer = p => p[0] === "B" ? "WHITE" : "BLACK"
 
 const FATAL_ERROR = 'Fatal error'
@@ -116,7 +117,7 @@ class WebSocketController extends EventEmitter {
         super()
 
         this.board = new Board(DEFAULT_BOARD_SIZE, DEFAULT_BOARD_SIZE)
-        
+
         sabaki.events.on('play-bot-color-selected',
             ({ humanColor }) => {
                 if (this.deferredPlayBot) {
@@ -128,17 +129,17 @@ class WebSocketController extends EventEmitter {
             'choose-board-size',
             ({ boardSize }) => {
                 this.boardSize = boardSize
-                this.board = new Board(boardSize,boardSize)
+                this.board = new Board(boardSize, boardSize)
                 if (this.deferredCreatePrivate) {
                     this.deferredCreatePrivate()
                     this.deferredCreatePrivate = undefined
                 }
             })
-        
-        sabaki.events.on('bugout-game-ready', 
+
+        sabaki.events.on('bugout-game-ready',
             ({ boardSize }) => {
                 this.boardSize = boardSize
-                this.board = new Board(boardSize,boardSize)
+                this.board = new Board(boardSize, boardSize)
             })
 
         this.gameId = null
@@ -156,12 +157,12 @@ class WebSocketController extends EventEmitter {
         this.joinPrivateGame = joinPrivateGame
         this.entryMethod = entryMethod
 
-        console.log('WS Controller Entry Method: '+ JSON.stringify(this.entryMethod))
+        console.log('WS Controller Entry Method: ' + JSON.stringify(this.entryMethod))
 
         setTimeout(() => setInterval(() => {
             emitReadyState(this.webSocket, sabaki.events)
         }, WEBSOCKET_HEALTH_INTERVAL_MS), WEBSOCKET_HEALTH_DELAY_MS)
-        
+
         // We pass handleWaitForOpponent down so that it can 'stick'
         // to the incoming websocket message, even after an initial WFP
         // result is returned via findPublicGame() and createPrivateGame() funcs
@@ -171,7 +172,7 @@ class WebSocketController extends EventEmitter {
         sabaki.events.on('sync-no-op', () => {
             // in case App.js is waiting for our play to resolve
             if (this.resolveMakeMove) {
-                this.resolveMakeMove({id: null, error: false})
+                this.resolveMakeMove({ id: null, error: false })
                 this.resolveMakeMove = undefined
             }
         })
@@ -183,10 +184,10 @@ class WebSocketController extends EventEmitter {
 
             if (this.resolveMoveMade) {
                 console.log('Resolving outstanding move...')
-                this.resolveMoveMade({'id':null, 'content': sabakiCoord, 'error':false})
+                this.resolveMoveMade({ 'id': null, 'content': sabakiCoord, 'error': false })
             }
 
-            let newPlayerUp = otherPlayer(playerUp) 
+            let newPlayerUp = otherPlayer(playerUp)
 
             // In case white needs to dismiss its initial screen
             sabaki.events.emit('they-moved', { 'playerUp': newPlayerUp })
@@ -195,11 +196,11 @@ class WebSocketController extends EventEmitter {
             // - Used by BugoutSync to delay sync requests after move
             sabaki.events.emit('bugout-move-made', { 'coord': syncLastMove.coord })
 
-            this.genMoveInProgress = false   
-            sabaki.events.emit('gen-move-completed', { done: true })  
+            this.genMoveInProgress = false
+            sabaki.events.emit('gen-move-completed', { done: true })
         })
 
-        sabaki.events.on('bugout-turn', ({ turn }) => this.turn = turn )
+        sabaki.events.on('bugout-turn', ({ turn }) => this.turn = turn)
 
         this.webSocket.addEventListener('close', () => {
             this.removeMessageListener()
@@ -207,7 +208,7 @@ class WebSocketController extends EventEmitter {
             emitReadyState(this.webSocket, sabaki.events)
         })
 
-        this.webSocket.addEventListener('error',event => {
+        this.webSocket.addEventListener('error', event => {
             console.log(`WebSocket error ${JSON.stringify(event)}`)
             emitReadyState(this.webSocket, sabaki.events)
         })
@@ -233,10 +234,10 @@ class WebSocketController extends EventEmitter {
                     // Until https://github.com/Terkwood/BUGOUT/issues/174
                     // is completed, we need to wait for the system to
                     // come online when we're playing against a human being.
-                    this.waitForBugoutOnline().then((a,b) => this.onBugoutOnline(a,b))    
+                    this.waitForBugoutOnline().then((a, b) => this.onBugoutOnline(a, b))
                 }
             })
-        }) 
+        })
     }
 
     setupBotGame() {
@@ -246,7 +247,7 @@ class WebSocketController extends EventEmitter {
                 if (!err && reply.type === 'BotAttached') {
                     this.gameId = reply.gameId
 
-                    let yourColor = humanColor.toUpperCase()[0] === "B" ? 
+                    let yourColor = humanColor.toUpperCase()[0] === "B" ?
                         Player.BLACK : Player.WHITE
 
                     sabaki.events.emit('your-color', { yourColor })
@@ -270,7 +271,7 @@ class WebSocketController extends EventEmitter {
                     } else {
                         throwFatal()
                     }
-            })
+                })
         } else if (!this.gameId && this.entryMethod === EntryMethod.CREATE_PRIVATE) {
             this.deferredCreatePrivate = () => this.gatewayConn
                 .createPrivateGame(this.boardSize || DEFAULT_BOARD_SIZE)
@@ -298,7 +299,7 @@ class WebSocketController extends EventEmitter {
                         throwFatal()
                     }
                 })
-        } else { 
+        } else {
             this.gatewayConn
                 .reconnect(this.gameId, this.resolveMoveMade, this.board)
                 .then((rc, err) => {
@@ -307,13 +308,13 @@ class WebSocketController extends EventEmitter {
 
                         if (this.genMoveInProgress) {
                             let provideHistoryCommand = {
-                                "type":"ProvideHistory",
+                                "type": "ProvideHistory",
                                 "gameId": this.gameId,
                                 "reqId": uuidv4()
                             }
-                            
+
                             this.webSocket.send(JSON.stringify(provideHistoryCommand))
-                            
+
                             let onMove = r => {
                                 if (r && r.resolveWith) {
                                     // the opponent moved
@@ -321,7 +322,7 @@ class WebSocketController extends EventEmitter {
                                     this.resolveMoveMade(r.resolveWith)
                                 }
                             }
-                            this.listenForHistoryOrMove(this.opponent, onMove)                    
+                            this.listenForHistoryOrMove(this.opponent, onMove)
                         } else {
                             this.listenForMove(this.opponent, this.resolveMoveMade)
                         }
@@ -334,7 +335,7 @@ class WebSocketController extends EventEmitter {
 
     removeMessageListener() {
         this.messageListener &&
-        this.webSocket.removeEventListener('message', this.messageListener)
+            this.webSocket.removeEventListener('message', this.messageListener)
     }
 
     updateMessageListener(listener) {
@@ -362,10 +363,10 @@ class WebSocketController extends EventEmitter {
                     if (lastMove) { // they didn't pass
                         let sabakiCoord = this.board.vertex2coord([lastMove.coord.x, lastMove.coord.y])
 
-                        onMove({player: lastMove.player, resolveWith: {"id":null,"content":sabakiCoord,"error":false}})
+                        onMove({ player: lastMove.player, resolveWith: { "id": null, "content": sabakiCoord, "error": false } })
                     } else {
                         // This may fail.  Revisit after https://github.com/Terkwood/BUGOUT/issues/56
-                        onMove({player: lastMove.player, resolveWith:{"id":null,"content":null,"error":false}})
+                        onMove({ player: lastMove.player, resolveWith: { "id": null, "content": null, "error": false } })
                     }
                 } else if (opponentMoved(msg, opponent)) {
 
@@ -406,7 +407,7 @@ class WebSocketController extends EventEmitter {
                 // from BUGOUT that the move was made
             } catch (err) {
                 console.log(`Error processing websocket message (M): ${JSON.stringify(err)}`)
-                resolve({"id": null, "content": "", "error": true})
+                resolve({ "id": null, "content": "", "error": true })
             }
         })
     }
@@ -419,9 +420,9 @@ class WebSocketController extends EventEmitter {
 
         let sabakiCoord = msg.coord ? this.board.vertex2coord([msg.coord.x, msg.coord.y]) : 'pass'
 
-        resolve({'id':null, 'content': sabakiCoord, 'error':false})
-        
-        let playerUp = otherPlayer(opponent) 
+        resolve({ 'id': null, 'content': sabakiCoord, 'error': false })
+
+        let playerUp = otherPlayer(opponent)
 
         // In case white needs to dismiss its initial screen
         sabaki.events.emit('they-moved', { playerUp })
@@ -436,17 +437,17 @@ class WebSocketController extends EventEmitter {
         sabaki.events.emit('bugout-opponent-quit')
         sabaki.makeResign()
         sabaki.setMode('scoring')
-        resolve({'id':null, 'error':false})
+        resolve({ 'id': null, 'error': false })
     }
 
 
-    async sendCommand(command, subscriber = () => {}) {
+    async sendCommand(command, subscriber = () => { }) {
         let isPassing = v => v[0] == 14 && isNaN(v[1])
 
         let promise = new Promise((resolve, reject) => {
             if (!this.gameId) {
                 console.log(`no game id: ignoring command ${JSON.stringify(command)}`)
-                reject({id: null, error: true})
+                reject({ id: null, error: true })
             }
 
             if (command.name == 'play') {
@@ -455,10 +456,10 @@ class WebSocketController extends EventEmitter {
 
                 let v = this.board.coord2vertex(command.args[1])
 
-                let coord = isPassing(v) ? null : {'x': v[0], 'y': v[1] }
+                let coord = isPassing(v) ? null : { 'x': v[0], 'y': v[1] }
 
                 let makeMove = {
-                    'type':'MakeMove',
+                    'type': 'MakeMove',
                     'gameId': this.gameId,
                     'reqId': uuidv4(),
                     'player': player,
@@ -471,32 +472,32 @@ class WebSocketController extends EventEmitter {
                     try {
                         let msg = JSON.parse(event.data)
                         if (msg.type === 'MoveMade' && msg.replyTo === makeMove.reqId) {
-                            resolve({id: null, error: false})
-                        } 
+                            resolve({ id: null, error: false })
+                        }
 
                         // discard any other messages until we receive confirmation
                         // from BUGOUT that the move was made
                     } catch (err) {
                         console.log(`Error processing websocket message: ${JSON.stringify(err)}`)
-                        resolve({ok: false})
+                        resolve({ ok: false })
                     }
                 })
-                
+
                 let payload = JSON.stringify(makeMove)
 
                 this.webSocket.send(payload)
-                
+
                 // Sync will be delayed as a result
                 sabaki.events.emit('bugout-make-move')
             } else if (command.name === 'genmove') {
                 let opponent = letterToPlayer(command.args[0])
                 this.opponent = opponent
-                
+
                 this.listenForMove(opponent, resolve)
                 this.genMoveInProgress = true
             } else {
-                resolve({id: null, err: false})
-             }
+                resolve({ id: null, err: false })
+            }
         })
 
         this.emit('command-sent', {
@@ -526,7 +527,7 @@ class WebSocketController extends EventEmitter {
 
     async identifySelf() {
         let command = {
-            'type':'Identify',
+            'type': 'Identify',
             'clientId': this.clientId
         }
 
@@ -539,7 +540,7 @@ class WebSocketController extends EventEmitter {
 
                     if (msg.type === 'IdentityAcknowledged') {
                         this.removeMessageListener()
-                    
+
                         resolve(msg)
                     }
                     // discard any other messages until we receive confirmation
@@ -550,7 +551,7 @@ class WebSocketController extends EventEmitter {
                 }
             })
         })
-       
+
     }
 
     async waitForBugoutOnline() {
@@ -562,15 +563,15 @@ class WebSocketController extends EventEmitter {
         }))
 
         this.pollBugoutOnline()
-        
-        return new Promise((resolve, reject) => { 
+
+        return new Promise((resolve, reject) => {
             this.updateMessageListener(event => {
                 try {
                     let msg = JSON.parse(event.data)
 
                     if (msg.type === 'IdleStatusProvided' && msg.status === IdleStatus.ONLINE) {
                         this.removeMessageListener()
-                    
+
                         this.idleStatus = { status: msg.status }
                         if (this.idleStatusPoll) {
                             clearInterval(this.idleStatusPoll)
@@ -579,15 +580,15 @@ class WebSocketController extends EventEmitter {
 
                         resolve(msg)
                     } else if (msg.type === 'IdleStatusProvided' && msg.status === IdleStatus.IDLE) {
-                        
+
                         this.idleStatus = { status: msg.status, since: msg.since }
                         sabaki.events.emit('idle-status', this.idleStatus)
                     } else if (msg.type === 'IdleStatusProvided' && msg.status === IdleStatus.BOOTING) {
-                    
+
                         this.idleStatus = { status: msg.status, since: msg.since }
                         sabaki.events.emit('idle-status', this.idleStatus)
                     } else {
-                        throw('wait-error-halp')
+                        throw ('wait-error-halp')
                     }
 
                     // discard any other messages until we receive confirmation
@@ -597,12 +598,12 @@ class WebSocketController extends EventEmitter {
                     reject()
                 }
             })
-         })
+        })
     }
 
     pollBugoutOnline() {
         let command = {
-            'type':'ProvideIdleStatus'
+            'type': 'ProvideIdleStatus'
         }
 
         this.webSocket.send(JSON.stringify(command))
@@ -610,9 +611,9 @@ class WebSocketController extends EventEmitter {
         this.idleStatusPoll = setInterval(() => {
             if (this.idleStatus && this.idleStatus.status && this.idleStatus.status !== IdleStatus.ONLINE) {
                 let command = {
-                    'type':'ProvideIdleStatus'
+                    'type': 'ProvideIdleStatus'
                 }
-        
+
                 this.webSocket.send(JSON.stringify(command))
             }
         }, IDLE_STATUS_POLL_MS)
@@ -635,7 +636,7 @@ class GatewayConn {
 
         this.handleYourColor = handleYourColor
 
-        sabaki.events.on('choose-color-pref', ({ colorPref }) =>    
+        sabaki.events.on('choose-color-pref', ({ colorPref }) =>
             this.chooseColorPref(colorPref))
 
         sabaki.events.on('resign', () => this.quitGame())
@@ -643,9 +644,9 @@ class GatewayConn {
 
     async reconnect(gameId, resolveMoveMade, board) {
         return new Promise((resolve, reject) => {
-            try { 
+            try {
                 let reconnectCommand = {
-                    "type":"Reconnect",
+                    "type": "Reconnect",
                     "gameId": gameId,
                     "reqId": uuidv4()
                 }
@@ -660,14 +661,14 @@ class GatewayConn {
                         // listens for _any_ player to move ...
                         if (resolveMoveMade && msg.type == "MoveMade") {
                             let sabakiCoord = board.vertex2coord([msg.coord.x, msg.coord.y])
-                            
-                            resolveMoveMade({"id":null,"content":sabakiCoord,"error":false})
+
+                            resolveMoveMade({ "id": null, "content": sabakiCoord, "error": false })
                         }
 
                         // discard any other messages
                     } catch (err) {
                         console.log(`Error processing websocket message (R): ${JSON.stringify(err)}`)
-                        resolve({error: true})
+                        resolve({ error: true })
                     }
                 }
 
@@ -708,7 +709,7 @@ class GatewayConn {
                                     isModalRelevant: false
                                 })
                             })
-                        }                        
+                        }
 
                         // App.js wants to know about this as well
                         sabaki.events.emit('bugout-bot-attached', msg)
@@ -732,19 +733,19 @@ class GatewayConn {
     async findPublicGame() {
         return new Promise((resolve, reject) => {
             let requestPayload = {
-                'type':'FindPublicGame'
+                'type': 'FindPublicGame'
             }
 
             this.webSocket.addEventListener('message', event => {
                 try {
                     let msg = JSON.parse(event.data)
-                    
+
                     if (msg.type === 'GameReady') {
                         resolve(msg)
                         this.handleWaitForOpponent({ gap: false, hasEvent: false })
                     } else if (msg.type === 'WaitForOpponent') {
                         resolve(msg)
-                        this.handleWaitForOpponent({ gap: false, hasEvent: true, event: msg})
+                        this.handleWaitForOpponent({ gap: false, hasEvent: true, event: msg })
                     }
                     // discard any other messages
                 } catch (err) {
@@ -754,7 +755,7 @@ class GatewayConn {
             })
 
             // We want to show the modal while we wait for a response from gateway
-            this.handleWaitForOpponent( { gap: true, hasEvent: false })
+            this.handleWaitForOpponent({ gap: true, hasEvent: false })
             this.webSocket.send(JSON.stringify(requestPayload))
         })
     }
@@ -762,7 +763,7 @@ class GatewayConn {
     async createPrivateGame(boardSize) {
         return new Promise((resolve, reject) => {
             let requestPayload = {
-                'type':'CreatePrivateGame',
+                'type': 'CreatePrivateGame',
                 boardSize
             }
 
@@ -772,7 +773,7 @@ class GatewayConn {
 
                     if (msg.type === 'WaitForOpponent') {
                         resolve(msg)
-                        this.handleWaitForOpponent({ gap: false, hasEvent: true, event: msg})
+                        this.handleWaitForOpponent({ gap: false, hasEvent: true, event: msg })
                     } else if (msg.type === 'GameReady') {
                         // later ...
                         resolve(msg)
@@ -788,7 +789,7 @@ class GatewayConn {
             })
 
             // We want to show the modal while we wait for a response from gateway
-            this.handleWaitForOpponent( { gap: true, hasEvent: false })
+            this.handleWaitForOpponent({ gap: true, hasEvent: false })
             this.webSocket.send(JSON.stringify(requestPayload))
         })
     }
@@ -796,7 +797,7 @@ class GatewayConn {
     async joinPrivateGame(gameId) {
         return new Promise((resolve, reject) => {
             let requestPayload = {
-                'type':'JoinPrivateGame',
+                'type': 'JoinPrivateGame',
                 gameId
             }
 
@@ -819,7 +820,7 @@ class GatewayConn {
             })
 
             // We want to show the modal while we wait for a response from gateway
-            this.handleWaitForOpponent( { gap: true, hasEvent: false })
+            this.handleWaitForOpponent({ gap: true, hasEvent: false })
             this.webSocket.send(JSON.stringify(requestPayload))
         })
     }
@@ -827,7 +828,7 @@ class GatewayConn {
     async chooseColorPref(colorPref) {
         return new Promise((resolve, reject) => {
             let requestPayload = {
-                'type':'ChooseColorPref',
+                'type': 'ChooseColorPref',
                 colorPref
             }
 
@@ -835,7 +836,7 @@ class GatewayConn {
             this.webSocket.addEventListener('message', event => {
                 try {
                     let msg = JSON.parse(event.data)
-                    
+
                     if (msg.type === 'YourColor') {
                         resolve(msg)
                         this.handleYourColor({ wait: false, event: msg })
@@ -848,7 +849,7 @@ class GatewayConn {
             })
 
             // We want to show a modal while we wait for a response from gateway
-            this.handleYourColor( { wait: true } )
+            this.handleYourColor({ wait: true })
             this.webSocket.send(JSON.stringify(requestPayload))
         })
     }
@@ -870,8 +871,8 @@ class BugoutSync {
         this.delayUntil = undefined
         this.reqId = undefined
 
-        sabaki.events.on('bugout-move-made', () => this.delay() )
-        sabaki.events.on('bugout-make-move', () => this.delay() )
+        sabaki.events.on('bugout-move-made', () => this.delay())
+        sabaki.events.on('bugout-make-move', () => this.delay())
     }
 
     activate(gameId) {
@@ -888,15 +889,15 @@ class BugoutSync {
     }
 
     reqSync() {
-        if ( this.activated && (Date.now() > (this.delayUntil||0)) ) {
+        if (this.activated && (Date.now() > (this.delayUntil || 0))) {
             this.reqId = uuidv4()
-            
+
             const payload = this.makePayload(this.reqId)
             this.webSocket.send(JSON.stringify(payload))
             this.updateMessageListener(event => {
                 try {
                     let msg = JSON.parse(event.data)
-                    
+
                     if (msg.type === "SyncReply" && this.reqId === msg.replyTo) {
                         this.processReply(msg)
                     }
@@ -938,7 +939,7 @@ class BugoutSync {
 
     removeMessageListener() {
         this.messageListener &&
-        this.webSocket.removeEventListener('message', this.messageListener)
+            this.webSocket.removeEventListener('message', this.messageListener)
     }
 
     updateMessageListener(listener) {
@@ -979,14 +980,14 @@ const findLastMove = tree => {
     var subtree = tree.root.children[0]
     var turn = 0
     var lastMove = null
-    while(!bottom) {
+    while (!bottom) {
         turn = turn + 1
 
         if (subtree && subtree.data) {
-            
+
             let blackTreeCoords = subtree.data.B
             let whiteTreeCoords = subtree.data.W
-            
+
             var proceed = false
             if (blackTreeCoords) {
                 let coord = convertTreeCoord(blackTreeCoords)
@@ -1018,7 +1019,7 @@ const findLastMove = tree => {
 
 const convertTreeCoord = (treeCoords) => {
     const offset = 97
-    if (treeCoords === undefined || 
+    if (treeCoords === undefined ||
         treeCoords[0] === undefined ||
         treeCoords[0].length !== 2) {
         return null

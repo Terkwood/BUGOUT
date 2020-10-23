@@ -20,6 +20,8 @@ services:
       - "redis"
     depends_on:
       - "redis"
+    ports:
+      - "33012:3012" # for local dev
   micro-judge:
     build: micro-judge/.
     links:

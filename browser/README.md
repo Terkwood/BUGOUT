@@ -4,6 +4,13 @@ This project is a direct descendant of [Sabaki](https://github.com/SabakiHQ/Saba
 
 Thank you to the Sabaki author and community for making their project available under MIT license.
 
+## Run the frontend locally
+
+```sh
+npm run build
+npm run start
+```
+
 ## Deployment
 
 Deploy from _this_ directory. npm build artifacts will be deposited to this directory.

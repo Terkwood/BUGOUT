@@ -9,7 +9,6 @@ pub fn init() {
 struct Env {
     hash_salt: Option<String>,
     link_to: Option<String>,
-    brokers: Option<String>,
 }
 
 lazy_static! {

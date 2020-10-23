@@ -1,3 +1,8 @@
+# NEXT: v0.9.1
+
+- Simplify redis-streams crate (#421)
+- Use XREADGROUP in gateway (#420)
+
 # v0.9.0
 
 This release focuses on providing multiplayer functionality through a memory-efficent design focusing on Redis and Rust. (#174)

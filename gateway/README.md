@@ -17,11 +17,7 @@ WebSocket server which negotiates between BUGOUT frontend and an internal redis 
 
 Ensures that connected browsers receive updates from redis, based on a client ID. Maintains crib notes on game states.
 
-## Premade game creation
-
-Sends a number of changelog/gamestate-aggregator empty states on startup, ensuring that there are games available for adjudication.
-
-## Running an example
+## Deprecated: Running an example
 
 In one terminal:
 
