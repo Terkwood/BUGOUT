@@ -228,7 +228,9 @@ mod tests {
         let (test_in, test_out): (Sender<TestResult>, Receiver<TestResult>) = unbounded();
         let (cmds_in, cmds_out): (Sender<BC>, Receiver<BC>) = unbounded();
 
-        thread::spawn(move || super::super::write::start(cmds_out, &FakeXAddCmd { st: test_in }));
+        thread::spawn(move || {
+            super::super::write::write_loop(cmds_out, &FakeXAddCmd { st: test_in })
+        });
 
         cmds_in
             .send(BC::AttachBot(AttachBot {

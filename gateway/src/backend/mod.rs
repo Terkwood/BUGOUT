@@ -10,12 +10,12 @@ pub fn start(channels: &MainChannels, redis_client: Arc<redis::Client>) {
     let pool_c = redis_client.clone();
     let c_out = channels.session_commands_out.clone();
     thread::spawn(move || {
-        stream::write::start(c_out, &stream::xadd::RedisXAddCommands::create(pool_c))
+        stream::write_loop(c_out, &stream::xadd::RedisXAddCommands::create(pool_c))
     });
 
     let bei = channels.backend_events_in.clone();
     let client_d = redis_client.clone();
-    stream::process(
+    stream::read_loop(
         bei,
         stream::StreamOpts {
             xread: Box::new(stream::xread::RedisXReader {

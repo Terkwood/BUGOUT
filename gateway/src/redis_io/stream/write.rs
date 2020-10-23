@@ -3,7 +3,7 @@ use crate::backend::commands::BackendCommands as BC;
 use crossbeam_channel::{select, Receiver};
 use log::{error, info};
 
-pub fn start(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
+pub fn write_loop(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
     loop {
         select! {
             recv(commands_out) -> backend_command_msg => match backend_command_msg {

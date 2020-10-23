@@ -1,10 +1,11 @@
 mod unacknowledged;
-pub mod write;
+mod write;
 mod xack;
 pub mod xadd;
 pub mod xread;
 
 pub use unacknowledged::*;
+pub use write::write_loop;
 
 use crate::backend::events as be;
 use crate::backend::events::BackendEvents;
@@ -38,7 +39,7 @@ pub struct StreamOpts {
     pub xack: Box<dyn XAck>,
 }
 
-pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
+pub fn read_loop(events_in: Sender<BackendEvents>, opts: StreamOpts) {
     let mut unacked = Unacknowledged::default();
     loop {
         match opts.xread.xread_sorted() {
