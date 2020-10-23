@@ -1,12 +1,11 @@
 use super::{StreamData, GROUP_NAME};
 use crate::topics;
-use log::{error, warn};
+use log::error;
 use redis::{
-    streams::{StreamMaxlen, StreamReadOptions, StreamReadReply},
-    Client, Commands,
+    streams::{StreamReadOptions, StreamReadReply},
+    Commands,
 };
 use redis_streams::XReadEntryId;
-use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -15,7 +14,13 @@ const CONSUMER_NAME: &str = "singleton";
 ///
 /// entry_ids: the minimum entry ids from which to read
 pub trait XReader {
-    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError>;
+    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamData)>, StreamReadError>;
+}
+
+#[derive(Debug)]
+pub enum StreamReadError {
+    Redis(redis::RedisError),
+    Deser(StreamDeserErr),
 }
 
 const BLOCK_MS: usize = 5000;
@@ -41,30 +46,16 @@ lazy_static! {
 }
 
 impl XReader for RedisXReader {
-    fn xread_sorted(&self) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
+    fn xread_sorted(&self) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, StreamReadError> {
         match self.client.get_connection() {
             Ok(mut conn) => {
                 let opts = StreamReadOptions::default()
                     .block(BLOCK_MS)
                     .group(GROUP_NAME, CONSUMER_NAME);
 
-                let ser: Result<StreamReadReply, _> =
-                    conn.xread_options(ALL_TOPICS, &AUTO_IDS, opts);
+                let ser: StreamReadReply = conn.xread_options(ALL_TOPICS, &AUTO_IDS, opts)?;
 
-                let xrr = redis::cmd("XREAD")
-                    .arg("BLOCK")
-                    .arg(&BLOCK_MS.to_string())
-                    .arg("STREAMS")
-                    /*.arg(entry_ids.bot_attached_xid.to_string())
-                    .arg(entry_ids.move_made_xid.to_string())
-                    .arg(entry_ids.hist_prov_xid.to_string())
-                    .arg(entry_ids.sync_reply_xid.to_string())
-                    .arg(entry_ids.wait_opponent_xid.to_string())
-                    .arg(entry_ids.game_ready_xid.to_string())
-                    .arg(entry_ids.priv_game_reject_xid.to_string())
-                    .arg(entry_ids.colors_chosen_xid.to_string())*/
-                    .query::<XReadResult>(&mut conn)?;
-                let unsorted: HashMap<XReadEntryId, StreamData> = deser(xrr);
+                let unsorted: HashMap<XReadEntryId, StreamData> = deser(ser)?;
                 let sorted_keys: Vec<XReadEntryId> = {
                     let mut ks: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
                     ks.sort();
@@ -80,167 +71,76 @@ impl XReader for RedisXReader {
                 }
                 Ok(answer)
             }
-            Err(e) => Err(e),
+            Err(e) => Err(StreamReadError::Redis(e)),
         }
     }
 }
-fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
-    let mut stream_data: HashMap<XReadEntryId, StreamData> = HashMap::new();
+fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, StreamDeserErr> {
+    let mut out: HashMap<XReadEntryId, StreamData> = HashMap::new();
 
-    for hash in xread_result.iter() {
-        for (xread_topic, xread_data) in hash.iter() {
-            if &xread_topic[..] == topics::BOT_ATTACHED_TOPIC {
-                for with_timestamps in xread_data {
-                    for (k, v) in with_timestamps {
-                        let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin> 
-                            redis::FromRedisValue::from_redis_value(&v);
-                        if let Ok(s) = shape {
-                            if let (Ok(xid), Some(bot_attached)) = (
-                                XReadEntryId::from_str(k),
-                                s.1.clone().and_then(|bytes| {
-                                    micro_model_bot::gateway::BotAttached::from(&bytes).ok()
-                                }),
-                            ) {
-                                stream_data.insert(xid, StreamData::BotAttached(bot_attached));
-                            } else {
-                                warn!("Xread: Deser error   bot attached data")
-                            }
-                        } else {
-                            error!("Fail XREAD bot attached")
-                        }
+    for k in srr.keys {
+        let key = k.key;
+        for e in k.ids {
+            if let Ok(xid) = XReadEntryId::from_str(&e.id) {
+                let maybe_data: Option<Vec<u8>> = e.get("data");
+                if let Some(data) = maybe_data {
+                    let sd: Option<StreamData> = if key == topics::BOT_ATTACHED_TOPIC {
+                        todo!("special")
+                    } else if key == topics::MOVE_MADE_TOPIC {
+                        todo!("really really special")
+                    } else if key == topics::HISTORY_PROVIDED_TOPIC {
+                        bincode::deserialize(&data)
+                            .map(|hp| StreamData::HistoryProvided(hp))
+                            .ok()
+                    } else if key == topics::SYNC_REPLY_TOPIC {
+                        bincode::deserialize(&data)
+                            .map(|synrep| StreamData::SyncReply(synrep))
+                            .ok()
+                    } else if key == topics::WAIT_FOR_OPPONENT_TOPIC {
+                        bincode::deserialize(&data)
+                            .map(|w| StreamData::WaitForOpponent(w))
+                            .ok()
+                    } else if key == topics::GAME_READY_TOPIC {
+                        bincode::deserialize(&data)
+                            .map(|g| StreamData::GameReady(g))
+                            .ok()
+                    } else if key == topics::PRIVATE_GAME_REJECTED_TOPIC {
+                        bincode::deserialize(&data)
+                            .map(|p| StreamData::PrivGameRejected(p))
+                            .ok()
+                    } else if key == topics::COLORS_CHOSEN_TOPIC {
+                        bincode::deserialize(&data)
+                            .map(|c| StreamData::ColorsChosen(c))
+                            .ok()
+                    } else {
+                        error!("Unknown key {}", key);
+                        return Err(StreamDeserErr);
+                    };
+                    if let Some(s) = sd {
+                        out.insert(xid, s);
+                    } else {
+                        return Err(StreamDeserErr);
                     }
-                }
-            } else if &xread_topic[..] == topics::MOVE_MADE_TOPIC {
-                for with_timestamps in xread_data {
-                    for (k, v) in with_timestamps {
-                        let shape: Result<(String, Vec<u8>), _> = // data <bin>
-                            redis::FromRedisValue::from_redis_value(&v);
-                        if let Ok(s) = shape {
-                            if let (Ok(xid), Some(move_made)) = (
-                                XReadEntryId::from_str(k),
-                                bincode::deserialize::<move_model::MoveMade>(&s.1.clone()).ok(),
-                            ) {
-                                stream_data.insert(xid, StreamData::MoveMade(move_made));
-                            } else {
-                                error!("fail  move made xread inner")
-                            }
-                        } else {
-                            error!("Fail move made XREAD outer")
-                        }
-                    }
-                }
-            } else if &xread_topic[..] == topics::HISTORY_PROVIDED_TOPIC {
-                bin_data_process(
-                    xread_data,
-                    &mut stream_data,
-                    Box::new(|bytes| {
-                        bincode::deserialize::<sync_model::api::HistoryProvided>(&bytes)
-                    }),
-                    topics::HISTORY_PROVIDED_TOPIC,
-                )
-            } else if &xread_topic[..] == topics::SYNC_REPLY_TOPIC {
-                bin_data_process(
-                    xread_data,
-                    &mut stream_data,
-                    Box::new(|bytes| bincode::deserialize::<sync_model::api::SyncReply>(&bytes)),
-                    topics::SYNC_REPLY_TOPIC,
-                )
-            } else if &xread_topic[..] == topics::WAIT_FOR_OPPONENT_TOPIC {
-                bin_data_process(
-                    xread_data,
-                    &mut stream_data,
-                    Box::new(|bytes| {
-                        bincode::deserialize::<lobby_model::api::WaitForOpponent>(&bytes)
-                    }),
-                    topics::WAIT_FOR_OPPONENT_TOPIC,
-                )
-            } else if &xread_topic[..] == topics::GAME_READY_TOPIC {
-                bin_data_process(
-                    xread_data,
-                    &mut stream_data,
-                    Box::new(|bytes| bincode::deserialize::<lobby_model::api::GameReady>(&bytes)),
-                    topics::GAME_READY_TOPIC,
-                )
-            } else if &xread_topic[..] == topics::PRIVATE_GAME_REJECTED_TOPIC {
-                bin_data_process(
-                    xread_data,
-                    &mut stream_data,
-                    Box::new(|bytes| {
-                        bincode::deserialize::<lobby_model::api::PrivateGameRejected>(&bytes)
-                    }),
-                    topics::PRIVATE_GAME_REJECTED_TOPIC,
-                )
-            } else if &xread_topic[..] == topics::COLORS_CHOSEN_TOPIC {
-                bin_data_process(
-                    xread_data,
-                    &mut stream_data,
-                    Box::new(|bytes| {
-                        bincode::deserialize::<color_model::api::ColorsChosen>(&bytes)
-                    }),
-                    topics::COLORS_CHOSEN_TOPIC,
-                )
-            } else {
-                warn!("Ignoring topic {}", &xread_topic[..])
-            }
-        }
-    }
-
-    stream_data
-}
-
-fn bin_data_process<'a, T>(
-    xread_data: &Vec<HashMap<String, redis::Value, std::collections::hash_map::RandomState>>,
-    stream_data: &mut HashMap<XReadEntryId, StreamData>,
-    des: Box<dyn Fn(Vec<u8>) -> Result<T, Box<bincode::ErrorKind>>>,
-    topic: &str,
-) where
-    T: Deserialize<'a> + std::convert::Into<StreamData>,
-{
-    for with_timestamps in xread_data {
-        for (k, v) in with_timestamps {
-            let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin> 
-                redis::FromRedisValue::from_redis_value(&v);
-            if let Ok(s) = shape {
-                if let (Ok(xid), Some(local)) =
-                    (XReadEntryId::from_str(k), des(s.1.unwrap_or_default()).ok())
-                {
-                    stream_data.insert(xid, local.into());
                 } else {
-                    warn!("Xread: Deser error  {}", topic)
+                    error!("xid-ish");
+                    return Err(StreamDeserErr);
                 }
-            } else {
-                error!("Fail XREAD {}", topic)
             }
         }
     }
+    Ok(out)
 }
-impl From<sync_model::api::HistoryProvided> for StreamData {
-    fn from(a: sync_model::api::HistoryProvided) -> Self {
-        StreamData::HistoryProvided(a)
+
+#[derive(Debug)]
+pub struct StreamDeserErr;
+
+impl From<StreamDeserErr> for StreamReadError {
+    fn from(e: StreamDeserErr) -> Self {
+        StreamReadError::Deser(e)
     }
 }
-impl From<sync_model::api::SyncReply> for StreamData {
-    fn from(h: sync_model::api::SyncReply) -> Self {
-        StreamData::SyncReply(h)
-    }
-}
-impl From<lobby_model::api::WaitForOpponent> for StreamData {
-    fn from(w: lobby_model::api::WaitForOpponent) -> Self {
-        StreamData::WaitForOpponent(w)
-    }
-}
-impl From<lobby_model::api::GameReady> for StreamData {
-    fn from(w: lobby_model::api::GameReady) -> Self {
-        StreamData::GameReady(w)
-    }
-}
-impl From<lobby_model::api::PrivateGameRejected> for StreamData {
-    fn from(w: lobby_model::api::PrivateGameRejected) -> Self {
-        StreamData::PrivGameRejected(w)
-    }
-}
-impl From<color_model::api::ColorsChosen> for StreamData {
-    fn from(w: color_model::api::ColorsChosen) -> Self {
-        StreamData::ColorsChosen(w)
+impl From<redis::RedisError> for StreamReadError {
+    fn from(e: redis::RedisError) -> Self {
+        StreamReadError::Redis(e)
     }
 }
