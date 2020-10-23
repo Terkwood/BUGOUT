@@ -1,4 +1,6 @@
-https://your.host.here
+# replace with something like
+# https://your.host.here
+localhost
 
 proxy /gateway gateway:3012 {
     websocket
