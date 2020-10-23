@@ -1,9 +1,7 @@
 use super::topics;
-use crate::repo::AllEntryIds;
 use log::{trace, warn};
 use micro_model_bot::gateway::AttachBot;
-use redis_conn_pool::redis;
-use redis_conn_pool::Pool;
+use redis::Client;
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -16,48 +14,45 @@ pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 ///
 /// entry_ids: the minimum entry ids from which to read
 pub trait XReader: Send + Sync {
-    fn xread_sorted(
-        &self,
-        entry_ids: AllEntryIds,
-    ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError>;
+    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError>;
 }
 
 pub struct RedisXReader {
-    pub pool: Arc<Pool>,
+    pub client: Arc<Client>,
 }
 impl XReader for RedisXReader {
-    fn xread_sorted(
-        &self,
-        entry_ids: AllEntryIds,
-    ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
+    fn xread_sorted(&self) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
         trace!(
             "xreading from {} and {}",
             topics::ATTACH_BOT_CMD,
             topics::GAME_STATES_CHANGELOG
         );
-        let mut conn = self.pool.get().unwrap();
-        let xrr = redis::cmd("XREAD")
-            .arg("BLOCK")
-            .arg(&BLOCK_MSEC.to_string())
-            .arg("STREAMS")
-            .arg(topics::ATTACH_BOT_CMD)
-            .arg(topics::GAME_STATES_CHANGELOG)
-            .arg(entry_ids.attach_bot_eid.to_string())
-            .arg(entry_ids.game_states_eid.to_string())
-            .query::<XReadResult>(&mut *conn)?;
-        let unsorted = deser(xrr);
-        let sorted_keys: Vec<XReadEntryId> = {
-            let mut ks: Vec<XReadEntryId> = unsorted.keys().copied().collect();
-            ks.sort();
-            ks
-        };
-        let mut answer = vec![];
-        for sk in sorted_keys {
-            if let Some(data) = unsorted.get(&sk) {
-                answer.push((sk, data.clone()))
+        match self.client.get_connection() {
+            Ok(mut conn) => {
+                todo!();
+                let xrr = redis::cmd("XREAD")
+                    .arg("BLOCK")
+                    .arg(&BLOCK_MSEC.to_string())
+                    .arg("STREAMS")
+                    .arg(topics::ATTACH_BOT_CMD)
+                    .arg(topics::GAME_STATES_CHANGELOG)
+                    .query::<XReadResult>(&mut conn)?;
+                let unsorted = deser(xrr);
+                let sorted_keys: Vec<XReadEntryId> = {
+                    let mut ks: Vec<XReadEntryId> = unsorted.keys().copied().collect();
+                    ks.sort();
+                    ks
+                };
+                let mut answer = vec![];
+                for sk in sorted_keys {
+                    if let Some(data) = unsorted.get(&sk) {
+                        answer.push((sk, data.clone()))
+                    }
+                }
+                Ok(answer)
             }
+            Err(_) => todo!(),
         }
-        Ok(answer)
     }
 }
 

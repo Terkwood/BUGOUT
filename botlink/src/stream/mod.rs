@@ -5,7 +5,7 @@ pub mod xadd;
 pub mod xread;
 
 use crate::registry::Components;
-use crate::repo::{AttachedBotsRepo, BoardSizeRepo, EntryIdRepo, EntryIdType};
+use crate::repo::{AttachedBotsRepo, BoardSizeRepo};
 use convert::Convert;
 use crossbeam_channel::Sender;
 use log::{error, info};
@@ -17,54 +17,43 @@ pub use write_moves::write_moves;
 use xread::StreamData;
 
 pub fn process(opts: &mut StreamOpts) {
+    todo!("unack init");
     loop {
-        match opts.entry_id_repo.fetch_all() {
-            Ok(entry_ids) => match opts.xreader.xread_sorted(entry_ids) {
-                Ok(xrr) => {
-                    for time_ordered_event in xrr {
-                        match time_ordered_event {
-                            (entry_id, StreamData::AB(ab)) => {
-                                process_attach_bot(ab, entry_id, opts)
-                            }
-                            (entry_id, StreamData::GS(game_state)) => {
-                                let player_up = game_state.player_up.convert();
-                                let game_id = game_state.game_id.convert();
-                                match opts.attached_bots_repo.is_attached(&game_id, player_up) {
-                                    Ok(bot_game) => {
-                                        if bot_game {
-                                            let convert_state = game_state.convert();
-                                            if let Err(e) = opts.compute_move_in.send(ComputeMove {
-                                                game_id,
-                                                game_state: convert_state,
-                                            }) {
-                                                error!("WS SEND ERROR {:?}", e)
-                                            }
-                                        } else {
-                                            info!("Ignoring {:?} {:?}", game_id, player_up)
-                                        };
-                                        if let Err(e) = opts
-                                            .entry_id_repo
-                                            .update(EntryIdType::GameStateChangelog, entry_id)
-                                        {
-                                            error!("Failed to save entry ID for game state {:?}", e)
+        match opts.xreader.xread_sorted() {
+            Ok(xrr) => {
+                for time_ordered_event in xrr {
+                    match time_ordered_event {
+                        (entry_id, StreamData::AB(ab)) => process_attach_bot(ab, entry_id, opts),
+                        (entry_id, StreamData::GS(game_state)) => {
+                            let player_up = game_state.player_up.convert();
+                            let game_id = game_state.game_id.convert();
+                            match opts.attached_bots_repo.is_attached(&game_id, player_up) {
+                                Ok(bot_game) => {
+                                    if bot_game {
+                                        let convert_state = game_state.convert();
+                                        if let Err(e) = opts.compute_move_in.send(ComputeMove {
+                                            game_id,
+                                            game_state: convert_state,
+                                        }) {
+                                            error!("WS SEND ERROR {:?}", e)
                                         }
-                                    }
-                                    Err(e) => error!("Game Repo error is_attached {:?}", e),
+                                    } else {
+                                        info!("Ignoring {:?} {:?}", game_id, player_up)
+                                    };
                                 }
+                                Err(e) => error!("Game Repo error is_attached {:?}", e),
                             }
                         }
                     }
                 }
-                Err(e) => error!("Stream error {:?}", e),
-            },
-            Err(e) => error!("Redis err in xread: {:#?}", e),
+            }
+            Err(e) => error!("Stream error {:?}", e),
         }
     }
 }
 
 pub struct StreamOpts {
     pub attached_bots_repo: Box<dyn AttachedBotsRepo>,
-    pub entry_id_repo: Box<dyn EntryIdRepo>,
     pub board_size_repo: Arc<dyn BoardSizeRepo>,
     pub xreader: Box<dyn xread::XReader>,
     pub xadder: Arc<dyn xadd::XAdder>,
@@ -75,7 +64,6 @@ impl StreamOpts {
     pub fn from(components: Components) -> Self {
         StreamOpts {
             attached_bots_repo: components.ab_repo,
-            entry_id_repo: components.entry_id_repo,
             board_size_repo: components.board_size_repo,
             xreader: components.xreader,
             xadder: components.xadder,
@@ -87,13 +75,8 @@ impl StreamOpts {
 fn process_attach_bot(ab: AttachBot, entry_id: XReadEntryId, opts: &mut StreamOpts) {
     if let Err(e) = opts.attached_bots_repo.attach(&ab.game_id, ab.player) {
         error!("Error attaching bot {:?}", e)
-    } else if let Err(e) = opts
-        .entry_id_repo
-        .update(EntryIdType::AttachBotEvent, entry_id)
-    {
-        error!("Error saving entry ID for attach bot {:?}", e)
     } else {
-        info!("Stream: Attach bot {:?}", ab);
+        info!("Stream: Set up game state for attach bot {:?}", ab);
         let mut game_state = move_model::GameState {
             game_id: core_model::GameId(ab.game_id.0),
             captures: move_model::Captures::default(),
@@ -146,45 +129,12 @@ mod tests {
 
     #[derive(Clone)]
     struct FakeEntryIdRepo {
-        eid_update_in: Sender<(EntryIdType, XReadEntryId)>,
+        eid_update_in: Sender<XReadEntryId>,
     }
     static FAKE_AB_MILLIS: AtomicU64 = AtomicU64::new(0);
     static FAKE_AB_SEQNO: AtomicU64 = AtomicU64::new(0);
     static FAKE_GS_MILLIS: AtomicU64 = AtomicU64::new(0);
     static FAKE_GS_SEQNO: AtomicU64 = AtomicU64::new(0);
-    impl EntryIdRepo for FakeEntryIdRepo {
-        fn fetch_all(&self) -> Result<AllEntryIds, RepoErr> {
-            Ok(AllEntryIds {
-                attach_bot_eid: XReadEntryId {
-                    millis_time: FAKE_AB_MILLIS.load(Ordering::SeqCst),
-                    seq_no: FAKE_AB_SEQNO.load(Ordering::SeqCst),
-                },
-                game_states_eid: XReadEntryId {
-                    millis_time: FAKE_GS_MILLIS.load(Ordering::SeqCst),
-                    seq_no: FAKE_GS_MILLIS.load(Ordering::SeqCst),
-                },
-            })
-        }
-        fn update(
-            &self,
-            entry_id_type: EntryIdType,
-            entry_id: redis_streams::XReadEntryId,
-        ) -> Result<(), RepoErr> {
-            self.eid_update_in
-                .send((entry_id_type.clone(), entry_id))
-                .expect("eid update send");
-            Ok(match entry_id_type {
-                EntryIdType::AttachBotEvent => {
-                    FAKE_AB_MILLIS.store(entry_id.millis_time, Ordering::SeqCst);
-                    FAKE_AB_SEQNO.store(entry_id.seq_no, Ordering::SeqCst)
-                }
-                EntryIdType::GameStateChangelog => {
-                    FAKE_GS_MILLIS.store(entry_id.millis_time, Ordering::SeqCst);
-                    FAKE_GS_SEQNO.store(entry_id.seq_no, Ordering::SeqCst)
-                }
-            })
-        }
-    }
 
     #[derive(Clone)]
     struct FakeAttachedBotsRepo {
@@ -223,16 +173,19 @@ mod tests {
         added_in: Sender<move_model::GameState>,
     }
     impl xadd::XAdder for FakeXAdder {
-        fn xadd_game_state(&self, game_state: &move_model::GameState) -> Result<(), XAddError> {
+        fn xadd_game_state(
+            &self,
+            game_state: &move_model::GameState,
+        ) -> Result<(), StreamAddError> {
             Ok(self.added_in.send(game_state.clone()).expect("send add"))
         }
         fn xadd_bot_attached(
             &self,
             _bot_attached: micro_model_bot::gateway::BotAttached,
-        ) -> Result<(), crate::stream::xadd::XAddError> {
+        ) -> Result<(), crate::stream::xadd::StreamAddError> {
             Ok(())
         }
-        fn xadd_make_move_command(&self, _command: &MakeMoveCommand) -> Result<(), XAddError> {
+        fn xadd_make_move_command(&self, _command: &MakeMoveCommand) -> Result<(), StreamAddError> {
             Ok(info!("Doing nothing for xadd make move"))
         }
     }
@@ -246,11 +199,7 @@ mod tests {
     impl xread::XReader for FakeXReader {
         fn xread_sorted(
             &self,
-            entry_ids: AllEntryIds,
-        ) -> Result<
-            Vec<(redis_streams::XReadEntryId, StreamData)>,
-            redis_conn_pool::redis::RedisError,
-        > {
+        ) -> Result<Vec<(redis_streams::XReadEntryId, StreamData)>, redis::RedisError> {
             let game_id = self.game_id.clone();
             let player = self.player;
             let board_size = self.board_size;
@@ -271,15 +220,7 @@ mod tests {
                 v.push((inc_eid, inc_game_state));
             }
 
-            Ok(v.iter()
-                .filter(|(eid, data)| {
-                    eid > match data {
-                        StreamData::AB(_) => &entry_ids.attach_bot_eid,
-                        StreamData::GS(_) => &entry_ids.game_states_eid,
-                    }
-                })
-                .cloned()
-                .collect())
+            Ok(todo!())
         }
     }
 
@@ -317,7 +258,6 @@ mod tests {
         thread::spawn(move || {
             let mut opts = StreamOpts {
                 compute_move_in,
-                entry_id_repo,
                 attached_bots_repo,
                 board_size_repo,
                 xreader,
@@ -340,23 +280,5 @@ mod tests {
         assert!(abr.is_attached(&GAME_ID, player).expect("ab repo"));
 
         let timeoutdur = Some(Duration::from_millis(30));
-
-        // Create a channel that times out after the specified duration.
-        let timeout = timeoutdur.map(|d| after(d)).unwrap_or(never());
-        let mut eid_updates_observed = vec![];
-        select! {
-            recv(eid_update_out) -> msg => eid_updates_observed.push(msg.expect("msg")),
-            recv(timeout) -> _ => panic!("unexpected timeout")
-        }
-        select! {
-            recv(eid_update_out) -> msg => eid_updates_observed.push(msg.expect("msg")),
-            recv(timeout) -> _ => panic!("unexpected timeout 2")
-        }
-
-        assert!(eid_updates_observed.len() == 2);
-        assert_eq!(eid_updates_observed[0].0, EntryIdType::AttachBotEvent);
-        assert!(eid_updates_observed[0].1 > XReadEntryId::default());
-        assert_eq!(eid_updates_observed[1].0, EntryIdType::GameStateChangelog);
-        assert!(eid_updates_observed[1].1 > XReadEntryId::default());
     }
 }
