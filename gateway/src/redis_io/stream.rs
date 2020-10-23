@@ -1,3 +1,4 @@
+use super::xack::XAck;
 use super::xread::XReader;
 use crate::backend::events as be;
 use crate::backend::events::BackendEvents;
@@ -24,7 +25,7 @@ pub enum StreamData {
 
 pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
     loop {
-        match opts.xreader.xread_sorted() {
+        match opts.xread.xread_sorted() {
             Err(e) => error!("cannot xread {:?}", e),
             Ok(xrr) => {
                 for (xid, data) in xrr {
@@ -59,7 +60,8 @@ fn process_event(
 }
 
 pub struct StreamOpts {
-    pub xreader: Box<dyn XReader>,
+    pub xread: Box<dyn XReader>,
+    pub xack: Box<dyn XAck>,
 }
 
 impl From<StreamData> for BackendEvents {

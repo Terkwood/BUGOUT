@@ -14,11 +14,14 @@ pub fn start(channels: &MainChannels, redis_client: Arc<redis::Client>) {
     });
 
     let bei = channels.backend_events_in.clone();
-    let pool_d = redis_client.clone();
+    let client_d = redis_client.clone();
     redis_io::stream::process(
         bei,
         redis_io::stream::StreamOpts {
-            xreader: Box::new(redis_io::xread::RedisXReader { client: pool_d }),
+            xread: Box::new(redis_io::xread::RedisXReader {
+                client: client_d.clone(),
+            }),
+            xack: Box::new(client_d),
         },
     )
 }
