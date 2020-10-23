@@ -1,5 +1,10 @@
-use super::xack::XAck;
-use super::xread::XReader;
+mod unacknowledged;
+mod xack;
+pub mod xadd;
+pub mod xread;
+
+pub use unacknowledged::*;
+
 use crate::backend::events as be;
 use crate::backend::events::BackendEvents;
 use crate::model::{ColorsChosenEvent, HistoryProvidedEvent, MoveMadeEvent};
@@ -10,6 +15,10 @@ use log::{error, info};
 use move_model as moves;
 use redis_streams::XReadEntryId;
 use sync_model as sync;
+use xack::XAck;
+use xread::XReader;
+
+pub const GROUP_NAME: &str = "micro-gateway";
 
 #[derive(Clone, Debug)]
 pub enum StreamData {
@@ -23,7 +32,13 @@ pub enum StreamData {
     ColorsChosen(color::api::ColorsChosen),
 }
 
+pub struct StreamOpts {
+    pub xread: Box<dyn XReader>,
+    pub xack: Box<dyn XAck>,
+}
+
 pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
+    let mut unacked = Unacknowledged::default();
     loop {
         match opts.xread.xread_sorted() {
             Err(e) => error!("cannot xread {:?}", e),
@@ -42,7 +57,7 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
             }
         }
 
-        todo!("ack")
+        unacked.ack_all(&opts.xack)
     }
 }
 
@@ -57,11 +72,6 @@ fn process_event(
     }
 
     todo!("think about ack")
-}
-
-pub struct StreamOpts {
-    pub xread: Box<dyn XReader>,
-    pub xack: Box<dyn XAck>,
 }
 
 impl From<StreamData> for BackendEvents {

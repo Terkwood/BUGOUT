@@ -1,5 +1,5 @@
-use super::stream::StreamData;
 use super::xack::XAck;
+use super::StreamData;
 use log::error;
 use redis::Client;
 use redis_streams::XReadEntryId;
@@ -17,9 +17,9 @@ pub struct Unacknowledged {
 
 const INIT_ACK_CAPACITY: usize = 25;
 impl Unacknowledged {
-    pub fn ack_all(&mut self, stream: &XAck) {
+    pub fn ack_all(&mut self, opts: &super::StreamOpts) {
         if !self.move_made.is_empty() {
-            if let Err(_e) = stream.ack_move_made(&self.move_made) {
+            if let Err(_e) = opts.xack.ack_move_made(&self.move_made) {
                 error!("ack for move made failed")
             } else {
                 self.move_made.clear();
@@ -31,8 +31,12 @@ impl Unacknowledged {
         match event {
             StreamData::MoveMade(_) => self.move_made.push(xid),
             StreamData::HistoryProvided(_) => self.history_provided.push(xid),
+            StreamData::SyncReply(_) => self.sync_reply.push(xid),
+            StreamData::WaitForOpponent(_) => self.wait_for_opponent.push(xid),
+            StreamData::GameReady(_) => self.game_ready.push(xid),
+            StreamData::PrivGameRejected(_) => self.private_game_rejected.push(xid),
             StreamData::BotAttached(_) => self.bot_attached.push(xid),
-            _ => todo!("write me"),
+            StreamData::ColorsChosen(_) => self.colors_chosen.push(xid),
         }
     }
 }
