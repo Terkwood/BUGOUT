@@ -2,7 +2,6 @@ use super::stream::StreamData;
 use super::{AllEntryIds, RedisPool};
 use crate::topics;
 use log::{error, warn};
-use r2d2_redis::redis;
 use redis_streams::XReadEntryId;
 use serde::Deserialize;
 use std::collections::HashMap;

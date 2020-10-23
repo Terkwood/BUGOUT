@@ -23,8 +23,8 @@ micro_model_bot = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstabl
 micro_model_moves = {git = "https://github.com/Terkwood/BUGOUT", branch = "unstable"}
 mio-extras = "2.0.6"
 move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20e6620"}
-r2d2_redis = "0.13.0"
 rand = "0.7.3"
+redis = {version = "0.17.0", features = ["r2d2"]}
 redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "0.3.1", rev = "081cd9b"}
 serde = "1.0.117"
 serde_derive = "1.0.117"

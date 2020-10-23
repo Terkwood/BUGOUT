@@ -4,14 +4,12 @@ use crate::backend::commands::{
     JoinPrivateGameBackendCommand, ReqSyncBackendCommand, SessionDisconnected,
 };
 use crate::model::{Coord, MakeMoveCommand, ProvideHistoryCommand};
-use crate::redis_io::RedisPool;
 use crate::topics;
 use micro_model_bot::gateway::AttachBot;
 
 use crate::backend::commands::IntoShared;
 use crossbeam_channel::{select, Receiver};
 use log::{error, info};
-use r2d2_redis::redis;
 use std::sync::Arc;
 
 pub trait XAddCommands {
@@ -56,52 +54,56 @@ pub fn start(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
 }
 
 pub struct RedisXAddCommands {
-    pub pool: Arc<RedisPool>,
+    pub client: Arc<redis::Client>,
 }
 
 impl XAddCommands for RedisXAddCommands {
     fn xadd_attach_bot(&self, attach_bot: AttachBot) {
-        let mut conn = self.pool.get().unwrap();
-
-        match attach_bot.serialize() {
-            Err(e) => error!("attach bot ser error {:?}", e),
-            Ok(bin) => {
-                let mut redis_cmd = redis::cmd("XADD");
-                redis_cmd
-                    .arg(topics::ATTACH_BOT_TOPIC)
-                    .arg("MAXLEN")
-                    .arg("~")
-                    .arg("1000")
-                    .arg("*")
-                    .arg("data")
-                    .arg(bin);
-                if let Err(e) = redis_cmd.query::<String>(&mut *conn) {
-                    error!("attach bot redis err {:?}", e)
+        if let Ok(mut conn) = self.client.get_connection() {
+            match attach_bot.serialize() {
+                Err(e) => error!("attach bot ser error {:?}", e),
+                Ok(bin) => {
+                    let mut redis_cmd = redis::cmd("XADD");
+                    redis_cmd
+                        .arg(topics::ATTACH_BOT_TOPIC)
+                        .arg("MAXLEN")
+                        .arg("~")
+                        .arg("1000")
+                        .arg("*")
+                        .arg("data")
+                        .arg(bin);
+                    if let Err(e) = redis_cmd.query::<String>(&mut conn) {
+                        error!("attach bot redis err {:?}", e)
+                    }
                 }
             }
+        } else {
+            error!("conn")
         }
     }
     fn xadd_make_move(&self, command: MakeMoveCommand) {
-        let mut conn = self.pool.get().unwrap();
-
-        let mut redis_cmd = redis::cmd("XADD");
-        redis_cmd
-            .arg(topics::MAKE_MOVE_TOPIC)
-            .arg("MAXLEN")
-            .arg("~")
-            .arg("1000")
-            .arg("*")
-            .arg("game_id")
-            .arg(command.game_id.to_string())
-            .arg("player")
-            .arg(command.player.to_string())
-            .arg("req_id")
-            .arg(command.req_id.to_string());
-        if let Some(Coord { x, y }) = command.coord {
-            redis_cmd.arg("coord_x").arg(x).arg("coord_y").arg(y);
-        }
-        if let Err(e) = redis_cmd.query::<String>(&mut *conn) {
-            error!("make move {:?}", e)
+        if let Ok(mut conn) = self.client.get_connection() {
+            let mut redis_cmd = redis::cmd("XADD");
+            redis_cmd
+                .arg(topics::MAKE_MOVE_TOPIC)
+                .arg("MAXLEN")
+                .arg("~")
+                .arg("1000")
+                .arg("*")
+                .arg("game_id")
+                .arg(command.game_id.to_string())
+                .arg("player")
+                .arg(command.player.to_string())
+                .arg("req_id")
+                .arg(command.req_id.to_string());
+            if let Some(Coord { x, y }) = command.coord {
+                redis_cmd.arg("coord_x").arg(x).arg("coord_y").arg(y);
+            }
+            if let Err(e) = redis_cmd.query::<String>(&mut conn) {
+                error!("make move {:?}", e)
+            }
+        } else {
+            error!("conn")
         }
     }
 
@@ -156,12 +158,12 @@ impl XAddCommands for RedisXAddCommands {
 }
 
 impl RedisXAddCommands {
-    pub fn create(pool: Arc<RedisPool>) -> Self {
-        RedisXAddCommands { pool }
+    pub fn create(client: Arc<redis::Client>) -> Self {
+        RedisXAddCommands { client }
     }
 
     fn xadd_classic(&self, bin: Result<Vec<u8>, Box<bincode::ErrorKind>>, topic: &str) {
-        match self.pool.get() {
+        match self.client.get_connection() {
             Err(e) => error!("xadd {}: cannot get conn {:?}", topic, e),
             Ok(mut conn) => {
                 if let Ok(b) = bin {
@@ -174,7 +176,7 @@ impl RedisXAddCommands {
                         .arg("*")
                         .arg("data")
                         .arg(b);
-                    if let Err(e) = redis_cmd.query::<String>(&mut *conn) {
+                    if let Err(e) = redis_cmd.query::<String>(&mut conn) {
                         error!("xadd {}: redis execution err. {:?}", topic, e)
                     }
                 } else {

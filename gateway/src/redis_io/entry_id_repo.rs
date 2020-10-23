@@ -1,9 +1,6 @@
 use super::AllEntryIds;
-use super::RedisPool;
 use redis_streams::repo::{fetch_entry_ids, update_entry_id};
 use redis_streams::XReadEntryId;
-
-use r2d2_redis::redis;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -34,7 +31,7 @@ impl From<redis::RedisError> for EidRepoErr {
 }
 
 pub struct RedisEntryIdRepo {
-    pool: Arc<RedisPool>,
+    client: Arc<redis::Client>,
 
     pub key_provider: super::KeyProvider,
 }
@@ -75,7 +72,7 @@ impl EntryIdRepo for RedisEntryIdRepo {
             }
         });
 
-        fetch_entry_ids(self.pool.as_ref(), &redis_key, deser_hash).map_err(|_| EidRepoErr)
+        fetch_entry_ids(self.client.as_ref(), &redis_key, deser_hash).map_err(|_| EidRepoErr)
     }
 
     fn update(&self, entry_id_type: EntryIdType, entry_id: XReadEntryId) -> Result<(), EidRepoErr> {
@@ -90,8 +87,14 @@ impl EntryIdRepo for RedisEntryIdRepo {
             EntryIdType::PrivGameReject => PRIV_GAME_REJECT_XID.to_string(),
             EntryIdType::ColorsChosen => COLORS_CHOSEN_XID.to_string(),
         });
-        update_entry_id(entry_id_type, entry_id, &self.pool, &redis_key, hash_field)
-            .map_err(|_| EidRepoErr)
+        update_entry_id(
+            entry_id_type,
+            entry_id,
+            &self.client,
+            &redis_key,
+            hash_field,
+        )
+        .map_err(|_| EidRepoErr)
     }
 }
 fn gen_xid(xid_name: &str, f: &HashMap<String, String>) -> XReadEntryId {
@@ -106,7 +109,7 @@ fn gen_xid(xid_name: &str, f: &HashMap<String, String>) -> XReadEntryId {
 impl RedisEntryIdRepo {
     pub fn create_boxed(pool: Arc<RedisPool>) -> Box<dyn EntryIdRepo> {
         Box::new(RedisEntryIdRepo {
-            pool,
+            client: pool,
             key_provider: super::KeyProvider::default(),
         })
     }
