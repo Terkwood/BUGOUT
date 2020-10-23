@@ -1,8 +1,8 @@
 use color_model as color;
-use crossbeam_channel::Sender;
 use lobby_model as lobby;
 use move_model as moves;
 use sync_model as sync;
+
 #[derive(Clone, Debug)]
 pub enum StreamData {
     BotAttached(micro_model_bot::gateway::BotAttached),

@@ -86,7 +86,7 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, Stre
                 if let Some(data) = maybe_data {
                     let sd: Option<StreamData> = if key == topics::BOT_ATTACHED_TOPIC {
                         bincode::deserialize(&data)
-                            .map(|b| StreamData::BotAttached(b))
+                            .map(|hp| StreamData::BotAttached(hp))
                             .ok()
                     } else if key == topics::MOVE_MADE_TOPIC {
                         todo!("really really special")
