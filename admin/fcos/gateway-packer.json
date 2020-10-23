@@ -45,7 +45,10 @@
     {
       "type": "shell",
       "inline": [
-        "git clone https://github.com/Terkwood/BUGOUT.git"
+        "git clone https://github.com/Terkwood/BUGOUT.git",
+        "cd BUGOUT",
+        "git switch fix/admin-touch-up",
+        "cd .."
       ]
     },
     {
