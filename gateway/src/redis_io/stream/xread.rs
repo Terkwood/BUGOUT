@@ -27,6 +27,30 @@ const BLOCK_MS: usize = 5000;
 
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 
+use log::warn;
+pub fn create_consumer_group(client: &redis::Client) {
+    let mut conn = client.get_connection().expect("group create conn");
+    let to_create = vec![
+        topics::MOVE_MADE_TOPIC,
+        topics::HISTORY_PROVIDED_TOPIC,
+        topics::SYNC_REPLY_TOPIC,
+        topics::WAIT_FOR_OPPONENT_TOPIC,
+        topics::GAME_READY_TOPIC,
+        topics::PRIVATE_GAME_REJECTED_TOPIC,
+        topics::COLORS_CHOSEN_TOPIC,
+        topics::BOT_ATTACHED_TOPIC,
+    ];
+    for topic in to_create {
+        let created: Result<(), _> = conn.xgroup_create_mkstream(topic, GROUP_NAME, "$");
+        if let Err(e) = created {
+            warn!(
+                "Ignoring error creating {} consumer group (it probably exists already) {:?}",
+                topic, e
+            );
+        }
+    }
+}
+
 pub struct RedisXReader {
     pub client: Arc<redis::Client>,
 }
