@@ -1,6 +1,6 @@
 use super::{StreamData, GROUP_NAME};
 use crate::topics;
-use log::error;
+use log::{error, warn};
 use redis::{
     streams::{StreamReadOptions, StreamReadReply},
     Commands,
@@ -9,7 +9,6 @@ use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-const CONSUMER_NAME: &str = "singleton";
 /// performs a redis xread then sorts the results
 ///
 /// entry_ids: the minimum entry ids from which to read
@@ -23,11 +22,12 @@ pub enum StreamReadError {
     Deser(StreamDeserErr),
 }
 
-const BLOCK_MS: usize = 5000;
+#[derive(Debug)]
+pub struct StreamDeserErr;
 
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 
-use log::warn;
+const CONSUMER_NAME: &str = "singleton";
 pub fn create_consumer_group(client: &redis::Client) {
     let mut conn = client.get_connection().expect("group create conn");
     let to_create = vec![
@@ -69,6 +69,7 @@ lazy_static! {
     static ref AUTO_IDS: Vec<&'static str> = ALL_TOPICS.iter().map(|_| ">").collect();
 }
 
+const BLOCK_MS: usize = 5000;
 impl XReader for RedisXReader {
     fn xread_sorted(&self) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, StreamReadError> {
         match self.client.get_connection() {
@@ -152,9 +153,6 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, Stre
     }
     Ok(out)
 }
-
-#[derive(Debug)]
-pub struct StreamDeserErr;
 
 impl From<StreamDeserErr> for StreamReadError {
     fn from(e: StreamDeserErr) -> Self {
