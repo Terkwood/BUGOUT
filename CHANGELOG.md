@@ -1,5 +1,6 @@
 # NEXT: v0.9.1
 
+- Use XREADGROUP in botlink (#423)
 - Simplify redis-streams crate (#421)
 - Use XREADGROUP in gateway (#420)
 
