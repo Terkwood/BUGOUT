@@ -1,7 +1,6 @@
 use color_model as color;
 use crossbeam_channel::Sender;
 use lobby_model as lobby;
-use log::{error, info};
 use move_model as moves;
 use sync_model as sync;
 #[derive(Clone, Debug)]
