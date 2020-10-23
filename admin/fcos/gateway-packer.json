@@ -45,16 +45,13 @@
     {
       "type": "shell",
       "inline": [
-        "git clone https://github.com/Terkwood/BUGOUT.git",
-        "cd BUGOUT",
-        "git switch fix/admin-touch-up",
-        "cd .."
+        "git clone https://github.com/Terkwood/BUGOUT.git"
       ]
     },
     {
       "type": "shell",
       "inline": [
-        "cp BUGOUT/reverse-proxy/Caddyfile.example.prod /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile"
+        "sudo cp BUGOUT/reverse-proxy/Caddyfile.example.prod /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile"
       ]
     },
     {
