@@ -25,14 +25,55 @@ impl Unacknowledged {
             }
         }
         if !self.history_provided.is_empty() {
-            if let Err(_e) = stream.ack_history_provided(&self.move_made) {
-                error!("ack for move made failed")
+            if let Err(_e) = stream.ack_history_provided(&self.history_provided) {
+                error!("ack hp failed")
             } else {
-                self.move_made.clear();
+                self.history_provided.clear();
+            }
+        }
+        if !self.sync_reply.is_empty() {
+            if let Err(_e) = stream.ack_sync_reply(&self.sync_reply) {
+                error!("ack sync_reply failed")
+            } else {
+                self.sync_reply.clear();
+            }
+        }
+        if !self.wait_for_opponent.is_empty() {
+            if let Err(_e) = stream.ack_wait_for_opponent(&self.wait_for_opponent) {
+                error!("ack wait_for_opponent failed")
+            } else {
+                self.wait_for_opponent.clear();
             }
         }
 
-        todo!("others")
+        if !self.game_ready.is_empty() {
+            if let Err(_e) = stream.ack_game_ready(&self.game_ready) {
+                error!("ack game_ready failed")
+            } else {
+                self.game_ready.clear();
+            }
+        }
+        if !self.private_game_rejected.is_empty() {
+            if let Err(_e) = stream.ack_private_game_rejected(&self.private_game_rejected) {
+                error!("ack private_game_rejected failed")
+            } else {
+                self.private_game_rejected.clear();
+            }
+        }
+        if !self.colors_chosen.is_empty() {
+            if let Err(_e) = stream.ack_colors_chosen(&self.colors_chosen) {
+                error!("ack colors_chosen failed")
+            } else {
+                self.colors_chosen.clear();
+            }
+        }
+        if !self.bot_attached.is_empty() {
+            if let Err(_e) = stream.ack_bot_attached(&self.bot_attached) {
+                error!("ack bot_attached failed")
+            } else {
+                self.bot_attached.clear();
+            }
+        }
     }
     pub fn push(&mut self, xid: XReadEntryId, event: StreamData) {
         match event {
@@ -42,8 +83,8 @@ impl Unacknowledged {
             StreamData::WaitForOpponent(_) => self.wait_for_opponent.push(xid),
             StreamData::GameReady(_) => self.game_ready.push(xid),
             StreamData::PrivGameRejected(_) => self.private_game_rejected.push(xid),
-            StreamData::BotAttached(_) => self.bot_attached.push(xid),
             StreamData::ColorsChosen(_) => self.colors_chosen.push(xid),
+            StreamData::BotAttached(_) => self.bot_attached.push(xid),
         }
     }
 }
