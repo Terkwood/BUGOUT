@@ -25,8 +25,7 @@ mio-extras = "2.0.6"
 move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20e6620"}
 rand = "0.7.3"
 redis = {version = "0.17.0", features = ["r2d2"]}
-## TODO
-redis_streams = {git = "https://github.com/Terkwood/BUGOUT", branch = "fix/gateway-redis"}
+redis_streams = {git = "https://github.com/Terkwood/BUGOUT", rev = "2ea71cd"}
 serde = "1.0.117"
 serde_derive = "1.0.117"
 serde_json = "1.0.59"
