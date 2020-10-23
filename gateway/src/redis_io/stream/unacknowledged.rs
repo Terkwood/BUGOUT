@@ -31,20 +31,7 @@ impl Unacknowledged {
                 self.move_made.clear();
             }
         }
-        if !self.move_made.is_empty() {
-            if let Err(_e) = stream.ack_move_made(&self.move_made) {
-                error!("ack for move made failed")
-            } else {
-                self.move_made.clear();
-            }
-        }
-        if !self.move_made.is_empty() {
-            if let Err(_e) = stream.ack_move_made(&self.move_made) {
-                error!("ack for move made failed")
-            } else {
-                self.move_made.clear();
-            }
-        }
+
         todo!("others")
     }
     pub fn push(&mut self, xid: XReadEntryId, event: StreamData) {
