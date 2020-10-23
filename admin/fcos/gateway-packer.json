@@ -55,6 +55,11 @@
       "source": "{{user `dotenv_src`}}/botlink/.env"
     },
     {
+      "type": "file",
+      "destination": "/mnt/stateful_partition/BUGOUT/reverse_proxy/Caddyfile",
+      "source": "BUGOUT/reverse-proxy/Caddyfile.example.prod"
+    },
+    {
       "type": "shell",
       "inline": [
         "sudo systemctl stop rpm-ostreed",
@@ -67,7 +72,7 @@
     {
       "type": "shell",
       "inline": ["sudo systemctl reboot"],
-      "pause_before": "20s"
+      "expect_disconnect":true
     },
     {
       "type": "shell",
