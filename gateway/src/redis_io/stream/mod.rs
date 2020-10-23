@@ -1,4 +1,5 @@
 mod unacknowledged;
+pub mod write;
 mod xack;
 pub mod xadd;
 pub mod xread;
@@ -57,7 +58,7 @@ pub fn process(events_in: Sender<BackendEvents>, opts: StreamOpts) {
             }
         }
 
-        unacked.ack_all(&opts.xack)
+        unacked.ack_all(opts.xack.as_ref())
     }
 }
 

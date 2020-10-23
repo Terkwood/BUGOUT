@@ -17,9 +17,9 @@ pub struct Unacknowledged {
 
 const INIT_ACK_CAPACITY: usize = 25;
 impl Unacknowledged {
-    pub fn ack_all(&mut self, opts: &super::StreamOpts) {
+    pub fn ack_all(&mut self, stream: &dyn XAck) {
         if !self.move_made.is_empty() {
-            if let Err(_e) = opts.xack.ack_move_made(&self.move_made) {
+            if let Err(_e) = stream.ack_move_made(&self.move_made) {
                 error!("ack for move made failed")
             } else {
                 self.move_made.clear();

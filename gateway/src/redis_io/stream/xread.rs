@@ -1,4 +1,4 @@
-use super::stream::StreamData;
+use super::StreamData;
 use crate::topics;
 use log::{error, warn};
 use redis_streams::XReadEntryId;
@@ -175,7 +175,7 @@ fn bin_data_process<'a, T>(
     des: Box<dyn Fn(Vec<u8>) -> Result<T, Box<bincode::ErrorKind>>>,
     topic: &str,
 ) where
-    T: Deserialize<'a> + std::convert::Into<crate::redis_io::stream::StreamData>,
+    T: Deserialize<'a> + std::convert::Into<StreamData>,
 {
     for with_timestamps in xread_data {
         for (k, v) in with_timestamps {

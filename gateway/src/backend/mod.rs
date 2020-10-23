@@ -2,7 +2,7 @@ pub mod commands;
 pub mod events;
 
 use crate::channels::MainChannels;
-use crate::redis_io;
+use crate::redis_io::stream;
 use std::sync::Arc;
 use std::thread;
 
@@ -10,15 +10,15 @@ pub fn start(channels: &MainChannels, redis_client: Arc<redis::Client>) {
     let pool_c = redis_client.clone();
     let c_out = channels.session_commands_out.clone();
     thread::spawn(move || {
-        redis_io::start(c_out, &redis_io::xadd::RedisXAddCommands::create(pool_c))
+        stream::write::start(c_out, &stream::xadd::RedisXAddCommands::create(pool_c))
     });
 
     let bei = channels.backend_events_in.clone();
     let client_d = redis_client.clone();
-    redis_io::stream::process(
+    stream::process(
         bei,
-        redis_io::stream::StreamOpts {
-            xread: Box::new(redis_io::xread::RedisXReader {
+        stream::StreamOpts {
+            xread: Box::new(stream::xread::RedisXReader {
                 client: client_d.clone(),
             }),
             xack: Box::new(client_d),
