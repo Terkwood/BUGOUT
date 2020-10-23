@@ -12,6 +12,7 @@ pub struct Unacknowledged {
     game_ready: Vec<XReadEntryId>,
     private_game_rejected: Vec<XReadEntryId>,
     colors_chosen: Vec<XReadEntryId>,
+    bot_attached: Vec<XReadEntryId>,
 }
 
 const INIT_ACK_CAPACITY: usize = 25;
@@ -29,6 +30,8 @@ impl Unacknowledged {
     pub fn push(&mut self, xid: XReadEntryId, event: StreamData) {
         match event {
             StreamData::MoveMade(_) => self.move_made.push(xid),
+            StreamData::HistoryProvided(_) => self.history_provided.push(xid),
+            StreamData::BotAttached(_) => self.bot_attached.push(xid),
             _ => todo!("write me"),
         }
     }
@@ -47,6 +50,7 @@ impl Default for Unacknowledged {
             game_ready: nv(),
             private_game_rejected: nv(),
             colors_chosen: nv(),
+            bot_attached: nv(),
         }
     }
 }
