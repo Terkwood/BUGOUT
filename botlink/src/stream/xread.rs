@@ -1,12 +1,13 @@
 use super::topics;
 use log::{trace, warn};
 use micro_model_bot::gateway::AttachBot;
-use redis::Client;
+use redis::streams::{StreamReadOptions, StreamReadReply};
+use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-const BLOCK_MSEC: u32 = 5000;
+const BLOCK_MS: usize = 5000;
 
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 
@@ -16,10 +17,15 @@ pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 pub trait XReader: Send + Sync {
     fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError>;
 }
-
+pub enum StreamReadError {
+    Redis(redis::RedisError),
+    Deser,
+}
 pub struct RedisXReader {
     pub client: Arc<Client>,
 }
+const GROUP_NAME: &str = "botlink";
+const CONSUMER_NAME: &str = "singleton";
 impl XReader for RedisXReader {
     fn xread_sorted(&self) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
         trace!(
@@ -28,30 +34,36 @@ impl XReader for RedisXReader {
             topics::GAME_STATES_CHANGELOG
         );
         match self.client.get_connection() {
+            Err(e) => Err(e),
             Ok(mut conn) => {
-                todo!();
-                let xrr = redis::cmd("XREAD")
-                    .arg("BLOCK")
-                    .arg(&BLOCK_MSEC.to_string())
-                    .arg("STREAMS")
-                    .arg(topics::ATTACH_BOT_CMD)
-                    .arg(topics::GAME_STATES_CHANGELOG)
-                    .query::<XReadResult>(&mut conn)?;
-                let unsorted = deser(xrr);
-                let sorted_keys: Vec<XReadEntryId> = {
-                    let mut ks: Vec<XReadEntryId> = unsorted.keys().copied().collect();
-                    ks.sort();
-                    ks
-                };
-                let mut answer = vec![];
-                for sk in sorted_keys {
-                    if let Some(data) = unsorted.get(&sk) {
-                        answer.push((sk, data.clone()))
+                let opts = StreamReadOptions::default()
+                    .block(BLOCK_MS)
+                    .group(GROUP_NAME, CONSUMER_NAME);
+                let ser = conn.xread_options(
+                    &[topics::ATTACH_BOT_CMD, topics::GAME_STATES_CHANGELOG],
+                    &[">", ">"],
+                    opts,
+                )?;
+
+                match deser(ser) {
+                    Ok(unsorted) => {
+                        todo!() /*
+                                let sorted_keys: Vec<XReadEntryId> = {
+                                        let mut ks: Vec<XReadEntryId> = unsorted.keys().copied().collect();
+                                        ks.sort();
+                                        ks
+                                    };
+                                    let mut answer = vec![];
+                                    for sk in sorted_keys {
+                                        if let Some(data) = unsorted.get(&sk) {
+                                            answer.push((sk, data.clone()))
+                                        }
+                                    }
+                                    Ok(answer)*/
                     }
+                    Err(_) => todo!(),
                 }
-                Ok(answer)
             }
-            Err(_) => todo!(),
         }
     }
 }
@@ -62,9 +74,10 @@ pub enum StreamData {
     GS(move_model::GameState),
 }
 
-fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
+fn deser(xread_result: XReadResult) -> Result<HashMap<XReadEntryId, StreamData>, StreamReadError> {
     let mut stream_data = HashMap::new();
-
+    todo!();
+    /*
     for hash in xread_result.iter() {
         for (xread_topic, xread_data) in hash.iter() {
             if &xread_topic[..] == topics::GAME_STATES_CHANGELOG {
@@ -109,8 +122,7 @@ fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
             } else {
                 warn!("Ignoring topic {}", &xread_topic[..])
             }
-        }
-    }
+        }*/
 
-    stream_data
+    Ok(stream_data)
 }
