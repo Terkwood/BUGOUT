@@ -13,7 +13,7 @@ fn main() {
 
     env::init();
     let mc = MainChannels::create();
-    let pool = redis_io::create_pool();
+    let client = redis_io::create_redis_client();
     idle_status::start_monitor(mc.idle_resp_in.clone(), mc.req_idle_out.clone());
 
     router::start(
@@ -32,5 +32,5 @@ fn main() {
         .unwrap()
     });
 
-    backend::start(&mc, pool)
+    backend::start(&mc, client)
 }

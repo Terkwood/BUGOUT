@@ -637,7 +637,7 @@ dependencies = [
  "mio-extras",
  "move-model",
  "rand",
- "redis 0.17.0",
+ "redis",
  "redis_streams",
  "serde",
  "serde_derive",
@@ -841,7 +841,7 @@ dependencies = [
 [[package]]
 name = "micro_model_bot"
 version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0dec7266b41c21982e74137a827845b81083c745"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#081cd9bf21cd3f8452ff7f186792ac0dc5f1db04"
 dependencies = [
  "bincode",
  "micro_model_moves",
@@ -852,7 +852,7 @@ dependencies = [
 [[package]]
 name = "micro_model_moves"
 version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#0dec7266b41c21982e74137a827845b81083c745"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#081cd9bf21cd3f8452ff7f186792ac0dc5f1db04"
 dependencies = [
  "bincode",
  "serde",
@@ -1047,9 +1047,9 @@ dependencies = [
 
 [[package]]
 name = "pin-project-lite"
-version = "0.1.10"
+version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e555d9e657502182ac97b539fb3dae8b79cda19e3e4f8ffb5e8de4f18df93c95"
+checksum = "c917123afa01924fc84bb20c4c03f004d9c38e5127e3c039bbf7f4b9c76a2f6b"
 
 [[package]]
 name = "pin-utils"
@@ -1160,26 +1160,6 @@ dependencies = [
 
 [[package]]
 name = "redis"
-version = "0.16.1-alpha.0"
-source = "git+https://github.com/mitsuhiko/redis-rs?rev=aaecd6734a4c1f0bc59c96429d0e2102348e23ef#aaecd6734a4c1f0bc59c96429d0e2102348e23ef"
-dependencies = [
- "async-std",
- "async-trait",
- "bytes 0.5.6",
- "combine",
- "dtoa",
- "futures-util",
- "itoa",
- "percent-encoding",
- "pin-project-lite",
- "sha1",
- "tokio",
- "tokio-util",
- "url",
-]
-
-[[package]]
-name = "redis"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95357caf2640abc54651b93c98a8df4fe1ccbf44b8e601ccdf43d5c1451f29ac"
@@ -1202,10 +1182,9 @@ dependencies = [
 
 [[package]]
 name = "redis_streams"
-version = "0.3.1"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/gateway-redis#b1d47cdb6ecb4cd3f0b37b22adf15664246eed86"
+version = "0.4.0"
+source = "git+https://github.com/Terkwood/BUGOUT?branch=fix/gateway-redis#7c0b9572b17d0f5bb85dfb9d39b8c461deeba02f"
 dependencies = [
- "redis 0.16.1-alpha.0",
  "uuid",
 ]
 
@@ -1399,9 +1378,9 @@ checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
 
 [[package]]
 name = "syn"
-version = "1.0.45"
+version = "1.0.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea9c5432ff16d6152371f808fb5a871cd67368171b09bb21b43df8e4a47a3556"
+checksum = "5ad5de3220ea04da322618ded2c42233d02baca219d6f160a3e9c87cda16c942"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -1,5 +1,4 @@
 use super::stream::StreamData;
-use super::{AllEntryIds, RedisPool};
 use crate::topics;
 use log::{error, warn};
 use redis_streams::XReadEntryId;
@@ -11,10 +10,7 @@ use std::sync::Arc;
 ///
 /// entry_ids: the minimum entry ids from which to read
 pub trait XReader {
-    fn xread_sorted(
-        &self,
-        entry_ids: super::AllEntryIds,
-    ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError>;
+    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError>;
 }
 
 const BLOCK_MSEC: u32 = 5000;
@@ -22,53 +18,53 @@ const BLOCK_MSEC: u32 = 5000;
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 
 pub struct RedisXReader {
-    pub pool: Arc<RedisPool>,
+    pub client: Arc<redis::Client>,
 }
 impl XReader for RedisXReader {
-    fn xread_sorted(
-        &self,
-        entry_ids: AllEntryIds,
-    ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
-        let mut conn = self.pool.get().unwrap();
-        let xrr = redis::cmd("XREAD")
-            .arg("BLOCK")
-            .arg(&BLOCK_MSEC.to_string())
-            .arg("STREAMS")
-            .arg(topics::BOT_ATTACHED_TOPIC)
-            .arg(topics::MOVE_MADE_TOPIC)
-            .arg(topics::HISTORY_PROVIDED_TOPIC)
-            .arg(topics::SYNC_REPLY_TOPIC)
-            .arg(topics::WAIT_FOR_OPPONENT_TOPIC)
-            .arg(topics::GAME_READY_TOPIC)
-            .arg(topics::PRIVATE_GAME_REJECTED_TOPIC)
-            .arg(topics::COLORS_CHOSEN_TOPIC)
-            .arg(entry_ids.bot_attached_xid.to_string())
-            .arg(entry_ids.move_made_xid.to_string())
-            .arg(entry_ids.hist_prov_xid.to_string())
-            .arg(entry_ids.sync_reply_xid.to_string())
-            .arg(entry_ids.wait_opponent_xid.to_string())
-            .arg(entry_ids.game_ready_xid.to_string())
-            .arg(entry_ids.priv_game_reject_xid.to_string())
-            .arg(entry_ids.colors_chosen_xid.to_string())
-            .query::<XReadResult>(&mut *conn)?;
-        let unsorted: HashMap<XReadEntryId, StreamData> = deser(xrr);
-        let sorted_keys: Vec<XReadEntryId> = {
-            let mut ks: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
-            ks.sort();
-            ks
-        };
-        let mut answer: Vec<(XReadEntryId, StreamData)> = vec![];
-        for sk in sorted_keys {
-            if let Some(data) = unsorted.get(&sk) {
-                answer.push((sk, data.clone()))
-            } else {
-                error!("💫 {:?}", sk)
+    fn xread_sorted(&self) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
+        match self.client.get_connection() {
+            Ok(mut conn) => {
+                let xrr = redis::cmd("XREAD")
+                    .arg("BLOCK")
+                    .arg(&BLOCK_MSEC.to_string())
+                    .arg("STREAMS")
+                    .arg(topics::BOT_ATTACHED_TOPIC)
+                    .arg(topics::MOVE_MADE_TOPIC)
+                    .arg(topics::HISTORY_PROVIDED_TOPIC)
+                    .arg(topics::SYNC_REPLY_TOPIC)
+                    .arg(topics::WAIT_FOR_OPPONENT_TOPIC)
+                    .arg(topics::GAME_READY_TOPIC)
+                    .arg(topics::PRIVATE_GAME_REJECTED_TOPIC)
+                    .arg(topics::COLORS_CHOSEN_TOPIC)
+                    /*.arg(entry_ids.bot_attached_xid.to_string())
+                    .arg(entry_ids.move_made_xid.to_string())
+                    .arg(entry_ids.hist_prov_xid.to_string())
+                    .arg(entry_ids.sync_reply_xid.to_string())
+                    .arg(entry_ids.wait_opponent_xid.to_string())
+                    .arg(entry_ids.game_ready_xid.to_string())
+                    .arg(entry_ids.priv_game_reject_xid.to_string())
+                    .arg(entry_ids.colors_chosen_xid.to_string())*/
+                    .query::<XReadResult>(&mut conn)?;
+                let unsorted: HashMap<XReadEntryId, StreamData> = deser(xrr);
+                let sorted_keys: Vec<XReadEntryId> = {
+                    let mut ks: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
+                    ks.sort();
+                    ks
+                };
+                let mut answer: Vec<(XReadEntryId, StreamData)> = vec![];
+                for sk in sorted_keys {
+                    if let Some(data) = unsorted.get(&sk) {
+                        answer.push((sk, data.clone()))
+                    } else {
+                        error!("💫 {:?}", sk)
+                    }
+                }
+                Ok(answer)
             }
+            Err(e) => Err(e),
         }
-        Ok(answer)
     }
 }
-
 fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
     let mut stream_data: HashMap<XReadEntryId, StreamData> = HashMap::new();
 
