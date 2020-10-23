@@ -85,7 +85,9 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, Stre
                 let maybe_data: Option<Vec<u8>> = e.get("data");
                 if let Some(data) = maybe_data {
                     let sd: Option<StreamData> = if key == topics::BOT_ATTACHED_TOPIC {
-                        todo!("special")
+                        bincode::deserialize(&data)
+                            .map(|b| StreamData::BotAttached(b))
+                            .ok()
                     } else if key == topics::MOVE_MADE_TOPIC {
                         todo!("really really special")
                     } else if key == topics::HISTORY_PROVIDED_TOPIC {
