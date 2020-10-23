@@ -25,7 +25,7 @@ mio-extras = "2.0.6"
 move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20e6620"}
 r2d2_redis = "0.13.0"
 rand = "0.7.3"
-redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "0.2.0", rev = "fdad420"}
+redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "0.3.1", rev = "081cd9b"}
 serde = "1.0.117"
 serde_derive = "1.0.117"
 serde_json = "1.0.59"
