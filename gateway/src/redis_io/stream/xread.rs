@@ -79,44 +79,40 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, Stre
     let mut out: HashMap<XReadEntryId, StreamData> = HashMap::new();
 
     for k in srr.keys {
-        let key = k.key;
+        let key: &str = &k.key;
         for e in k.ids {
             if let Ok(xid) = XReadEntryId::from_str(&e.id) {
                 let maybe_data: Option<Vec<u8>> = e.get("data");
                 if let Some(data) = maybe_data {
-                    let sd: Option<StreamData> = if key == topics::BOT_ATTACHED_TOPIC {
-                        bincode::deserialize(&data)
+                    let sd: Option<StreamData> = match key {
+                        topics::BOT_ATTACHED_TOPIC => bincode::deserialize(&data)
                             .map(|b| StreamData::BotAttached(b))
-                            .ok()
-                    } else if key == topics::MOVE_MADE_TOPIC {
-                        todo!("really really special")
-                    } else if key == topics::HISTORY_PROVIDED_TOPIC {
-                        bincode::deserialize(&data)
+                            .ok(),
+                        topics::MOVE_MADE_TOPIC => bincode::deserialize(&data)
+                            .map(|m| StreamData::MoveMade(m))
+                            .ok(),
+                        topics::HISTORY_PROVIDED_TOPIC => bincode::deserialize(&data)
                             .map(|hp| StreamData::HistoryProvided(hp))
-                            .ok()
-                    } else if key == topics::SYNC_REPLY_TOPIC {
-                        bincode::deserialize(&data)
+                            .ok(),
+                        topics::SYNC_REPLY_TOPIC => bincode::deserialize(&data)
                             .map(|synrep| StreamData::SyncReply(synrep))
-                            .ok()
-                    } else if key == topics::WAIT_FOR_OPPONENT_TOPIC {
-                        bincode::deserialize(&data)
+                            .ok(),
+                        topics::WAIT_FOR_OPPONENT_TOPIC => bincode::deserialize(&data)
                             .map(|w| StreamData::WaitForOpponent(w))
-                            .ok()
-                    } else if key == topics::GAME_READY_TOPIC {
-                        bincode::deserialize(&data)
+                            .ok(),
+                        topics::GAME_READY_TOPIC => bincode::deserialize(&data)
                             .map(|g| StreamData::GameReady(g))
-                            .ok()
-                    } else if key == topics::PRIVATE_GAME_REJECTED_TOPIC {
-                        bincode::deserialize(&data)
+                            .ok(),
+                        topics::PRIVATE_GAME_REJECTED_TOPIC => bincode::deserialize(&data)
                             .map(|p| StreamData::PrivGameRejected(p))
-                            .ok()
-                    } else if key == topics::COLORS_CHOSEN_TOPIC {
-                        bincode::deserialize(&data)
+                            .ok(),
+                        topics::COLORS_CHOSEN_TOPIC => bincode::deserialize(&data)
                             .map(|c| StreamData::ColorsChosen(c))
-                            .ok()
-                    } else {
-                        error!("Unknown key {}", key);
-                        return Err(StreamDeserErr);
+                            .ok(),
+                        _ => {
+                            error!("Unknown key {}", key);
+                            return Err(StreamDeserErr);
+                        }
                     };
                     if let Some(s) = sd {
                         out.insert(xid, s);
