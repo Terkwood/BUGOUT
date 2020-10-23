@@ -25,7 +25,9 @@
           "name": "fedora-coreos-32.20200923.3.0",
           "root-device-type": "ebs"
         },
-        "owners": ["125523088429"],
+        "owners": [
+          "125523088429"
+        ],
         "most_recent": true
       },
       "ssh_username": "core",
@@ -42,7 +44,15 @@
   "provisioners": [
     {
       "type": "shell",
-      "inline": ["git clone https://github.com/Terkwood/BUGOUT.git"]
+      "inline": [
+        "git clone https://github.com/Terkwood/BUGOUT.git"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "cp BUGOUT/reverse-proxy/Caddyfile.example.prod /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile"
+      ]
     },
     {
       "type": "file",
@@ -53,11 +63,6 @@
       "type": "file",
       "destination": "/home/core/BUGOUT/botlink/",
       "source": "{{user `dotenv_src`}}/botlink/.env"
-    },
-    {
-      "type": "file",
-      "destination": "/mnt/stateful_partition/BUGOUT/reverse_proxy/Caddyfile",
-      "source": "BUGOUT/reverse-proxy/Caddyfile.example.prod"
     },
     {
       "type": "shell",
@@ -71,8 +76,10 @@
     },
     {
       "type": "shell",
-      "inline": ["sudo systemctl reboot"],
-      "expect_disconnect":true
+      "inline": [
+        "sudo systemctl reboot"
+      ],
+      "expect_disconnect": true
     },
     {
       "type": "shell",
