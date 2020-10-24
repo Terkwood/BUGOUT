@@ -23,6 +23,8 @@ RUN apt install -y libssl-dev
 
 COPY --from=builder /usr/local/bin/botlink /usr/local/bin/botlink
 
+WORKDIR /BUGOUT
+
 ENV RUST_LOG info
 
 CMD ["botlink"]
