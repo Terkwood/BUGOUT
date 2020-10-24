@@ -21,12 +21,10 @@ pub enum StreamReadError {
     Redis(redis::RedisError),
     Deser,
 }
-pub struct RedisXReader {
-    pub client: Arc<Client>,
-}
+
 const GROUP_NAME: &str = "botlink";
 const CONSUMER_NAME: &str = "singleton";
-impl XReader for RedisXReader {
+impl XReader for Arc<Client> {
     fn xread_sorted(
         &self,
     ) -> Result<std::vec::Vec<(XReadEntryId, StreamInput)>, redis::RedisError> {
@@ -35,7 +33,7 @@ impl XReader for RedisXReader {
             topics::ATTACH_BOT_CMD,
             topics::GAME_STATES_CHANGELOG
         );
-        match self.client.get_connection() {
+        match self.get_connection() {
             Err(e) => Err(e),
             Ok(mut conn) => {
                 let opts = StreamReadOptions::default()

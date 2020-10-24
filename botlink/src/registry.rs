@@ -1,6 +1,6 @@
 use crate::repo::*;
 use crate::stream::xadd::*;
-use crate::stream::xread::{RedisXReader, XReader};
+use crate::stream::xread::XReader;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use micro_model_bot::{ComputeMove, MoveComputed};
 use redis::Client;
@@ -30,14 +30,12 @@ impl Default for Components {
         let (move_computed_in, move_computed_out): (Sender<MoveComputed>, Receiver<MoveComputed>) =
             unbounded();
 
-        let pool = create_redis_client();
+        let client = create_redis_client();
         Components {
-            ab_repo: Box::new(pool.clone()),
-            board_size_repo: Arc::new(pool.clone()),
-            xreader: Box::new(RedisXReader {
-                client: pool.clone(),
-            }),
-            xadder: Arc::new(RedisXAdder { client: pool }),
+            ab_repo: Box::new(client.clone()),
+            board_size_repo: Arc::new(client.clone()),
+            xreader: Box::new(client.clone()),
+            xadder: Arc::new(client),
             compute_move_in,
             compute_move_out,
             move_computed_in,

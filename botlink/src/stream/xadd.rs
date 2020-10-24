@@ -20,12 +20,9 @@ pub enum StreamAddError {
     Ser(Box<bincode::ErrorKind>),
 }
 
-pub struct RedisXAdder {
-    pub client: Arc<Client>,
-}
-impl XAdder for RedisXAdder {
+impl XAdder for Arc<Client> {
     fn xadd_game_state(&self, game_state: &move_model::GameState) -> Result<(), StreamAddError> {
-        match self.client.get_connection() {
+        match self.get_connection() {
             Ok(mut conn) => {
                 redis::cmd("XADD")
                     .arg(topics::GAME_STATES_CHANGELOG)
@@ -49,7 +46,7 @@ impl XAdder for RedisXAdder {
         }
     }
     fn xadd_make_move_command(&self, command: &MakeMoveCommand) -> Result<(), StreamAddError> {
-        match self.client.get_connection() {
+        match self.get_connection() {
             Ok(mut conn) => {
                 let mut redis_cmd = redis::cmd("XADD");
                 redis_cmd
@@ -81,7 +78,7 @@ impl XAdder for RedisXAdder {
     }
 
     fn xadd_bot_attached(&self, bot_attached: BotAttached) -> Result<(), StreamAddError> {
-        match self.client.get_connection() {
+        match self.get_connection() {
             Ok(mut conn) => {
                 redis::cmd("XADD")
                     .arg(topics::BOT_ATTACHED_EV)

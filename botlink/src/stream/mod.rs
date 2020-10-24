@@ -4,6 +4,7 @@ mod opts;
 pub mod topics;
 mod unack;
 mod write_moves;
+pub mod xack;
 pub mod xadd;
 pub mod xread;
 
