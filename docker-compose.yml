@@ -15,7 +15,7 @@ services:
   gateway:
     build: gateway/.
     volumes:
-      - "./gateway/.env:/var/BUGOUT/gateway/.env:z"
+      - "./gateway/.env:/BUGOUT/.env:z"
     links:
       - "redis"
     depends_on:
@@ -57,7 +57,7 @@ services:
     depends_on:
       - "redis"
     volumes:
-      - "./botlink/.env:/var/BUGOUT/botlink/.env:z"
+      - "./botlink/.env:/BUGOUT/.env:z"
   reverse-proxy:
     image: abiosoft/caddy
     ports:
