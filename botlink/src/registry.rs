@@ -24,15 +24,14 @@ pub fn create_redis_client() -> Arc<redis::Client> {
     Arc::new(Client::open(REDIS_URL).expect("redis client"))
 }
 
-impl Default for Components {
-    fn default() -> Self {
+impl Components {
+    pub fn new(client: Arc<Client>) -> Self {
         let (compute_move_in, compute_move_out): (Sender<ComputeMove>, Receiver<ComputeMove>) =
             unbounded();
 
         let (move_computed_in, move_computed_out): (Sender<MoveComputed>, Receiver<MoveComputed>) =
             unbounded();
 
-        let client = create_redis_client();
         Components {
             ab_repo: Box::new(client.clone()),
             board_size_repo: Arc::new(client.clone()),
