@@ -6,10 +6,10 @@ pub struct Unacknowledged {
 }
 
 impl Unacknowledged {
-    fn ack_all(&mut self) {
+    pub fn ack_all(&mut self) {
         todo!()
     }
-    pub fn push(&mut self, xid: XReadEntryId, event: super::StreamInput) {
+    pub fn push(&mut self, xid: XReadEntryId, event: &StreamInput) {
         todo!()
     }
 }

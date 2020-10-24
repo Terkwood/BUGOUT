@@ -18,7 +18,7 @@ async fn main() {
     let xmm = components.xadder.clone();
     let bsr = components.board_size_repo.clone();
 
-    thread::spawn(move || stream::write_moves(mco, xmm, bsr));
-    thread::spawn(move || stream::process(&mut stream::StreamOpts::from(components)));
+    thread::spawn(move || stream::xadd_loop(mco, xmm, bsr));
+    thread::spawn(move || stream::xread_loop(&mut stream::StreamOpts::from(components)));
     websocket::listen(ws_opts).await;
 }

@@ -1,6 +1,6 @@
 use super::topics;
+use super::StreamInput;
 use log::{error, trace};
-use micro_model_bot::gateway::AttachBot;
 use redis::streams::{StreamReadOptions, StreamReadReply};
 use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
@@ -66,12 +66,6 @@ impl XReader for RedisXReader {
             }
         }
     }
-}
-
-#[derive(Clone, Debug)]
-pub enum StreamInput {
-    AB(AttachBot),
-    GS(move_model::GameState),
 }
 
 fn deser(xrr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, StreamReadError> {

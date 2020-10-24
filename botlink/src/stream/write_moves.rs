@@ -7,7 +7,7 @@ use micro_model_moves::{Coord, MakeMoveCommand, ReqId};
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub fn write_moves(
+pub fn xadd_loop(
     move_computed_out: Receiver<MoveComputed>,
     xadder: Arc<dyn XAdder>,
     board_size_repo: Arc<dyn BoardSizeRepo>,

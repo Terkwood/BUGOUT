@@ -1,81 +1,69 @@
 mod convert;
+mod input;
+mod opts;
 pub mod topics;
 mod unack;
 mod write_moves;
 pub mod xadd;
 pub mod xread;
 
+pub use opts::StreamOpts;
 pub use unack::Unacknowledged;
-pub use write_moves::write_moves;
+pub use write_moves::xadd_loop;
 
-use crate::registry::Components;
-use crate::repo::{AttachedBotsRepo, BoardSizeRepo};
 use convert::Convert;
-use crossbeam_channel::Sender;
+pub use input::StreamInput;
 use log::{error, info};
 use micro_model_bot::gateway::AttachBot;
 use micro_model_bot::ComputeMove;
-use redis_streams::XReadEntryId;
-use std::sync::Arc;
-use xread::StreamInput;
 
-pub fn process(opts: &mut StreamOpts) {
+pub fn xread_loop(opts: &mut StreamOpts) {
     let mut unack = Unacknowledged::default();
     loop {
         match opts.xreader.xread_sorted() {
             Ok(xrr) => {
-                for time_ordered_event in xrr {
-                    match time_ordered_event {
-                        (entry_id, StreamInput::AB(ab)) => process_attach_bot(ab, entry_id, opts),
-                        (entry_id, StreamInput::GS(game_state)) => {
-                            let player_up = game_state.player_up.convert();
-                            let game_id = game_state.game_id.convert();
-                            match opts.attached_bots_repo.is_attached(&game_id, player_up) {
-                                Ok(bot_game) => {
-                                    if bot_game {
-                                        let convert_state = game_state.convert();
-                                        if let Err(e) = opts.compute_move_in.send(ComputeMove {
-                                            game_id,
-                                            game_state: convert_state,
-                                        }) {
-                                            error!("WS SEND ERROR {:?}", e)
-                                        }
-                                    } else {
-                                        info!("Ignoring {:?} {:?}", game_id, player_up)
-                                    };
-                                }
-                                Err(e) => error!("Game Repo error is_attached {:?}", e),
-                            }
-                        }
-                    }
+                for (xid, event) in xrr {
+                    process(&event, opts);
+
+                    unack.push(xid, &event)
                 }
+
+                unack.ack_all()
             }
             Err(e) => error!("Stream error {:?}", e),
         }
     }
 }
 
-pub struct StreamOpts {
-    pub attached_bots_repo: Box<dyn AttachedBotsRepo>,
-    pub board_size_repo: Arc<dyn BoardSizeRepo>,
-    pub xreader: Box<dyn xread::XReader>,
-    pub xadder: Arc<dyn xadd::XAdder>,
-    pub compute_move_in: Sender<ComputeMove>,
-}
-
-impl StreamOpts {
-    pub fn from(components: Components) -> Self {
-        StreamOpts {
-            attached_bots_repo: components.ab_repo,
-            board_size_repo: components.board_size_repo,
-            xreader: components.xreader,
-            xadder: components.xadder,
-            compute_move_in: components.compute_move_in,
+fn process(event: &StreamInput, opts: &mut StreamOpts) {
+    match &event {
+        StreamInput::AB(ab) => {
+            process_attach_bot(&ab, opts);
+        }
+        StreamInput::GS(game_state) => {
+            let player_up = game_state.player_up.convert();
+            let game_id = game_state.game_id.convert();
+            match opts.attached_bots_repo.is_attached(&game_id, player_up) {
+                Ok(bot_game) => {
+                    if bot_game {
+                        let convert_state = game_state.convert();
+                        if let Err(e) = opts.compute_move_in.send(ComputeMove {
+                            game_id,
+                            game_state: convert_state,
+                        }) {
+                            error!("WS SEND ERROR {:?}", e)
+                        }
+                    } else {
+                        info!("Ignoring {:?} {:?}", game_id, player_up)
+                    };
+                }
+                Err(e) => error!("Game Repo error is_attached {:?}", e),
+            }
         }
     }
 }
 
-fn process_attach_bot(ab: AttachBot, entry_id: XReadEntryId, opts: &mut StreamOpts) {
+fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
     if let Err(e) = opts.attached_bots_repo.attach(&ab.game_id, ab.player) {
         error!("Error attaching bot {:?}", e)
     } else {
@@ -121,23 +109,15 @@ mod tests {
     use super::*;
     use crate::repo::*;
     use crate::stream::xadd::*;
-    use crossbeam_channel::{after, never, select, unbounded, Receiver};
+    use crossbeam_channel::Sender;
+    use crossbeam_channel::{select, unbounded, Receiver};
     use micro_model_moves::*;
     use redis_streams::XReadEntryId;
-    use std::sync::atomic::{AtomicU16, AtomicU64, Ordering};
+    use std::sync::atomic::{AtomicU16, Ordering};
     use std::sync::{Arc, Mutex};
     use std::thread;
     use std::time::Duration;
     use uuid::Uuid;
-
-    #[derive(Clone)]
-    struct FakeEntryIdRepo {
-        eid_update_in: Sender<XReadEntryId>,
-    }
-    static FAKE_AB_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static FAKE_AB_SEQNO: AtomicU64 = AtomicU64::new(0);
-    static FAKE_GS_MILLIS: AtomicU64 = AtomicU64::new(0);
-    static FAKE_GS_SEQNO: AtomicU64 = AtomicU64::new(0);
 
     #[derive(Clone)]
     struct FakeAttachedBotsRepo {
@@ -230,13 +210,10 @@ mod tests {
     #[test]
     fn process_test() {
         let (compute_move_in, _): (Sender<ComputeMove>, _) = unbounded();
-        let (eid_update_in, eid_update_out) = unbounded();
         let (added_in, added_out): (
             Sender<move_model::GameState>,
             Receiver<move_model::GameState>,
         ) = unbounded();
-
-        let entry_id_repo = Box::new(FakeEntryIdRepo { eid_update_in });
 
         let bots_attached = Arc::new(Mutex::new(vec![]));
         let attached_bots_repo = Box::new(FakeAttachedBotsRepo {
@@ -267,7 +244,7 @@ mod tests {
                 xadder,
             };
 
-            process(&mut opts)
+            xread_loop(&mut opts)
         });
 
         // process xadd of game state correctly
