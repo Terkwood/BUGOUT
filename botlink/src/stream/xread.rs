@@ -22,7 +22,6 @@ pub enum StreamReadError {
     Deser,
 }
 
-const GROUP_NAME: &str = "botlink";
 const CONSUMER_NAME: &str = "singleton";
 impl XReader for Arc<Client> {
     fn xread_sorted(
@@ -38,7 +37,7 @@ impl XReader for Arc<Client> {
             Ok(mut conn) => {
                 let opts = StreamReadOptions::default()
                     .block(BLOCK_MS)
-                    .group(GROUP_NAME, CONSUMER_NAME);
+                    .group(super::GROUP_NAME, CONSUMER_NAME);
                 let ser = conn.xread_options(
                     &[topics::ATTACH_BOT_CMD, topics::GAME_STATES_CHANGELOG],
                     &[">", ">"],

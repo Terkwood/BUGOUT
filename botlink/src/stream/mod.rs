@@ -18,6 +18,8 @@ use log::{error, info};
 use micro_model_bot::gateway::AttachBot;
 use micro_model_bot::ComputeMove;
 
+const GROUP_NAME: &str = "botlink";
+
 pub fn xread_loop(opts: &mut StreamOpts) {
     let mut unack = Unacknowledged::default();
     loop {
