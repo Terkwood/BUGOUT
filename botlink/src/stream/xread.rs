@@ -47,19 +47,17 @@ impl XReader for RedisXReader {
 
                 match deser(ser) {
                     Ok(unsorted) => {
-                        todo!() /*
-                                let sorted_keys: Vec<XReadEntryId> = {
-                                        let mut ks: Vec<XReadEntryId> = unsorted.keys().copied().collect();
-                                        ks.sort();
-                                        ks
-                                    };
-                                    let mut answer = vec![];
-                                    for sk in sorted_keys {
-                                        if let Some(data) = unsorted.get(&sk) {
-                                            answer.push((sk, data.clone()))
-                                        }
-                                    }
-                                    Ok(answer)*/
+                        let mut sorted_keys: Vec<XReadEntryId> =
+                            unsorted.keys().map(|k| *k).collect();
+                        sorted_keys.sort();
+
+                        let mut answer = vec![];
+                        for sk in sorted_keys {
+                            if let Some(data) = unsorted.get(&sk) {
+                                answer.push((sk, data.clone()))
+                            }
+                        }
+                        Ok(answer)
                     }
                     Err(_) => todo!(),
                 }
@@ -74,55 +72,20 @@ pub enum StreamData {
     GS(move_model::GameState),
 }
 
-fn deser(xread_result: XReadResult) -> Result<HashMap<XReadEntryId, StreamData>, StreamReadError> {
-    let mut stream_data = HashMap::new();
-    todo!();
-    /*
-    for hash in xread_result.iter() {
-        for (xread_topic, xread_data) in hash.iter() {
-            if &xread_topic[..] == topics::GAME_STATES_CHANGELOG {
-                for with_timestamps in xread_data {
-                    for (k, v) in with_timestamps {
-                        let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin>
-                            redis::FromRedisValue::from_redis_value(&v);
-                        if let Ok(s) = shape {
-                            if let (Ok(seq_no), Some(game_state)) = (
-                                XReadEntryId::from_str(k),
-                                s.1.clone()
-                                    .and_then(|bytes| move_model::GameState::from(&bytes).ok()),
-                            ) {
-                                stream_data.insert(seq_no, StreamData::GS(game_state));
-                            } else {
-                                warn!("Xread: Deser error around game states data")
-                            }
-                        } else {
-                            warn!("Fail XREAD {:?}", &v)
-                        }
-                    }
+fn deser(xrr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, StreamReadError> {
+    let mut out = HashMap::new();
+    for k in xrr.keys {
+        let key = k.key;
+        for e in k.ids {
+            if let Ok(eid) = XReadEntryId::from_str(&e.id) {
+                let maybe_data: Option<Vec<u8>> = e.get("data");
+                if let Some(data) = maybe_data {
+                    todo!()
+                } else {
+                    return Err(StreamReadError::Deser);
                 }
-            } else if &xread_topic[..] == topics::ATTACH_BOT_CMD {
-                for with_timestamps in xread_data {
-                    for (k, v) in with_timestamps {
-                        let shape: Result<(String, Vec<u8>), _> = // data <bin>
-                            redis::FromRedisValue::from_redis_value(&v);
-                        if let Ok(s) = shape {
-                            if let (Ok(seq_no), Some(command)) = (
-                                XReadEntryId::from_str(k),
-                                AttachBot::from(&s.1.clone()).ok(),
-                            ) {
-                                stream_data.insert(seq_no, StreamData::AB(command));
-                            } else {
-                                warn!("fail attach bot xread 0")
-                            }
-                        } else {
-                            warn!("Fail attach bot XREAD 1")
-                        }
-                    }
-                }
-            } else {
-                warn!("Ignoring topic {}", &xread_topic[..])
             }
-        }*/
-
-    Ok(stream_data)
+        }
+    }
+    Ok(out)
 }
