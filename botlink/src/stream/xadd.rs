@@ -2,98 +2,107 @@ use crate::stream::topics;
 use micro_model_bot::gateway::BotAttached;
 use micro_model_moves::{Coord, MakeMoveCommand};
 use move_model;
-use redis_conn_pool::redis::RedisError;
-use redis_conn_pool::{redis, Pool};
+use redis::Client;
+use redis::RedisError;
 
 use log::info;
 use std::sync::Arc;
 
 pub trait XAdder: Send + Sync {
-    fn xadd_game_state(&self, game_state: &move_model::GameState) -> Result<(), XAddError>;
-    fn xadd_make_move_command(&self, command: &MakeMoveCommand) -> Result<(), XAddError>;
-    fn xadd_bot_attached(&self, bot_attached: BotAttached) -> Result<(), XAddError>;
+    fn xadd_game_state(&self, game_state: &move_model::GameState) -> Result<(), StreamAddError>;
+    fn xadd_make_move_command(&self, command: &MakeMoveCommand) -> Result<(), StreamAddError>;
+    fn xadd_bot_attached(&self, bot_attached: BotAttached) -> Result<(), StreamAddError>;
 }
 
 #[derive(Debug)]
-pub enum XAddError {
+pub enum StreamAddError {
     Redis(RedisError),
     Ser(Box<bincode::ErrorKind>),
 }
 
-pub struct RedisXAdder {
-    pub pool: Arc<Pool>,
-}
-impl XAdder for RedisXAdder {
-    fn xadd_game_state(&self, game_state: &move_model::GameState) -> Result<(), XAddError> {
-        let mut conn = self.pool.get().expect("redis pool");
-        redis::cmd("XADD")
-            .arg(topics::GAME_STATES_CHANGELOG)
-            .arg("MAXLEN")
-            .arg("~")
-            .arg("1000")
-            .arg("*")
-            .arg("data")
-            .arg(game_state.serialize()?)
-            .query::<String>(&mut *conn)?;
+impl XAdder for Arc<Client> {
+    fn xadd_game_state(&self, game_state: &move_model::GameState) -> Result<(), StreamAddError> {
+        match self.get_connection() {
+            Ok(mut conn) => {
+                redis::cmd("XADD")
+                    .arg(topics::GAME_STATES_CHANGELOG)
+                    .arg("MAXLEN")
+                    .arg("~")
+                    .arg("1000")
+                    .arg("*")
+                    .arg("data")
+                    .arg(game_state.serialize()?)
+                    .query::<String>(&mut conn)?;
 
-        info!(
-            "🧳 {} {}",
-            &game_state.game_id.0.to_string()[0..8],
-            game_state.player_up.to_string()
-        );
+                info!(
+                    "🧳 {} {}",
+                    &game_state.game_id.0.to_string()[0..8],
+                    game_state.player_up.to_string()
+                );
 
-        Ok(())
-    }
-    fn xadd_make_move_command(&self, command: &MakeMoveCommand) -> Result<(), XAddError> {
-        let mut conn = self.pool.get().unwrap();
-
-        let mut redis_cmd = redis::cmd("XADD");
-        redis_cmd
-            .arg(topics::MAKE_MOVE_CMD)
-            .arg("MAXLEN")
-            .arg("~")
-            .arg("1000")
-            .arg("*")
-            .arg("game_id")
-            .arg(command.game_id.0.to_string())
-            .arg("player")
-            .arg(command.player.to_string())
-            .arg("req_id")
-            .arg(command.req_id.0.to_string());
-        if let Some(Coord { x, y }) = command.coord {
-            redis_cmd.arg("coord_x").arg(x).arg("coord_y").arg(y);
+                Ok(())
+            }
+            Err(e) => Err(StreamAddError::Redis(e)),
         }
-        redis_cmd.query::<String>(&mut *conn)?;
-
-        info!(
-            "🏇 {} {}",
-            &command.game_id.0.to_string()[0..8],
-            command.player.to_string()
-        );
-        Ok(())
     }
-    fn xadd_bot_attached(&self, bot_attached: BotAttached) -> Result<(), XAddError> {
-        let mut conn = self.pool.get().expect("redis pool");
-        redis::cmd("XADD")
-            .arg(topics::BOT_ATTACHED_EV)
-            .arg("MAXLEN")
-            .arg("~")
-            .arg("1000")
-            .arg("*")
-            .arg("data")
-            .arg(bot_attached.serialize()?)
-            .query::<String>(&mut *conn)?;
-        Ok(())
+    fn xadd_make_move_command(&self, command: &MakeMoveCommand) -> Result<(), StreamAddError> {
+        match self.get_connection() {
+            Ok(mut conn) => {
+                let mut redis_cmd = redis::cmd("XADD");
+                redis_cmd
+                    .arg(topics::MAKE_MOVE_CMD)
+                    .arg("MAXLEN")
+                    .arg("~")
+                    .arg("1000")
+                    .arg("*")
+                    .arg("game_id")
+                    .arg(command.game_id.0.to_string())
+                    .arg("player")
+                    .arg(command.player.to_string())
+                    .arg("req_id")
+                    .arg(command.req_id.0.to_string());
+                if let Some(Coord { x, y }) = command.coord {
+                    redis_cmd.arg("coord_x").arg(x).arg("coord_y").arg(y);
+                }
+                redis_cmd.query::<String>(&mut conn)?;
+
+                info!(
+                    "🏇 {} {}",
+                    &command.game_id.0.to_string()[0..8],
+                    command.player.to_string()
+                );
+                Ok(())
+            }
+            Err(e) => Err(StreamAddError::Redis(e)),
+        }
+    }
+
+    fn xadd_bot_attached(&self, bot_attached: BotAttached) -> Result<(), StreamAddError> {
+        match self.get_connection() {
+            Ok(mut conn) => {
+                redis::cmd("XADD")
+                    .arg(topics::BOT_ATTACHED_EV)
+                    .arg("MAXLEN")
+                    .arg("~")
+                    .arg("1000")
+                    .arg("*")
+                    .arg("data")
+                    .arg(bot_attached.serialize()?)
+                    .query::<String>(&mut conn)?;
+                Ok(())
+            }
+            Err(e) => Err(StreamAddError::Redis(e)),
+        }
     }
 }
 
-impl From<RedisError> for XAddError {
+impl From<RedisError> for StreamAddError {
     fn from(r: RedisError) -> Self {
-        XAddError::Redis(r)
+        StreamAddError::Redis(r)
     }
 }
-impl From<Box<bincode::ErrorKind>> for XAddError {
+impl From<Box<bincode::ErrorKind>> for StreamAddError {
     fn from(b: Box<bincode::ErrorKind>) -> Self {
-        XAddError::Ser(b)
+        StreamAddError::Ser(b)
     }
 }

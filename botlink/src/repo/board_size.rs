@@ -1,8 +1,7 @@
 use super::redis_keys::board_size as board_size_key;
 use super::RepoErr;
 use micro_model_moves::GameId;
-use redis::Commands;
-use redis_conn_pool::{r2d2, r2d2_redis, redis, Pool};
+use redis::{Client, Commands};
 use std::sync::Arc;
 
 pub trait BoardSizeRepo: Send + Sync {
@@ -11,25 +10,28 @@ pub trait BoardSizeRepo: Send + Sync {
     fn set_board_size(&self, game_id: &GameId, board_size: u16) -> Result<(), RepoErr>;
 }
 
-impl BoardSizeRepo for Arc<Pool> {
+impl BoardSizeRepo for Arc<Client> {
     fn get_board_size(&self, game_id: &GameId) -> Result<u16, RepoErr> {
-        let mut conn = self.get().expect("pool");
-        let result = conn.get(board_size_key(&game_id.0))?;
-        expire(game_id, &mut conn)?;
-        Ok(result)
+        if let Ok(mut conn) = self.get_connection() {
+            let result = conn.get(board_size_key(&game_id.0))?;
+            expire(game_id, &mut conn)?;
+            Ok(result)
+        } else {
+            Err(RepoErr::Conn)
+        }
     }
     fn set_board_size(&self, game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
-        let mut conn = self.get().expect("pool");
-        conn.set(board_size_key(&game_id.0), board_size)?;
-        expire(game_id, &mut conn)?;
-        Ok(())
+        if let Ok(mut conn) = self.get_connection() {
+            conn.set(board_size_key(&game_id.0), board_size)?;
+            expire(game_id, &mut conn)?;
+            Ok(())
+        } else {
+            Err(RepoErr::Conn)
+        }
     }
 }
 
 const TTL_SECS: usize = 86400;
-fn expire(
-    game_id: &GameId,
-    conn: &mut r2d2::PooledConnection<r2d2_redis::RedisConnectionManager>,
-) -> Result<(), RepoErr> {
+fn expire(game_id: &GameId, conn: &mut redis::Connection) -> Result<(), RepoErr> {
     Ok(conn.expire(board_size_key(&game_id.0), TTL_SECS)?)
 }

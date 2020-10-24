@@ -1,8 +1,7 @@
 use super::redis_keys::ATTACHED_BOTS;
 use super::RepoErr;
 use micro_model_moves::{GameId, Player};
-use redis::Commands;
-use redis_conn_pool::{r2d2, r2d2_redis, redis, Pool};
+use redis::{Client, Commands};
 
 use std::sync::Arc;
 
@@ -14,25 +13,31 @@ pub trait AttachedBotsRepo: Send + Sync {
 
 const TTL_SECS: usize = 86400;
 
-impl AttachedBotsRepo for Arc<Pool> {
+impl AttachedBotsRepo for Arc<Client> {
     fn is_attached(&self, game_id: &GameId, player: Player) -> Result<bool, RepoErr> {
-        let mut conn = self.get().expect("pool");
-        let result = conn.sismember(ATTACHED_BOTS, member_value(game_id, player))?;
-        expire(&mut conn)?;
-        Ok(result)
+        match self.get_connection() {
+            Ok(mut conn) => {
+                let result = conn.sismember(ATTACHED_BOTS, member_value(game_id, player))?;
+                expire(&mut conn)?;
+                Ok(result)
+            }
+            Err(_) => Err(RepoErr::Conn),
+        }
     }
 
     fn attach(&mut self, game_id: &GameId, player: Player) -> Result<(), RepoErr> {
-        let mut conn = self.get().expect("pool");
-        let result = conn.sadd(ATTACHED_BOTS, member_value(game_id, player))?;
-        expire(&mut conn)?;
-        Ok(result)
+        match self.get_connection() {
+            Ok(mut conn) => {
+                let result = conn.sadd(ATTACHED_BOTS, member_value(game_id, player))?;
+                expire(&mut conn)?;
+                Ok(result)
+            }
+            Err(_) => Err(RepoErr::Conn),
+        }
     }
 }
 
-fn expire(
-    conn: &mut r2d2::PooledConnection<r2d2_redis::RedisConnectionManager>,
-) -> Result<(), RepoErr> {
+fn expire(conn: &mut redis::Connection) -> Result<(), RepoErr> {
     Ok(conn.expire(ATTACHED_BOTS, TTL_SECS)?)
 }
 

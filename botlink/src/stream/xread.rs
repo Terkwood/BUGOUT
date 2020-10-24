@@ -1,14 +1,13 @@
 use super::topics;
-use crate::repo::AllEntryIds;
-use log::{trace, warn};
-use micro_model_bot::gateway::AttachBot;
-use redis_conn_pool::redis;
-use redis_conn_pool::Pool;
+use super::StreamInput;
+use log::{error, trace};
+use redis::streams::{StreamReadOptions, StreamReadReply};
+use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-const BLOCK_MSEC: u32 = 5000;
+const BLOCK_MS: usize = 5000;
 
 pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 
@@ -16,106 +15,87 @@ pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 ///
 /// entry_ids: the minimum entry ids from which to read
 pub trait XReader: Send + Sync {
-    fn xread_sorted(
-        &self,
-        entry_ids: AllEntryIds,
-    ) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError>;
+    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, redis::RedisError>;
+}
+pub enum StreamReadError {
+    Redis(redis::RedisError),
+    Deser,
 }
 
-pub struct RedisXReader {
-    pub pool: Arc<Pool>,
-}
-impl XReader for RedisXReader {
+const CONSUMER_NAME: &str = "singleton";
+impl XReader for Arc<Client> {
     fn xread_sorted(
         &self,
-        entry_ids: AllEntryIds,
-    ) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
+    ) -> Result<std::vec::Vec<(XReadEntryId, StreamInput)>, redis::RedisError> {
         trace!(
             "xreading from {} and {}",
             topics::ATTACH_BOT_CMD,
             topics::GAME_STATES_CHANGELOG
         );
-        let mut conn = self.pool.get().unwrap();
-        let xrr = redis::cmd("XREAD")
-            .arg("BLOCK")
-            .arg(&BLOCK_MSEC.to_string())
-            .arg("STREAMS")
-            .arg(topics::ATTACH_BOT_CMD)
-            .arg(topics::GAME_STATES_CHANGELOG)
-            .arg(entry_ids.attach_bot_eid.to_string())
-            .arg(entry_ids.game_states_eid.to_string())
-            .query::<XReadResult>(&mut *conn)?;
-        let unsorted = deser(xrr);
-        let sorted_keys: Vec<XReadEntryId> = {
-            let mut ks: Vec<XReadEntryId> = unsorted.keys().copied().collect();
-            ks.sort();
-            ks
-        };
-        let mut answer = vec![];
-        for sk in sorted_keys {
-            if let Some(data) = unsorted.get(&sk) {
-                answer.push((sk, data.clone()))
-            }
-        }
-        Ok(answer)
-    }
-}
+        match self.get_connection() {
+            Err(e) => Err(e),
+            Ok(mut conn) => {
+                let opts = StreamReadOptions::default()
+                    .block(BLOCK_MS)
+                    .group(super::GROUP_NAME, CONSUMER_NAME);
+                let ser = conn.xread_options(
+                    &[topics::ATTACH_BOT_CMD, topics::GAME_STATES_CHANGELOG],
+                    &[">", ">"],
+                    opts,
+                )?;
 
-#[derive(Clone, Debug)]
-pub enum StreamData {
-    AB(AttachBot),
-    GS(move_model::GameState),
-}
+                match deser(ser) {
+                    Ok(unsorted) => {
+                        let mut sorted_keys: Vec<XReadEntryId> =
+                            unsorted.keys().map(|k| *k).collect();
+                        sorted_keys.sort();
 
-fn deser(xread_result: XReadResult) -> HashMap<XReadEntryId, StreamData> {
-    let mut stream_data = HashMap::new();
-
-    for hash in xread_result.iter() {
-        for (xread_topic, xread_data) in hash.iter() {
-            if &xread_topic[..] == topics::GAME_STATES_CHANGELOG {
-                for with_timestamps in xread_data {
-                    for (k, v) in with_timestamps {
-                        let shape: Result<(String, Option<Vec<u8>>), _> = // data <bin>
-                            redis::FromRedisValue::from_redis_value(&v);
-                        if let Ok(s) = shape {
-                            if let (Ok(seq_no), Some(game_state)) = (
-                                XReadEntryId::from_str(k),
-                                s.1.clone()
-                                    .and_then(|bytes| move_model::GameState::from(&bytes).ok()),
-                            ) {
-                                stream_data.insert(seq_no, StreamData::GS(game_state));
-                            } else {
-                                warn!("Xread: Deser error around game states data")
+                        let mut answer = vec![];
+                        for sk in sorted_keys {
+                            if let Some(data) = unsorted.get(&sk) {
+                                answer.push((sk, data.clone()))
                             }
-                        } else {
-                            warn!("Fail XREAD {:?}", &v)
                         }
+                        Ok(answer)
                     }
+                    Err(_) => todo!(),
                 }
-            } else if &xread_topic[..] == topics::ATTACH_BOT_CMD {
-                for with_timestamps in xread_data {
-                    for (k, v) in with_timestamps {
-                        let shape: Result<(String, Vec<u8>), _> = // data <bin>
-                            redis::FromRedisValue::from_redis_value(&v);
-                        if let Ok(s) = shape {
-                            if let (Ok(seq_no), Some(command)) = (
-                                XReadEntryId::from_str(k),
-                                AttachBot::from(&s.1.clone()).ok(),
-                            ) {
-                                stream_data.insert(seq_no, StreamData::AB(command));
-                            } else {
-                                warn!("fail attach bot xread 0")
-                            }
-                        } else {
-                            warn!("Fail attach bot XREAD 1")
-                        }
-                    }
-                }
-            } else {
-                warn!("Ignoring topic {}", &xread_topic[..])
             }
         }
     }
+}
 
-    stream_data
+fn deser(xrr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, StreamReadError> {
+    let mut out = HashMap::new();
+    for k in xrr.keys {
+        let key = k.key;
+        for e in k.ids {
+            if let Ok(xid) = XReadEntryId::from_str(&e.id) {
+                let maybe_data: Option<Vec<u8>> = e.get("data");
+                if let Some(data) = maybe_data {
+                    let sd: Option<StreamInput> = if key == topics::GAME_STATES_CHANGELOG {
+                        bincode::deserialize(&data)
+                            .map(|gs| StreamInput::GS(gs))
+                            .ok()
+                    } else if key == topics::ATTACH_BOT_CMD {
+                        bincode::deserialize(&data)
+                            .map(|ab| StreamInput::AB(ab))
+                            .ok()
+                    } else {
+                        error!("Unknown key {}", key);
+                        return Err(StreamReadError::Deser);
+                    };
+                    if let Some(s) = sd {
+                        out.insert(xid, s);
+                    } else {
+                        error!("empty data");
+                        return Err(StreamReadError::Deser);
+                    }
+                } else {
+                    return Err(StreamReadError::Deser);
+                }
+            }
+        }
+    }
+    Ok(out)
 }
