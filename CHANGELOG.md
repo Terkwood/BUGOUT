@@ -1,5 +1,6 @@
 # NEXT: v0.9.1
 
+- gateway: fix deprecated time call (#426, #413)
 - Use XREADGROUP in gateway & botlink, upgrade their redis dep (#302, #310, #420, #423)
 - Simplify redis-streams crate (#421)
 
