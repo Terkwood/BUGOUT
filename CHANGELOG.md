@@ -1,6 +1,6 @@
 # NEXT: v0.9.1
 
-- Use XREADGROUP in gateway & botlink, upgrade their redis dep (#302, #310, #420, #423)
+- Use XREADGROUP in gateway & botlink, upgrade their redis dep (#302, #310, #420, #423, #427)
 - Simplify redis-streams crate (#421)
 
 # v0.9.0
