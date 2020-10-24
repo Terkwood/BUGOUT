@@ -1,8 +1,12 @@
 mod convert;
 pub mod topics;
+mod unack;
 mod write_moves;
 pub mod xadd;
 pub mod xread;
+
+pub use unack::Unacknowledged;
+pub use write_moves::write_moves;
 
 use crate::registry::Components;
 use crate::repo::{AttachedBotsRepo, BoardSizeRepo};
@@ -13,18 +17,17 @@ use micro_model_bot::gateway::AttachBot;
 use micro_model_bot::ComputeMove;
 use redis_streams::XReadEntryId;
 use std::sync::Arc;
-pub use write_moves::write_moves;
-use xread::StreamData;
+use xread::StreamInput;
 
 pub fn process(opts: &mut StreamOpts) {
-    todo!("unack init");
+    let mut unack = Unacknowledged::default();
     loop {
         match opts.xreader.xread_sorted() {
             Ok(xrr) => {
                 for time_ordered_event in xrr {
                     match time_ordered_event {
-                        (entry_id, StreamData::AB(ab)) => process_attach_bot(ab, entry_id, opts),
-                        (entry_id, StreamData::GS(game_state)) => {
+                        (entry_id, StreamInput::AB(ab)) => process_attach_bot(ab, entry_id, opts),
+                        (entry_id, StreamInput::GS(game_state)) => {
                             let player_up = game_state.player_up.convert();
                             let game_id = game_state.game_id.convert();
                             match opts.attached_bots_repo.is_attached(&game_id, player_up) {
@@ -194,21 +197,21 @@ mod tests {
         game_id: GameId,
         player: Player,
         board_size: Option<u8>,
-        incoming_game_state: Arc<Mutex<Option<(XReadEntryId, StreamData)>>>,
+        incoming_game_state: Arc<Mutex<Option<(XReadEntryId, StreamInput)>>>,
     }
     impl xread::XReader for FakeXReader {
         fn xread_sorted(
             &self,
-        ) -> Result<Vec<(redis_streams::XReadEntryId, StreamData)>, redis::RedisError> {
+        ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, redis::RedisError> {
             let game_id = self.game_id.clone();
             let player = self.player;
             let board_size = self.board_size;
-            let mut v: Vec<(XReadEntryId, StreamData)> = vec![(
+            let mut v: Vec<(XReadEntryId, StreamInput)> = vec![(
                 XReadEntryId {
                     millis_time: 10,
                     seq_no: 0,
                 },
-                StreamData::AB(AttachBot {
+                StreamInput::AB(AttachBot {
                     game_id,
                     player,
                     board_size,
@@ -272,7 +275,7 @@ mod tests {
             select! {
                 recv(added_out) -> msg => if let Ok(a) = msg {
                     let mut data =  incoming_game_state.lock().expect("locked gs");
-                    *data = Some((XReadEntryId{millis_time: 1, seq_no: 0}, StreamData::GS(a))); }
+                    *data = Some((XReadEntryId{millis_time: 1, seq_no: 0}, StreamInput::GS(a))); }
             }
         });
 

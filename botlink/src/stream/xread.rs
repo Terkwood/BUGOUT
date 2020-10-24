@@ -15,7 +15,7 @@ pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 ///
 /// entry_ids: the minimum entry ids from which to read
 pub trait XReader: Send + Sync {
-    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError>;
+    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, redis::RedisError>;
 }
 pub enum StreamReadError {
     Redis(redis::RedisError),
@@ -27,7 +27,9 @@ pub struct RedisXReader {
 const GROUP_NAME: &str = "botlink";
 const CONSUMER_NAME: &str = "singleton";
 impl XReader for RedisXReader {
-    fn xread_sorted(&self) -> Result<std::vec::Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
+    fn xread_sorted(
+        &self,
+    ) -> Result<std::vec::Vec<(XReadEntryId, StreamInput)>, redis::RedisError> {
         trace!(
             "xreading from {} and {}",
             topics::ATTACH_BOT_CMD,
@@ -67,12 +69,12 @@ impl XReader for RedisXReader {
 }
 
 #[derive(Clone, Debug)]
-pub enum StreamData {
+pub enum StreamInput {
     AB(AttachBot),
     GS(move_model::GameState),
 }
 
-fn deser(xrr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, StreamReadError> {
+fn deser(xrr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, StreamReadError> {
     let mut out = HashMap::new();
     for k in xrr.keys {
         let key = k.key;
@@ -80,13 +82,13 @@ fn deser(xrr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, Stre
             if let Ok(xid) = XReadEntryId::from_str(&e.id) {
                 let maybe_data: Option<Vec<u8>> = e.get("data");
                 if let Some(data) = maybe_data {
-                    let sd: Option<StreamData> = if key == topics::GAME_STATES_CHANGELOG {
+                    let sd: Option<StreamInput> = if key == topics::GAME_STATES_CHANGELOG {
                         bincode::deserialize(&data)
-                            .map(|gs| StreamData::GS(gs))
+                            .map(|gs| StreamInput::GS(gs))
                             .ok()
                     } else if key == topics::ATTACH_BOT_CMD {
                         bincode::deserialize(&data)
-                            .map(|ab| StreamData::AB(ab))
+                            .map(|ab| StreamInput::AB(ab))
                             .ok()
                     } else {
                         error!("Unknown key {}", key);
