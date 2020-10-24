@@ -1,6 +1,9 @@
 #!/usr/bin/env -S deno run --allow-run --allow-net --allow-read --allow-env
 // SPDX-License-Identifier: MIT
 import { runOrExit, parseProcessOutput, awsEc2Cmd } from "./procs.ts";
+import { config as loadEnv } from "https://deno.land/x/dotenv@v0.3.0/mod.ts";
+
+console.log(loadEnv({ safe: true, export: true }));
 
 const KEY_NAME = Deno.env.get("KEY_NAME");
 
