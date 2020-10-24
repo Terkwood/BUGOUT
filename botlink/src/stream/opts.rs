@@ -8,8 +8,9 @@ use std::sync::Arc;
 pub struct StreamOpts {
     pub attached_bots_repo: Box<dyn AttachedBotsRepo>,
     pub board_size_repo: Arc<dyn BoardSizeRepo>,
-    pub xreader: Box<dyn xread::XReader>,
-    pub xadder: Arc<dyn xadd::XAdder>,
+    pub xread: Box<dyn xread::XReader>,
+    pub xadd: Arc<dyn xadd::XAdder>,
+    pub xack: Arc<dyn xack::XAck>,
     pub compute_move_in: Sender<ComputeMove>,
 }
 
@@ -18,8 +19,9 @@ impl StreamOpts {
         StreamOpts {
             attached_bots_repo: components.ab_repo,
             board_size_repo: components.board_size_repo,
-            xreader: components.xreader,
-            xadder: components.xadder,
+            xread: components.xreader,
+            xadd: components.xadder,
+            xack: components.xack,
             compute_move_in: components.compute_move_in,
         }
     }

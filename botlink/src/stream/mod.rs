@@ -21,7 +21,7 @@ use micro_model_bot::ComputeMove;
 pub fn xread_loop(opts: &mut StreamOpts) {
     let mut unack = Unacknowledged::default();
     loop {
-        match opts.xreader.xread_sorted() {
+        match opts.xread.xread_sorted() {
             Ok(xrr) => {
                 for (xid, event) in xrr {
                     process(&event, opts);
@@ -29,7 +29,7 @@ pub fn xread_loop(opts: &mut StreamOpts) {
                     unack.push(xid, &event)
                 }
 
-                unack.ack_all()
+                unack.ack_all(&opts)
             }
             Err(e) => error!("Stream error {:?}", e),
         }
@@ -81,17 +81,17 @@ fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
             game_state.board.size = bs.into()
         }
 
-        if let Err(e) = opts.xadder.xadd_game_state(&game_state) {
+        if let Err(e) = opts.xadd.xadd_game_state(&game_state) {
             error!(
                 "Error writing redis stream for game state changelog : {:?}",
                 e
             )
-        } else if let Err(e) =
-            opts.xadder
-                .xadd_bot_attached(micro_model_bot::gateway::BotAttached {
-                    game_id: ab.game_id.clone(),
-                    player: ab.player,
-                })
+        } else if let Err(e) = opts
+            .xadd
+            .xadd_bot_attached(micro_model_bot::gateway::BotAttached {
+                game_id: ab.game_id.clone(),
+                player: ab.player,
+            })
         {
             error!("Error xadd bot attached {:?}", e)
         }
@@ -175,20 +175,23 @@ mod tests {
     }
 
     struct FakeXReader {
-        game_id: GameId,
-        player: Player,
-        board_size: Option<u8>,
         incoming_game_state: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
-        init_data: Vec<(XReadEntryId, StreamInput)>,
+        init_data: Mutex<Vec<(XReadEntryId, StreamInput)>>,
     }
     impl xread::XReader for FakeXReader {
         fn xread_sorted(
             &self,
         ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, redis::RedisError> {
-            let game_id = self.game_id.clone();
-            let player = self.player;
-            let board_size = self.board_size;
-            let v = self.incoming_game_state.lock().expect("xrl").clone();
+            let mut v = vec![];
+
+            if let Ok(mut the_start) = self.init_data.lock() {
+                if !the_start.is_empty() {
+                    v.extend(the_start.clone());
+                    *the_start = vec![];
+                }
+            }
+
+            v.extend(self.incoming_game_state.lock().expect("xrl").clone());
 
             let mut data = self.incoming_game_state.lock().expect("locked gs");
             *data = vec![];
@@ -218,11 +221,8 @@ mod tests {
         let board_size = Some(13);
         let incoming_game_state = Arc::new(Mutex::new(vec![]));
         let xreader = Box::new(FakeXReader {
-            game_id: GAME_ID.clone(),
-            player,
-            board_size,
             incoming_game_state: incoming_game_state.clone(),
-            init_data: vec![(
+            init_data: Mutex::new(vec![(
                 XReadEntryId {
                     millis_time: 10,
                     seq_no: 0,
@@ -232,17 +232,44 @@ mod tests {
                     player,
                     board_size,
                 }),
-            )],
+            )]),
         });
         let xadder = Arc::new(FakeXAdder { added_in });
+        struct FakeXAck {
+            acked: Mutex<Vec<XReadEntryId>>,
+        };
+        impl crate::stream::xack::XAck for FakeXAck {
+            fn ack_attach_bot(
+                &self,
+                xids: &[XReadEntryId],
+            ) -> Result<(), super::xack::StreamAckError> {
+                if let Ok(mut a) = self.acked.lock() {
+                    a.extend(xids)
+                }
+                Ok(())
+            }
+
+            fn ack_game_states_changelog(
+                &self,
+                xids: &[XReadEntryId],
+            ) -> Result<(), super::xack::StreamAckError> {
+                if let Ok(mut a) = self.acked.lock() {
+                    a.extend(xids)
+                }
+                Ok(())
+            }
+        }
 
         thread::spawn(move || {
             let mut opts = StreamOpts {
                 compute_move_in,
                 attached_bots_repo,
                 board_size_repo,
-                xreader,
-                xadder,
+                xread: xreader,
+                xadd: xadder,
+                xack: Arc::new(FakeXAck {
+                    acked: Mutex::new(vec![]),
+                }),
             };
 
             xread_loop(&mut opts)
@@ -262,7 +289,5 @@ mod tests {
 
         thread::sleep(Duration::from_millis(1));
         assert!(abr.is_attached(&GAME_ID, player).expect("ab repo"));
-
-        let timeoutdur = Some(Duration::from_millis(30));
     }
 }

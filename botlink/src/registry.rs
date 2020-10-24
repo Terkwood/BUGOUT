@@ -1,4 +1,5 @@
 use crate::repo::*;
+use crate::stream::xack::XAck;
 use crate::stream::xadd::*;
 use crate::stream::xread::XReader;
 use crossbeam_channel::{unbounded, Receiver, Sender};
@@ -11,6 +12,7 @@ pub struct Components {
     pub board_size_repo: Arc<dyn BoardSizeRepo>,
     pub xreader: Box<dyn XReader>,
     pub xadder: Arc<dyn XAdder>,
+    pub xack: Arc<dyn XAck>,
     pub compute_move_in: Sender<ComputeMove>,
     pub compute_move_out: Receiver<ComputeMove>,
     pub move_computed_in: Sender<MoveComputed>,
@@ -35,7 +37,8 @@ impl Default for Components {
             ab_repo: Box::new(client.clone()),
             board_size_repo: Arc::new(client.clone()),
             xreader: Box::new(client.clone()),
-            xadder: Arc::new(client),
+            xadder: Arc::new(client.clone()),
+            xack: Arc::new(client),
             compute_move_in,
             compute_move_out,
             move_computed_in,
