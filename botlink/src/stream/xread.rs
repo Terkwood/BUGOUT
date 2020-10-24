@@ -1,5 +1,5 @@
 use super::topics;
-use log::{trace, warn};
+use log::{error, trace};
 use micro_model_bot::gateway::AttachBot;
 use redis::streams::{StreamReadOptions, StreamReadReply};
 use redis::{Client, Commands};
@@ -77,10 +77,27 @@ fn deser(xrr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, Stre
     for k in xrr.keys {
         let key = k.key;
         for e in k.ids {
-            if let Ok(eid) = XReadEntryId::from_str(&e.id) {
+            if let Ok(xid) = XReadEntryId::from_str(&e.id) {
                 let maybe_data: Option<Vec<u8>> = e.get("data");
                 if let Some(data) = maybe_data {
-                    todo!()
+                    let sd: Option<StreamData> = if key == topics::GAME_STATES_CHANGELOG {
+                        bincode::deserialize(&data)
+                            .map(|gs| StreamData::GS(gs))
+                            .ok()
+                    } else if key == topics::ATTACH_BOT_CMD {
+                        bincode::deserialize(&data)
+                            .map(|ab| StreamData::AB(ab))
+                            .ok()
+                    } else {
+                        error!("Unknown key {}", key);
+                        return Err(StreamReadError::Deser);
+                    };
+                    if let Some(s) = sd {
+                        out.insert(xid, s);
+                    } else {
+                        error!("empty data");
+                        return Err(StreamReadError::Deser);
+                    }
                 } else {
                     return Err(StreamReadError::Deser);
                 }
