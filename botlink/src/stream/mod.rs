@@ -178,7 +178,8 @@ mod tests {
         game_id: GameId,
         player: Player,
         board_size: Option<u8>,
-        incoming_game_state: Arc<Mutex<Option<(XReadEntryId, StreamInput)>>>,
+        incoming_game_state: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
+        init_data: Vec<(XReadEntryId, StreamInput)>,
     }
     impl xread::XReader for FakeXReader {
         fn xread_sorted(
@@ -187,24 +188,12 @@ mod tests {
             let game_id = self.game_id.clone();
             let player = self.player;
             let board_size = self.board_size;
-            let mut v: Vec<(XReadEntryId, StreamInput)> = vec![(
-                XReadEntryId {
-                    millis_time: 10,
-                    seq_no: 0,
-                },
-                StreamInput::AB(AttachBot {
-                    game_id,
-                    player,
-                    board_size,
-                }),
-            )];
-            if let Some((inc_eid, inc_game_state)) =
-                self.incoming_game_state.lock().expect("xrl").clone()
-            {
-                v.push((inc_eid, inc_game_state));
-            }
+            let v = self.incoming_game_state.lock().expect("xrl").clone();
 
-            Ok(todo!())
+            let mut data = self.incoming_game_state.lock().expect("locked gs");
+            *data = vec![];
+
+            Ok(v)
         }
     }
 
@@ -227,12 +216,23 @@ mod tests {
         const GAME_ID: GameId = GameId(Uuid::nil());
         let player = Player::WHITE;
         let board_size = Some(13);
-        let incoming_game_state = Arc::new(Mutex::new(None));
+        let incoming_game_state = Arc::new(Mutex::new(vec![]));
         let xreader = Box::new(FakeXReader {
             game_id: GAME_ID.clone(),
             player,
             board_size,
             incoming_game_state: incoming_game_state.clone(),
+            init_data: vec![(
+                XReadEntryId {
+                    millis_time: 10,
+                    seq_no: 0,
+                },
+                StreamInput::AB(AttachBot {
+                    game_id: GAME_ID.clone(),
+                    player,
+                    board_size,
+                }),
+            )],
         });
         let xadder = Arc::new(FakeXAdder { added_in });
 
@@ -253,7 +253,10 @@ mod tests {
             select! {
                 recv(added_out) -> msg => if let Ok(a) = msg {
                     let mut data =  incoming_game_state.lock().expect("locked gs");
-                    *data = Some((XReadEntryId{millis_time: 1, seq_no: 0}, StreamInput::GS(a))); }
+                    data.push(
+                        (XReadEntryId{millis_time: 1, seq_no: 0},
+                            StreamInput::GS(a)));
+                }
             }
         });
 
