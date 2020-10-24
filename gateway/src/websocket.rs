@@ -1,6 +1,7 @@
 use std::ops::Add;
 use std::str::from_utf8;
 use std::time::{Duration, Instant};
+use time::OffsetDateTime;
 
 use log::{error, info};
 use mio_extras::timer::Timeout;
@@ -476,8 +477,7 @@ impl Handler for WsSession {
         match event {
             // PING timeout has occured, send a ping and reschedule
             PING => {
-                self.ws_out
-                    .ping(time::precise_time_ns().to_string().into())?;
+                self.ws_out.ping(epoch_nanosecs().to_string().into())?;
                 self.ping_timeout.take();
                 self.ws_out.timeout(PING_TIMEOUT_MS, PING)
             }
@@ -594,12 +594,12 @@ impl Handler for WsSession {
                 self.observe_game();
                 self.produce_client_heartbeat(HeartbeatType::WebSocketPong);
 
-                let now = time::precise_time_ns();
+                let now = epoch_nanosecs();
                 info!(
                     "🏓 {} {:<8} {:.0}ms",
                     session_code(self),
                     "PINGPONG",
-                    (now - pong) as f64 / 1_000_000f64
+                    (now - pong as u128) as f64 / 1_000_000f64
                 );
             } else {
                 error!("😐 {} {:<8} gOnE wRoNg", session_code(self), "PINGPONG");
@@ -632,4 +632,8 @@ fn client_event_channels() -> (
 
 fn complain_no_client_id() -> Result<()> {
     Ok(error!("❌ UNEXPECTED: NO CLIENT ID DEFINED ❌"))
+}
+
+fn epoch_nanosecs() -> u128 {
+    (OffsetDateTime::now_utc() - OffsetDateTime::unix_epoch()).whole_nanoseconds() as u128
 }
