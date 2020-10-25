@@ -686,7 +686,8 @@ class GatewayConn {
             let requestPayload = {
                 'type': 'AttachBot',
                 boardSize,
-                player
+                player,
+                difficulty: 'Max'
             }
 
             this.webSocket.addEventListener('message', event => {

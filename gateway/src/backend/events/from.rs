@@ -108,23 +108,10 @@ impl From<moves::Player> for Player {
         }
     }
 }
- 
-impl From<micro_model_moves::Player> for Player {
-    fn from(p: micro_model_moves::Player) -> Self {
-        match p {
-            micro_model_moves::Player::BLACK => Player::BLACK,
-            micro_model_moves::Player::WHITE => Player::WHITE,
-        }
-    }
-}
+  
 impl From<moves::Coord> for Coord {
     fn from(c: moves::Coord) -> Self {
         Self { x: c.x, y: c.y }
     }
 }
- 
-impl From<micro_model_moves::Coord> for Coord {
-    fn from(c: micro_model_moves::Coord) -> Self {
-        Self { x: c.x, y: c.y }
-    }
-}
+  

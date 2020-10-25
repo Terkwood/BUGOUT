@@ -1,13 +1,12 @@
 extern crate bincode;
-extern crate micro_model_bot;
-extern crate micro_model_moves;
 extern crate tinybrain;
 extern crate tungstenite;
 extern crate uuid;
 
+use bot_model::api::*;
+use core_model::*;
 use log::{error, info};
-use micro_model_bot::*;
-use micro_model_moves::*;
+use move_model::*;
 use std::net::TcpListener;
 use std::thread::spawn;
 use tungstenite::accept_hdr;
@@ -33,10 +32,11 @@ fn main() {
             let mut websocket = accept_hdr(stream.unwrap(), callback).unwrap();
 
             loop {
+                let game_id = GameId(Uuid::new_v4());
                 websocket
                     .write_message(Message::Binary(
                         bincode::serialize(&ComputeMove {
-                            game_id: GameId(Uuid::new_v4()),
+                            game_id: game_id.clone(),
                             game_state: GameState {
                                 board: Board {
                                     size: 9,
@@ -46,7 +46,9 @@ fn main() {
                                 moves: vec![],
                                 player_up: Player::BLACK,
                                 turn: 1,
+                                game_id: game_id,
                             },
+                            max_visits: 500,
                         })
                         .expect("ser"),
                     ))

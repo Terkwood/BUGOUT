@@ -1,6 +1,7 @@
 use crate::err::*;
 
-use micro_model_moves::*;
+use core_model::*;
+use move_model::*;
 use serde_derive::{Deserialize, Serialize};
 
 use std::str::FromStr;
@@ -205,7 +206,9 @@ mod tests {
             ],
             turn: 3,
             player_up: Player::WHITE,
-            ..GameState::default()
+            captures: Captures::default(),
+            board: Board::default(),
+            game_id: game_id.clone(),
         };
 
         let expected = KataGoQuery {
@@ -235,7 +238,10 @@ mod tests {
                 captured: vec![],
             }],
             turn: 2,
-            ..GameState::default()
+            captures: Captures::default(),
+            board: Board::default(),
+            player_up: Player::WHITE,
+            game_id: game_id.clone(),
         };
 
         assert!(KataGoQuery::from(&game_id, &game_state).is_err())
@@ -252,7 +258,8 @@ mod tests {
                 pieces: std::collections::HashMap::new(),
                 size: 9,
             },
-            ..GameState::default()
+            game_id: game_id.clone(),
+            captures: Captures::default(),
         };
 
         let expected = KataGoQuery {

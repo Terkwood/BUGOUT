@@ -237,6 +237,7 @@ mod tests {
                 game_id: core_model::GameId(Uuid::nil()),
                 board_size: Some(9),
                 player: move_model::Player::WHITE,
+                difficulty: bot_model::Difficulty::Max,
             }))
             .expect("send test");
 

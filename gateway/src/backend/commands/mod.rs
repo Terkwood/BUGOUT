@@ -104,6 +104,6 @@ pub enum BackendCommands {
     ClientHeartbeat(ClientHeartbeat),
     SessionDisconnected(SessionDisconnected),
     QuitGame(QuitGameCommand),
-    AttachBot(micro_model_bot::gateway::AttachBot),
+    AttachBot(bot_model::api::AttachBot),
     ReqSync(ReqSyncBackendCommand),
 }
