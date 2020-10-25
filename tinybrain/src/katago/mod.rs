@@ -118,8 +118,9 @@ fn launch_child() -> Result<Child, std::io::Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core_model::*;
     use json::KataGoResponse;
-    use micro_model_moves::*;
+    use move_model::*;
     use uuid::Uuid;
     #[test]
     fn move_computed_from_play() {

@@ -2,8 +2,8 @@ use crate::repo::*;
 use crate::stream::xack::XAck;
 use crate::stream::xadd::*;
 use crate::stream::xread::XReader;
+use bot_model::api::{ComputeMove, MoveComputed};
 use crossbeam_channel::{unbounded, Receiver, Sender};
-use micro_model_bot::{ComputeMove, MoveComputed};
 use redis::Client;
 use std::sync::Arc;
 

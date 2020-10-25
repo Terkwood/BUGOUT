@@ -1,4 +1,4 @@
-const EDITION = 'Micro'
+const EDITION = 'Penultimate'
 
 const EventEmitter = require('events')
 const { ipcRenderer, remote } = require('electron')

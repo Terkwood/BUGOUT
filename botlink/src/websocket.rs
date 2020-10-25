@@ -1,5 +1,5 @@
 use crate::env;
-use micro_model_bot::{ComputeMove, MoveComputed};
+use bot_model::api::{ComputeMove, MoveComputed};
 
 use bincode::{deserialize, serialize};
 use crossbeam_channel::{Receiver, Sender};

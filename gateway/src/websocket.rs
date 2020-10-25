@@ -370,12 +370,13 @@ impl Handler for WsSession {
             Ok(ClientCommands::AttachBot(AttachBotClientCommand {
                 player: lp,
                 board_size,
+                difficulty,
             })) => {
                 info!("📌 {} ATACHBOT", session_code(self));
 
                 let player = match lp {
-                    Player::BLACK => micro_model_moves::Player::BLACK,
-                    _ => micro_model_moves::Player::WHITE,
+                    Player::BLACK => move_model::Player::BLACK,
+                    _ => move_model::Player::WHITE,
                 };
                 let game_id = uuid::Uuid::new_v4();
                 if let Err(e) = self.router_commands_in.send(RouterCommand::RouteGame {
@@ -386,10 +387,11 @@ impl Handler for WsSession {
                 }
 
                 Ok({
-                    let payload = BackendCommands::AttachBot(micro_model_bot::gateway::AttachBot {
-                        game_id: micro_model_moves::GameId(game_id),
+                    let payload = BackendCommands::AttachBot(bot_model::api::AttachBot {
+                        game_id: core_model::GameId(game_id),
                         player,
                         board_size,
+                        difficulty,
                     });
 
                     if let Err(e) = self.session_commands_in.send(payload) {

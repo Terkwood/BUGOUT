@@ -4,7 +4,7 @@ use crate::backend::commands::{
 };
 use crate::model::{Coord, MakeMoveCommand, ProvideHistoryCommand};
 use crate::topics;
-use micro_model_bot::gateway::AttachBot;
+use bot_model::api::AttachBot;
 
 use crate::backend::commands::IntoShared;
 use log::error;
@@ -29,7 +29,7 @@ pub struct RedisXAddCommands {
 impl XAddCommands for RedisXAddCommands {
     fn xadd_attach_bot(&self, attach_bot: AttachBot) {
         if let Ok(mut conn) = self.client.get_connection() {
-            match attach_bot.serialize() {
+            match bincode::serialize(&attach_bot) {
                 Err(e) => error!("attach bot ser error {:?}", e),
                 Ok(bin) => {
                     let mut redis_cmd = redis::cmd("XADD");
@@ -234,9 +234,10 @@ mod tests {
 
         cmds_in
             .send(BC::AttachBot(AttachBot {
-                game_id: micro_model_moves::GameId(Uuid::nil()),
+                game_id: core_model::GameId(Uuid::nil()),
                 board_size: Some(9),
-                player: micro_model_moves::Player::WHITE,
+                player: move_model::Player::WHITE,
+                difficulty: bot_model::Difficulty::Max,
             }))
             .expect("send test");
 

@@ -1,7 +1,7 @@
 use crate::stream::topics;
-use micro_model_bot::gateway::BotAttached;
-use micro_model_moves::{Coord, MakeMoveCommand};
+use bot_model::api::BotAttached;
 use move_model;
+use move_model::{Coord, MakeMove};
 use redis::Client;
 use redis::RedisError;
 
@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 pub trait XAdder: Send + Sync {
     fn xadd_game_state(&self, game_state: &move_model::GameState) -> Result<(), StreamAddError>;
-    fn xadd_make_move_command(&self, command: &MakeMoveCommand) -> Result<(), StreamAddError>;
+    fn xadd_make_move_command(&self, command: &MakeMove) -> Result<(), StreamAddError>;
     fn xadd_bot_attached(&self, bot_attached: BotAttached) -> Result<(), StreamAddError>;
 }
 
@@ -45,7 +45,7 @@ impl XAdder for Arc<Client> {
             Err(e) => Err(StreamAddError::Redis(e)),
         }
     }
-    fn xadd_make_move_command(&self, command: &MakeMoveCommand) -> Result<(), StreamAddError> {
+    fn xadd_make_move_command(&self, command: &MakeMove) -> Result<(), StreamAddError> {
         match self.get_connection() {
             Ok(mut conn) => {
                 let mut redis_cmd = redis::cmd("XADD");
@@ -87,7 +87,7 @@ impl XAdder for Arc<Client> {
                     .arg("1000")
                     .arg("*")
                     .arg("data")
-                    .arg(bot_attached.serialize()?)
+                    .arg(bincode::serialize(&bot_attached)?)
                     .query::<String>(&mut conn)?;
                 Ok(())
             }

@@ -1,4 +1,3 @@
-mod convert;
 pub mod init;
 mod input;
 mod opts;
@@ -13,13 +12,13 @@ pub use opts::StreamOpts;
 pub use unack::Unacknowledged;
 pub use write_moves::xadd_loop;
 
-use convert::Convert;
+use bot_model::api::{AttachBot, ComputeMove};
 pub use input::StreamInput;
 use log::{error, info};
-use micro_model_bot::gateway::AttachBot;
-use micro_model_bot::ComputeMove;
 
 const GROUP_NAME: &str = "botlink";
+/// This needs to be replaced in #322
+const DEFAULT_MAX_VISITS: u16 = 500;
 
 pub fn xread_loop(opts: &mut StreamOpts) {
     let mut unack = Unacknowledged::default();
@@ -45,15 +44,15 @@ fn process(event: &StreamInput, opts: &mut StreamOpts) {
             process_attach_bot(&ab, opts);
         }
         StreamInput::GS(game_state) => {
-            let player_up = game_state.player_up.convert();
-            let game_id = game_state.game_id.convert();
+            let player_up = game_state.player_up;
+            let game_id = &game_state.game_id;
             match opts.attached_bots_repo.is_attached(&game_id, player_up) {
                 Ok(bot_game) => {
                     if bot_game {
-                        let convert_state = game_state.convert();
                         if let Err(e) = opts.compute_move_in.send(ComputeMove {
-                            game_id,
-                            game_state: convert_state,
+                            game_id: game_id.clone(),
+                            game_state: game_state.clone(),
+                            max_visits: DEFAULT_MAX_VISITS,
                         }) {
                             error!("WS SEND ERROR {:?}", e)
                         }
@@ -68,6 +67,7 @@ fn process(event: &StreamInput, opts: &mut StreamOpts) {
 }
 
 fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
+    use bot_model::api::BotAttached;
     if let Err(e) = opts.attached_bots_repo.attach(&ab.game_id, ab.player) {
         error!("Error attaching bot {:?}", e)
     } else {
@@ -89,13 +89,10 @@ fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
                 "Error writing redis stream for game state changelog : {:?}",
                 e
             )
-        } else if let Err(e) = opts
-            .xadd
-            .xadd_bot_attached(micro_model_bot::gateway::BotAttached {
-                game_id: ab.game_id.clone(),
-                player: ab.player,
-            })
-        {
+        } else if let Err(e) = opts.xadd.xadd_bot_attached(BotAttached {
+            game_id: ab.game_id.clone(),
+            player: ab.player,
+        }) {
             error!("Error xadd bot attached {:?}", e)
         }
 
@@ -113,9 +110,12 @@ mod tests {
     use super::*;
     use crate::repo::*;
     use crate::stream::xadd::*;
+    use bot_model::api::*;
+    use bot_model::*;
+    use core_model::*;
     use crossbeam_channel::Sender;
     use crossbeam_channel::{select, unbounded, Receiver};
-    use micro_model_moves::*;
+    use move_model::*;
     use redis_streams::XReadEntryId;
     use std::sync::atomic::{AtomicU16, Ordering};
     use std::sync::{Arc, Mutex};
@@ -168,11 +168,11 @@ mod tests {
         }
         fn xadd_bot_attached(
             &self,
-            _bot_attached: micro_model_bot::gateway::BotAttached,
+            _bot_attached: BotAttached,
         ) -> Result<(), crate::stream::xadd::StreamAddError> {
             Ok(())
         }
-        fn xadd_make_move_command(&self, _command: &MakeMoveCommand) -> Result<(), StreamAddError> {
+        fn xadd_make_move_command(&self, _command: &MakeMove) -> Result<(), StreamAddError> {
             Ok(info!("Doing nothing for xadd make move"))
         }
     }
@@ -234,6 +234,7 @@ mod tests {
                     game_id: GAME_ID.clone(),
                     player,
                     board_size,
+                    difficulty: Difficulty::Max,
                 }),
             )]),
         });

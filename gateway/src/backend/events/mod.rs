@@ -15,7 +15,7 @@ pub enum BackendEvents {
     PrivateGameRejected(PrivateGameRejectedBackendEvent),
     WaitForOpponent(WaitForOpponentBackendEvent),
     ColorsChosen(ColorsChosenEvent),
-    BotAttached(micro_model_bot::gateway::BotAttached),
+    BotAttached(bot_model::api::BotAttached),
     SyncReply(SyncReplyBackendEvent),
 }
 

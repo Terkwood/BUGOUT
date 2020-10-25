@@ -21,7 +21,7 @@ pub enum ClientEvents {
     IdleStatusProvided(IdleStatus),
     IdentityAcknowledged(Identity),
     OpponentQuit,
-    BotAttached(micro_model_bot::gateway::BotAttached),
+    BotAttached(bot_model::api::BotAttached),
     SyncReply(SyncReplyClientEvent),
 }
 

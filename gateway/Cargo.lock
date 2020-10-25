@@ -201,6 +201,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bot-model"
+version = "0.1.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=3004520#300452076602853ce2a4bb8d62e7d1e94a140647"
+dependencies = [
+ "core-model",
+ "move-model",
+ "serde",
+ "serde_derive",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -616,9 +627,10 @@ dependencies = [
 
 [[package]]
 name = "gateway"
-version = "0.15.2"
+version = "1.0.0-a"
 dependencies = [
  "bincode",
+ "bot-model",
  "chrono",
  "color-model",
  "core-model",
@@ -632,8 +644,6 @@ dependencies = [
  "lazy_static",
  "lobby-model",
  "log",
- "micro_model_bot",
- "micro_model_moves",
  "mio-extras",
  "move-model",
  "rand",
@@ -721,11 +731,11 @@ dependencies = [
 
 [[package]]
 name = "instant"
-version = "0.1.7"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63312a18f7ea8760cdd0a7c5aac1a619752a246b833545e3e36d1f81f7cd9e66"
+checksum = "cb1fc4429a33e1f80d41dc9fea4d108a88bec1de8053878898ae448a0b52f613"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
 ]
 
 [[package]]
@@ -836,28 +846,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "043175f069eda7b85febe4a74abbaeff828d9f8b448515d3151a14a3542811aa"
 dependencies = [
  "autocfg",
-]
-
-[[package]]
-name = "micro_model_bot"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#2ea71cd657bb0922b7c5badd8523b7c0ac741b53"
-dependencies = [
- "bincode",
- "micro_model_moves",
- "serde",
- "serde_derive",
-]
-
-[[package]]
-name = "micro_model_moves"
-version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#2ea71cd657bb0922b7c5badd8523b7c0ac741b53"
-dependencies = [
- "bincode",
- "serde",
- "serde_derive",
- "uuid",
 ]
 
 [[package]]
@@ -1378,9 +1366,9 @@ checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
 
 [[package]]
 name = "syn"
-version = "1.0.46"
+version = "1.0.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ad5de3220ea04da322618ded2c42233d02baca219d6f160a3e9c87cda16c942"
+checksum = "cc371affeffc477f42a221a1e4297aedcea33d47d19b61455588bd9d8f6b19ac"
 dependencies = [
  "proc-macro2",
  "quote",

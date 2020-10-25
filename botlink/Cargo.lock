@@ -207,11 +207,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "bot-model"
+version = "0.1.0"
+dependencies = [
+ "core-model",
+ "move-model",
+ "serde",
+ "serde_derive",
+]
+
+[[package]]
 name = "botlink"
-version = "0.2.2"
+version = "1.0.0-a"
 dependencies = [
  "base64 0.13.0",
  "bincode",
+ "bot-model",
  "core-model",
  "crossbeam",
  "crossbeam-channel",
@@ -220,8 +231,6 @@ dependencies = [
  "futures-util",
  "lazy_static",
  "log",
- "micro_model_bot",
- "micro_model_moves",
  "move-model",
  "redis",
  "redis_streams",
@@ -794,28 +803,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "043175f069eda7b85febe4a74abbaeff828d9f8b448515d3151a14a3542811aa"
 dependencies = [
  "autocfg",
-]
-
-[[package]]
-name = "micro_model_bot"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#476eb0f544ee56549ed0a4097b16d2f830121d60"
-dependencies = [
- "bincode",
- "micro_model_moves",
- "serde",
- "serde_derive",
-]
-
-[[package]]
-name = "micro_model_moves"
-version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#476eb0f544ee56549ed0a4097b16d2f830121d60"
-dependencies = [
- "bincode",
- "serde",
- "serde_derive",
- "uuid",
 ]
 
 [[package]]

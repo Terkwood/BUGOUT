@@ -1,4 +1,4 @@
-# micro-model
+# Model crates
 
 Bincode-compatible model crates, used for communication
 between the micro-stack services.  These model definitions
