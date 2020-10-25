@@ -7,6 +7,7 @@ Thank you to the Sabaki author and community for making their project available 
 ## Run the frontend locally
 
 ```sh
+npm install 
 npm run build
 npm run start
 ```
