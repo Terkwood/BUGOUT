@@ -34,6 +34,7 @@ npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).  Then:
 
 ```sh
 cd browser
+npm install
 npm run build
 npm run start
 ```
