@@ -1,5 +1,5 @@
 #[derive(Clone, Debug)]
 pub enum StreamInput {
-    AB(micro_model_bot::gateway::AttachBot),
+    AB(bot_model::api::AttachBot),
     GS(move_model::GameState),
 }

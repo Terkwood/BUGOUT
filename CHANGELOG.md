@@ -1,3 +1,17 @@
+# NEXT: v1.0.0
+
+Welcome to the v1.0.0 release of BUGOUT!
+
+This release allows you to play against easier difficulties
+of KataGo, by limiting the search space of the AI.
+
+Since our main host for the AI is a tiny, power-efficient GPU,
+this means that selecting an easier level of difficulty will
+also increase the speed of KataGo's response!
+
+- Provide levels of difficulty when playing KataGo (#322, ???)
+- Upgrades shared structs in botlink (#429, #406)
+
 # v0.9.1
 
 - gateway: fix deprecated time call (#426, #413)

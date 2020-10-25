@@ -1,6 +1,7 @@
 use super::redis_keys::ATTACHED_BOTS;
 use super::RepoErr;
-use micro_model_moves::{GameId, Player};
+use core_model::GameId;
+use move_model::Player;
 use redis::{Client, Commands};
 
 use std::sync::Arc;

@@ -1,8 +1,8 @@
 use super::*;
 use crate::registry::Components;
 use crate::repo::{AttachedBotsRepo, BoardSizeRepo};
+use bot_model::api::ComputeMove;
 use crossbeam_channel::Sender;
-use micro_model_bot::ComputeMove;
 use std::sync::Arc;
 
 pub struct StreamOpts {

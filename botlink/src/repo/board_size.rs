@@ -1,6 +1,6 @@
 use super::redis_keys::board_size as board_size_key;
 use super::RepoErr;
-use micro_model_moves::GameId;
+use core_model::GameId;
 use redis::{Client, Commands};
 use std::sync::Arc;
 

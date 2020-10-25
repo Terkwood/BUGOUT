@@ -201,6 +201,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bot-model"
+version = "0.1.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=c116f38#c116f38fb576d7f315cc64073053f5253c6998f8"
+dependencies = [
+ "core-model",
+ "move-model",
+ "serde",
+ "serde_derive",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -616,9 +627,10 @@ dependencies = [
 
 [[package]]
 name = "gateway"
-version = "0.15.2"
+version = "1.0.0-a"
 dependencies = [
  "bincode",
+ "bot-model",
  "chrono",
  "color-model",
  "core-model",
@@ -632,8 +644,6 @@ dependencies = [
  "lazy_static",
  "lobby-model",
  "log",
- "micro_model_bot",
- "micro_model_moves",
  "mio-extras",
  "move-model",
  "rand",
@@ -836,28 +846,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "043175f069eda7b85febe4a74abbaeff828d9f8b448515d3151a14a3542811aa"
 dependencies = [
  "autocfg",
-]
-
-[[package]]
-name = "micro_model_bot"
-version = "0.2.0"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#2ea71cd657bb0922b7c5badd8523b7c0ac741b53"
-dependencies = [
- "bincode",
- "micro_model_moves",
- "serde",
- "serde_derive",
-]
-
-[[package]]
-name = "micro_model_moves"
-version = "0.1.2"
-source = "git+https://github.com/Terkwood/BUGOUT?branch=unstable#2ea71cd657bb0922b7c5badd8523b7c0ac741b53"
-dependencies = [
- "bincode",
- "serde",
- "serde_derive",
- "uuid",
 ]
 
 [[package]]

@@ -1,9 +1,10 @@
 use super::xadd::XAdder;
 use crate::repo::board_size::BoardSizeRepo;
+use bot_model::{api::MoveComputed, AlphaNumCoord};
+use core_model::ReqId;
 use crossbeam_channel::{select, Receiver};
 use log::{error, info};
-use micro_model_bot::{AlphaNumCoord, MoveComputed};
-use micro_model_moves::{Coord, MakeMoveCommand, ReqId};
+use move_model::{Coord, MakeMove};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -19,7 +20,7 @@ pub fn xadd_loop(
                     if let Ok(board_size) = board_size_repo.get_board_size(&game_id) {
                         let coord = alphanum_coord.map(|a|convert(a, board_size));
 
-                        let command = MakeMoveCommand { game_id, player, req_id: ReqId(Uuid::new_v4()), coord };
+                        let command = MakeMove  { game_id, player, req_id: ReqId(Uuid::new_v4()), coord };
 
                         if let Err(e) = xadder.xadd_make_move_command(&command) {
                             error!("could not xadd move command : {:?}",e)

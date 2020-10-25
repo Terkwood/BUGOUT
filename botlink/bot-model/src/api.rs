@@ -1,5 +1,20 @@
-use micro_model_moves::{GameId, Player};
+use super::{AlphaNumCoord, Difficulty};
+use core_model::GameId;
+use move_model::{GameState, Player};
 use serde_derive::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComputeMove {
+    pub game_id: GameId,
+    pub game_state: GameState,
+    pub max_visits: u16,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MoveComputed {
+    pub game_id: GameId,
+    pub player: Player,
+    pub alphanum_coord: Option<AlphaNumCoord>,
+}
 
 /// This command is sent from gateway, and
 /// requests that robocall coordinate with
@@ -11,6 +26,7 @@ pub struct AttachBot {
     pub game_id: GameId,
     pub player: Player,
     pub board_size: Option<u8>,
+    pub difficulty: Difficulty,
 }
 
 /// This reply is sent once a bot is listening
@@ -22,27 +38,9 @@ pub struct BotAttached {
     pub player: Player,
 }
 
-impl AttachBot {
-    pub fn from(bytes: &[u8]) -> Result<Self, std::boxed::Box<bincode::ErrorKind>> {
-        bincode::deserialize(bytes)
-    }
-    pub fn serialize(&self) -> Result<Vec<u8>, std::boxed::Box<bincode::ErrorKind>> {
-        Ok(bincode::serialize(&self)?)
-    }
-}
-impl BotAttached {
-    pub fn from(bytes: &[u8]) -> Result<Self, std::boxed::Box<bincode::ErrorKind>> {
-        bincode::deserialize(bytes)
-    }
-    pub fn serialize(&self) -> Result<Vec<u8>, std::boxed::Box<bincode::ErrorKind>> {
-        Ok(bincode::serialize(&self)?)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Player;
     use uuid::Uuid;
 
     #[test]
@@ -51,6 +49,7 @@ mod tests {
             game_id: GameId(Uuid::nil()),
             player: Player::BLACK,
             board_size: Some(9),
+            difficulty: Difficulty::Max,
         };
         let json = serde_json::to_string(&expected).expect("to_string");
         let actual: AttachBot = serde_json::from_str(&json).expect("from_str");
@@ -74,9 +73,11 @@ mod tests {
             game_id: GameId(Uuid::nil()),
             player: Player::BLACK,
             board_size: Some(19),
+            difficulty: Difficulty::Easy,
         };
         let json = serde_json::to_string(&input).expect("to_string");
         assert!(json.contains("gameId"));
-        assert!(json.contains("boardSize"))
+        assert!(json.contains("boardSize"));
+        assert!(json.contains("difficulty"));
     }
 }
