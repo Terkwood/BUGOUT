@@ -18,7 +18,7 @@ Deploy from _this_ directory. npm build artifacts will be deposited to this dire
 
 ## Formatting the codebase
 
-We use prettier to format the code for the browser:
+Install [prettier](https://prettier.io/docs/en/install.html) to format the code for the browser:
 
 ```sh
 prettier --write .
@@ -30,5 +30,5 @@ as follows:
 ```json
     "[javascript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
-    } 
+    }
 ```
