@@ -15,3 +15,20 @@ npm run start
 ## Deployment
 
 Deploy from _this_ directory. npm build artifacts will be deposited to this directory.
+
+## Formatting the codebase
+
+We use prettier to format the code for the browser:
+
+```sh
+prettier --write .
+```
+
+We recommend installing the [prettier VSCode extension](https://prettier.io/docs/en/editors.html) and configuring it
+as follows:
+
+```json
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    } 
+```
