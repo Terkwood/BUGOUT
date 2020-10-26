@@ -8,26 +8,26 @@ This documentation is incomplete and a work in progress.
 
 ## Guides
 
-* [Building & Tests](guides/building-tests.md)
-* [Debugging](guides/debugging.md)
-* [Engines](guides/engines.md)
-* [Markdown in Sabaki](guides/markdown.md)
-* [Textures & Theme Directory](guides/theme-directory.md)
-* [Create Themes](guides/create-themes.md)
-* [Userstyle Tutorial](guides/userstyle-tutorial.md)
+- [Building & Tests](guides/building-tests.md)
+- [Debugging](guides/debugging.md)
+- [Engines](guides/engines.md)
+- [Markdown in Sabaki](guides/markdown.md)
+- [Textures & Theme Directory](guides/theme-directory.md)
+- [Create Themes](guides/create-themes.md)
+- [Userstyle Tutorial](guides/userstyle-tutorial.md)
 
 ## Concepts
 
-* [Sign Object](api/sign.md)
-* [Vertex Object](api/vertex.md)
-* [Game Tree](api/gametree.md)
+- [Sign Object](api/sign.md)
+- [Vertex Object](api/vertex.md)
+- [Game Tree](api/gametree.md)
 
 ## API References
 
-* [Sabaki](api/sabaki.md)
-* [Board](api/board.md)
-* [Dialog](api/dialog.md)
-* [File Formats](api/fileformats.md)
-* [Helper](api/helper.md)
-* [Setting](api/setting.md)
-* [Sound](api/sound.md)
+- [Sabaki](api/sabaki.md)
+- [Board](api/board.md)
+- [Dialog](api/dialog.md)
+- [File Formats](api/fileformats.md)
+- [Helper](api/helper.md)
+- [Setting](api/setting.md)
+- [Sound](api/sound.md)

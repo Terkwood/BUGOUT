@@ -1,3 +1,3 @@
 module.exports = {
-    from: x => x
-}
+  from: (x) => x,
+};

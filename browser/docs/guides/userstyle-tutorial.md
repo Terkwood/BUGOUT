@@ -8,9 +8,9 @@ Using userstyles is an easy way to change Sabaki's appearance without having to 
 
 First, determine where Sabaki saves its settings:
 
-* `%APPDATA%\Sabaki` on Windows
-* `$XDG_CONFIG_HOME/Sabaki` or `~/.config/Sabaki` on Linux
-* `~/Library/Application Support/Sabaki` on macOS
+- `%APPDATA%\Sabaki` on Windows
+- `$XDG_CONFIG_HOME/Sabaki` or `~/.config/Sabaki` on Linux
+- `~/Library/Application Support/Sabaki` on macOS
 
 Inside the folder there's a file named `styles.css`. Any CSS statement inside this file will be loaded when Sabaki starts up. It can be helpful to [open the developer tools](debugging.md) to look at the DOM.
 
