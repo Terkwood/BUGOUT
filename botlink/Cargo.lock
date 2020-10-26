@@ -208,7 +208,7 @@ dependencies = [
 
 [[package]]
 name = "bot-model"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "core-model",
  "move-model",
@@ -218,7 +218,7 @@ dependencies = [
 
 [[package]]
 name = "botlink"
-version = "1.0.0-a"
+version = "1.0.0-b"
 dependencies = [
  "base64 0.13.0",
  "bincode",

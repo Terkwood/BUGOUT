@@ -7,7 +7,7 @@ use serde_derive::{Deserialize, Serialize};
 pub struct ComputeMove {
     pub game_id: GameId,
     pub game_state: GameState,
-    pub max_visits: u16,
+    pub max_visits: Option<u16>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct MoveComputed {
