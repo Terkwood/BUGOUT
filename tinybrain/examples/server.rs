@@ -48,7 +48,7 @@ fn main() {
                                 turn: 1,
                                 game_id: game_id,
                             },
-                            max_visits: 500,
+                            max_visits: None,
                         })
                         .expect("ser"),
                     ))
