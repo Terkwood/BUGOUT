@@ -56,6 +56,13 @@ const Player = {
   WHITE: "WHITE",
 };
 
+const BotDifficulty = {
+  EASY: "Easy",
+  MEDIUM: "Medium",
+  HARD: "Hard",
+  MAX: "Max",
+};
+
 /** private to isValidGameId */
 const MIN_ID_LENGTH = 4;
 /** private to isValidGameId */
