@@ -18,7 +18,7 @@ use log::{error, info};
 
 const GROUP_NAME: &str = "botlink";
 /// This needs to be replaced in #322
-const DEFAULT_MAX_VISITS: u16 = 500;
+const DEFAULT_MAX_VISITS: Option<u16> = None;
 
 pub fn xread_loop(opts: &mut StreamOpts) {
     let mut unack = Unacknowledged::default();
