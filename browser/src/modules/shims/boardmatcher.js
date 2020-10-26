@@ -1,5 +1,5 @@
-const noop = require('./noop')
+const noop = require("./noop");
 
 module.exports = {
-    findPatternInMove: noop
-}
+  findPatternInMove: noop,
+};

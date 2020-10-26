@@ -2,9 +2,9 @@
 
 The `fileformats` module is responsible for parsing files into [game trees](gametree.md). Currently, it supports `sgf`. To access this module, use:
 
-~~~js
-const {fileformats} = sabaki.modules
-~~~
+```js
+const { fileformats } = sabaki.modules;
+```
 
 ## Properties
 
@@ -18,16 +18,16 @@ The `fileformats` module has submodules, one for each file format. Currently, it
 
 ### submodule.parse(content)
 
-* `content` `<String>`
+- `content` `<String>`
 
 Parses the contents and returns an array of [game trees](gametree.md).
 
 ### submodule.parseFile(filename[, onProgress])
 
-* `filename` `<String>`
-* `onProgress` `<Function>` *(optional)*
-    * `evt` `<Object>`
-        * `progress` `<Float>` - Between `0` and `1`
+- `filename` `<String>`
+- `onProgress` `<Function>` _(optional)_
+  - `evt` `<Object>`
+    - `progress` `<Float>` - Between `0` and `1`
 
 Parses `filename` and returns an array of [game trees](gametree.md) contained in `filename`. This method can't be used in the web version.
 
@@ -35,15 +35,15 @@ Parses `filename` and returns an array of [game trees](gametree.md) contained in
 
 ### fileformats.getModuleByExtension(extension)
 
-* `extension` `<String>` - The file extension without initial `.`
+- `extension` `<String>` - The file extension without initial `.`
 
 Infers file format from `extension` and returns the submodule responsible for parsing said file format.
 
 ### fileformats.parseFile(filename[, onProgress])
 
-* `filename` `<String>`
-* `onProgress` `<Function>` *(optional)*
-    * `evt` `<Object>`
-        * `progress` `<Float>` - Between `0` and `1`
+- `filename` `<String>`
+- `onProgress` `<Function>` _(optional)_
+  - `evt` `<Object>`
+    - `progress` `<Float>` - Between `0` and `1`
 
 Infers file format from `filename`, parses the file, and returns an array of [game trees](gametree.md) contained in `filename`. This function shouldn't be used in the web version.

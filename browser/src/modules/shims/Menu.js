@@ -1,44 +1,69 @@
-const {h, render} = require('preact')
-const classNames = require('classnames')
+const { h, render } = require("preact");
+const classNames = require("classnames");
 
 function hide() {
-    document.getElementById('popupmenu-overlay').remove()
+  document.getElementById("popupmenu-overlay").remove();
 }
 
-const BUGOUT_HACK = 65
+const BUGOUT_HACK = 65;
 
 function show(velement, x, y) {
-    let element = render(velement, document.body).childNodes[0]
+  let element = render(velement, document.body).childNodes[0];
 
-    let {width, height} = element.getBoundingClientRect()
-    let {width: bodyWidth, height: bodyHeight} = document.body.getBoundingClientRect()
- 
-    element.style.left = x + width <= bodyWidth ? x + BUGOUT_HACK : Math.max(0, x + BUGOUT_HACK - width) + 'px'
-    element.style.top = (y + height <= bodyHeight ? y : Math.max(0, y - height)) + 'px'
+  let { width, height } = element.getBoundingClientRect();
+  let {
+    width: bodyWidth,
+    height: bodyHeight,
+  } = document.body.getBoundingClientRect();
+
+  element.style.left =
+    x + width <= bodyWidth
+      ? x + BUGOUT_HACK
+      : Math.max(0, x + BUGOUT_HACK - width) + "px";
+  element.style.top =
+    (y + height <= bodyHeight ? y : Math.max(0, y - height)) + "px";
 }
 
-exports.buildFromTemplate = function(template) {
-    return {
-        popup: ({x, y}) => show(h('section',
-            {
-                id: 'popupmenu-overlay',
-                onClick: () => hide()
-            },
+exports.buildFromTemplate = function (template) {
+  return {
+    popup: ({ x, y }) =>
+      show(
+        h(
+          "section",
+          {
+            id: "popupmenu-overlay",
+            onClick: () => hide(),
+          },
 
-            h('ul', {class: 'popupmenu'}, template.map(item =>
-                h('li', {
-                    class: classNames({
-                        checked: item.checked,
-                        [item.type]: item.type
-                    }),
-                    onClick: () => item.click && item.click()
-                }, item.label && item.label.replace(/&/g, ''))
-            ))
-        ), x, y)
-    }
-}
+          h(
+            "ul",
+            { class: "popupmenu" },
+            template.map((item) =>
+              h(
+                "li",
+                {
+                  class: classNames({
+                    checked: item.checked,
+                    [item.type]: item.type,
+                  }),
+                  onClick: () => item.click && item.click(),
+                },
+                item.label && item.label.replace(/&/g, "")
+              )
+            )
+          )
+        ),
+        x,
+        y
+      ),
+  };
+};
 
-render(h('style', {}, `
+render(
+  h(
+    "style",
+    {},
+    `
     #popupmenu-overlay {
         position: absolute;
         left: 0;
@@ -88,4 +113,7 @@ render(h('style', {}, `
         .popupmenu li:not(.separator):active {
             background-color: #0030A0;
     }
-`), document.body)
+`
+  ),
+  document.body
+);

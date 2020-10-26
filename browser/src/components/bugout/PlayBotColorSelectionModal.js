@@ -1,67 +1,77 @@
-const { h, Component } = require('preact')
+const { h, Component } = require("preact");
 
 // 🦹🏻‍ Bundle Bloat Protector
-import Dialog from 'preact-material-components/Dialog'
+import Dialog from "preact-material-components/Dialog";
 
-const { ColorPref, EntryMethod } = require('../../modules/multiplayer/bugout')
+const { ColorPref, EntryMethod } = require("../../modules/multiplayer/bugout");
 
 class PlayBotColorSelectionModal extends Component {
-    constructor() {
-        super()
-        this.state = { showDialog: false, turnedOnOnce: false }
+  constructor() {
+    super();
+    this.state = { showDialog: false, turnedOnOnce: false };
+  }
+
+  render({ id = "play-bot-color-selection", data }) {
+    if (data == undefined) {
+      return h("div", { id });
     }
 
-    render({ id = 'play-bot-color-selection', data }) {
-        if (data == undefined) {
-            return h('div', { id })
-        }
+    let { entryMethod } = data;
 
-        let { entryMethod } = data
+    let turnOn = entryMethod && entryMethod == EntryMethod.PLAY_BOT;
 
-        let turnOn = entryMethod && entryMethod == EntryMethod.PLAY_BOT
+    let { showDialog, turnedOnOnce } = this.state;
 
-        let { showDialog, turnedOnOnce } = this.state
+    let happyTimes = (turnOn && !turnedOnOnce) || showDialog;
 
-        let happyTimes = (turnOn && !turnedOnOnce) || showDialog
+    if (!happyTimes) {
+      return h("div", { id });
+    }
 
-        if (!happyTimes) {
-            return h('div', { id })
-        }
-
-        return h(Dialog,
-            {
-                id,
-                isOpen: true,
+    return h(
+      Dialog,
+      {
+        id,
+        isOpen: true,
+      },
+      h(Dialog.Header, null, "Turn Order"),
+      h(Dialog.Body, null, "Please choose which color you'd like to play."),
+      h(
+        Dialog.Footer,
+        null,
+        h(
+          Dialog.FooterButton,
+          {
+            accept: true,
+            onClick: () => {
+              this.setState({ showDialog: false, turnedOnOnce: true });
+              sabaki.events.emit("play-bot-color-selected", {
+                humanColor: ColorPref.BLACK,
+              });
             },
-            h(Dialog.Header, null, 'Turn Order'),
-            h(Dialog.Body, null, 'Please choose which color you\'d like to play.'),
-            h(Dialog.Footer, null, 
-                h(Dialog.FooterButton, 
-                    { 
-                        accept: true, 
-                        onClick: () => {
-                            this.setState({ showDialog: false, turnedOnOnce: true })
-                            sabaki.events.emit('play-bot-color-selected', {
-                                'humanColor': ColorPref.BLACK
-                            })
-                        }
-                    }, 
-                    'Black')
-                ),
-            h(Dialog.Footer, null, 
-                h(Dialog.FooterButton, 
-                    { 
-                        cancel: true,
-                        onClick: () => {
-                            this.setState({ showDialog: false, turnedOnOnce: true })
-                            sabaki.events.emit('play-bot-color-selected', {
-                                humanColor: ColorPref.WHITE
-                            })
-                        }
-                    }, 'White'))
+          },
+          "Black"
         )
-    }
+      ),
+      h(
+        Dialog.Footer,
+        null,
+        h(
+          Dialog.FooterButton,
+          {
+            cancel: true,
+            onClick: () => {
+              this.setState({ showDialog: false, turnedOnOnce: true });
+              sabaki.events.emit("play-bot-color-selected", {
+                humanColor: ColorPref.WHITE,
+              });
+            },
+          },
+          "White"
+        )
+      )
+    );
+  }
 }
 
-
-export default PlayBotColorSelectionModal
+export default PlayBotColorSelectionModal;

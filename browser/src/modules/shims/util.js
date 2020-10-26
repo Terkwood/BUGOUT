@@ -1,1 +1,1 @@
-exports.TextDecoder = window.TextDecoder
+exports.TextDecoder = window.TextDecoder;

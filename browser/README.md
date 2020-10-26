@@ -1,13 +1,13 @@
 # Browser
 
-This project is a direct descendant of [Sabaki](https://github.com/SabakiHQ/Sabaki).  We are not affiliated with the Sabaki project.
+This project is a direct descendant of [Sabaki](https://github.com/SabakiHQ/Sabaki). We are not affiliated with the Sabaki project.
 
 Thank you to the Sabaki author and community for making their project available under MIT license.
 
 ## Run the frontend locally
 
 ```sh
-npm install 
+npm install
 npm run build
 npm run start
 ```
