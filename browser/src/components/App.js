@@ -1,4 +1,4 @@
-const EDITION = "Penultimate";
+const EDITION = "Difficult";
 
 const EventEmitter = require("events");
 const { ipcRenderer, remote } = require("electron");
@@ -12,6 +12,7 @@ const DrawerManager = require("./DrawerManager");
 // BUGOUT 🦹🏻‍ Bundle Bloat Protector
 import BoardSizeModal from "./bugout/BoardSizeModal";
 import GameLobbyModal from "./bugout/WelcomeModal";
+import BotDifficultyModal from "./bugout/BotDifficultyModal";
 import IdleStatusModal from "./bugout/IdleStatusModal";
 import MultiplayerColorPrefModal from "./bugout/MultiplayerColorPrefModal";
 import OpponentPassedModal from "./bugout/OpponentPassedModal";
@@ -1335,6 +1336,21 @@ class App extends Component {
             },
           }),
         appEvents: this.events,
+      }),
+      h(BotDifficultyModal, {
+        data: state.multiplayer,
+        update: (botDifficulty) => {
+          // This value is used by other modals to compute whether
+          // they should turn on
+          this.setState({
+            multiplayer: { ...this.state.multiplayer, botDifficulty },
+          });
+
+          // This will be intercepted in gtp.js, which is already
+          // establishing backend connectivity while the user
+          // is busy answering the bot difficulty dialog
+          this.events.emit("bot-difficulty-selected", { botDifficulty });
+        },
       }),
       h(WaitForOpponentModal, {
         data: state.multiplayer && state.multiplayer.waitForOpponentModal,

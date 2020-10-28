@@ -9,8 +9,8 @@ Since our main host for the AI is a tiny, power-efficient GPU,
 this means that selecting an easier level of difficulty will
 also increase the speed of KataGo's response!
 
+- Provide levels of difficulty when playing KataGo (#322, #432, ???)
 - Use [prettier](https://prettier.io/) to format the browser code (#431)
-- Provide levels of difficulty when playing KataGo (#322, ???)
 - Upgrades shared structs in botlink (#429, #406)
 
 # v0.9.1

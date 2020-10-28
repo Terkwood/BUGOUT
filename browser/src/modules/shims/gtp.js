@@ -134,6 +134,10 @@ class WebSocketController extends EventEmitter {
 
     this.board = new Board(DEFAULT_BOARD_SIZE, DEFAULT_BOARD_SIZE);
 
+    sabaki.events.on("bot-difficulty-selected", ({ botDifficulty }) => {
+      this.botDifficulty = botDifficulty;
+    });
+
     sabaki.events.on("play-bot-color-selected", ({ humanColor }) => {
       if (this.deferredPlayBot) {
         this.deferredPlayBot(humanColor);
@@ -286,7 +290,7 @@ class WebSocketController extends EventEmitter {
   setupBotGame() {
     this.deferredPlayBot = (humanColor) =>
       this.gatewayConn
-        .attachBot(this.boardSize, humanColor)
+        .attachBot(this.boardSize, humanColor, this.botDifficulty)
         .then((reply, err) => {
           if (!err && reply.type === "BotAttached") {
             this.gameId = reply.gameId;
@@ -764,7 +768,7 @@ class GatewayConn {
     });
   }
 
-  async attachBot(boardSize, humanColor) {
+  async attachBot(boardSize, humanColor, difficulty) {
     return new Promise((resolve, reject) => {
       let player = otherPlayer(humanColor);
 
@@ -772,7 +776,7 @@ class GatewayConn {
         type: "AttachBot",
         boardSize,
         player,
-        difficulty: "Max",
+        difficulty,
       };
 
       this.webSocket.addEventListener("message", (event) => {
