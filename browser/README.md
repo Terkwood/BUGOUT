@@ -12,6 +12,12 @@ npm run build
 npm run start
 ```
 
+## Watch changes during development
+
+```sh
+npm run watch
+```
+
 ## Deployment
 
 Deploy from _this_ directory. npm build artifacts will be deposited to this directory.
