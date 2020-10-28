@@ -174,9 +174,11 @@ class WebSocketController extends EventEmitter {
       entryMethod,
       handleWaitForOpponent,
       handleYourColor,
+      botDifficulty,
     } = spawnOptions.multiplayer;
     this.joinPrivateGame = joinPrivateGame;
     this.entryMethod = entryMethod;
+    this.botDifficulty = botDifficulty;
 
     console.log(
       "WS Controller Entry Method: " + JSON.stringify(this.entryMethod)
@@ -272,7 +274,7 @@ class WebSocketController extends EventEmitter {
         // backend, so there's no need to wait for
         // that part of the system to start up.
         if (!this.gameId && this.entryMethod === EntryMethod.PLAY_BOT) {
-          this.setupBotGame();
+          this.setupBotGame(this.botDifficulty);
         } else {
           // Until https://github.com/Terkwood/BUGOUT/issues/174
           // is completed, we need to wait for the system to
@@ -283,22 +285,28 @@ class WebSocketController extends EventEmitter {
     });
   }
 
-  setupBotGame() {
-    this.deferredPlayBot = (humanColor) =>
-      this.gatewayConn
-        .attachBot(this.boardSize, humanColor)
-        .then((reply, err) => {
-          if (!err && reply.type === "BotAttached") {
-            this.gameId = reply.gameId;
+  setupBotGame(botDifficulty) {
+    if (botDifficulty) {
+      this.deferredPlayBot = (humanColor) =>
+        this.gatewayConn
+          .attachBot(this.boardSize, humanColor, botDifficulty)
+          .then((reply, err) => {
+            if (!err && reply.type === "BotAttached") {
+              this.gameId = reply.gameId;
 
-            let yourColor =
-              humanColor.toUpperCase()[0] === "B" ? Player.BLACK : Player.WHITE;
+              let yourColor =
+                humanColor.toUpperCase()[0] === "B"
+                  ? Player.BLACK
+                  : Player.WHITE;
 
-            sabaki.events.emit("your-color", { yourColor });
-          } else {
-            throwFatal();
-          }
-        });
+              sabaki.events.emit("your-color", { yourColor });
+            } else {
+              throwFatal();
+            }
+          });
+    } else {
+      alert("Fatal error: bot difficulty");
+    }
   }
 
   onBugoutOnline(_wrc, _werr) {
@@ -764,7 +772,7 @@ class GatewayConn {
     });
   }
 
-  async attachBot(boardSize, humanColor) {
+  async attachBot(boardSize, humanColor, difficulty) {
     return new Promise((resolve, reject) => {
       let player = otherPlayer(humanColor);
 
@@ -772,7 +780,7 @@ class GatewayConn {
         type: "AttachBot",
         boardSize,
         player,
-        difficulty: "Max",
+        difficulty,
       };
 
       this.webSocket.addEventListener("message", (event) => {
