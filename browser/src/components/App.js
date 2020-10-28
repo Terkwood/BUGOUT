@@ -1349,7 +1349,7 @@ class App extends Component {
           // This will be intercepted in gtp.js, which is already
           // establishing backend connectivity while the user
           // is busy answering the bot difficulty dialog
-          this.events.emit({ botDifficulty });
+          this.events.emit("bot-difficulty-selected", { botDifficulty });
         },
       }),
       h(WaitForOpponentModal, {

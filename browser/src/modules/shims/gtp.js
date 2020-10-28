@@ -772,6 +772,8 @@ class GatewayConn {
     return new Promise((resolve, reject) => {
       let player = otherPlayer(humanColor);
 
+      console.log(`bot diff ${difficulty}`);
+
       let requestPayload = {
         type: "AttachBot",
         boardSize,
