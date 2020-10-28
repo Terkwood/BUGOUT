@@ -14,7 +14,7 @@ class BotDifficultyModal extends Component {
     this.state = { showDialog: false, turnedOnOnce: false };
   }
 
-  render({ id = "select-bot-difficulty", data }) {
+  render({ id = "select-bot-difficulty", data, update }) {
     if (data == undefined) {
       return h("div", { id });
     }
@@ -52,9 +52,7 @@ class BotDifficultyModal extends Component {
             accept: true,
             onClick: () => {
               this.setState({ showDialog: false, turnedOnOnce: true });
-              sabaki.events.emit("bot-difficulty-selected", {
-                botDifficulty: BotDifficulty.EASY,
-              });
+              update(BotDifficulty.EASY);
             },
           },
           "Easy 🍼"
@@ -69,9 +67,7 @@ class BotDifficultyModal extends Component {
             accept: true,
             onClick: () => {
               this.setState({ showDialog: false, turnedOnOnce: true });
-              sabaki.events.emit("bot-difficulty-selected", {
-                botDifficulty: BotDifficulty.MEDIUM,
-              });
+              update(BotDifficulty.MEDIUM);
             },
           },
           "Medium 🤓"
@@ -86,9 +82,7 @@ class BotDifficultyModal extends Component {
             accept: true,
             onClick: () => {
               this.setState({ showDialog: false, turnedOnOnce: true });
-              sabaki.events.emit("bot-difficulty-selected", {
-                botDifficulty: BotDifficulty.HARD,
-              });
+              update(BotDifficulty.HARD);
             },
           },
           "Hard 😈"
@@ -103,9 +97,7 @@ class BotDifficultyModal extends Component {
             accept: true,
             onClick: () => {
               this.setState({ showDialog: false, turnedOnOnce: true });
-              sabaki.events.emit("bot-difficulty-selected", {
-                botDifficulty: BotDifficulty.MAX,
-              });
+              update(BotDifficulty.MAX);
             },
           },
           "Max 👹"

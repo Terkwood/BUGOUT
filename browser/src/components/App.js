@@ -12,6 +12,7 @@ const DrawerManager = require("./DrawerManager");
 // BUGOUT 🦹🏻‍ Bundle Bloat Protector
 import BoardSizeModal from "./bugout/BoardSizeModal";
 import GameLobbyModal from "./bugout/WelcomeModal";
+import BotDifficultyModal from "./bugout/BotDifficultyModal";
 import IdleStatusModal from "./bugout/IdleStatusModal";
 import MultiplayerColorPrefModal from "./bugout/MultiplayerColorPrefModal";
 import OpponentPassedModal from "./bugout/OpponentPassedModal";
@@ -1335,6 +1336,13 @@ class App extends Component {
             },
           }),
         appEvents: this.events,
+      }),
+      h(BotDifficultyModal, {
+        data: state.multiplayer,
+        update: (botDifficulty) =>
+          this.setState({
+            multiplayer: { ...this.state.multiplayer, botDifficulty },
+          }),
       }),
       h(WaitForOpponentModal, {
         data: state.multiplayer && state.multiplayer.waitForOpponentModal,
