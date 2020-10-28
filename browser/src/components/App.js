@@ -1339,10 +1339,18 @@ class App extends Component {
       }),
       h(BotDifficultyModal, {
         data: state.multiplayer,
-        update: (botDifficulty) =>
+        update: (botDifficulty) => {
+          // This value is used by other modals to compute whether
+          // they should turn on
           this.setState({
             multiplayer: { ...this.state.multiplayer, botDifficulty },
-          }),
+          });
+
+          // This will be intercepted in gtp.js, which is already
+          // establishing backend connectivity while the user
+          // is busy answering the bot difficulty dialog
+          this.events.emit({ botDifficulty });
+        },
       }),
       h(WaitForOpponentModal, {
         data: state.multiplayer && state.multiplayer.waitForOpponentModal,
