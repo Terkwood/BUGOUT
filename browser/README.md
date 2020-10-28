@@ -14,8 +14,17 @@ npm run start
 
 ## Watch changes during development
 
+You can auto-build as files change, but for now, you'll need to run
+a separate web server to host the build.
+
 ```sh
 npm run watch
+```
+
+Then (something like):
+
+```sh
+python3 -m http.server
 ```
 
 ## Deployment
