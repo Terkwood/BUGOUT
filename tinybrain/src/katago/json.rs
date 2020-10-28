@@ -114,7 +114,8 @@ impl KataGoQuery {
                 moves,
                 board_x_size: game_state.board.size,
                 board_y_size: game_state.board.size,
-                ..KataGoQuery::default()
+                max_visits: compute_move.max_visits,
+                ..Default::default()
             })
         }
     }
@@ -209,7 +210,7 @@ mod tests {
                     captured: vec![],
                 },
             ],
-            turn: 3,
+            turn: 4,
             player_up: Player::WHITE,
             captures: Captures::default(),
             board: Board::default(),
@@ -222,7 +223,7 @@ mod tests {
         };
 
         let expected = KataGoQuery {
-            id: Id("00000000-0000-0000-0000-000000000000_3_WHITE".to_string()),
+            id: Id("00000000-0000-0000-0000-000000000000_4_WHITE".to_string()),
             moves: vec![
                 Move("B".to_string(), KataCoordOrPass("(0,0)".to_string())),
                 Move("W".to_string(), KataCoordOrPass("(1,1)".to_string())),
@@ -287,6 +288,34 @@ mod tests {
             moves: vec![],
             board_x_size: 9,
             board_y_size: 9,
+            ..KataGoQuery::default()
+        };
+
+        let actual = KataGoQuery::from(compute_move).expect("move(s) out of range");
+        assert_eq!(actual, expected)
+    }
+
+    #[test]
+    fn max_visits_can_be_specified() {
+        let game_id = GameId(Uuid::nil());
+        let game_state = GameState {
+            moves: vec![],
+            turn: 1,
+            player_up: Player::BLACK,
+            captures: Captures::default(),
+            board: Board::default(),
+            game_id: game_id.clone(),
+        };
+        let compute_move = ComputeMove {
+            game_id,
+            game_state,
+            max_visits: Some(25),
+        };
+
+        let expected = KataGoQuery {
+            id: Id("00000000-0000-0000-0000-000000000000_1_BLACK".to_string()),
+            moves: vec![],
+            max_visits: Some(25),
             ..KataGoQuery::default()
         };
 
