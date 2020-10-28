@@ -980,7 +980,7 @@ dependencies = [
 
 [[package]]
 name = "tinybrain"
-version = "1.0.0-b"
+version = "1.0.0-c"
 dependencies = [
  "base64 0.12.3",
  "bincode",

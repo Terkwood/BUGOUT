@@ -32,7 +32,7 @@ pub fn start(move_computed_in: Sender<MoveComputed>, compute_move_out: Receiver<
                 recv(compute_move_out) -> request =>
                     match request {
                         Ok(r) =>{
-                            if let Ok(query) = KataGoQuery::from(&r.game_id, &r.game_state) {
+                            if let Ok(query) = KataGoQuery::from(r) {
                                 match query.to_json() {
                                     Ok(qj) => match child_in.write(&qj) {
                                         Err(why) => panic!("couldn't write to stdin: {:?}", why),

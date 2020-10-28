@@ -1,9 +1,9 @@
 use crate::err::*;
 
+use bot_model::api::ComputeMove;
 use core_model::*;
 use move_model::*;
 use serde_derive::{Deserialize, Serialize};
-
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -19,6 +19,8 @@ pub struct KataGoQuery {
     pub board_x_size: u16,
     #[serde(rename = "boardYSize")]
     pub board_y_size: u16,
+    #[serde(rename = "maxVisits")]
+    pub max_visits: Option<u16>,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq, PartialOrd)]
@@ -84,7 +86,9 @@ impl KataCoordOrPass {
 }
 
 impl KataGoQuery {
-    pub fn from(game_id: &GameId, game_state: &GameState) -> Result<Self, CoordOutOfRange> {
+    pub fn from(compute_move: ComputeMove) -> Result<Self, CoordOutOfRange> {
+        let game_id = compute_move.game_id;
+        let game_state = compute_move.game_state;
         let moves_with_errors: Vec<Result<Move, CoordOutOfRange>> = game_state
             .moves
             .iter()
@@ -110,7 +114,8 @@ impl KataGoQuery {
                 moves,
                 board_x_size: game_state.board.size,
                 board_y_size: game_state.board.size,
-                ..KataGoQuery::default()
+                max_visits: compute_move.max_visits,
+                ..Default::default()
             })
         }
     }
@@ -153,6 +158,7 @@ impl Default for KataGoQuery {
             rules: Rules::default(),
             board_x_size: DEFAULT_BOARD_SIZE,
             board_y_size: DEFAULT_BOARD_SIZE,
+            max_visits: None,
         }
     }
 }
@@ -204,15 +210,20 @@ mod tests {
                     captured: vec![],
                 },
             ],
-            turn: 3,
+            turn: 4,
             player_up: Player::WHITE,
             captures: Captures::default(),
             board: Board::default(),
             game_id: game_id.clone(),
         };
+        let compute_move = ComputeMove {
+            game_id,
+            game_state,
+            max_visits: None,
+        };
 
         let expected = KataGoQuery {
-            id: Id("00000000-0000-0000-0000-000000000000_3_WHITE".to_string()),
+            id: Id("00000000-0000-0000-0000-000000000000_4_WHITE".to_string()),
             moves: vec![
                 Move("B".to_string(), KataCoordOrPass("(0,0)".to_string())),
                 Move("W".to_string(), KataCoordOrPass("(1,1)".to_string())),
@@ -221,7 +232,7 @@ mod tests {
             ..KataGoQuery::default()
         };
 
-        let actual = KataGoQuery::from(&game_id, &game_state).expect("move(s) out of range");
+        let actual = KataGoQuery::from(compute_move).expect("move(s) out of range");
         assert_eq!(actual, expected)
     }
 
@@ -243,8 +254,13 @@ mod tests {
             player_up: Player::WHITE,
             game_id: game_id.clone(),
         };
+        let compute_move = ComputeMove {
+            game_id,
+            game_state,
+            max_visits: None,
+        };
 
-        assert!(KataGoQuery::from(&game_id, &game_state).is_err())
+        assert!(KataGoQuery::from(compute_move).is_err())
     }
 
     #[test]
@@ -261,6 +277,11 @@ mod tests {
             game_id: game_id.clone(),
             captures: Captures::default(),
         };
+        let compute_move = ComputeMove {
+            game_id,
+            game_state,
+            max_visits: None,
+        };
 
         let expected = KataGoQuery {
             id: Id("00000000-0000-0000-0000-000000000000_1_WHITE".to_string()),
@@ -270,7 +291,35 @@ mod tests {
             ..KataGoQuery::default()
         };
 
-        let actual = KataGoQuery::from(&game_id, &game_state).expect("move(s) out of range");
+        let actual = KataGoQuery::from(compute_move).expect("move(s) out of range");
+        assert_eq!(actual, expected)
+    }
+
+    #[test]
+    fn max_visits_can_be_specified() {
+        let game_id = GameId(Uuid::nil());
+        let game_state = GameState {
+            moves: vec![],
+            turn: 1,
+            player_up: Player::BLACK,
+            captures: Captures::default(),
+            board: Board::default(),
+            game_id: game_id.clone(),
+        };
+        let compute_move = ComputeMove {
+            game_id,
+            game_state,
+            max_visits: Some(25),
+        };
+
+        let expected = KataGoQuery {
+            id: Id("00000000-0000-0000-0000-000000000000_1_BLACK".to_string()),
+            moves: vec![],
+            max_visits: Some(25),
+            ..KataGoQuery::default()
+        };
+
+        let actual = KataGoQuery::from(compute_move).expect("move(s) out of range");
         assert_eq!(actual, expected)
     }
 }
