@@ -16,9 +16,10 @@ class PlayBotColorSelectionModal extends Component {
       return h("div", { id });
     }
 
-    let { entryMethod } = data;
+    let { entryMethod, botDifficulty } = data;
 
-    let turnOn = entryMethod && entryMethod == EntryMethod.PLAY_BOT;
+    let turnOn =
+      entryMethod && entryMethod == EntryMethod.PLAY_BOT && botDifficulty;
 
     let { showDialog, turnedOnOnce } = this.state;
 

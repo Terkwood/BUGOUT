@@ -134,6 +134,10 @@ class WebSocketController extends EventEmitter {
 
     this.board = new Board(DEFAULT_BOARD_SIZE, DEFAULT_BOARD_SIZE);
 
+    sabaki.events.on("bot-difficulty-selected", ({ botDifficulty }) => {
+      this.botDifficulty = botDifficulty;
+    });
+
     sabaki.events.on("play-bot-color-selected", ({ humanColor }) => {
       if (this.deferredPlayBot) {
         this.deferredPlayBot(humanColor);
