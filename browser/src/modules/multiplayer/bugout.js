@@ -260,3 +260,4 @@ exports.EntryMethod = EntryMethod;
 exports.Player = Player;
 exports.IdleStatus = IdleStatus;
 exports.BoardSize = BoardSize;
+exports.BotDifficulty = BotDifficulty;

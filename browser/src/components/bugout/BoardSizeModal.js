@@ -10,6 +10,14 @@ const ALLOWED_ENTRY_METHODS = [
   EntryMethod.PLAY_BOT,
 ];
 
+const isTurnedOn = (entryMethod, botDifficulty) => {
+  let entryOk =
+    entryMethod !== undefined && ALLOWED_ENTRY_METHODS.includes(entryMethod);
+  let ifBotOk =
+    entryMethod === EntryMethod.PLAY_BOT ? botDifficulty !== undefined : true;
+  return entryOk && ifBotOk;
+};
+
 class BoardSizeModal extends Component {
   constructor() {
     super();
@@ -21,12 +29,11 @@ class BoardSizeModal extends Component {
       return h("div", { id });
     }
 
-    let { entryMethod } = data;
+    let { entryMethod, botDifficulty } = data;
 
     let { showDialog, turnedOnOnce } = this.state;
 
-    let turnOn =
-      entryMethod !== undefined && ALLOWED_ENTRY_METHODS.includes(entryMethod);
+    let turnOn = isTurnedOn(entryMethod, botDifficulty);
 
     let hide = !((turnOn && !turnedOnOnce) || showDialog);
 
