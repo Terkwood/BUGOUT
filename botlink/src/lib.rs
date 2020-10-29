@@ -6,6 +6,7 @@ extern crate tokio_tungstenite;
 extern crate uuid;
 
 pub mod env;
+pub mod max_visits;
 pub mod registry;
 pub mod repo;
 pub mod stream;
