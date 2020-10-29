@@ -1,6 +1,7 @@
 use super::{expire, RepoErr};
 use bot_model::Difficulty;
 use core_model::GameId;
+use log::info;
 use redis::{Client, Commands};
 use std::sync::Arc;
 
@@ -14,11 +15,14 @@ impl DifficultyRepo for Arc<Client> {
         if let Ok(mut conn) = self.get_connection() {
             let bytes: Option<Vec<u8>> = conn.get(difficulty_key(&game_id))?;
             expire(&difficulty_key(game_id), &mut conn)?;
-            Ok(if let Some(b) = bytes {
+            let r = Ok(if let Some(b) = bytes {
                 bincode::deserialize(&b)?
             } else {
                 None
-            })
+            });
+
+            info!("Got difficulty: {:?}", r);
+            r
         } else {
             Err(RepoErr::Conn)
         }

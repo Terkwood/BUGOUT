@@ -67,6 +67,15 @@ fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
             game_state.board.size = bs.into()
         }
 
+        if let Err(e) = opts.board_size_repo.put(&ab.game_id, game_state.board.size) {
+            error!("Failed to write board size {:?}", e)
+        }
+
+        info!("Put difficulty: {:?}", ab.difficulty);
+        if let Err(e) = opts.difficulty_repo.put(&ab.game_id, ab.difficulty) {
+            error!("Failed to put difficulty {:?}", e)
+        }
+
         if let Err(e) = opts.xadd.xadd_game_state(&game_state) {
             error!(
                 "Error writing redis stream for game state changelog : {:?}",
@@ -77,14 +86,6 @@ fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
             player: ab.player,
         }) {
             error!("Error xadd bot attached {:?}", e)
-        }
-
-        if let Err(e) = opts.board_size_repo.put(&ab.game_id, game_state.board.size) {
-            error!("Failed to write board size {:?}", e)
-        }
-
-        if let Err(e) = opts.difficulty_repo.put(&ab.game_id, ab.difficulty) {
-            error!("Failed to put difficulty {:?}", e)
         }
     }
 }
