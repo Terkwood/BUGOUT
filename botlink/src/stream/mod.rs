@@ -12,9 +12,11 @@ pub use opts::StreamOpts;
 pub use unack::Unacknowledged;
 pub use write_moves::xadd_loop;
 
+use crate::max_visits;
 use bot_model::api::{AttachBot, ComputeMove};
 pub use input::StreamInput;
 use log::{error, info};
+use move_model::GameState;
 
 const GROUP_NAME: &str = "botlink";
 /// This needs to be replaced in #322
@@ -44,24 +46,7 @@ fn process(event: &StreamInput, opts: &mut StreamOpts) {
             process_attach_bot(&ab, opts);
         }
         StreamInput::GS(game_state) => {
-            let player_up = game_state.player_up;
-            let game_id = &game_state.game_id;
-            match opts.attached_bots_repo.is_attached(&game_id, player_up) {
-                Ok(bot_game) => {
-                    if bot_game {
-                        if let Err(e) = opts.compute_move_in.send(ComputeMove {
-                            game_id: game_id.clone(),
-                            game_state: game_state.clone(),
-                            max_visits: DEFAULT_MAX_VISITS,
-                        }) {
-                            error!("WS SEND ERROR {:?}", e)
-                        }
-                    } else {
-                        info!("Ignoring {:?} {:?}", game_id, player_up)
-                    };
-                }
-                Err(e) => error!("Game Repo error is_attached {:?}", e),
-            }
+            process_game_state(&game_state, opts);
         }
     }
 }
@@ -103,6 +88,29 @@ fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
         if let Err(e) = opts.difficulty_repo.put(&ab.game_id, ab.difficulty) {
             error!("Failed to put difficulty {:?}", e)
         }
+    }
+}
+
+fn process_game_state(game_state: &GameState, opts: &mut StreamOpts) {
+    let player_up = game_state.player_up;
+    let game_id = &game_state.game_id;
+    match (
+        opts.attached_bots_repo.is_attached(&game_id, player_up),
+        opts.difficulty_repo.get(&game_id),
+    ) {
+        (Ok(true), Ok(difficulty)) => {
+            if let Err(e) = opts.compute_move_in.send(ComputeMove {
+                game_id: game_id.clone(),
+                game_state: game_state.clone(),
+                max_visits: max_visits::convert(difficulty.unwrap_or(bot_model::Difficulty::Max)),
+            }) {
+                error!("WS SEND ERROR {:?}", e)
+            }
+        }
+        (Ok(false), Ok(_)) => info!("Ignoring {:?} {:?}", game_id, player_up),
+        (Err(e), Ok(_)) => error!("Game Repo is_attached {:?}", e),
+        (Ok(_), Err(e)) => error!("Difficulty get {:?}", e),
+        (Err(e), Err(f)) => error!("So many errors {:?} {:?}", e, f),
     }
 }
 
