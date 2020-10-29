@@ -1,5 +1,5 @@
-pub mod attached_bots;
-pub mod board_size;
+mod attached_bots;
+mod board_size;
 mod difficulty;
 
 pub use attached_bots::*;

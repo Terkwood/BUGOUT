@@ -1,5 +1,5 @@
 use super::xadd::XAdder;
-use crate::repo::board_size::BoardSizeRepo;
+use crate::repo::BoardSizeRepo;
 use bot_model::{api::MoveComputed, AlphaNumCoord};
 use core_model::ReqId;
 use crossbeam_channel::{select, Receiver};
