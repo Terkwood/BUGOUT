@@ -1,5 +1,5 @@
 use super::xadd::XAdder;
-use crate::repo::board_size::BoardSizeRepo;
+use crate::repo::BoardSizeRepo;
 use bot_model::{api::MoveComputed, AlphaNumCoord};
 use core_model::ReqId;
 use crossbeam_channel::{select, Receiver};
@@ -17,7 +17,7 @@ pub fn xadd_loop(
         select! { recv(move_computed_out) -> msg =>
             match msg {
                 Ok(MoveComputed { game_id, player, alphanum_coord }) => {
-                    if let Ok(board_size) = board_size_repo.get_board_size(&game_id) {
+                    if let Ok(board_size) = board_size_repo.get(&game_id) {
                         let coord = alphanum_coord.map(|a|convert(a, board_size));
 
                         let command = MakeMove  { game_id, player, req_id: ReqId(Uuid::new_v4()), coord };

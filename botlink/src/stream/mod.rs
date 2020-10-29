@@ -12,13 +12,13 @@ pub use opts::StreamOpts;
 pub use unack::Unacknowledged;
 pub use write_moves::xadd_loop;
 
+use crate::max_visits;
 use bot_model::api::{AttachBot, ComputeMove};
 pub use input::StreamInput;
 use log::{error, info};
+use move_model::GameState;
 
 const GROUP_NAME: &str = "botlink";
-/// This needs to be replaced in #322
-const DEFAULT_MAX_VISITS: Option<u16> = None;
 
 pub fn xread_loop(opts: &mut StreamOpts) {
     let mut unack = Unacknowledged::default();
@@ -44,24 +44,7 @@ fn process(event: &StreamInput, opts: &mut StreamOpts) {
             process_attach_bot(&ab, opts);
         }
         StreamInput::GS(game_state) => {
-            let player_up = game_state.player_up;
-            let game_id = &game_state.game_id;
-            match opts.attached_bots_repo.is_attached(&game_id, player_up) {
-                Ok(bot_game) => {
-                    if bot_game {
-                        if let Err(e) = opts.compute_move_in.send(ComputeMove {
-                            game_id: game_id.clone(),
-                            game_state: game_state.clone(),
-                            max_visits: DEFAULT_MAX_VISITS,
-                        }) {
-                            error!("WS SEND ERROR {:?}", e)
-                        }
-                    } else {
-                        info!("Ignoring {:?} {:?}", game_id, player_up)
-                    };
-                }
-                Err(e) => error!("Game Repo error is_attached {:?}", e),
-            }
+            process_game_state(&game_state, opts);
         }
     }
 }
@@ -96,12 +79,36 @@ fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
             error!("Error xadd bot attached {:?}", e)
         }
 
-        if let Err(e) = opts
-            .board_size_repo
-            .set_board_size(&ab.game_id, game_state.board.size)
-        {
+        if let Err(e) = opts.board_size_repo.put(&ab.game_id, game_state.board.size) {
             error!("Failed to write board size {:?}", e)
         }
+
+        if let Err(e) = opts.difficulty_repo.put(&ab.game_id, ab.difficulty) {
+            error!("Failed to put difficulty {:?}", e)
+        }
+    }
+}
+
+fn process_game_state(game_state: &GameState, opts: &mut StreamOpts) {
+    let player_up = game_state.player_up;
+    let game_id = &game_state.game_id;
+    match (
+        opts.attached_bots_repo.is_attached(&game_id, player_up),
+        opts.difficulty_repo.get(&game_id),
+    ) {
+        (Ok(true), Ok(difficulty)) => {
+            if let Err(e) = opts.compute_move_in.send(ComputeMove {
+                game_id: game_id.clone(),
+                game_state: game_state.clone(),
+                max_visits: max_visits::convert(difficulty.unwrap_or(bot_model::Difficulty::Max)),
+            }) {
+                error!("WS SEND ERROR {:?}", e)
+            }
+        }
+        (Ok(false), Ok(_)) => info!("Ignoring {:?} {:?}", game_id, player_up),
+        (Err(e), Ok(_)) => error!("Game Repo is_attached {:?}", e),
+        (Ok(_), Err(e)) => error!("Difficulty get {:?}", e),
+        (Err(e), Err(f)) => error!("So many errors {:?} {:?}", e, f),
     }
 }
 
@@ -147,11 +154,22 @@ mod tests {
     static FAKE_BOARD_SIZE: AtomicU16 = AtomicU16::new(0);
     struct FakeBoardSizeRepo;
     impl BoardSizeRepo for FakeBoardSizeRepo {
-        fn get_board_size(&self, _game_id: &GameId) -> Result<u16, RepoErr> {
+        fn get(&self, _game_id: &GameId) -> Result<u16, RepoErr> {
             Ok(FAKE_BOARD_SIZE.load(Ordering::SeqCst))
         }
-        fn set_board_size(&self, _game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
+        fn put(&self, _game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
             FAKE_BOARD_SIZE.store(board_size, Ordering::SeqCst);
+            Ok(())
+        }
+    }
+
+    struct FakeDifficultyRepo;
+    impl DifficultyRepo for FakeDifficultyRepo {
+        fn get(&self, _game_id: &GameId) -> Result<Option<Difficulty>, RepoErr> {
+            Ok(None)
+        }
+
+        fn put(&self, _game_id: &GameId, _difficulty: Difficulty) -> Result<(), RepoErr> {
             Ok(())
         }
     }
@@ -184,7 +202,8 @@ mod tests {
     impl xread::XReader for FakeXReader {
         fn xread_sorted(
             &self,
-        ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, redis::RedisError> {
+        ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, xread::StreamReadError>
+        {
             let mut v = vec![];
 
             if let Ok(mut the_start) = self.init_data.lock() {
@@ -218,6 +237,8 @@ mod tests {
         let abr = attached_bots_repo.clone();
 
         let board_size_repo = Arc::new(FakeBoardSizeRepo);
+
+        let difficulty_repo = Box::new(FakeDifficultyRepo);
 
         const GAME_ID: GameId = GameId(Uuid::nil());
         let player = Player::WHITE;
@@ -268,6 +289,7 @@ mod tests {
             let mut opts = StreamOpts {
                 compute_move_in,
                 attached_bots_repo,
+                difficulty_repo,
                 board_size_repo,
                 xread: xreader,
                 xadd: xadder,
