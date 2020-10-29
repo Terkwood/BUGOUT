@@ -343,7 +343,6 @@ mod tests {
         let query = KataGoQuery::from(compute_move);
         let json = serde_json::to_string(&query).expect("ser");
 
-        println!("{}", json);
-        assert!(!json.contains("maxVisits"));
+        assert!(!json.contains("maxVisits"))
     }
 }
