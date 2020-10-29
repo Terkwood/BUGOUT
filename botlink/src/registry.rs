@@ -10,6 +10,7 @@ use std::sync::Arc;
 pub struct Components {
     pub ab_repo: Box<dyn AttachedBotsRepo>,
     pub board_size_repo: Arc<dyn BoardSizeRepo>,
+    pub difficulty_repo: Box<dyn DifficultyRepo>,
     pub xreader: Box<dyn XReader>,
     pub xadder: Arc<dyn XAdder>,
     pub xack: Arc<dyn XAck>,
@@ -35,6 +36,7 @@ impl Components {
         Components {
             ab_repo: Box::new(client.clone()),
             board_size_repo: Arc::new(client.clone()),
+            difficulty_repo: todo!(),
             xreader: Box::new(client.clone()),
             xadder: Arc::new(client.clone()),
             xack: Arc::new(client),

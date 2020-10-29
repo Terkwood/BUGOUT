@@ -1,6 +1,6 @@
 use super::*;
 use crate::registry::Components;
-use crate::repo::{AttachedBotsRepo, BoardSizeRepo};
+use crate::repo::{AttachedBotsRepo, BoardSizeRepo, DifficultyRepo};
 use bot_model::api::ComputeMove;
 use crossbeam_channel::Sender;
 use std::sync::Arc;
@@ -8,6 +8,7 @@ use std::sync::Arc;
 pub struct StreamOpts {
     pub attached_bots_repo: Box<dyn AttachedBotsRepo>,
     pub board_size_repo: Arc<dyn BoardSizeRepo>,
+    pub difficulty_repo: Box<dyn DifficultyRepo>,
     pub xread: Box<dyn xread::XReader>,
     pub xadd: Arc<dyn xadd::XAdder>,
     pub xack: Arc<dyn xack::XAck>,
@@ -19,6 +20,7 @@ impl StreamOpts {
         StreamOpts {
             attached_bots_repo: components.ab_repo,
             board_size_repo: components.board_size_repo,
+            difficulty_repo: components.difficulty_repo,
             xread: components.xreader,
             xadd: components.xadder,
             xack: components.xack,

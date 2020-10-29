@@ -156,6 +156,17 @@ mod tests {
         }
     }
 
+    struct FakeDifficultyRepo;
+    impl DifficultyRepo for FakeDifficultyRepo {
+        fn get(&self, _game_id: &GameId) -> Result<Option<Difficulty>, RepoErr> {
+            Ok(None)
+        }
+
+        fn put(&self, _game_id: &GameId, _difficulty: Difficulty) -> Result<(), RepoErr> {
+            Ok(())
+        }
+    }
+
     struct FakeXAdder {
         added_in: Sender<move_model::GameState>,
     }
@@ -219,6 +230,8 @@ mod tests {
 
         let board_size_repo = Arc::new(FakeBoardSizeRepo);
 
+        let difficulty_repo = Box::new(FakeDifficultyRepo);
+
         const GAME_ID: GameId = GameId(Uuid::nil());
         let player = Player::WHITE;
         let board_size = Some(13);
@@ -268,6 +281,7 @@ mod tests {
             let mut opts = StreamOpts {
                 compute_move_in,
                 attached_bots_repo,
+                difficulty_repo,
                 board_size_repo,
                 xread: xreader,
                 xadd: xadder,
