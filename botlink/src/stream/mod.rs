@@ -19,8 +19,6 @@ use log::{error, info};
 use move_model::GameState;
 
 const GROUP_NAME: &str = "botlink";
-/// This needs to be replaced in #322
-const DEFAULT_MAX_VISITS: Option<u16> = None;
 
 pub fn xread_loop(opts: &mut StreamOpts) {
     let mut unack = Unacknowledged::default();
