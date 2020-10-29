@@ -11,16 +11,27 @@ pub trait DifficultyRepo: Send + Sync {
 impl DifficultyRepo for Box<Client> {
     fn get(&self, game_id: &GameId) -> Result<Option<Difficulty>, RepoErr> {
         if let Ok(mut conn) = self.get_connection() {
-            let ser: Option<Vec<u8>> = conn.get(difficulty_key(&game_id))?;
+            let bytes: Option<Vec<u8>> = conn.get(difficulty_key(&game_id))?;
             expire(&difficulty_key(game_id), &mut conn)?;
-            Ok(todo!())
+            Ok(if let Some(b) = bytes {
+                bincode::deserialize(&b)?
+            } else {
+                None
+            })
         } else {
             Err(RepoErr::Conn)
         }
     }
 
     fn put(&self, game_id: &GameId, difficulty: Difficulty) -> Result<(), RepoErr> {
-        todo!()
+        if let Ok(mut conn) = self.get_connection() {
+            let bytes: Vec<u8> = bincode::serialize(&difficulty)?;
+            conn.set(difficulty_key(&game_id), bytes)?;
+            expire(&difficulty_key(game_id), &mut conn)?;
+            Ok(())
+        } else {
+            Err(RepoErr::Conn)
+        }
     }
 }
 
