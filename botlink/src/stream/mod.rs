@@ -102,6 +102,10 @@ fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
         {
             error!("Failed to write board size {:?}", e)
         }
+
+        if let Err(e) = opts.difficulty_repo.put(&ab.game_id, ab.difficulty) {
+            error!("Failed to put difficulty {:?}", e)
+        }
     }
 }
 
