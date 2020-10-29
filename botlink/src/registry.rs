@@ -36,7 +36,7 @@ impl Components {
         Components {
             ab_repo: Box::new(client.clone()),
             board_size_repo: Arc::new(client.clone()),
-            difficulty_repo: todo!(),
+            difficulty_repo: Box::new(client.clone()),
             xreader: Box::new(client.clone()),
             xadder: Arc::new(client.clone()),
             xack: Arc::new(client),

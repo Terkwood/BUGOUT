@@ -2,13 +2,14 @@ use super::{expire, RepoErr};
 use bot_model::Difficulty;
 use core_model::GameId;
 use redis::{Client, Commands};
+use std::sync::Arc;
 
 pub trait DifficultyRepo: Send + Sync {
     fn get(&self, game_id: &GameId) -> Result<Option<Difficulty>, RepoErr>;
     fn put(&self, game_id: &GameId, difficulty: Difficulty) -> Result<(), RepoErr>;
 }
 
-impl DifficultyRepo for Box<Client> {
+impl DifficultyRepo for Arc<Client> {
     fn get(&self, game_id: &GameId) -> Result<Option<Difficulty>, RepoErr> {
         if let Ok(mut conn) = self.get_connection() {
             let bytes: Option<Vec<u8>> = conn.get(difficulty_key(&game_id))?;
