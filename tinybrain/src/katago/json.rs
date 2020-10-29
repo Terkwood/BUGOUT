@@ -19,7 +19,7 @@ pub struct KataGoQuery {
     pub board_x_size: u16,
     #[serde(rename = "boardYSize")]
     pub board_y_size: u16,
-    #[serde(rename = "maxVisits")]
+    #[serde(rename = "maxVisits", skip_serializing_if = "Option::is_none")]
     pub max_visits: Option<u16>,
 }
 
@@ -321,5 +321,28 @@ mod tests {
 
         let actual = KataGoQuery::from(compute_move).expect("move(s) out of range");
         assert_eq!(actual, expected)
+    }
+
+    #[test]
+    fn max_visits_skipped_when_none() {
+        let game_id = GameId(Uuid::nil());
+        let game_state = GameState {
+            moves: vec![],
+            turn: 1,
+            player_up: Player::BLACK,
+            captures: Captures::default(),
+            board: Board::default(),
+            game_id: game_id.clone(),
+        };
+        let compute_move = ComputeMove {
+            game_id,
+            game_state,
+            max_visits: None,
+        };
+
+        let query = KataGoQuery::from(compute_move);
+        let json = serde_json::to_string(&query).expect("ser");
+
+        assert!(!json.contains("maxVisits"))
     }
 }
