@@ -1,8 +1,9 @@
 use bot_model::Difficulty;
 
-const EASY: u16 = 20;
-const MEDIUM: u16 = 100;
-const HARD: u16 = 200;
+/// Lower than 2 and you'll see an error
+const EASY: u16 = 2;
+const MEDIUM: u16 = 25;
+const HARD: u16 = 100;
 
 pub fn convert(difficulty: Difficulty) -> Option<u16> {
     match difficulty {
