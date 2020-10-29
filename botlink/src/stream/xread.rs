@@ -15,8 +15,10 @@ pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 ///
 /// entry_ids: the minimum entry ids from which to read
 pub trait XReader: Send + Sync {
-    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, redis::RedisError>;
+    fn xread_sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadError>;
 }
+
+#[derive(Debug)]
 pub enum StreamReadError {
     Redis(redis::RedisError),
     Deser,
@@ -24,16 +26,14 @@ pub enum StreamReadError {
 
 const CONSUMER_NAME: &str = "singleton";
 impl XReader for Arc<Client> {
-    fn xread_sorted(
-        &self,
-    ) -> Result<std::vec::Vec<(XReadEntryId, StreamInput)>, redis::RedisError> {
+    fn xread_sorted(&self) -> Result<std::vec::Vec<(XReadEntryId, StreamInput)>, StreamReadError> {
         trace!(
             "xreading from {} and {}",
             topics::ATTACH_BOT_CMD,
             topics::GAME_STATES_CHANGELOG
         );
         match self.get_connection() {
-            Err(e) => Err(e),
+            Err(e) => Err(StreamReadError::Redis(e)),
             Ok(mut conn) => {
                 let opts = StreamReadOptions::default()
                     .block(BLOCK_MS)
@@ -58,7 +58,7 @@ impl XReader for Arc<Client> {
                         }
                         Ok(answer)
                     }
-                    Err(_) => todo!(),
+                    Err(e) => Err(e),
                 }
             }
         }
@@ -98,4 +98,10 @@ fn deser(xrr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, Str
         }
     }
     Ok(out)
+}
+
+impl From<redis::RedisError> for StreamReadError {
+    fn from(e: redis::RedisError) -> Self {
+        StreamReadError::Redis(e)
+    }
 }

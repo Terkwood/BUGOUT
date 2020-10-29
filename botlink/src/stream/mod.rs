@@ -202,7 +202,8 @@ mod tests {
     impl xread::XReader for FakeXReader {
         fn xread_sorted(
             &self,
-        ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, redis::RedisError> {
+        ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, xread::StreamReadError>
+        {
             let mut v = vec![];
 
             if let Ok(mut the_start) = self.init_data.lock() {
