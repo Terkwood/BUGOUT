@@ -1,4 +1,3 @@
-use super::redis_keys::board_size as board_size_key;
 use super::RepoErr;
 use core_model::GameId;
 use redis::{Client, Commands};
@@ -13,7 +12,7 @@ pub trait BoardSizeRepo: Send + Sync {
 impl BoardSizeRepo for Arc<Client> {
     fn get(&self, game_id: &GameId) -> Result<u16, RepoErr> {
         if let Ok(mut conn) = self.get_connection() {
-            let result = conn.get(board_size_key(&game_id.0))?;
+            let result = conn.get(board_size_key(&game_id))?;
             expire(game_id, &mut conn)?;
             Ok(result)
         } else {
@@ -22,7 +21,7 @@ impl BoardSizeRepo for Arc<Client> {
     }
     fn put(&self, game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
         if let Ok(mut conn) = self.get_connection() {
-            conn.set(board_size_key(&game_id.0), board_size)?;
+            conn.set(board_size_key(&game_id), board_size)?;
             expire(game_id, &mut conn)?;
             Ok(())
         } else {
@@ -33,5 +32,9 @@ impl BoardSizeRepo for Arc<Client> {
 
 const TTL_SECS: usize = 86400;
 fn expire(game_id: &GameId, conn: &mut redis::Connection) -> Result<(), RepoErr> {
-    Ok(conn.expire(board_size_key(&game_id.0), TTL_SECS)?)
+    Ok(conn.expire(board_size_key(&game_id), TTL_SECS)?)
+}
+
+fn board_size_key(game_id: &GameId) -> String {
+    format!("/BUGOUT/botlink/board_size/{}", game_id.0.to_string())
 }

@@ -6,3 +6,7 @@ pub trait DifficultyRepo: Send + Sync {
     fn get(&self, game_id: &GameId) -> Result<Option<Difficulty>, RepoErr>;
     fn put(&self, game_id: &GameId, difficulty: Difficulty) -> Result<(), RepoErr>;
 }
+
+fn difficulty_key(game_id: &GameId) -> String {
+    format!("/BUGOUT/botlink/difficulty/{}", game_id.0.to_string())
+}
