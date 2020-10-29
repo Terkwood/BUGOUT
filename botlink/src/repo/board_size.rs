@@ -5,13 +5,13 @@ use redis::{Client, Commands};
 use std::sync::Arc;
 
 pub trait BoardSizeRepo: Send + Sync {
-    fn get_board_size(&self, game_id: &GameId) -> Result<u16, RepoErr>;
+    fn get(&self, game_id: &GameId) -> Result<u16, RepoErr>;
 
-    fn set_board_size(&self, game_id: &GameId, board_size: u16) -> Result<(), RepoErr>;
+    fn put(&self, game_id: &GameId, board_size: u16) -> Result<(), RepoErr>;
 }
 
 impl BoardSizeRepo for Arc<Client> {
-    fn get_board_size(&self, game_id: &GameId) -> Result<u16, RepoErr> {
+    fn get(&self, game_id: &GameId) -> Result<u16, RepoErr> {
         if let Ok(mut conn) = self.get_connection() {
             let result = conn.get(board_size_key(&game_id.0))?;
             expire(game_id, &mut conn)?;
@@ -20,7 +20,7 @@ impl BoardSizeRepo for Arc<Client> {
             Err(RepoErr::Conn)
         }
     }
-    fn set_board_size(&self, game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
+    fn put(&self, game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
         if let Ok(mut conn) = self.get_connection() {
             conn.set(board_size_key(&game_id.0), board_size)?;
             expire(game_id, &mut conn)?;

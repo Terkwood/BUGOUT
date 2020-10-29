@@ -96,10 +96,7 @@ fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
             error!("Error xadd bot attached {:?}", e)
         }
 
-        if let Err(e) = opts
-            .board_size_repo
-            .set_board_size(&ab.game_id, game_state.board.size)
-        {
+        if let Err(e) = opts.board_size_repo.put(&ab.game_id, game_state.board.size) {
             error!("Failed to write board size {:?}", e)
         }
 
@@ -151,10 +148,10 @@ mod tests {
     static FAKE_BOARD_SIZE: AtomicU16 = AtomicU16::new(0);
     struct FakeBoardSizeRepo;
     impl BoardSizeRepo for FakeBoardSizeRepo {
-        fn get_board_size(&self, _game_id: &GameId) -> Result<u16, RepoErr> {
+        fn get(&self, _game_id: &GameId) -> Result<u16, RepoErr> {
             Ok(FAKE_BOARD_SIZE.load(Ordering::SeqCst))
         }
-        fn set_board_size(&self, _game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
+        fn put(&self, _game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
             FAKE_BOARD_SIZE.store(board_size, Ordering::SeqCst);
             Ok(())
         }
