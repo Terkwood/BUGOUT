@@ -12,7 +12,7 @@ const DrawerManager = require("./DrawerManager");
 // BUGOUT 🦹🏻‍ Bundle Bloat Protector
 import BoardSizeModal from "./bugout/BoardSizeModal";
 import GameLobbyModal from "./bugout/WelcomeModal";
-import BotDifficultyModal from "./bugout/BotDifficultyModal";
+import BotModal from "./bugout/BotModal";
 import IdleStatusModal from "./bugout/IdleStatusModal";
 import MultiplayerColorPrefModal from "./bugout/MultiplayerColorPrefModal";
 import OpponentPassedModal from "./bugout/OpponentPassedModal";
@@ -1337,19 +1337,19 @@ class App extends Component {
           }),
         appEvents: this.events,
       }),
-      h(BotDifficultyModal, {
+      h(BotModal, {
         data: state.multiplayer,
-        update: (botDifficulty) => {
+        update: (bot) => {
           // This value is used by other modals to compute whether
           // they should turn on
           this.setState({
-            multiplayer: { ...this.state.multiplayer, botDifficulty },
+            multiplayer: { ...this.state.multiplayer, bot },
           });
 
           // This will be intercepted in gtp.js, which is already
           // establishing backend connectivity while the user
-          // is busy answering the bot difficulty dialog
-          this.events.emit("bot-difficulty-selected", { botDifficulty });
+          // is busy answering the bot dialog
+          this.events.emit("bot-selected", { bot });
         },
       }),
       h(WaitForOpponentModal, {

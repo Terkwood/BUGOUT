@@ -52,28 +52,28 @@ fn process(event: &StreamInput, opts: &mut StreamOpts) {
 
 fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
     use bot_model::api::BotAttached;
+    let mut game_state = move_model::GameState {
+        game_id: core_model::GameId(ab.game_id.0),
+        captures: move_model::Captures::default(),
+        turn: 1,
+        moves: vec![],
+        board: move_model::Board::default(),
+        player_up: move_model::Player::BLACK,
+    };
+
     if let Err(e) = opts.attachment_repo.put(&Attachment {
         game_id: ab.game_id.clone(),
         player: ab.player,
         bot: ab.bot,
     }) {
         error!("Error attaching bot {:?}", e)
+    } else if let Err(e) = opts.board_size_repo.put(&ab.game_id, game_state.board.size) {
+        error!("Failed to write board size {:?}", e)
     } else {
         info!("Stream: Set up game state for attach bot {:?}", ab);
-        let mut game_state = move_model::GameState {
-            game_id: core_model::GameId(ab.game_id.0),
-            captures: move_model::Captures::default(),
-            turn: 1,
-            moves: vec![],
-            board: move_model::Board::default(),
-            player_up: move_model::Player::BLACK,
-        };
+
         if let Some(bs) = ab.board_size {
             game_state.board.size = bs.into()
-        }
-
-        if let Err(e) = opts.board_size_repo.put(&ab.game_id, game_state.board.size) {
-            error!("Failed to write board size {:?}", e)
         }
 
         if let Err(e) = opts.xadd.xadd_game_state(&game_state) {

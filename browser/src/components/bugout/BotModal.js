@@ -3,18 +3,15 @@ const { h, Component } = require("preact");
 // 🦹🏻‍ Bundle Bloat Protector
 import Dialog from "preact-material-components/Dialog";
 
-const {
-  BotDifficulty,
-  EntryMethod,
-} = require("../../modules/multiplayer/bugout");
+const { Bot, EntryMethod } = require("../../modules/multiplayer/bugout");
 
-class BotDifficultyModal extends Component {
+class BotModal extends Component {
   constructor() {
     super();
     this.state = { showDialog: false, turnedOnOnce: false };
   }
 
-  render({ id = "select-bot-difficulty", data, update }) {
+  render({ id = "select-bot", data, update }) {
     if (data == undefined) {
       return h("div", { id });
     }
@@ -37,11 +34,11 @@ class BotDifficultyModal extends Component {
         id,
         isOpen: true,
       },
-      h(Dialog.Header, null, "Bot Difficulty"),
+      h(Dialog.Header, null, "Choose Bot"),
       h(
         Dialog.Body,
         null,
-        "Choose a difficulty level for the AI. Easier bots take less time to move."
+        "KataGo: Full Strength takes significantly longer to compute moves."
       ),
       h(
         Dialog.Footer,
@@ -52,10 +49,10 @@ class BotDifficultyModal extends Component {
             accept: true,
             onClick: () => {
               this.setState({ showDialog: false, turnedOnOnce: true });
-              update(BotDifficulty.EASY);
+              update(Bot.KATAGO_INSTANT);
             },
           },
-          "Easy 🍼"
+          "KataGo: Instant Play 🐇"
         )
       ),
       h(
@@ -67,44 +64,14 @@ class BotDifficultyModal extends Component {
             accept: true,
             onClick: () => {
               this.setState({ showDialog: false, turnedOnOnce: true });
-              update(BotDifficulty.MEDIUM);
+              update(Bot.KATAGO_FULL_STRENGTH);
             },
           },
-          "Medium 🤓"
-        )
-      ),
-      h(
-        Dialog.Footer,
-        null,
-        h(
-          Dialog.FooterButton,
-          {
-            accept: true,
-            onClick: () => {
-              this.setState({ showDialog: false, turnedOnOnce: true });
-              update(BotDifficulty.HARD);
-            },
-          },
-          "Hard 😈"
-        )
-      ),
-      h(
-        Dialog.Footer,
-        null,
-        h(
-          Dialog.FooterButton,
-          {
-            accept: true,
-            onClick: () => {
-              this.setState({ showDialog: false, turnedOnOnce: true });
-              update(BotDifficulty.MAX);
-            },
-          },
-          "Max 👹"
+          "KataGo: Full Strength 👹"
         )
       )
     );
   }
 }
 
-export default BotDifficultyModal;
+export default BotModal;

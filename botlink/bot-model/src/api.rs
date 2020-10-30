@@ -78,6 +78,6 @@ mod tests {
         let json = serde_json::to_string(&input).expect("to_string");
         assert!(json.contains("gameId"));
         assert!(json.contains("boardSize"));
-        assert!(json.contains("botMode"));
+        assert!(json.contains("bot"));
     }
 }

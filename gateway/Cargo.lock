@@ -203,7 +203,7 @@ dependencies = [
 [[package]]
 name = "bot-model"
 version = "1.0.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=567e3f0#567e3f047bdcba726309c78bec71d1002f5fb50e"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=29163ac#29163acf8401b0a105a0e301b1b941de2b8fa271"
 dependencies = [
  "core-model",
  "move-model",
@@ -627,7 +627,7 @@ dependencies = [
 
 [[package]]
 name = "gateway"
-version = "1.0.0-b"
+version = "1.0.0-c"
 dependencies = [
  "bincode",
  "bot-model",

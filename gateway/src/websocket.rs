@@ -370,7 +370,7 @@ impl Handler for WsSession {
             Ok(ClientCommands::AttachBot(AttachBotClientCommand {
                 player: lp,
                 board_size,
-                difficulty,
+                bot,
             })) => {
                 info!("📌 {} ATACHBOT", session_code(self));
 
@@ -391,7 +391,7 @@ impl Handler for WsSession {
                         game_id: core_model::GameId(game_id),
                         player,
                         board_size,
-                        difficulty,
+                        bot,
                     });
 
                     if let Err(e) = self.session_commands_in.send(payload) {

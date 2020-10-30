@@ -17,9 +17,19 @@ pub enum Bot {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AlphaNumCoord(pub char, pub u16);
 
-#[test]
-fn test_difficulty_json() {
-    let input = Bot::KataGoInstant;
-    let json = serde_json::to_string(&input).expect("to_string");
-    assert_eq!(json, "\"KataGoInstant\"")
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_kata_instant_json() {
+        let input = Bot::KataGoInstant;
+        let json = serde_json::to_string(&input).expect("to_string");
+        assert_eq!(json, "\"KataGoInstant\"")
+    }
+    #[test]
+    fn test_kata_full_json() {
+        let input = Bot::KataGoFullStrength;
+        let json = serde_json::to_string(&input).expect("to_string");
+        assert_eq!(json, "\"KataGoFullStrength\"")
+    }
 }
