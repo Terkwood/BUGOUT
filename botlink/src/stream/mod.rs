@@ -61,6 +61,10 @@ fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
         player_up: move_model::Player::BLACK,
     };
 
+    if let Some(bs) = ab.board_size {
+        game_state.board.size = bs.into()
+    }
+
     if let Err(e) = opts.attachment_repo.put(&Attachment {
         game_id: ab.game_id.clone(),
         player: ab.player,
@@ -71,10 +75,6 @@ fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
         error!("Failed to write board size {:?}", e)
     } else {
         info!("Stream: Set up game state for attach bot {:?}", ab);
-
-        if let Some(bs) = ab.board_size {
-            game_state.board.size = bs.into()
-        }
 
         if let Err(e) = opts.xadd.xadd_game_state(&game_state) {
             error!(
