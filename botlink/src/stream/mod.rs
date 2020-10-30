@@ -13,6 +13,7 @@ pub use unack::Unacknowledged;
 pub use write_moves::xadd_loop;
 
 use crate::max_visits;
+use crate::repo::Attachment;
 use bot_model::api::{AttachBot, ComputeMove};
 pub use input::StreamInput;
 use log::{error, info};
@@ -51,28 +52,28 @@ fn process(event: &StreamInput, opts: &mut StreamOpts) {
 
 fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
     use bot_model::api::BotAttached;
-    if let Err(e) = opts.attached_bots_repo.attach(&ab.game_id, ab.player) {
+    let mut game_state = move_model::GameState {
+        game_id: core_model::GameId(ab.game_id.0),
+        captures: move_model::Captures::default(),
+        turn: 1,
+        moves: vec![],
+        board: move_model::Board::default(),
+        player_up: move_model::Player::BLACK,
+    };
+
+    if let Err(e) = opts.attachment_repo.put(&Attachment {
+        game_id: ab.game_id.clone(),
+        player: ab.player,
+        bot: ab.bot,
+    }) {
         error!("Error attaching bot {:?}", e)
+    } else if let Err(e) = opts.board_size_repo.put(&ab.game_id, game_state.board.size) {
+        error!("Failed to write board size {:?}", e)
     } else {
         info!("Stream: Set up game state for attach bot {:?}", ab);
-        let mut game_state = move_model::GameState {
-            game_id: core_model::GameId(ab.game_id.0),
-            captures: move_model::Captures::default(),
-            turn: 1,
-            moves: vec![],
-            board: move_model::Board::default(),
-            player_up: move_model::Player::BLACK,
-        };
+
         if let Some(bs) = ab.board_size {
             game_state.board.size = bs.into()
-        }
-
-        if let Err(e) = opts.board_size_repo.put(&ab.game_id, game_state.board.size) {
-            error!("Failed to write board size {:?}", e)
-        }
-
-        if let Err(e) = opts.difficulty_repo.put(&ab.game_id, ab.difficulty) {
-            error!("Failed to put difficulty {:?}", e)
         }
 
         if let Err(e) = opts.xadd.xadd_game_state(&game_state) {
@@ -92,23 +93,18 @@ fn process_attach_bot(ab: &AttachBot, opts: &mut StreamOpts) {
 fn process_game_state(game_state: &GameState, opts: &mut StreamOpts) {
     let player_up = game_state.player_up;
     let game_id = &game_state.game_id;
-    match (
-        opts.attached_bots_repo.is_attached(&game_id, player_up),
-        opts.difficulty_repo.get(&game_id),
-    ) {
-        (Ok(true), Ok(difficulty)) => {
+    match opts.attachment_repo.get(&game_id, player_up) {
+        Ok(Some(attachment)) => {
             if let Err(e) = opts.compute_move_in.send(ComputeMove {
                 game_id: game_id.clone(),
                 game_state: game_state.clone(),
-                max_visits: max_visits::convert(difficulty.unwrap_or(bot_model::Difficulty::Max)),
+                max_visits: max_visits::convert(attachment.bot),
             }) {
                 error!("WS SEND ERROR {:?}", e)
             }
         }
-        (Ok(false), Ok(_)) => info!("Ignoring {:?} {:?}", game_id, player_up),
-        (Err(e), Ok(_)) => error!("Game Repo is_attached {:?}", e),
-        (Ok(_), Err(e)) => error!("Difficulty get {:?}", e),
-        (Err(e), Err(f)) => error!("So many errors {:?} {:?}", e, f),
+        Ok(None) => info!("Ignoring {:?} {:?}", game_id, player_up),
+        Err(e) => error!("Attachment repo {:?}", e),
     }
 }
 
@@ -118,7 +114,7 @@ mod tests {
     use crate::repo::*;
     use crate::stream::xadd::*;
     use bot_model::api::*;
-    use bot_model::*;
+    use bot_model::Bot;
     use core_model::*;
     use crossbeam_channel::Sender;
     use crossbeam_channel::{select, unbounded, Receiver};
@@ -131,23 +127,21 @@ mod tests {
     use uuid::Uuid;
 
     #[derive(Clone)]
-    struct FakeAttachedBotsRepo {
-        pub members: Arc<Mutex<Vec<(GameId, Player)>>>,
+    struct FakeAttachmentRepo {
+        pub members: Arc<Mutex<Vec<Attachment>>>,
     }
-    impl AttachedBotsRepo for FakeAttachedBotsRepo {
-        fn is_attached(&self, game_id: &GameId, player: Player) -> Result<bool, RepoErr> {
+    impl AttachmentRepo for FakeAttachmentRepo {
+        fn get(&self, game_id: &GameId, player: Player) -> Result<Option<Attachment>, RepoErr> {
             Ok(self
                 .members
                 .lock()
                 .expect("lock")
-                .contains(&(game_id.clone(), player)))
+                .iter()
+                .find(|member| &member.game_id == game_id && member.player == player)
+                .map(|m| m.clone()))
         }
-        fn attach(&mut self, game_id: &GameId, player: Player) -> Result<(), RepoErr> {
-            Ok(self
-                .members
-                .lock()
-                .expect("lock")
-                .push((game_id.clone(), player)))
+        fn put(&self, attachment: &Attachment) -> Result<(), RepoErr> {
+            Ok(self.members.lock().expect("lock").push(attachment.clone()))
         }
     }
 
@@ -159,17 +153,6 @@ mod tests {
         }
         fn put(&self, _game_id: &GameId, board_size: u16) -> Result<(), RepoErr> {
             FAKE_BOARD_SIZE.store(board_size, Ordering::SeqCst);
-            Ok(())
-        }
-    }
-
-    struct FakeDifficultyRepo;
-    impl DifficultyRepo for FakeDifficultyRepo {
-        fn get(&self, _game_id: &GameId) -> Result<Option<Difficulty>, RepoErr> {
-            Ok(None)
-        }
-
-        fn put(&self, _game_id: &GameId, _difficulty: Difficulty) -> Result<(), RepoErr> {
             Ok(())
         }
     }
@@ -230,15 +213,13 @@ mod tests {
             Receiver<move_model::GameState>,
         ) = unbounded();
 
-        let bots_attached = Arc::new(Mutex::new(vec![]));
-        let attached_bots_repo = Box::new(FakeAttachedBotsRepo {
-            members: bots_attached.clone(),
+        let fake_attachments = Arc::new(Mutex::new(vec![]));
+        let attachment_repo = Box::new(FakeAttachmentRepo {
+            members: fake_attachments.clone(),
         });
-        let abr = attached_bots_repo.clone();
+        let abr = attachment_repo.clone();
 
         let board_size_repo = Arc::new(FakeBoardSizeRepo);
-
-        let difficulty_repo = Box::new(FakeDifficultyRepo);
 
         const GAME_ID: GameId = GameId(Uuid::nil());
         let player = Player::WHITE;
@@ -255,7 +236,7 @@ mod tests {
                     game_id: GAME_ID.clone(),
                     player,
                     board_size,
-                    difficulty: Difficulty::Max,
+                    bot: Bot::KataGoInstant,
                 }),
             )]),
         });
@@ -288,8 +269,7 @@ mod tests {
         thread::spawn(move || {
             let mut opts = StreamOpts {
                 compute_move_in,
-                attached_bots_repo,
-                difficulty_repo,
+                attachment_repo,
                 board_size_repo,
                 xread: xreader,
                 xadd: xadder,
@@ -314,6 +294,6 @@ mod tests {
         });
 
         thread::sleep(Duration::from_millis(1));
-        assert!(abr.is_attached(&GAME_ID, player).expect("ab repo"));
+        assert!(abr.get(&GAME_ID, player).expect("ab repo").is_some());
     }
 }

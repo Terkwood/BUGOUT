@@ -1,4 +1,4 @@
-use super::{AlphaNumCoord, Difficulty};
+use super::{AlphaNumCoord, Bot};
 use core_model::GameId;
 use move_model::{GameState, Player};
 use serde_derive::{Deserialize, Serialize};
@@ -26,7 +26,7 @@ pub struct AttachBot {
     pub game_id: GameId,
     pub player: Player,
     pub board_size: Option<u8>,
-    pub difficulty: Difficulty,
+    pub bot: Bot,
 }
 
 /// This reply is sent once a bot is listening
@@ -49,7 +49,7 @@ mod tests {
             game_id: GameId(Uuid::nil()),
             player: Player::BLACK,
             board_size: Some(9),
-            difficulty: Difficulty::Max,
+            bot: Bot::KataGoInstant,
         };
         let json = serde_json::to_string(&expected).expect("to_string");
         let actual: AttachBot = serde_json::from_str(&json).expect("from_str");
@@ -73,11 +73,11 @@ mod tests {
             game_id: GameId(Uuid::nil()),
             player: Player::BLACK,
             board_size: Some(19),
-            difficulty: Difficulty::Easy,
+            bot: Bot::KataGoFullStrength,
         };
         let json = serde_json::to_string(&input).expect("to_string");
         assert!(json.contains("gameId"));
         assert!(json.contains("boardSize"));
-        assert!(json.contains("difficulty"));
+        assert!(json.contains("bot"));
     }
 }

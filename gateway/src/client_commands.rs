@@ -34,7 +34,7 @@ pub struct AttachBotClientCommand {
     pub player: Player,
     #[serde(rename = "boardSize")]
     pub board_size: Option<u8>,
-    pub difficulty: bot_model::Difficulty,
+    pub bot: bot_model::Bot,
 }
 
 /// This command requests synchronization with the backend

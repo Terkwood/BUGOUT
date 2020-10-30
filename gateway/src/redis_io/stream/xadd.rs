@@ -223,6 +223,7 @@ mod tests {
         }
     }
 
+    use bot_model::Bot;
     #[test]
     fn test_loop() {
         let (test_in, test_out): (Sender<TestResult>, Receiver<TestResult>) = unbounded();
@@ -237,7 +238,7 @@ mod tests {
                 game_id: core_model::GameId(Uuid::nil()),
                 board_size: Some(9),
                 player: move_model::Player::WHITE,
-                difficulty: bot_model::Difficulty::Max,
+                bot: Bot::KataGoInstant,
             }))
             .expect("send test");
 

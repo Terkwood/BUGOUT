@@ -208,7 +208,7 @@ dependencies = [
 
 [[package]]
 name = "bot-model"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "core-model",
  "move-model",
@@ -218,7 +218,7 @@ dependencies = [
 
 [[package]]
 name = "botlink"
-version = "1.0.0-e"
+version = "1.0.0-f"
 dependencies = [
  "base64 0.13.0",
  "bincode",
@@ -234,6 +234,8 @@ dependencies = [
  "move-model",
  "redis",
  "redis_streams",
+ "serde",
+ "serde_derive",
  "tokio",
  "tokio-tungstenite",
  "tungstenite",

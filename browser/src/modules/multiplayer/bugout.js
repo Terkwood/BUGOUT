@@ -56,11 +56,9 @@ const Player = {
   WHITE: "WHITE",
 };
 
-const BotDifficulty = {
-  EASY: "Easy",
-  MEDIUM: "Medium",
-  HARD: "Hard",
-  MAX: "Max",
+const Bot = {
+  KATAGO_INSTANT: "KataGoInstant",
+  KATAGO_FULL_STRENGTH: "KataGoFullStrength",
 };
 
 /** private to isValidGameId */
@@ -235,7 +233,7 @@ const load = () => {
               }
             });
 
-            app.events.on("play-bot-color-selected", ({ humanColor }) => {
+            app.events.on("human-color-selected", ({ humanColor }) => {
               if (humanColor[0].toUpperCase() === "W") {
                 app.generateMove({ firstMove: true });
               }
@@ -260,4 +258,4 @@ exports.EntryMethod = EntryMethod;
 exports.Player = Player;
 exports.IdleStatus = IdleStatus;
 exports.BoardSize = BoardSize;
-exports.BotDifficulty = BotDifficulty;
+exports.Bot = Bot;

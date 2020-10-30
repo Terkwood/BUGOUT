@@ -1,15 +1,11 @@
-use bot_model::Difficulty;
+use bot_model::Bot;
 
 /// Lower than 2 and you'll see an error
-const EASY: u16 = 2;
-const MEDIUM: u16 = 25;
-const HARD: u16 = 100;
+const INSTANT: u16 = 2;
 
-pub fn convert(difficulty: Difficulty) -> Option<u16> {
-    match difficulty {
-        Difficulty::Easy => Some(EASY),
-        Difficulty::Medium => Some(MEDIUM),
-        Difficulty::Hard => Some(HARD),
-        Difficulty::Max => None,
+pub fn convert(bot: Bot) -> Option<u16> {
+    match bot {
+        Bot::KataGoInstant => Some(INSTANT),
+        Bot::KataGoFullStrength => None,
     }
 }

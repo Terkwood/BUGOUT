@@ -2,20 +2,34 @@ pub mod api;
 
 use serde_derive::{Deserialize, Serialize};
 
+/// This enum represents various Go-playing programs with different
+/// difficulties and time constraints.  v1.0 uses only KataGo, but
+/// in https://github.com/Terkwood/BUGOUT/issues/322 and
+/// https://github.com/Terkwood/BUGOUT/issues/440 we plan to investigate
+/// using other programs to provide much easier computer-controlled
+/// opponents.
 #[derive(Copy, Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Ord, PartialOrd)]
-pub enum Difficulty {
-    Easy,
-    Medium,
-    Hard,
-    Max,
+pub enum Bot {
+    KataGoInstant,
+    KataGoFullStrength,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AlphaNumCoord(pub char, pub u16);
 
-#[test]
-fn test_difficulty_json() {
-    let input = Difficulty::Max;
-    let json = serde_json::to_string(&input).expect("to_string");
-    assert_eq!(json, "\"Max\"")
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_kata_instant_json() {
+        let input = Bot::KataGoInstant;
+        let json = serde_json::to_string(&input).expect("to_string");
+        assert_eq!(json, "\"KataGoInstant\"")
+    }
+    #[test]
+    fn test_kata_full_json() {
+        let input = Bot::KataGoFullStrength;
+        let json = serde_json::to_string(&input).expect("to_string");
+        assert_eq!(json, "\"KataGoFullStrength\"")
+    }
 }
