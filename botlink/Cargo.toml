@@ -2,7 +2,7 @@
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 name = "botlink"
-version = "1.0.0-f"
+version = "1.0.0-g"
 
 [dependencies]
 base64 = "0.13.0"
@@ -19,9 +19,9 @@ log = "0.4.11"
 move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20e6620"}
 redis = {version = "0.17.0"}
 redis_streams = {git = "https://github.com/Terkwood/BUGOUT", rev = "2ea71cd"}
+serde = "1.0.117"
+serde_derive = "1.0.117"
 tokio = {version = "0.2.20", default-features = false, features = ["io-std", "io-util", "macros", "stream", "time"]}
 tokio-tungstenite = "0.10.1"
 tungstenite = "0.10.1"
 uuid = {version = "0.8.1", features = ["v4", "serde"]}
-serde_derive = "1.0.117"
-serde = "1.0.117"
