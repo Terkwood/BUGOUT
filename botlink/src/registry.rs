@@ -8,9 +8,8 @@ use redis::Client;
 use std::sync::Arc;
 
 pub struct Components {
-    pub ab_repo: Box<dyn AttachedBotsRepo>,
     pub board_size_repo: Arc<dyn BoardSizeRepo>,
-    pub difficulty_repo: Box<dyn DifficultyRepo>,
+    pub attachment_repo: Box<dyn AttachmentRepo>,
     pub xreader: Box<dyn XReader>,
     pub xadder: Arc<dyn XAdder>,
     pub xack: Arc<dyn XAck>,
@@ -34,9 +33,8 @@ impl Components {
             unbounded();
 
         Components {
-            ab_repo: Box::new(client.clone()),
+            attachment_repo: Box::new(client.clone()),
             board_size_repo: Arc::new(client.clone()),
-            difficulty_repo: Box::new(client.clone()),
             xreader: Box::new(client.clone()),
             xadder: Arc::new(client.clone()),
             xack: Arc::new(client),

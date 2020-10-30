@@ -1,11 +1,9 @@
-mod attached_bots;
+mod attachment;
 mod board_size;
-mod difficulty;
 mod expire;
 
-pub use attached_bots::*;
+pub use attachment::*;
 pub use board_size::*;
-pub use difficulty::*;
 use expire::*;
 
 #[derive(Debug)]
