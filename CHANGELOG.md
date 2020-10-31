@@ -2,10 +2,11 @@
 
 Welcome to the v1.0.0 release of BUGOUT!
 
-This release allows you to play against a much faster
-version of KataGo. The search space for the AI is
-limited, but it's still going to be a difficult opponent
-for most players.
+We welcome you to play online at [go.terkwood.farm](https://go.terkwood.farm).
+
+This release allows you to play against a much faster version of KataGo. The
+search space for the AI is limited, but it's still going to be a difficult
+opponent for most players.
 
 - Provide two settings for playing KataGo (#322, #432, #442, #441, #439, #437, #435)
 - Use [prettier](https://prettier.io/) to format the browser code (#431)
