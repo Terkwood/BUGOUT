@@ -2,7 +2,7 @@
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 name = "tinybrain"
-version = "1.0.0-e"
+version = "1.0.0"
 
 [dependencies]
 base64 = "0.12.1"
