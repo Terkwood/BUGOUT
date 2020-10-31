@@ -4,9 +4,9 @@
 
 🤖 _Or play against KataGo AI_ on a power-efficient dev board! 🤖
 
-![BUGOUT Online Go](BUGOUT.jpeg)
-
 Want to play right now? Click here: [go.terkwood.farm](https://go.terkwood.farm)
+
+![BUGOUT Online Go](BUGOUT.jpeg)
 
 ## Design
 
