@@ -627,7 +627,7 @@ dependencies = [
 
 [[package]]
 name = "gateway"
-version = "1.0.0-c"
+version = "1.0.0"
 dependencies = [
  "bincode",
  "bot-model",
