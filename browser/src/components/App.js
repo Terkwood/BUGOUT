@@ -1,4 +1,4 @@
-const EDITION = "Difficult";
+const EDITION = "Vacation";
 
 const EventEmitter = require("events");
 const { ipcRenderer, remote } = require("electron");
