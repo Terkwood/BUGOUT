@@ -6,6 +6,7 @@
 
 ![BUGOUT Online Go](BUGOUT.jpeg)
 
+Want to play right now? Click here: [go.terkwood.farm](https://go.terkwood.farm)
 
 ## Design
 
@@ -14,23 +15,17 @@
 - Uses a descendant of [Sabaki](https://sabaki.yichuanshen.de/) for the [web UI](browser/).
 - A [public-facing websocket gateway](gateway/README.md) communicates with the browser.
 
-## Marching to Production 
+## Getting Started with Development
 
-BUGOUT is nearing its production release, at which point we will publish a playable website address. 
-
-Keep an eye on the [pinned issues](https://github.com/Terkwood/BUGOUT/issues) in this github repository if you're interested in the progress toward the release. Primarily we are finishing optimizations to the Multiplayer capability and adding an "easy mode" for playing against the AI. 
-
-## Getting Started
-
-BUGOUT relies on [docker-compose](https://docs.docker.com/compose/install/) to run _most_ of its services. It will invoke some buildkit-related options, so please use the included script to start the system. 
+BUGOUT relies on [docker-compose](https://docs.docker.com/compose/install/) to run _most_ of its services. It will invoke some buildkit-related options, so please use the included script to start the system.
 
 ```sh
 sh compose.sh up
 ```
 
 If you're hacking BUGOUT, you will want to host the
-web application on your local machine.  You need to [install
-npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).  Then:
+web application on your local machine. You need to [install
+npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm). Then:
 
 ```sh
 cd browser
@@ -39,5 +34,5 @@ npm run build
 npm run start
 ```
 
-The tinybrain utility currently does not use docker-compose.  This utility wraps [KataGo](https://github.com/lightvector/KataGo)
-AI and allows it to communicate with the rest of the backend services.  We run it using a [systemd script](./tinybrain/tinybrain.service).
+The tinybrain utility currently does not use docker-compose. This utility wraps [KataGo](https://github.com/lightvector/KataGo)
+AI and allows it to communicate with the rest of the backend services. We run it using a [systemd script](./tinybrain/tinybrain.service).
