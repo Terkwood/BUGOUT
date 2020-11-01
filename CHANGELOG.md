@@ -1,3 +1,7 @@
+# v1.0.1
+
+Adds a link to the Github repository on the front page.  #447, #448
+
 # v1.0.0
 
 Welcome to the v1.0.0 release of BUGOUT!
