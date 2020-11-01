@@ -9,6 +9,9 @@ const {
   IdleStatus,
 } = require("../../modules/multiplayer/bugout");
 
+const FRONT_MATTER_TEXT =
+  "We recommend playing against KataGo, a leading AI running on a power-efficient device. ";
+
 class WelcomeModal extends Component {
   constructor() {
     super();
@@ -23,6 +26,16 @@ class WelcomeModal extends Component {
     appEvents,
   }) {
     let empty = h("div", { id });
+    let frontMatter = h(
+      "div",
+      { id: "welcome-front-matter" },
+      FRONT_MATTER_TEXT,
+      h(
+        "a",
+        { href: "https://github.com/Terkwood/BUGOUT" },
+        "View the source on Github."
+      )
+    );
 
     if (idleStatus && idleStatus !== IdleStatus.ONLINE) {
       return empty;
@@ -67,11 +80,7 @@ class WelcomeModal extends Component {
             isOpen: true,
           },
           h(Dialog.Header, null, "Go🔹Baduk🔸Weiqi"),
-          h(
-            Dialog.Body,
-            null,
-            "We recommend playing against KataGo, a leading AI running on a power-efficient device."
-          ),
+          h(Dialog.Body, null, frontMatter),
           h(
             Dialog.Footer,
             null,
