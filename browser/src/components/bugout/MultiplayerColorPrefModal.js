@@ -33,7 +33,8 @@ class MultiplayerColorPrefModal extends Component {
 
     let turnOn =
       !isBotEntry &&
-      ((isPrivateEntryWithBoardSizeDefined && !turnedOnOnce) || showDialog);
+      ((isPrivateEntryWithBoardSizeDefined && !turnedOnOnce) || showDialog) &&
+      idleStatus;
 
     if (!turnOn) {
       return h("div", { id });
