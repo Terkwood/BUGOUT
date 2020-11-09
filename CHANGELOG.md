@@ -1,3 +1,7 @@
+# NEXT: v1.0.2
+
+- Update webpack dep in browser #451
+
 # v1.0.1
 
 Adds a link to the Github repository on the front page.  #447, #448
