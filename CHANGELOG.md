@@ -1,5 +1,6 @@
-# NEXT: v1.0.2
+# v1.0.2
 
+- Fix spammy dialog during reconnection to AI play #450, #238
 - Update webpack dep in browser #451
 
 # v1.0.1

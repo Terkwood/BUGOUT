@@ -22,20 +22,21 @@ class MultiplayerColorPrefModal extends Component {
 
     let { entryMethod, boardSize } = data;
 
-    let turnOn =
+    let isPrivateEntryWithBoardSizeDefined =
       entryMethod && entryMethod == EntryMethod.CREATE_PRIVATE
         ? boardSize !== undefined
         : true;
 
+    let isBotEntry = entryMethod && entryMethod == EntryMethod.PLAY_BOT;
+
     let { showDialog, turnedOnOnce } = this.state;
 
-    let happyTimes = (turnOn && !turnedOnOnce) || showDialog;
+    let turnOn =
+      !isBotEntry &&
+      ((isPrivateEntryWithBoardSizeDefined && !turnedOnOnce) || showDialog) &&
+      idleStatus;
 
-    if (
-      !happyTimes ||
-      idleStatus == undefined ||
-      idleStatus !== IdleStatus.ONLINE
-    ) {
+    if (!turnOn) {
       return h("div", { id });
     }
 
