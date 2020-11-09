@@ -1,4 +1,4 @@
-const EDITION = "Speechless";
+const EDITION = "EUGOOD";
 
 const EventEmitter = require("events");
 const { ipcRenderer, remote } = require("electron");

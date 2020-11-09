@@ -1,6 +1,6 @@
-# NEXT: v1.0.3
+# v1.0.3
 
-- Add PRIVACY.md.  #452
+- Address GDPR.  #453, #452, #416 
 
 # v1.0.2
 
