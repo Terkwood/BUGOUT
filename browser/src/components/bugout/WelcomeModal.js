@@ -31,6 +31,7 @@ class WelcomeModal extends Component {
       { id: "welcome-front-matter" },
       FRONT_MATTER_TEXT,
       h("a", { href: "https://github.com/Terkwood/BUGOUT" }, "Source code."),
+      " ",
       h(
         "a",
         { href: "https://github.com/Terkwood/BUGOUT/blob/unstable/PRIVACY.md" },
