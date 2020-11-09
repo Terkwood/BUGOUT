@@ -12,17 +12,17 @@ local storage.
 
 The Client ID may be present in our server database
 for up to 24 hours after a user interacts with our
-system.  After 24 hours, it disappears from our server
+system. After 24 hours, it disappears from our server
 logs automatically.
 
 Additionally, we store your IP address inside our web
-server logs for a limited period of time.  This is
+server logs for a limited period of time. This is
 a standard security practice.
 
 ## Going Forward
 
 In the future, we may opt to provide capabilities that
-require creating and storing additional data for each 
-user.  This includes, but is not limited to, such features
+require creating and storing additional data for each
+user. This includes, but is not limited to, such features
 as allowing users to choose a name, or participate in a
 leaderboard.
