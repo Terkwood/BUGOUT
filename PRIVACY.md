@@ -1,6 +1,6 @@
 # Privacy Policy
 
-BUGOUT currently seeks to minimize the amount of
+BUGOUT makes an effort to minimize the amount of
 data that we store about you, the user.
 
 ## Client ID
