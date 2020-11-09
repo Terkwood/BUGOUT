@@ -10,7 +10,7 @@ random number (called a Client ID). This is used to
 identify you over the course of multiple sessions of
 gameplay. We used a standard V4 UUID to represent
 this number. It's just a number, and doesn't relate
-to who you in terms of physical location or human
+to who you are in terms of physical location or human
 identity, etc.
 
 The Client ID is stored in your web browser, in our
