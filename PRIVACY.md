@@ -3,21 +3,32 @@
 BUGOUT currently seeks to minimize the amount of
 data that we store about you, the user.
 
+## Client ID
+
 In order to operate the game, we generate a large,
-random number (called a Client ID), and store that
-in your web browser. This is used to identify you
-over the course of multiple sessions of gameplay.
-You can destroy this data by clearing your browser's
-local storage.
+random number (called a Client ID). This is used to
+identify you over the course of multiple sessions of
+gameplay. We used a standard V4 UUID to represent
+this number. It's just a number, and doesn't relate
+to who you in terms of physical location or human
+identity, etc.
+
+The Client ID is stored in your web browser, in our
+server's database, and in our server's log files.
+
+You can remove the Client ID from your web browser
+by clearing your browser's local storage.
 
 The Client ID may be present in our server database
 for up to 24 hours after a user interacts with our
-system. After 24 hours, it disappears from our server
-logs automatically.
+system. After 24 hours, it disappears from our database
+automatically. The Client ID may be present in log
+files stored on our server for a limited period of time.
 
-Additionally, we store your IP address inside our web
-server logs for a limited period of time. This is
-a standard security practice.
+## IP Address Logging
+
+We store your IP address inside our web server logs for a
+limited period of time. This is a standard security practice.
 
 ## Going Forward
 
