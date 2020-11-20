@@ -10,8 +10,10 @@ use serde_derive::{Deserialize, Serialize};
 /// opponents.
 #[derive(Copy, Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Ord, PartialOrd)]
 pub enum Bot {
-    KataGoInstant,
-    KataGoFullStrength,
+    KataGoOneStar,
+    KataGoTwoStars,
+    KataGoThreeStars,
+    KataGoFourStars,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

@@ -8,14 +8,14 @@ pub mod xack;
 pub mod xadd;
 pub mod xread;
 
+pub use input::StreamInput;
 pub use opts::StreamOpts;
 pub use unack::Unacknowledged;
 pub use write_moves::xadd_loop;
 
-use crate::max_visits;
+use crate::max_visits::*;
 use crate::repo::Attachment;
 use bot_model::api::{AttachBot, ComputeMove};
-pub use input::StreamInput;
 use log::{error, info};
 use move_model::GameState;
 
@@ -98,7 +98,7 @@ fn process_game_state(game_state: &GameState, opts: &mut StreamOpts) {
             if let Err(e) = opts.compute_move_in.send(ComputeMove {
                 game_id: game_id.clone(),
                 game_state: game_state.clone(),
-                max_visits: max_visits::convert(attachment.bot),
+                max_visits: max_visits(attachment.bot),
             }) {
                 error!("WS SEND ERROR {:?}", e)
             }
@@ -225,6 +225,7 @@ mod tests {
         let player = Player::WHITE;
         let board_size = Some(13);
         let incoming_game_state = Arc::new(Mutex::new(vec![]));
+
         let xreader = Box::new(FakeXReader {
             incoming_game_state: incoming_game_state.clone(),
             init_data: Mutex::new(vec![(
@@ -236,7 +237,7 @@ mod tests {
                     game_id: GAME_ID.clone(),
                     player,
                     board_size,
-                    bot: Bot::KataGoInstant,
+                    bot: Bot::KataGoOneStar,
                 }),
             )]),
         });
