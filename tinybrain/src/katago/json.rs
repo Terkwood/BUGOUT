@@ -345,4 +345,49 @@ mod tests {
 
         assert!(!json.contains("maxVisits"))
     }
+
+    #[test]
+    fn komi_is_always_explicit() {
+        let game_id = GameId(Uuid::nil());
+        let game_state = GameState {
+            moves: vec![],
+            turn: 1,
+            player_up: Player::BLACK,
+            captures: Captures::default(),
+            board: Board::default(),
+            game_id: game_id.clone(),
+        };
+        let compute_move = ComputeMove {
+            game_id,
+            game_state,
+            max_visits: None,
+        };
+
+        let query = KataGoQuery::from(compute_move).expect("query formed");
+
+        assert_eq!(query.komi, Komi::default())
+    }
+
+    #[test]
+    fn komi_json_ser() {
+        let game_id = GameId(Uuid::nil());
+        let game_state = GameState {
+            moves: vec![],
+            turn: 1,
+            player_up: Player::BLACK,
+            captures: Captures::default(),
+            board: Board::default(),
+            game_id: game_id.clone(),
+        };
+        let compute_move = ComputeMove {
+            game_id,
+            game_state,
+            max_visits: None,
+        };
+
+        let json = serde_json::to_string(&KataGoQuery::from(compute_move).expect("query formed"))
+            .expect("json");
+
+        assert!(json.contains("\"komi\":6.5"))
+    }
 }
