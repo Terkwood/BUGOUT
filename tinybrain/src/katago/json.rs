@@ -180,6 +180,23 @@ mod tests {
     use super::*;
     use uuid::Uuid;
 
+    fn basic_move() -> ComputeMove {
+        let game_id = GameId(Uuid::nil());
+        let game_state = GameState {
+            moves: vec![],
+            turn: 1,
+            player_up: Player::BLACK,
+            captures: Captures::default(),
+            board: Board::default(),
+            game_id: game_id.clone(),
+        };
+        ComputeMove {
+            game_id,
+            game_state,
+            max_visits: None,
+        }
+    }
+
     #[test]
     fn query_from_game_state() {
         let game_id = GameId(Uuid::nil());
@@ -325,20 +342,7 @@ mod tests {
 
     #[test]
     fn max_visits_skipped_when_none() {
-        let game_id = GameId(Uuid::nil());
-        let game_state = GameState {
-            moves: vec![],
-            turn: 1,
-            player_up: Player::BLACK,
-            captures: Captures::default(),
-            board: Board::default(),
-            game_id: game_id.clone(),
-        };
-        let compute_move = ComputeMove {
-            game_id,
-            game_state,
-            max_visits: None,
-        };
+        let compute_move = basic_move();
 
         let query = KataGoQuery::from(compute_move);
         let json = serde_json::to_string(&query).expect("ser");
@@ -348,20 +352,7 @@ mod tests {
 
     #[test]
     fn komi_is_always_explicit() {
-        let game_id = GameId(Uuid::nil());
-        let game_state = GameState {
-            moves: vec![],
-            turn: 1,
-            player_up: Player::BLACK,
-            captures: Captures::default(),
-            board: Board::default(),
-            game_id: game_id.clone(),
-        };
-        let compute_move = ComputeMove {
-            game_id,
-            game_state,
-            max_visits: None,
-        };
+        let compute_move = basic_move();
 
         let query = KataGoQuery::from(compute_move).expect("query formed");
 
@@ -370,20 +361,7 @@ mod tests {
 
     #[test]
     fn komi_json_ser() {
-        let game_id = GameId(Uuid::nil());
-        let game_state = GameState {
-            moves: vec![],
-            turn: 1,
-            player_up: Player::BLACK,
-            captures: Captures::default(),
-            board: Board::default(),
-            game_id: game_id.clone(),
-        };
-        let compute_move = ComputeMove {
-            game_id,
-            game_state,
-            max_visits: None,
-        };
+        let compute_move = basic_move();
 
         let json = serde_json::to_string(&KataGoQuery::from(compute_move).expect("query formed"))
             .expect("json");
