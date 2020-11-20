@@ -1,6 +1,10 @@
+# v1.0.4
+
+Force tinybrain to request Komi 6.5.  #225, #455
+
 # v1.0.3
 
-- Address GDPR.  #453, #452, #416 
+Address GDPR.  #453, #452, #416 
 
 # v1.0.2
 
