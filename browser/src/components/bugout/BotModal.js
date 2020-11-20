@@ -35,11 +35,7 @@ class BotModal extends Component {
         isOpen: true,
       },
       h(Dialog.Header, null, "Choose Bot"),
-      h(
-        Dialog.Body,
-        null,
-        "KataGo: One Star is the easiest opponent, and takes the least time to move.  Higher levels take longer to move."
-      ),
+      h(Dialog.Body, null, "Lower levels are easier and faster to play."),
       h(
         Dialog.Footer,
         null,

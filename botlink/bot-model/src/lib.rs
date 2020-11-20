@@ -3,11 +3,11 @@ pub mod api;
 use serde_derive::{Deserialize, Serialize};
 
 /// This enum represents various Go-playing programs with different
-/// difficulties and time constraints.  v1.0 uses only KataGo, but
+/// difficulties and time constraints.  Currently uses only KataGo, but
 /// in https://github.com/Terkwood/BUGOUT/issues/322 and
 /// https://github.com/Terkwood/BUGOUT/issues/440 we plan to investigate
-/// using other programs to provide much easier computer-controlled
-/// opponents.
+/// using other programs to provide other computer-controlled
+/// opponents with their own difficulty settings.
 #[derive(Copy, Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Ord, PartialOrd)]
 pub enum Bot {
     KataGoOneStar,
