@@ -171,7 +171,7 @@ impl Default for Rules {
 
 impl Default for Komi {
     fn default() -> Self {
-        Komi(7.5)
+        Komi(6.5)
     }
 }
 
