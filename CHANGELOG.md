@@ -1,3 +1,7 @@
+# v1.1.0
+
+Add two more difficulty settings for play against KataGo.  #454, #457
+
 # v1.0.4
 
 Force tinybrain to request Komi 6.5.  #225, #455
