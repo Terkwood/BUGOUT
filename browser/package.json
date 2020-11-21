@@ -1,7 +1,7 @@
 {
   "name": "bugout-browser",
   "productName": "BUGOUT",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Graphical user interface for BUGOUT Go/Baduk/Weiqi",
   "author": "Terkwood <38859656+Terkwood@users.noreply.github.com>",
   "homepage": "https://github.com/Terkwood/BUGOUT",

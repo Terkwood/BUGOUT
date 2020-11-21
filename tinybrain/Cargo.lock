@@ -77,8 +77,8 @@ dependencies = [
 
 [[package]]
 name = "bot-model"
-version = "1.0.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=29163ac#29163acf8401b0a105a0e301b1b941de2b8fa271"
+version = "2.0.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=3a9c4b5#3a9c4b5c25e4ffbc9f3185bf22679af28c47543f"
 dependencies = [
  "core-model",
  "move-model",
@@ -980,7 +980,7 @@ dependencies = [
 
 [[package]]
 name = "tinybrain"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "base64 0.12.3",
  "bincode",

@@ -57,8 +57,10 @@ const Player = {
 };
 
 const Bot = {
-  KATAGO_INSTANT: "KataGoInstant",
-  KATAGO_FULL_STRENGTH: "KataGoFullStrength",
+  KATAGO_ONE_STAR: "KataGoOneStar",
+  KATAGO_TWO_STARS: "KataGoTwoStars",
+  KATAGO_THREE_STARS: "KataGoThreeStars",
+  KATAGO_FOUR_STARS: "KataGoFourStars",
 };
 
 /** private to isValidGameId */

@@ -2,12 +2,12 @@
 authors = ["terkwood <38859656+Terkwood@users.noreply.github.com>"]
 edition = "2018"
 name = "tinybrain"
-version = "1.0.1"
+version = "1.0.2"
 
 [dependencies]
 base64 = "0.12.1"
 bincode = "1.2.1"
-bot-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "29163ac"}
+bot-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "3a9c4b5"}
 core-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20e6620"}
 crossbeam = "0.7.3"
 crossbeam-channel = "0.4.2"

@@ -35,11 +35,7 @@ class BotModal extends Component {
         isOpen: true,
       },
       h(Dialog.Header, null, "Choose Bot"),
-      h(
-        Dialog.Body,
-        null,
-        "KataGo: Full Strength takes significantly longer to compute moves."
-      ),
+      h(Dialog.Body, null, "Lower levels are easier and faster to play."),
       h(
         Dialog.Footer,
         null,
@@ -49,10 +45,10 @@ class BotModal extends Component {
             accept: true,
             onClick: () => {
               this.setState({ showDialog: false, turnedOnOnce: true });
-              update(Bot.KATAGO_INSTANT);
+              update(Bot.KATAGO_ONE_STAR);
             },
           },
-          "KataGo: Instant Play 🐇"
+          "KataGo 🌟"
         )
       ),
       h(
@@ -64,10 +60,40 @@ class BotModal extends Component {
             accept: true,
             onClick: () => {
               this.setState({ showDialog: false, turnedOnOnce: true });
-              update(Bot.KATAGO_FULL_STRENGTH);
+              update(Bot.KATAGO_TWO_STARS);
             },
           },
-          "KataGo: Full Strength 👹"
+          "KataGo 🌟🌟"
+        )
+      ),
+      h(
+        Dialog.Footer,
+        null,
+        h(
+          Dialog.FooterButton,
+          {
+            accept: true,
+            onClick: () => {
+              this.setState({ showDialog: false, turnedOnOnce: true });
+              update(Bot.KATAGO_THREE_STARS);
+            },
+          },
+          "KataGo 🌟🌟🌟"
+        )
+      ),
+      h(
+        Dialog.Footer,
+        null,
+        h(
+          Dialog.FooterButton,
+          {
+            accept: true,
+            onClick: () => {
+              this.setState({ showDialog: false, turnedOnOnce: true });
+              update(Bot.KATAGO_FOUR_STARS);
+            },
+          },
+          "KataGo 🌟🌟🌟🌟"
         )
       )
     );
