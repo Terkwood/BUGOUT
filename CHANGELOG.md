@@ -1,3 +1,7 @@
+# v1.2.0
+
+Add "new game" button at end of game. #271, #462
+
 # v1.1.0
 
 Add two more difficulty settings for play against KataGo.  #454, #457
