@@ -6,7 +6,8 @@ class ScoringBar extends Component {
   constructor() {
     super();
 
-    this.handleButtonClick = () => sabaki.openDrawer("score");
+    this.handleDetailsClick = () => sabaki.openDrawer("score");
+    this.handleNewGameClick() = () => sabaki.openDrawer("score");
   }
 
   render({ type, method, areaMap, scoreBoard, komi, handicap }) {
@@ -20,7 +21,7 @@ class ScoringBar extends Component {
       h(
         "div",
         { class: "result" },
-        h("button", { onClick: this.handleButtonClick }, t("Details")),
+        h("button", { onClick: this.handleDetailsClick }, t("Details")),
         h(
           "strong",
           {},
@@ -31,7 +32,8 @@ class ScoringBar extends Component {
             : result < 0
             ? t((p) => `W+${p.result}`, { result: -result })
             : t("Draw")
-        )
+        ),
+        h("button", { onClick: this.handleNewGameClick }, t("New Game"))
       ),
       " ",
       type === "scoring" ? t("Select dead stones.") : t("Toggle group status.")

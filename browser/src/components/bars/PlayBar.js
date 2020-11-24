@@ -159,9 +159,9 @@ class PlayBar extends Component {
         "a",
         {
           class: "current-player",
-          title: t("Current Player"), // 😇BUGOUT😇
-          ref: (el) => (this.menuButtonElement = el), // 😇BUGOUT😇
-          onClick: this.handleMenuClick, // 😇BUGOUT😇
+          title: t("Current Player"),
+          ref: (el) => (this.menuButtonElement = el),
+          onClick: this.handleMenuClick,
         },
         h("img", {
           src: `./img/ui/player_${currentPlayer}.svg`,
@@ -216,16 +216,6 @@ class PlayBar extends Component {
         },
         h("button", {}, t("QUIT"))
       )
-      /* // BUGOUT ... this was:
-            h('a',
-                {
-                    ref: el => this.menuButtonElement = el,
-                    class: 'menu',
-                    onClick: this.handleMenuClick
-                },
-                h('img', {src: './node_modules/octicons/build/svg/three-bars.svg', height: 22})
-            )
-            */
     );
   }
 }
