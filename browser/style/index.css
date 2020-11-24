@@ -222,6 +222,15 @@ header .menu img {
   top: 0;
   height: 100%;
 }
+#scoring #new-game-button {
+  position: absolute;
+  right: 20px;
+  box-sizing: border-box;
+  height: 64px;
+  background: #600000;
+  transform: none;
+  margin-top: 1%;
+}
 #scoring .result button,
 #estimator .result button {
   box-sizing: border-box;
@@ -240,7 +249,6 @@ header .menu img {
 #estimator .result button:active {
   transform: translateY(4%);
 }
-
 #popupmenu-overlay .popupmenu {
   transform: scale(2) translateX(100%) translateY(33.3%);
 }

@@ -32,11 +32,18 @@ class ScoringBar extends Component {
             : result < 0
             ? t((p) => `W+${p.result}`, { result: -result })
             : t("Draw")
-        ),
-        h("button", { onClick: this.handleDetailsClick }, t("New Game"))
+        )
       ),
       " ",
-      type === "scoring" ? t("Select dead stones.") : t("Toggle group status.")
+      type === "scoring" ? t("Select dead stones.") : t("Toggle group status."),
+      h(
+        "button",
+        {
+          id: "new-game-button",
+          onClick: this.handleDetailsClick,
+        },
+        t("New Game")
+      )
     );
   }
 }
