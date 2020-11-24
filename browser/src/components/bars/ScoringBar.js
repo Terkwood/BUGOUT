@@ -7,7 +7,7 @@ class ScoringBar extends Component {
     super();
 
     this.handleDetailsClick = () => sabaki.openDrawer("score");
-    //this.handleNewGameClick() = () => sabaki.openDrawer("score");
+    this.handleNewGameClick = () => location.reload();
   }
 
   render({ type, method, areaMap, scoreBoard, komi, handicap }) {
@@ -40,7 +40,7 @@ class ScoringBar extends Component {
         "button",
         {
           id: "new-game-button",
-          onClick: this.handleDetailsClick,
+          onClick: this.handleNewGameClick,
         },
         t("New Game")
       )
