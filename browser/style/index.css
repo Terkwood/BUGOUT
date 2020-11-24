@@ -225,11 +225,11 @@ header .menu img {
 #scoring #new-game-button {
   position: absolute;
   right: 20px;
+  top: 6px;
   box-sizing: border-box;
   height: 64px;
   background: #600000;
   transform: none;
-  margin-top: 1%;
 }
 #scoring .result button,
 #estimator .result button {
