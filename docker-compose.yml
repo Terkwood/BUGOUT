@@ -1,8 +1,4 @@
-# This file is for local development only.
-# To see the cloud configs, look at dc-giant.yml
-# and dc-tiny.yml
-
-version: '3.3'
+version: "3.3"
 services:
   redis:
     image: redis
@@ -69,4 +65,3 @@ services:
     volumes:
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile:/etc/Caddyfile:z
       - /mnt/stateful_partition/BUGOUT/reverse-proxy/.caddy:/root/.caddy:z
-
