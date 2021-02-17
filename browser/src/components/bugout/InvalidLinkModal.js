@@ -7,6 +7,11 @@ class InvalidLinkModal extends Component {
   constructor() {
     super();
     this.state = { showDialog: false };
+
+    // From GTP.js
+    sabaki.events.on("private-game-rejected", () => {
+      this.setState({ showDialog: true });
+    });
   }
 
   render({ id = "invalid-link-modal" }) {
