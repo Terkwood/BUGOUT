@@ -78,7 +78,7 @@ class Controller extends EventEmitter {
     this._webSocketController.stop();
   }
 
-  async sendCommand(command, subscriber = () => { }) {
+  async sendCommand(command, subscriber = () => {}) {
     if (this.webSocket == null) this.start();
 
     return await this._webSocketController.sendCommand(command, subscriber);
@@ -219,9 +219,9 @@ class WebSocketController extends EventEmitter {
         let syncLastMove = moves[moves.length - 1];
         let sabakiCoord = syncLastMove.coord
           ? this.board.vertex2coord([
-            syncLastMove.coord.x,
-            syncLastMove.coord.y,
-          ])
+              syncLastMove.coord.x,
+              syncLastMove.coord.y,
+            ])
           : "pass";
 
         if (this.resolveMoveMade) {
@@ -509,7 +509,7 @@ class WebSocketController extends EventEmitter {
     resolve({ id: null, error: false });
   }
 
-  async sendCommand(command, subscriber = () => { }) {
+  async sendCommand(command, subscriber = () => {}) {
     let isPassing = (v) => v[0] == 14 && isNaN(v[1]);
 
     let promise = new Promise((resolve, reject) => {
