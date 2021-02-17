@@ -6,15 +6,10 @@ import Dialog from "preact-material-components/Dialog";
 class InvalidLinkModal extends Component {
   constructor() {
     super();
-    this.state = { showDialog: false, scoringMode: false };
-
-    // From GTP.js
-    sabaki.events.on("bugout-opponent-quit", () => {
-      this.setState({ showDialog: true });
-    });
+    this.state = { showDialog: false };
   }
 
-  render({ id = "opponent-quit-modal" }) {
+  render({ id = "invalid-link-modal" }) {
     let { showDialog } = this.state;
 
     let empty = h("div", { id });
@@ -26,8 +21,8 @@ class InvalidLinkModal extends Component {
             id,
             isOpen: true,
           },
-          h(Dialog.Header, null, "Game Over"),
-          h(Dialog.Body, null, "The opponent quit."),
+          h(Dialog.Header, null, "Invalid Link"),
+          h(Dialog.Body, null, "This link is no longer available."),
           h(
             Dialog.Footer,
             null,
@@ -39,7 +34,7 @@ class InvalidLinkModal extends Component {
                   this.setState({ showDialog: false });
                 },
               },
-              "OK"
+              "START OVER"
             )
           )
         )
