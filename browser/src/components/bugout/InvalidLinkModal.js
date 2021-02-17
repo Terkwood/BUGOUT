@@ -27,7 +27,7 @@ class InvalidLinkModal extends Component {
             isOpen: true,
           },
           h(Dialog.Header, null, "Invalid Link"),
-          h(Dialog.Body, null, "This link is no longer available."),
+          h(Dialog.Body, null, "This game is no longer available."),
           h(
             Dialog.Footer,
             null,
