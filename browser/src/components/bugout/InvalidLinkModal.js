@@ -32,6 +32,7 @@ class InvalidLinkModal extends Component {
                 accept: true,
                 onClick: () => {
                   this.setState({ showDialog: false });
+                  location.reload();
                 },
               },
               "START OVER"
