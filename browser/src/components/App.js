@@ -1,4 +1,4 @@
-const EDITION = "Stylish";
+const EDITION = "Sty";
 
 const EventEmitter = require("events");
 const { ipcRenderer, remote } = require("electron");
@@ -1387,6 +1387,7 @@ class App extends Component {
       }),
       h(ReconnectModal, { data: state.multiplayer }),
       h(IdleStatusModal, { data: state.multiplayer }),
+      h(InvalidLinkModal),
       h(OpponentPassedModal),
       h(OpponentQuitModal),
       h(WaitForBotModal),

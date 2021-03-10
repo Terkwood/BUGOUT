@@ -348,7 +348,6 @@ class WebSocketController extends EventEmitter {
             this.gameId = reply.gameId;
             this.bugoutSync.activate(reply.gameId);
           } else if (!err && reply.type == "PrivateGameRejected") {
-            console.log(' -- in gtp');
             sabaki.events.emit("private-game-rejected");
           } else {
             throwFatal();
@@ -916,7 +915,6 @@ class GatewayConn {
             this.handleWaitForOpponent({ gap: false, hasEvent: false });
             sabaki.events.emit("bugout-game-ready", msg);
           } else if (msg.type === "PrivateGameRejected") {
-            console.log('-- in ws event listener');
             resolve(msg);
           }
           // discard any other messages
