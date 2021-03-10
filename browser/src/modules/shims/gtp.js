@@ -348,7 +348,7 @@ class WebSocketController extends EventEmitter {
             this.gameId = reply.gameId;
             this.bugoutSync.activate(reply.gameId);
           } else if (!err && reply.type == "PrivateGameRejected") {
-            alert("Invalid game");
+            sabaki.events.emit("private-game-rejected");
           } else {
             throwFatal();
           }

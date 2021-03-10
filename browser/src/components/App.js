@@ -1,4 +1,4 @@
-const EDITION = "Contentment";
+const EDITION = "Stylish";
 
 const EventEmitter = require("events");
 const { ipcRenderer, remote } = require("electron");
@@ -14,6 +14,7 @@ import BoardSizeModal from "./bugout/BoardSizeModal";
 import GameLobbyModal from "./bugout/WelcomeModal";
 import BotModal from "./bugout/BotModal";
 import IdleStatusModal from "./bugout/IdleStatusModal";
+import InvalidLinkModal from "./bugout/InvalidLinkModal";
 import MultiplayerColorPrefModal from "./bugout/MultiplayerColorPrefModal";
 import OpponentPassedModal from "./bugout/OpponentPassedModal";
 import OpponentQuitModal from "./bugout/OpponentQuitModal";
@@ -1386,6 +1387,7 @@ class App extends Component {
       }),
       h(ReconnectModal, { data: state.multiplayer }),
       h(IdleStatusModal, { data: state.multiplayer }),
+      h(InvalidLinkModal),
       h(OpponentPassedModal),
       h(OpponentQuitModal),
       h(WaitForBotModal),

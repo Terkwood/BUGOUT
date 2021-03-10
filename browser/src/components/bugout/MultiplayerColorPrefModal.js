@@ -13,6 +13,11 @@ class MultiplayerColorPrefModal extends Component {
   constructor() {
     super();
     this.state = { showDialog: false, turnedOnOnce: false };
+
+    // From GTP.js
+    sabaki.events.on("private-game-rejected", () => {
+      this.setState({ showDialog: false, turnedOnOnce: true });
+    });
   }
 
   render({ id = "human-color-pref-modal", data, idleStatus }) {
