@@ -11,11 +11,11 @@ mkdir /mnt/stateful_partition/BUGOUT/reverse-proxy
 
 if [ `basename "$PWD"` == "BUGOUT" ]; then
    CADDYFILE_PATH="./reverse-proxy/Caddyfile.example.dev"
-else if [ `basename "$PWD"` == "admin" ]; then
+elif [ `basename "$PWD"` == "admin" ]; then
    CADDYFILE_PATH="../reverse-proxy/Caddyfile.example.dev"
 else
     echo "Not sure where to find the example Caddyfile, exiting"
     exit 1
-find
+fi
 
 cp $CADDYFILE_PATH /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile
