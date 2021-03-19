@@ -17,6 +17,12 @@ Want to play right now? Click here: [go.terkwood.farm](https://go.terkwood.farm)
 
 ## Getting Started with Development
 
+BUGOUT uses docker to host multiple images, including a reverse-proxy for web traffic, and a redis instance. You need to create directory which will be used for volume mounting these instances. Inside the reverse-proxy directory, you'll need a `Caddyfile`, which this script will also create:
+
+```sh
+sh admin/setup-local-dev.sh
+```
+
 BUGOUT relies on [docker-compose](https://docs.docker.com/compose/install/) to run _most_ of its services. It will invoke some buildkit-related options, so please use the included script to start the system.
 
 ```sh
