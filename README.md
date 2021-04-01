@@ -33,8 +33,6 @@ These services run _in my home_, and connect remotely to an AWS-hosted instance 
 
 Mainly because we designed this system with the goal of being playable over the web. For this purpose, it functions well enough.
 
-The build and configuration of KataGo + Tinybrain is currently very fragile. We're running an old version of KataGo and have had difficulty upgrading it to the latest.
-
 In our context, the build of KataGo itself [probably isn't reproducible](./tinybrain/README.md). At least, getting it set up to run in the current production system was a bit of a pain point.
 
 #### Are you still interested in trying to run this system locally?
