@@ -71,4 +71,4 @@ AI and allows it to communicate with the rest of the backend services. We run it
 
 We have some [poorly written notes](./tinybrain/README.md) about building KataGo, but they are _specific to NVIDIA Jetson Nano + ARM_. You're on your own if you want to get everything hooked up via x86_64.
 
-We don't currently have a path for you to connect KataGo + tinybrain to the rest of your system, locally.
+[We don't currently have a path for you to connect KataGo + tinybrain to the rest of your system, locally](https://github.com/Terkwood/BUGOUT/issues/473).
