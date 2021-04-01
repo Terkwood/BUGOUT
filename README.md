@@ -39,7 +39,7 @@ In our context, the build of KataGo itself [probably isn't reproducible](./tinyb
 
 If so, _don't say we didn't warn you!_
 
-### Building the distributed monolith
+### Building the distributed monolith (everything but KataGo)
 
 BUGOUT uses docker to host multiple images, including a reverse-proxy for web traffic, and a redis instance. You need to create directory which will be used for volume mounting these instances. Inside the reverse-proxy directory, you'll need a `Caddyfile`, which this script will also create:
 
@@ -70,3 +70,5 @@ The tinybrain utility currently does not use docker-compose. This utility wraps 
 AI and allows it to communicate with the rest of the backend services. We run it using a [systemd script](./tinybrain/tinybrain.service).
 
 We have some [poorly written notes](./tinybrain/README.md) about building KataGo, but they are _specific to NVIDIA Jetson Nano + ARM_. You're on your own if you want to get everything hooked up via x86_64.
+
+We don't currently have a path for you to connect KataGo + tinybrain to the rest of your system, locally.
