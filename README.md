@@ -41,7 +41,7 @@ If so, _don't say we didn't warn you!_
 
 ### Building the distributed monolith (everything but KataGo)
 
-BUGOUT uses docker to host multiple images, including a reverse-proxy for web traffic, and a redis instance. You need to create directory which will be used for volume mounting these instances. Inside the reverse-proxy directory, you'll need a `Caddyfile`, which this script will also create:
+BUGOUT uses docker to host multiple images, including a reverse-proxy for web traffic, and a redis instance. You need to create directory which will be used for volume mounting these instances. Inside the reverse-proxy directory, you'll need a `Caddyfile`, which this script will also create. _This script uses sudo_, so _please_, review it before running it!
 
 ```sh
 sh admin/setup-local-dev.sh
