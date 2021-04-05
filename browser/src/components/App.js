@@ -1,4 +1,4 @@
-const EDITION = "Stylish";
+const EDITION = "Revisited";
 
 const EventEmitter = require("events");
 const { ipcRenderer, remote } = require("electron");
@@ -773,6 +773,10 @@ class App extends Component {
     this.makeMove([-1, -1], { player });
 
     this.events.emit("resign", { player });
+  }
+
+  undo() {
+    this.events.emit("undo");
   }
 
   // Navigation

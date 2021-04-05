@@ -32,6 +32,10 @@ class PlayBar extends Component {
       sabaki.setMode("scoring");
     };
 
+    this.handleUndoClick = () => {
+      sabaki.undo();
+    };
+
     this.handleMenuClick = () => {
       let { left, top } = this.menuButtonElement.getBoundingClientRect();
       helper.popupMenu(
@@ -124,6 +128,15 @@ class PlayBar extends Component {
       ),
 
       h(
+        "a",
+        {
+          class: "undo-button",
+          onClick: this.handleUndoClick,
+        },
+        h("button", {}, t("UNDO"))
+      ),
+
+      h(
         "span",
         { class: "playercontent player_1" },
         h(
@@ -207,7 +220,13 @@ class PlayBar extends Component {
           playerCaptures[1]
         )
       ),
-
+      h(
+        "a",
+        {
+          class: "spacer-fake-button"
+        },
+        h("button", {}, t("AAAA"))
+      ),
       h(
         "a",
         {
