@@ -24,6 +24,7 @@ pub fn write_loop(commands_out: Receiver<BC>, cmds: &dyn XAddCommands) {
                         BC::CreateGame(cg) => cmds.xadd_create_game(cg),
                         BC::ChooseColorPref(cp) => cmds.xadd_choose_color_pref(cp),
                         BC::SessionDisconnected(sd) => cmds.xadd_session_disconnected(sd),
+                        BC::UndoMove(ud) => cmds.xadd_undo_move(ud),
                         _ => error!("cannot match backend command to xadd"),
                     }
                 }

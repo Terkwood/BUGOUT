@@ -426,6 +426,24 @@ impl Handler for WsSession {
 
                 Ok(())
             }
+            Ok(ClientCommands::UndoMove(UndoMoveClientCommand { player })) => {
+                if let Some(game_id) = self.current_game {
+                    info!("🔙 {} {:<8}", session_code(self), "UNDOMOVE");
+                    if let Err(e) = self
+                        .send_to_backend(BackendCommands::UndoMove(undo_model::api::UndoMove {
+                            game_id: core_model::GameId(game_id),
+                            player: player.into(),
+                        }))
+                        .map_err(|e| ws::Error::from(Box::new(e)))
+                    {
+                        error!("💥 Req sync {:?}", e)
+                    }
+                } else {
+                    error!("undo move: unknown game")
+                }
+
+                Ok(())
+            }
             Err(_err) => {
                 error!(
                     "💥 {} {:<8} message deserialization {}",
@@ -550,7 +568,12 @@ impl Handler for WsSession {
                             _ => (),
                         }
 
-                        self.ws_out.send(serde_json::to_string(&event).unwrap())?
+                        if let Err(e) = serde_json::to_string(&event)
+                            .map_err(|e| error!("{:?}\t could not serialize event: {:?}", e, event))
+                            .map(|ser| self.ws_out.send(ser))
+                        {
+                            error!("ws send {:?}", e)
+                        }
                     }
                 }
                 self.channel_recv_timeout.take();

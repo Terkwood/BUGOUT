@@ -5,6 +5,7 @@ use crate::backend::commands::{
 use crate::model::{Coord, MakeMoveCommand, ProvideHistoryCommand};
 use crate::topics;
 use bot_model::api::AttachBot;
+use undo_model::api::UndoMove;
 
 use crate::backend::commands::IntoShared;
 use log::error;
@@ -20,6 +21,7 @@ pub trait XAddCommands {
     fn xadd_create_game(&self, command: CreateGameBackendCommand);
     fn xadd_choose_color_pref(&self, command: ChooseColorPrefBackendCommand);
     fn xadd_session_disconnected(&self, command: SessionDisconnected);
+    fn xadd_undo_move(&self, command: UndoMove);
 }
 
 pub struct RedisXAddCommands {
@@ -124,6 +126,10 @@ impl XAddCommands for RedisXAddCommands {
             topics::SESSION_DISCONNECTED_TOPIC,
         )
     }
+
+    fn xadd_undo_move(&self, command: UndoMove) {
+        self.xadd_classic(bincode::serialize(&command), topics::UNDO_MOVE_TOPIC)
+    }
 }
 
 impl RedisXAddCommands {
@@ -220,6 +226,10 @@ mod tests {
 
         fn xadd_session_disconnected(&self, command: SessionDisconnected) {
             self.sssend(TestResult::SessDisconn(command))
+        }
+
+        fn xadd_undo_move(&self, _command: UndoMove) {
+            todo!()
         }
     }
 

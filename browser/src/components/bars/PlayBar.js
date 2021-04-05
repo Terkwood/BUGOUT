@@ -9,6 +9,8 @@ const t = require("../../i18n").context("PlayBar");
 const helper = require("../../modules/helper");
 const setting = remote.require("./setting");
 
+const { Player } = require("../../modules/multiplayer/bugout");
+
 let toggleSetting = (key) => setting.set(key, !setting.get(key));
 
 const isPlayerTurn = (colorNum) => {
@@ -19,6 +21,32 @@ const isPlayerTurn = (colorNum) => {
 class PlayBar extends Component {
   constructor() {
     super();
+    this.state = { showUndo: false, undoDisabled: true };
+
+    sabaki.events.on(
+      "bugout-player-wants-bot",
+      () => {
+        this.setState({ showUndo: true });
+      }
+    );
+
+
+    // listen for moves, so that we know when to dim the undo button
+    sabaki.events.on("they-moved", () => {
+      let { showUndo } = this.state;
+      if (showUndo) {
+        this.setState({ undoDisabled: false });
+      }
+    });
+    
+    // human player moved
+    sabaki.events.on("bugout-make-move", () => {
+      let { showUndo } = this.state;
+      if (showUndo) {
+        this.setState({ undoDisabled: true });
+      }
+    });
+
 
     this.handlePassClick = () => {
       if (isPlayerTurn(sabaki.state.currentPlayer)) {
@@ -30,6 +58,10 @@ class PlayBar extends Component {
     this.handleQuitClick = () => {
       sabaki.makeResign();
       sabaki.setMode("scoring");
+    };
+
+    this.handleUndoClick = () => {
+      sabaki.undoMove();
     };
 
     this.handleMenuClick = () => {
@@ -82,6 +114,29 @@ class PlayBar extends Component {
     return nextProps.mode !== this.props.mode || nextProps.mode === "play";
   }
 
+  // balances the undo button
+  renderSpacer() {
+    return h(
+      "a",
+      {
+        class: "spacer-fake-button"
+      },
+      h("button", {}, t("AAAA"))
+    );
+  }
+
+  renderUndo() {
+    let { showUndo, undoDisabled } = this.state;
+    return showUndo ? h(
+      "a",
+      {
+        class: "undo-button",
+        onClick: this.handleUndoClick,
+      },
+      h("button", { disabled: undoDisabled }, t("UNDO"))
+    ) : this.renderSpacer();
+  }
+
   render({
     mode,
     attachedEngines,
@@ -122,6 +177,8 @@ class PlayBar extends Component {
         },
         h("button", {}, t("PASS"))
       ),
+
+      this.renderUndo(),
 
       h(
         "span",
@@ -208,6 +265,8 @@ class PlayBar extends Component {
         )
       ),
 
+      this.renderSpacer(),
+      
       h(
         "a",
         {

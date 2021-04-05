@@ -8,6 +8,7 @@ pub const CHOOSE_COLOR_PREF_TOPIC: &str = "bugout-choose-color-pref-cmd";
 pub const _QUIT_GAME_TOPIC: &str = "bugout-quit-game-cmd";
 pub const ATTACH_BOT_TOPIC: &str = "bugout-attach-bot-cmd";
 pub const REQ_SYNC_TOPIC: &str = "bugout-req-sync-cmd";
+pub const UNDO_MOVE_TOPIC: &str = "bugout-undo-move-cmd";
 
 /// A move was made and judged fit for communication to
 /// all interested clients
@@ -20,3 +21,5 @@ pub const COLORS_CHOSEN_TOPIC: &str = "bugout-colors-chosen-ev";
 pub const SESSION_DISCONNECTED_TOPIC: &str = "bugout-session-disconnected-ev";
 pub const BOT_ATTACHED_TOPIC: &str = "bugout-bot-attached-ev";
 pub const SYNC_REPLY_TOPIC: &str = "bugout-sync-reply-ev";
+pub const MOVE_UNDONE_TOPIC: &str = "bugout-move-undone-ev";
+pub const UNDO_REJECTED_TOPIC: &str = "bugout-undo-rejected-ev";

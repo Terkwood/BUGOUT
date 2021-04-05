@@ -1,4 +1,4 @@
-const EDITION = "Stylish";
+const EDITION = "Revisited";
 
 const EventEmitter = require("events");
 const { ipcRenderer, remote } = require("electron");
@@ -8,6 +8,8 @@ const classNames = require("classnames");
 
 const MainView = require("./MainView");
 const DrawerManager = require("./DrawerManager");
+
+const { Player } = require("../modules/multiplayer/bugout");
 
 // BUGOUT 🦹🏻‍ Bundle Bloat Protector
 import BoardSizeModal from "./bugout/BoardSizeModal";
@@ -21,6 +23,7 @@ import OpponentQuitModal from "./bugout/OpponentQuitModal";
 import PlayBotColorSelectionModal from "./bugout/PlayBotColorSelectionModal";
 import ReconnectModal from "./bugout/ReconnectModal";
 import WaitForBotModal from "./bugout/WaitForBotModal";
+import WaitForUndoModal from "./bugout/WaitForUndoModal";
 import WaitForOpponentModal from "./bugout/WaitForOpponentModal";
 import WaitForYourColorModal from "./bugout/WaitForYourColorModal";
 import YourColorChosenModal from "./bugout/YourColorChosenModal";
@@ -775,6 +778,29 @@ class App extends Component {
     this.events.emit("resign", { player });
   }
 
+  undoMove() {
+    let { currentPlayer } = this.inferredState;
+    let reversePlayer = currentPlayer > 0 ? Player.BLACK : Player.WHITE;
+    this.events.emit("undo", { player: reversePlayer });
+  }
+
+  onMoveUndone() {
+    let { gameTrees, gameIndex, treePosition } = this.state;
+    let tree = gameTrees[gameIndex];
+    
+    // Try going back two moves
+    let thisMove = tree.get(treePosition);
+    let oneMoveAgo = tree.get(thisMove.parentId);
+    
+    // Update data
+    let nextTreePosition = oneMoveAgo.parentId;
+    let newTree = tree.mutate((draft) => {
+      draft.removeNode(thisMove.parentId);  // one move ago
+    });
+
+    this.setCurrentTreePosition(newTree, nextTreePosition);
+  }
+
   // Navigation
 
   setCurrentTreePosition(tree, id, { clearCache = false } = {}) {
@@ -1391,6 +1417,7 @@ class App extends Component {
       h(OpponentPassedModal),
       h(OpponentQuitModal),
       h(WaitForBotModal),
+      h(WaitForUndoModal),
       // ↑ BUGOUT ↑
 
       h(MainView, state),
