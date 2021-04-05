@@ -123,6 +123,17 @@ class PlayBar extends Component {
         h("button", {}, t("PASS"))
       ),
 
+       // TODO THIS DOESN'T WORK BECAUSE
+       // IT SHOVES THE MIDDLE THING TO THE RIGHT
+      h(
+        "a",
+        {
+          class: "pass-button",
+          onClick: this.handlePassClick,
+        },
+        h("button", {}, t("UNDO"))
+      ),
+
       h(
         "span",
         { class: "playercontent player_1" },
