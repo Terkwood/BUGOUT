@@ -775,6 +775,10 @@ class App extends Component {
     this.events.emit("resign", { player });
   }
 
+  undo() {
+    this.events.emit("undo");
+  }
+
   // Navigation
 
   setCurrentTreePosition(tree, id, { clearCache = false } = {}) {

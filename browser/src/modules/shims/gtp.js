@@ -163,6 +163,10 @@ class WebSocketController extends EventEmitter {
       this.gameId = null;
     });
 
+    sabaki.events.on("undo", () => {
+      console.log("GTP undo: TODO");
+    })
+
     this.clientId = ClientId.fromStorage();
 
     this.beeping = true;
