@@ -215,6 +215,11 @@ header .menu img {
   margin-right: 5%;
   transform: scale(1.85);
 }
+#bar .undo-button {
+  z-index: 1000;
+  margin-right: 5%;
+  transform: scale(1.85);
+}
 #scoring .result,
 #estimator .result {
   position: absolute;

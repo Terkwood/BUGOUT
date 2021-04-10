@@ -32,6 +32,10 @@ class PlayBar extends Component {
       sabaki.setMode("scoring");
     };
 
+    this.handleUndoClick = () => {
+      console.log("TODO");
+    };
+
     this.handleMenuClick = () => {
       let { left, top } = this.menuButtonElement.getBoundingClientRect();
       helper.popupMenu(
@@ -128,8 +132,8 @@ class PlayBar extends Component {
       h(
         "a",
         {
-          class: "pass-button",
-          onClick: this.handlePassClick,
+          class: "undo-button",
+          onClick: this.handleUndoClick,
         },
         h("button", {}, t("UNDO"))
       ),
@@ -219,6 +223,15 @@ class PlayBar extends Component {
         )
       ),
 
+      // TODO duplicated to balance out the left side
+      h(
+        "a",
+        {
+          class: "undo-button",
+          onClick: this.handleUndoClick,
+        },
+        h("button", {}, t("UNDO"))
+      ),
       h(
         "a",
         {
