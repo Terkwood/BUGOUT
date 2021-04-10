@@ -127,8 +127,6 @@ class PlayBar extends Component {
         h("button", {}, t("PASS"))
       ),
 
-       // TODO THIS DOESN'T WORK BECAUSE
-       // IT SHOVES THE MIDDLE THING TO THE RIGHT
       h(
         "a",
         {
@@ -222,15 +220,12 @@ class PlayBar extends Component {
           playerCaptures[1]
         )
       ),
-
-      // TODO duplicated to balance out the left side
       h(
         "a",
         {
-          class: "undo-button",
-          onClick: this.handleUndoClick,
+          class: "spacer-fake-button"
         },
-        h("button", {}, t("UNDO"))
+        h("button", {}, t("AAAA"))
       ),
       h(
         "a",
