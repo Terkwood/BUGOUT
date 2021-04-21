@@ -1,5 +1,8 @@
 mod components;
 mod stream;
+
+pub use components::Components;
+
 /// it should listen to game states
 ///
 /// on UndoMove:

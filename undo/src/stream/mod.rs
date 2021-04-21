@@ -1,9 +1,11 @@
 mod topics;
+mod xack;
 mod xadd;
 
 use bot_model::api::*;
 use move_model::GameState;
 use undo_model::api::*;
+pub use xack::*;
 pub use xadd::*;
 
 pub const GROUP_NAME: &str = "undo";
