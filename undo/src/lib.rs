@@ -1,3 +1,5 @@
+mod components;
+mod stream;
 /// it should listen to game states
 ///
 /// on UndoMove:
