@@ -54,6 +54,12 @@ services:
       - "redis"
     volumes:
       - "./botlink/.env:/BUGOUT/.env:z"
+  undo:
+    build: undo/.
+    links:
+      - "redis"
+    depends_on:
+      - "redis"
   reverse-proxy:
     image: abiosoft/caddy
     ports:
