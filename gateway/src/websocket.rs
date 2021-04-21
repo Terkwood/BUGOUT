@@ -426,6 +426,7 @@ impl Handler for WsSession {
 
                 Ok(())
             }
+            Ok(ClientCommands::UndoMove) => todo!(),
             Err(_err) => {
                 error!(
                     "💥 {} {:<8} message deserialization {}",
