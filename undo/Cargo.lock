@@ -47,6 +47,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 
 [[package]]
+name = "bot-model"
+version = "2.0.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=3a9c4b5#3a9c4b5c25e4ffbc9f3185bf22679af28c47543f"
+dependencies = [
+ "core-model",
+ "move-model",
+ "serde",
+ "serde_derive",
+]
+
+[[package]]
 name = "bytes"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -391,6 +402,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 name = "undo"
 version = "0.1.0"
 dependencies = [
+ "bot-model",
  "core-model",
  "env_logger",
  "log",

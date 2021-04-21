@@ -7,6 +7,7 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bot-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "3a9c4b5"}
 core-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20e6620"}
 env_logger = "0.8.3"
 log = "0.4.14"
