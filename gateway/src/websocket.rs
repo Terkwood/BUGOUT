@@ -426,6 +426,14 @@ impl Handler for WsSession {
 
                 Ok(())
             }
+            Ok(ClientCommands::UndoMove) => {
+                if let Some(client_id) = self.client_id {
+                    info!("🔙 {} {:<8}", session_code(self), "UNDOMOVE");
+                    todo!()
+                } else {
+                    complain_no_client_id()
+                }
+            }
             Err(_err) => {
                 error!(
                     "💥 {} {:<8} message deserialization {}",
