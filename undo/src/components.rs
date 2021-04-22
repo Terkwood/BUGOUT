@@ -1,10 +1,11 @@
-use crate::stream::{XAck, XAdd};
+use crate::stream::{XAck, XAdd, XRead};
 
 use std::rc::Rc;
 
 pub struct Components {
     pub xadd: Box<dyn XAdd>,
     pub xack: Box<dyn XAck>,
+    pub xread: Box<dyn XRead>,
 }
 
 const REDIS_URL: &str = "redis://redis/";
@@ -18,6 +19,7 @@ impl Components {
         Components {
             xadd: Box::new(client.clone()),
             xack: Box::new(client.clone()),
+            xread: Box::new(client),
         }
     }
 }

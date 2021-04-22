@@ -294,6 +294,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "redis_streams"
+version = "0.4.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=2ea71cd#2ea71cd657bb0922b7c5badd8523b7c0ac741b53"
+dependencies = [
+ "uuid",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -402,12 +410,14 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 name = "undo"
 version = "0.1.0"
 dependencies = [
+ "bincode",
  "bot-model",
  "core-model",
  "env_logger",
  "log",
  "move-model",
  "redis",
+ "redis_streams",
  "undo-model",
 ]
 
