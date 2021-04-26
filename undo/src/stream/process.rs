@@ -1,6 +1,5 @@
 use super::*;
 use crate::Components;
-use bot_model::Bot;
 use log::{error, info};
 use redis_streams::XReadEntryId;
 
@@ -21,6 +20,7 @@ pub fn process(reg: &Components) {
         unacked.ack_all(&reg)
     }
 }
+
 fn consume(_xid: XReadEntryId, event: &StreamInput, reg: &Components) {
     match event {
         StreamInput::LOG(_) => todo!(),
@@ -31,6 +31,6 @@ fn consume(_xid: XReadEntryId, event: &StreamInput, reg: &Components) {
 
 fn consume_ba(ba: &BotAttached, reg: &Components) {
     if let Err(e) = reg.bot_repo.put(&ba.game_id, ba.player) {
-        error!("could not track bot attached: {:?}",e)
+        error!("could not track bot attached: {:?}", e)
     }
 }

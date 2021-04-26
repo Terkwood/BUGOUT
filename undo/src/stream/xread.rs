@@ -6,7 +6,6 @@ use redis::{Client, Commands};
 use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::rc::Rc;
-use undo_model::api::*;
 
 const BLOCK_MS: usize = 5000;
 
