@@ -1,4 +1,5 @@
 use super::*;
+use crate::repo::Botness;
 use crate::Components;
 use log::{error, info};
 use redis_streams::XReadEntryId;
@@ -36,7 +37,7 @@ fn consume_log(game_state: &GameState, reg: &Components) {
 }
 
 fn consume_ba(ba: &BotAttached, reg: &Components) {
-    if let Err(e) = reg.bot_repo.put(&ba.game_id, ba.player) {
+    if let Err(e) = reg.bot_repo.put(&ba.game_id, ba.player, Botness::IsBot) {
         error!("could not track bot attached: {:?}", e)
     }
 }

@@ -1,4 +1,4 @@
-use crate::repo::{BotRepo, GameStateRepo};
+use crate::repo::{BotnessRepo, GameStateRepo};
 use crate::stream::{XAck, XAdd, XRead};
 
 use std::rc::Rc;
@@ -7,7 +7,7 @@ pub struct Components {
     pub xadd: Box<dyn XAdd>,
     pub xack: Box<dyn XAck>,
     pub xread: Box<dyn XRead>,
-    pub bot_repo: Box<dyn BotRepo>,
+    pub bot_repo: Box<dyn BotnessRepo>,
     pub game_state_repo: Box<dyn GameStateRepo>,
 }
 

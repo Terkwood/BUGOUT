@@ -1,8 +1,8 @@
-mod bot;
+mod botness;
 mod expire;
 mod game_state;
 
-pub use bot::*;
+pub use botness::*;
 use expire::*;
 pub use game_state::*;
 

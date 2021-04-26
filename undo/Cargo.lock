@@ -418,6 +418,8 @@ dependencies = [
  "move-model",
  "redis",
  "redis_streams",
+ "serde",
+ "serde_derive",
  "undo-model",
 ]
 
