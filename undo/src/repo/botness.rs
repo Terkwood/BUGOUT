@@ -5,7 +5,7 @@ use redis::{Client, Commands};
 use serde_derive::{Deserialize, Serialize};
 use std::rc::Rc;
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Botness {
     IsBot,
     IsHuman,
