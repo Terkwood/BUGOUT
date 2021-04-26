@@ -12,6 +12,9 @@ pub trait XAck {
     fn ack_private_game_rejected(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
     fn ack_bot_attached(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
     fn ack_colors_chosen(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    fn ack_move_undone(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    fn ack_undo_rejected(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
+    
 }
 
 #[derive(Debug)]
@@ -48,6 +51,14 @@ impl XAck for Arc<Client> {
 
     fn ack_colors_chosen(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
         ack(self, topics::COLORS_CHOSEN_TOPIC, ids)
+    }
+
+    fn ack_move_undone(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+        todo!()
+    }
+
+    fn ack_undo_rejected(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+        todo!()
     }
 }
 

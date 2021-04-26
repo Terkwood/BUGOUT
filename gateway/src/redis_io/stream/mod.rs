@@ -74,6 +74,12 @@ impl From<StreamData> for BackendEvents {
             StreamData::ColorsChosen(c) => {
                 be::BackendEvents::ColorsChosen(ColorsChosenEvent::from(c))
             }
+            StreamData::MoveUndone(_) => {
+                todo!()
+            }
+            StreamData::UndoRejected(_) => {
+                todo!()
+            }
         }
     }
 }

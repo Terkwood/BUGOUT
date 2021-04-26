@@ -3,6 +3,7 @@ use color_model as color;
 use lobby_model as lobby;
 use move_model as moves;
 use sync_model as sync;
+use undo_model as undo;
 
 #[derive(Clone, Debug)]
 pub enum StreamData {
@@ -14,6 +15,8 @@ pub enum StreamData {
     GameReady(lobby::api::GameReady),
     PrivGameRejected(lobby::api::PrivateGameRejected),
     ColorsChosen(color::api::ColorsChosen),
+    MoveUndone(undo::api::MoveUndone),
+    UndoRejected(undo::api::UndoMove),
 }
 
 impl From<sync_model::api::HistoryProvided> for StreamData {
