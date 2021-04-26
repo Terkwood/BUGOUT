@@ -1,7 +1,6 @@
 use super::*;
 use crate::repo::Botness;
 use crate::Components;
-use log::{error, info};
 use move_model::{Board, Captures, MoveMade, Player};
 
 pub fn consume_undo(um: &UndoMove, reg: &Components) -> Result<(), UndoProcessingErr> {
