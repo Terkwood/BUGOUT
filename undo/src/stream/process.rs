@@ -48,19 +48,22 @@ fn consume_ba(ba: &BotAttached, reg: &Components) {
 
 fn consume_um(um: &UndoMove, reg: &Components) -> Result<(), UndoProcessingErr> {
     let botness = reg.botness_repo.get(&um.game_id, um.player)?;
+    let requester_is_human = botness == Botness::IsHuman;
 
-    match botness {
-        Botness::IsHuman => todo!("proceed"),
-        Botness::IsBot => todo!("write UndoMove to rejection stream"),
+    let current_move_is_human: bool =
+        todo!("check that we are not waiting on a bot to finish their move");
+
+    let not_the_very_beginning: bool =
+        todo!("check that there is a move which can be undone  (first move fails)");
+
+    if (requester_is_human && current_move_is_human && not_the_very_beginning) {
+        todo!("emit a game_state event to the changelog stream");
+        todo!("emit a move_undone event");
+    } else {
+        todo!("on fail: emit UndoMove  to a rejected stream");
     }
 
-    todo!("check that we are not waiting on a bot to finish their move");
-    todo!("check that there is a move which can be undone  (first move fails)");
-    todo!("emit a game_state event to the changelog stream");
-    todo!("emit a move_undone event");
-
-    todo!("on fail: emit UndoMove  to a rejected stream");
-    Ok(todo!())
+    Ok(())
 }
 
 use crate::repo::RepoErr;
