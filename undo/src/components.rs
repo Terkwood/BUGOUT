@@ -7,7 +7,7 @@ pub struct Components {
     pub xadd: Box<dyn XAdd>,
     pub xack: Box<dyn XAck>,
     pub xread: Box<dyn XRead>,
-    pub bot_repo: Box<dyn BotnessRepo>,
+    pub botness_repo: Box<dyn BotnessRepo>,
     pub game_state_repo: Box<dyn GameStateRepo>,
 }
 
@@ -20,7 +20,7 @@ pub fn redis_client() -> Rc<redis::Client> {
 impl Components {
     pub fn new(client: Rc<redis::Client>) -> Self {
         Components {
-            bot_repo: Box::new(client.clone()),
+            botness_repo: Box::new(client.clone()),
             game_state_repo: Box::new(client.clone()),
             xadd: Box::new(client.clone()),
             xack: Box::new(client.clone()),
