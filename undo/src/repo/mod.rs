@@ -4,6 +4,7 @@ mod game_state;
 
 pub use bot::*;
 use expire::*;
+pub use game_state::*;
 
 #[derive(Debug)]
 pub enum RepoErr {

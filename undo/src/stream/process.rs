@@ -23,9 +23,15 @@ pub fn process(reg: &Components) {
 
 fn consume(_xid: XReadEntryId, event: &StreamInput, reg: &Components) {
     match event {
-        StreamInput::LOG(_) => todo!(),
-        StreamInput::BA(ba) => consume_ba(ba, reg),
+        StreamInput::LOG(game_state) => consume_log(game_state, reg),
+        StreamInput::BA(bot_attached) => consume_ba(bot_attached, reg),
         StreamInput::UM(_) => todo!(),
+    }
+}
+
+fn consume_log(game_state: &GameState, reg: &Components) {
+    if let Err(e) = reg.game_state_repo.put(&game_state) {
+        error!("could not track game state: {:?}", e)
     }
 }
 
