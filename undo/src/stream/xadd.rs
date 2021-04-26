@@ -24,7 +24,7 @@ impl XAdd for Rc<Client> {
             StreamOutput::MU(move_undone) => (MOVE_UNDONE, bincode::serialize(&move_undone)),
             StreamOutput::LOG(state) => (GAME_STATES_CHANGELOG, bincode::serialize(&state)),
             StreamOutput::REJECT(original_undo) => {
-                (UNDO_MOVE_REJECTED, bincode::serialize(&original_undo))
+                (UNDO_REJECTED, bincode::serialize(&original_undo))
             }
         };
         if let Ok(bytes) = bytes_result {
