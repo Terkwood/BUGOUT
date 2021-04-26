@@ -25,7 +25,7 @@ fn consume(_xid: XReadEntryId, event: &StreamInput, reg: &Components) {
     match event {
         StreamInput::LOG(game_state) => consume_log(game_state, reg),
         StreamInput::BA(bot_attached) => consume_ba(bot_attached, reg),
-        StreamInput::UM(_) => todo!(),
+        StreamInput::UM(undo_move) => consume_um(undo_move, reg),
     }
 }
 
@@ -39,4 +39,8 @@ fn consume_ba(ba: &BotAttached, reg: &Components) {
     if let Err(e) = reg.bot_repo.put(&ba.game_id, ba.player) {
         error!("could not track bot attached: {:?}", e)
     }
+}
+
+fn consume_um(um: &UndoMove, reg: &Components) {
+    todo!()
 }
