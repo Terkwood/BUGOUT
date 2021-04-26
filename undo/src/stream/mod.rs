@@ -21,6 +21,7 @@ pub const GROUP_NAME: &str = "undo";
 pub enum StreamOutput {
     MU(MoveUndone),
     LOG(GameState),
+    REJECT(UndoMove),
 }
 
 #[derive(Clone, Debug)]

@@ -25,9 +25,9 @@ pub fn process(reg: &Components) {
 fn consume(_xid: XReadEntryId, event: &StreamInput, reg: &Components) {
     match event {
         StreamInput::LOG(game_state) => consume_log(game_state, reg),
-        StreamInput::BA(bot_attached) => consume_ba(bot_attached, reg),
+        StreamInput::BA(bot_attached) => consume_bot_attached(bot_attached, reg),
         StreamInput::UM(undo_move) => {
-            if let Err(e) = consume_um(undo_move, reg) {
+            if let Err(e) = consume_undo(undo_move, reg) {
                 error!("could not process undo move event {:?}", e)
             }
         }
@@ -40,30 +40,45 @@ fn consume_log(game_state: &GameState, reg: &Components) {
     }
 }
 
-fn consume_ba(ba: &BotAttached, reg: &Components) {
+fn consume_bot_attached(ba: &BotAttached, reg: &Components) {
     if let Err(e) = reg.botness_repo.put(&ba.game_id, ba.player, Botness::IsBot) {
         error!("could not track bot attached: {:?}", e)
     }
 }
 
-fn consume_um(um: &UndoMove, reg: &Components) -> Result<(), UndoProcessingErr> {
+fn consume_undo(um: &UndoMove, reg: &Components) -> Result<(), UndoProcessingErr> {
     let botness = reg.botness_repo.get(&um.game_id, um.player)?;
     let requester_is_human = botness == Botness::IsHuman;
 
-    let current_move_is_human: bool =
-        todo!("check that we are not waiting on a bot to finish their move");
+    if let Some(game_state) = reg.game_state_repo.get(&um.game_id)? {
+        let not_the_very_beginning: bool = game_state.moves.len() > 0;
 
-    let not_the_very_beginning: bool =
-        todo!("check that there is a move which can be undone  (first move fails)");
+        let player_up_is_human: bool = requester_is_human && game_state.player_up == um.player;
 
-    if (requester_is_human && current_move_is_human && not_the_very_beginning) {
-        todo!("emit a game_state event to the changelog stream");
-        todo!("emit a move_undone event");
+        if player_up_is_human && not_the_very_beginning {
+            let rolled_back = rollback(&game_state);
+            reg.xadd.xadd(&StreamOutput::LOG(rolled_back))?;
+            reg.xadd.xadd(&StreamOutput::MU(MoveUndone {
+                game_id: um.game_id.clone(),
+                player: um.player,
+                game_state,
+            }))?;
+        } else {
+            reject(um, reg)?
+        }
     } else {
-        todo!("on fail: emit UndoMove  to a rejected stream");
+        reject(um, reg)?
     }
 
     Ok(())
+}
+
+fn reject(undo_move: &UndoMove, reg: &Components) -> Result<(), StreamAddErr> {
+    reg.xadd.xadd(&StreamOutput::REJECT(undo_move.clone()))
+}
+
+fn rollback(_game_state: &GameState) -> GameState {
+    todo!("transform correctly")
 }
 
 use crate::repo::RepoErr;
@@ -71,9 +86,15 @@ use crate::repo::RepoErr;
 #[derive(Debug)]
 enum UndoProcessingErr {
     Repo(RepoErr),
+    StreamAdd(StreamAddErr),
 }
 impl From<crate::repo::RepoErr> for UndoProcessingErr {
     fn from(e: RepoErr) -> Self {
         Self::Repo(e)
+    }
+}
+impl From<StreamAddErr> for UndoProcessingErr {
+    fn from(e: StreamAddErr) -> Self {
+        Self::StreamAdd(e)
     }
 }
