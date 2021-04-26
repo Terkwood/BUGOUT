@@ -42,5 +42,11 @@ fn consume_ba(ba: &BotAttached, reg: &Components) {
 }
 
 fn consume_um(um: &UndoMove, reg: &Components) {
-    todo!()
+    todo!("check that the player whose move is being undone is NOT a bot");
+    todo!("check that we are not waiting on a bot to finish their move");
+    todo!("check that there is a move which can be undone  (first move fails)");
+    todo!("emit a game_state event to the changelog stream");
+    todo!("emit a move_undone event");
+
+    todo!("on fail: emit UndoMove  to a rejected stream")
 }
