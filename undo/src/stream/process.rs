@@ -2,6 +2,7 @@ use super::*;
 use crate::repo::Botness;
 use crate::Components;
 use log::{error, info};
+use move_model::{Board, Captures, MoveMade};
 use redis_streams::XReadEntryId;
 
 pub fn process(reg: &Components) {
@@ -51,11 +52,10 @@ fn consume_undo(um: &UndoMove, reg: &Components) -> Result<(), UndoProcessingErr
     let requester_is_human = botness == Botness::IsHuman;
 
     if let Some(game_state) = reg.game_state_repo.get(&um.game_id)? {
-        let not_the_very_beginning: bool = game_state.moves.len() > 0;
-
         let player_up_is_human: bool = requester_is_human && game_state.player_up == um.player;
+        let at_least_two_moves_made: bool = game_state.moves.len() > 1;
 
-        if player_up_is_human && not_the_very_beginning {
+        if player_up_is_human && at_least_two_moves_made {
             let rolled_back = rollback(&game_state);
             reg.xadd.xadd(&StreamOutput::LOG(rolled_back))?;
             reg.xadd.xadd(&StreamOutput::MU(MoveUndone {
@@ -77,8 +77,24 @@ fn reject(undo_move: &UndoMove, reg: &Components) -> Result<(), StreamAddErr> {
     reg.xadd.xadd(&StreamOutput::REJECT(undo_move.clone()))
 }
 
-fn rollback(_game_state: &GameState) -> GameState {
-    todo!("transform correctly")
+fn rollback(game_state: &GameState) -> GameState {
+    let moves = game_state.moves[0..(&game_state.moves.len() - 2)].to_vec();
+
+    GameState {
+        game_id: game_state.game_id.clone(),
+        turn: game_state.turn - 2,
+        player_up: game_state.player_up,
+        moves,
+        board: compute_board(&game_state.moves),
+        captures: compute_captures(&game_state.moves),
+    }
+}
+
+fn compute_captures(moves: &[MoveMade]) -> Captures {
+    todo!()
+}
+fn compute_board(moves: &[MoveMade]) -> Board {
+    todo!()
 }
 
 use crate::repo::RepoErr;
