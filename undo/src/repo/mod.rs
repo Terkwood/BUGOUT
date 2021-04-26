@@ -1,5 +1,6 @@
 mod bot;
 mod expire;
+mod game_state;
 
 pub use bot::*;
 use expire::*;
