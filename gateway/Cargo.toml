@@ -30,6 +30,7 @@ serde_derive = "1.0.117"
 serde_json = "1.0.59"
 sync-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "fa195a9"}
 time = "0.2.22"
+undo-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "a5721e6"}
 uuid = {version = "0.8.1", features = ["v4", "serde"]}
 ws = "0.9.1"
 

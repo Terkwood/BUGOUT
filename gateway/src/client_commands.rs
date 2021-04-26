@@ -78,7 +78,7 @@ pub enum ClientCommands {
     QuitGame,
     AttachBot(AttachBotClientCommand),
     ReqSync(ReqSyncClientCommand),
-    UndoMove,
+    UndoMove(Player),
 }
 
 #[cfg(test)]

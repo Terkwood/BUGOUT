@@ -426,13 +426,23 @@ impl Handler for WsSession {
 
                 Ok(())
             }
-            Ok(ClientCommands::UndoMove) => {
-                if let Some(client_id) = self.client_id {
+            Ok(ClientCommands::UndoMove(player)) => {
+                if let Some(game_id) = self.current_game {
                     info!("🔙 {} {:<8}", session_code(self), "UNDOMOVE");
-                    todo!()
+                    if let Err(e) = self
+                        .send_to_backend(BackendCommands::UndoMove(undo_model::api::UndoMove {
+                            game_id: core_model::GameId(game_id),
+                            player: player.into(),
+                        }))
+                        .map_err(|e| ws::Error::from(Box::new(e)))
+                    {
+                        error!("💥 Req sync {:?}", e)
+                    }
                 } else {
-                    complain_no_client_id()
+                    error!("undo move: unknown game")
                 }
+
+                Ok(())
             }
             Err(_err) => {
                 error!(
