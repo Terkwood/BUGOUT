@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 pub trait BotRepo {
     fn get(&self, game_id: &GameId, player: Player) -> Result<bool, RepoErr>;
-    fn put(&self, game_id: &GameId, player: Player, is_attached: bool) -> Result<(), RepoErr>;
+    fn put(&self, game_id: &GameId, player: Player) -> Result<(), RepoErr>;
 }
 
 impl BotRepo for Rc<Client> {
@@ -29,10 +29,10 @@ impl BotRepo for Rc<Client> {
         }
     }
 
-    fn put(&self, game_id: &GameId, player: Player, is_attached: bool) -> Result<(), RepoErr> {
+    fn put(&self, game_id: &GameId, player: Player) -> Result<(), RepoErr> {
         let key = bot_id(&game_id, player);
         let mut conn = self.get_connection()?;
-        let bytes = bincode::serialize(&is_attached)?;
+        let bytes = bincode::serialize(&true)?;
         let done = conn.set(&key, bytes).map_err(|e| RepoErr::Redis(e))?;
         expire(&key, &mut conn)?;
         Ok(done)
