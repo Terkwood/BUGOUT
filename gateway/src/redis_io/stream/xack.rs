@@ -14,7 +14,6 @@ pub trait XAck {
     fn ack_colors_chosen(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
     fn ack_move_undone(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
     fn ack_undo_rejected(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr>;
-    
 }
 
 #[derive(Debug)]
@@ -54,11 +53,11 @@ impl XAck for Arc<Client> {
     }
 
     fn ack_move_undone(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-        todo!()
+        ack(self, topics::MOVE_UNDONE_TOPIC, ids)
     }
 
     fn ack_undo_rejected(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-        todo!()
+        ack(self, topics::UNDO_REJECTED_TOPIC, ids)
     }
 }
 
