@@ -106,5 +106,5 @@ pub enum BackendCommands {
     QuitGame(QuitGameCommand),
     AttachBot(bot_model::api::AttachBot),
     ReqSync(ReqSyncBackendCommand),
-    UndoMove, // todo -- rational def
+    UndoMove(undo_model::api::UndoMove),
 }

@@ -23,9 +23,14 @@ pub enum ClientEvents {
     OpponentQuit,
     BotAttached(bot_model::api::BotAttached),
     SyncReply(SyncReplyClientEvent),
+    MoveUndone(undo_model::api::MoveUndone),
+    UndoRejected(undo_model::api::UndoMove),
 }
 
 impl ClientEvents {
+    /// returns none for some types:
+    ///  - priv game rejected, see https://github.com/Terkwood/BUGOUT/issues/90
+    ///  - anything else that isn't matched ?!
     pub fn game_id(&self) -> Option<GameId> {
         match self {
             ClientEvents::MoveMade(e) => Some(e.game_id),
@@ -36,7 +41,9 @@ impl ClientEvents {
             ClientEvents::WaitForOpponent(w) => Some(w.game_id),
             ClientEvents::YourColor(y) => Some(y.game_id),
             ClientEvents::BotAttached(b) => Some(b.game_id.0),
-            _ => None, // priv game rejected, see https://github.com/Terkwood/BUGOUT/issues/90
+            ClientEvents::MoveUndone(m) => Some(m.game_id.0),
+            ClientEvents::UndoRejected(u) => Some(u.game_id.0),
+            _ => None,
         }
     }
 }

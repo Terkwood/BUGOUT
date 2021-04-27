@@ -17,6 +17,8 @@ pub enum BackendEvents {
     ColorsChosen(ColorsChosenEvent),
     BotAttached(bot_model::api::BotAttached),
     SyncReply(SyncReplyBackendEvent),
+    MoveUndone(undo_model::api::MoveUndone),
+    UndoRejected(undo_model::api::UndoMove),
 }
 
 impl BackendEvents {
@@ -79,6 +81,8 @@ impl BackendEvents {
                 reply_to,
                 moves,
             }),
+            BackendEvents::MoveUndone(m) => ClientEvents::MoveUndone(m),
+            BackendEvents::UndoRejected(u) => ClientEvents::UndoRejected(u),
         }
     }
 
@@ -93,6 +97,8 @@ impl BackendEvents {
             BackendEvents::ColorsChosen(e) => e.game_id,
             BackendEvents::BotAttached(e) => e.game_id.0,
             BackendEvents::SyncReply(e) => e.game_id,
+            BackendEvents::MoveUndone(e) => e.game_id.0,
+            BackendEvents::UndoRejected(e) => e.game_id.0,
         }
     }
 }
