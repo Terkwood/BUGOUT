@@ -1510,7 +1510,7 @@ checksum = "879f6906492a7cd215bfa4cf595b600146ccfac0c79bcbd1f3000162af5e8b06"
 [[package]]
 name = "undo-model"
 version = "0.1.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=a5721e6#a5721e6d09d7741122a1b4b4bde7aae6524bef28"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=3ad089b#3ad089b55a86e354f0ad1fac1c94d07566fa7104"
 dependencies = [
  "core-model",
  "move-model",
