@@ -42,6 +42,7 @@ impl BotnessRepo for Rc<Client> {
         let bytes = bincode::serialize(&botness)?;
         let done = conn.set(&key, bytes).map_err(|e| RepoErr::Redis(e))?;
         expire(&key, &mut conn)?;
+        log::info!("OK PUT ");
         Ok(done)
     }
 }

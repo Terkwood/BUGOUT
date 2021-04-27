@@ -14,10 +14,11 @@ impl GameStateRepo for Rc<Client> {
     fn get(&self, game_id: &GameId) -> Result<Option<GameState>, RepoErr> {
         let mut conn = self.get_connection()?;
         let data: Option<Vec<u8>> = conn.get(key(game_id))?;
-        match data {
-            Some(bytes) => Ok(bincode::deserialize(&bytes)?),
-            None => Ok(None),
-        }
+        Ok(if let Some(bytes) = data {
+            Some(bincode::deserialize(&bytes)?)
+        } else {
+            None
+        })
     }
 
     fn put(&self, game_state: &GameState) -> Result<(), RepoErr> {
