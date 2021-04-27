@@ -962,11 +962,14 @@ class GatewayConn {
           if (msg.type === "MoveUndone") {
             console.log("HELLO UNDONE" + event.data);
             resolve(msg);
-            // todo handle
-            // todo sabaki.events.emit("bugout-move-undone", msg);
+            // todo
+            console.error("todo HANDLE"); 
+            sabaki.events.emit("bugout-move-undone", msg);
           } else if (msg.type === "UndoRejected") {
-            // todo something ??
+            // todo
+            console.error("todo something ??");
             resolve(msg);
+            sabaki.events.emit("bugout-undo-rejected", msg);
           }
           // discard any other messages
         } catch (err) {

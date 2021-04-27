@@ -777,11 +777,19 @@ class App extends Component {
     this.events.emit("resign", { player });
   }
 
-  makeUndo() {
+  undoMove() {
     let { currentPlayer } = this.inferredState;
     let reversePlayer = currentPlayer > 0 ? Player.BLACK : Player.WHITE;
     console.log("undo " + reversePlayer);
     this.events.emit("undo", { player: reversePlayer });
+  }
+
+  onMoveUndone(event) {
+    console.error("todo move undone")
+  }
+
+  onUndoRejected(event) {
+    console.error("todo undo rejected")
   }
 
   // Navigation
