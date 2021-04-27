@@ -33,7 +33,7 @@ class PlayBar extends Component {
     };
 
     this.handleUndoClick = () => {
-      sabaki.undo();
+      sabaki.makeUndo();
     };
 
     this.handleMenuClick = () => {

@@ -164,6 +164,15 @@ class WebSocketController extends EventEmitter {
     });
 
     sabaki.events.on("undo", () => {
+      // TODO: before we even enter this callback,
+      // TODO    we should already have checked to make
+      // TODO     sure that pressing the button is allowed
+      // TODO
+      // TODO  we should have validated the board state
+      // TODO     and disqualified any UNDO button clicks
+      // TODO  which   occur before both the player and the
+      // TODO   AI have had a turn
+
       console.log("GTP undo: TODO");
     })
 

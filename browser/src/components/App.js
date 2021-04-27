@@ -775,7 +775,7 @@ class App extends Component {
     this.events.emit("resign", { player });
   }
 
-  undo() {
+  makeUndo() {
     this.events.emit("undo");
   }
 
