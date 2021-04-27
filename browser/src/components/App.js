@@ -9,6 +9,8 @@ const classNames = require("classnames");
 const MainView = require("./MainView");
 const DrawerManager = require("./DrawerManager");
 
+const { Player } = require("../modules/multiplayer/bugout");
+
 // BUGOUT 🦹🏻‍ Bundle Bloat Protector
 import BoardSizeModal from "./bugout/BoardSizeModal";
 import GameLobbyModal from "./bugout/WelcomeModal";
@@ -776,7 +778,10 @@ class App extends Component {
   }
 
   makeUndo() {
-    this.events.emit("undo");
+    let { currentPlayer } = this.inferredState;
+    let reversePlayer = currentPlayer > 0 ? Player.BLACK : Player.WHITE;
+    console.log("undo " + reversePlayer);
+    this.events.emit("undo", { player: reversePlayer });
   }
 
   // Navigation

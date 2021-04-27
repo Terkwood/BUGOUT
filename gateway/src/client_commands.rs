@@ -37,6 +37,11 @@ pub struct AttachBotClientCommand {
     pub bot: bot_model::Bot,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct UndoMoveClientCommand {
+    pub player: Player,
+}
+
 /// This command requests synchronization with the backend
 /// view of the game.  
 ///
@@ -78,7 +83,7 @@ pub enum ClientCommands {
     QuitGame,
     AttachBot(AttachBotClientCommand),
     ReqSync(ReqSyncClientCommand),
-    UndoMove(Player),
+    UndoMove(UndoMoveClientCommand),
 }
 
 #[cfg(test)]

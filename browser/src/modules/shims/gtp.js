@@ -10,7 +10,7 @@ const {
   IdleStatus,
   EntryMethod,
   emitReadyState,
-  Player,
+  Player
 } = require("../multiplayer/bugout");
 
 // for dev: host port 33012 should be mapped to container 3012
@@ -163,7 +163,7 @@ class WebSocketController extends EventEmitter {
       this.gameId = null;
     });
 
-    sabaki.events.on("undo", () => {
+    sabaki.events.on("undo", ({ player }) => {
       // TODO: before we even enter this callback,
       // TODO    we should already have checked to make
       // TODO     sure that pressing the button is allowed
@@ -174,6 +174,8 @@ class WebSocketController extends EventEmitter {
       // TODO   AI have had a turn
 
       console.log("GTP undo: TODO");
+
+      this.gatewayConn.undoMove(player);
     })
 
     this.clientId = ClientId.fromStorage();
@@ -941,6 +943,42 @@ class GatewayConn {
 
       // We want to show the modal while we wait for a response from gateway
       this.handleWaitForOpponent({ gap: true, hasEvent: false });
+      this.webSocket.send(JSON.stringify(requestPayload));
+    });
+  }
+
+  // TODO love me
+  async undoMove(player) {
+    return new Promise((resolve, reject) => {
+      let requestPayload = {
+        type: "UndoMove",
+        player,
+      };
+
+      this.webSocket.addEventListener("message", (event) => {
+        try {
+          let msg = JSON.parse(event.data);
+
+          if (msg.type === "MoveUndone") {
+            console.log("HELLO UNDONE" + event.data);
+            resolve(msg);
+            // todo handle
+            // todo sabaki.events.emit("bugout-move-undone", msg);
+          } else if (msg.type === "UndoRejected") {
+            // todo something ??
+            resolve(msg);
+          }
+          // discard any other messages
+        } catch (err) {
+          console.log(
+            `Error processing websocket message: ${JSON.stringify(err)}`
+          );
+          reject();
+        }
+      });
+
+      // TODO:  modal?? while we wait for a response from gateway
+      console.log("ASYNC SEND UNDO " + JSON.stringify(requestPayload));
       this.webSocket.send(JSON.stringify(requestPayload));
     });
   }

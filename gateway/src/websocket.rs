@@ -426,7 +426,7 @@ impl Handler for WsSession {
 
                 Ok(())
             }
-            Ok(ClientCommands::UndoMove(player)) => {
+            Ok(ClientCommands::UndoMove(UndoMoveClientCommand { player })) => {
                 if let Some(game_id) = self.current_game {
                     info!("🔙 {} {:<8}", session_code(self), "UNDOMOVE");
                     if let Err(e) = self
