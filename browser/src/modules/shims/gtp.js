@@ -172,9 +172,6 @@ class WebSocketController extends EventEmitter {
       // TODO     and disqualified any UNDO button clicks
       // TODO  which   occur before both the player and the
       // TODO   AI have had a turn
-
-      console.log("GTP undo: TODO");
-
       this.gatewayConn.undoMove(player);
     })
 
@@ -947,7 +944,6 @@ class GatewayConn {
     });
   }
 
-  // TODO love me
   async undoMove(player) {
     return new Promise((resolve, reject) => {
       let requestPayload = {
@@ -960,7 +956,7 @@ class GatewayConn {
           let msg = JSON.parse(event.data);
 
           if (msg.type === "MoveUndone") {
-            console.log("HELLO UNDONE" + event.data); // TODO trim
+            console.log("HELLO EVENT " + JSON.stringify(event.data));
             sabaki.events.emit("bugout-move-undone", msg);
             resolve(msg);
           } else if (msg.type === "UndoRejected") {
@@ -968,8 +964,6 @@ class GatewayConn {
             console.error("todo something ??");
             sabaki.events.emit("bugout-undo-rejected", msg);
             resolve(msg);
-          } else {
-            console.log("ELSE   !! 🙁");
           }
           // discard any other messages
         } catch (err) {
@@ -980,8 +974,6 @@ class GatewayConn {
         }
       });
 
-      // TODO:  modal?? while we wait for a response from gateway
-      console.log("ASYNC SEND UNDO " + JSON.stringify(requestPayload));
       this.webSocket.send(JSON.stringify(requestPayload));
     });
   }

@@ -100,6 +100,7 @@ const registerBoardSizeEvents = (app) => {
 
 const registerUndoEvents = (app) => {
   app.events.on("bugout-move-undone", event => {
+    console.error("TEST HELLO"); //todo
     app.onMoveUndone(event)
   });
   app.events.on("bugout-undo-rejected", event => {
