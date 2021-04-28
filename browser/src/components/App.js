@@ -784,13 +784,24 @@ class App extends Component {
     this.events.emit("undo", { player: reversePlayer });
   }
 
-  onMoveUndone(event) {
-    let { gameTrees, gameIndex, treePosition } = state;
+  onMoveUndone(_event) {
+    let { gameTrees, gameIndex, treePosition } = this.state;
     let tree = gameTrees[gameIndex];
-    console.log(`undone: tree is ${JSON.stringify(tree)}`);
-    console.log(`gameIndex ${gameIndex}`);
-    console.log(`treePosition ${treePosition}`);
+    
+    // Try going back two moves
+    let thisMove = tree.get(treePosition);
+    let oneMoveAgo = tree.get(thisMove.parentId);
+    
+    // Update data
+    let nextTreePosition = oneMoveAgo.parentId;
+    let newTree = tree.mutate((draft) => {
+    draft.removeNode(thisMove.parentId);  // one move ago
+    });
 
+    this.setCurrentTreePosition(newTree, nextTreePosition);
+    
+    // TODO// TODO// TODO// TODO// TODO// TODO// TODO// TODO
+    // Play sounds
   }
 
   onUndoRejected(event) {

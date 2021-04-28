@@ -956,9 +956,9 @@ class GatewayConn {
           let msg = JSON.parse(event.data);
 
           if (msg.type === "MoveUndone") {
-            console.log("HELLO EVENT " + JSON.stringify(event.data));
-            sabaki.events.emit("bugout-move-undone", msg);
             resolve(msg);
+            console.log("HELLO EVENT " + JSON.stringify(event.data));
+            sabaki.events.emit("bugout-move-undone");
           } else if (msg.type === "UndoRejected") {
             // todo
             console.error("todo something ??");
