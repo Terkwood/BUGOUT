@@ -795,7 +795,7 @@ class App extends Component {
     // Update data
     let nextTreePosition = oneMoveAgo.parentId;
     let newTree = tree.mutate((draft) => {
-    draft.removeNode(thisMove.parentId);  // one move ago
+      draft.removeNode(thisMove.parentId);  // one move ago
     });
 
     this.setCurrentTreePosition(newTree, nextTreePosition);
