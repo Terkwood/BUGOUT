@@ -568,7 +568,12 @@ impl Handler for WsSession {
                             _ => (),
                         }
 
-                        self.ws_out.send(serde_json::to_string(&event).unwrap())?
+                        if let Err(e) = serde_json::to_string(&event)
+                            .map_err(|e| error!("{:?}\t could not serialize event: {:?}", e, event))
+                            .map(|ser| self.ws_out.send(ser))
+                        {
+                            error!("ws send {:?}", e)
+                        }
                     }
                 }
                 self.channel_recv_timeout.take();
