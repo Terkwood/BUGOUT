@@ -13,11 +13,11 @@ pub fn consume_undo(um: &UndoMove, reg: &Components) -> Result<(), UndoProcessin
 
         if player_up_is_human && at_least_two_moves_made {
             let rolled_back = rollback(&game_state);
-            reg.xadd.xadd(&StreamOutput::LOG(rolled_back))?;
+            reg.xadd.xadd(&StreamOutput::LOG(rolled_back.clone()))?;
             reg.xadd.xadd(&StreamOutput::MU(MoveUndone {
                 game_id: um.game_id.clone(),
                 player: um.player,
-                game_state,
+                game_state: rolled_back,
             }))?;
         } else {
             reject(um, reg)?
