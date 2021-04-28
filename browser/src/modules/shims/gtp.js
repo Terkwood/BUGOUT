@@ -960,16 +960,16 @@ class GatewayConn {
           let msg = JSON.parse(event.data);
 
           if (msg.type === "MoveUndone") {
-            console.log("HELLO UNDONE" + event.data);
-            resolve(msg);
-            // todo
-            console.error("todo HANDLE"); 
+            console.log("HELLO UNDONE" + event.data); // TODO trim
             sabaki.events.emit("bugout-move-undone", msg);
+            resolve(msg);
           } else if (msg.type === "UndoRejected") {
             // todo
             console.error("todo something ??");
-            resolve(msg);
             sabaki.events.emit("bugout-undo-rejected", msg);
+            resolve(msg);
+          } else {
+            console.log("ELSE   !! 🙁");
           }
           // discard any other messages
         } catch (err) {

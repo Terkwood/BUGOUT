@@ -785,7 +785,12 @@ class App extends Component {
   }
 
   onMoveUndone(event) {
-    console.error("todo move undone")
+    let { gameTrees, gameIndex, treePosition } = state;
+    let tree = gameTrees[gameIndex];
+    console.log(`undone: tree is ${JSON.stringify(tree)}`);
+    console.log(`gameIndex ${gameIndex}`);
+    console.log(`treePosition ${treePosition}`);
+
   }
 
   onUndoRejected(event) {
