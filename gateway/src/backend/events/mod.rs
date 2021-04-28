@@ -81,7 +81,7 @@ impl BackendEvents {
                 reply_to,
                 moves,
             }),
-            BackendEvents::MoveUndone(m) => ClientEvents::MoveUndone(m),
+            BackendEvents::MoveUndone(m) => ClientEvents::MoveUndone(m.into()),
             BackendEvents::UndoRejected(u) => ClientEvents::UndoRejected(u),
         }
     }
