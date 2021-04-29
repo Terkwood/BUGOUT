@@ -23,6 +23,7 @@ import OpponentQuitModal from "./bugout/OpponentQuitModal";
 import PlayBotColorSelectionModal from "./bugout/PlayBotColorSelectionModal";
 import ReconnectModal from "./bugout/ReconnectModal";
 import WaitForBotModal from "./bugout/WaitForBotModal";
+import WaitForUndoModal from "./bugout/WaitForUndoModal";
 import WaitForOpponentModal from "./bugout/WaitForOpponentModal";
 import WaitForYourColorModal from "./bugout/WaitForYourColorModal";
 import YourColorChosenModal from "./bugout/YourColorChosenModal";
@@ -780,11 +781,10 @@ class App extends Component {
   undoMove() {
     let { currentPlayer } = this.inferredState;
     let reversePlayer = currentPlayer > 0 ? Player.BLACK : Player.WHITE;
-    console.log("undo " + reversePlayer);
     this.events.emit("undo", { player: reversePlayer });
   }
 
-  onMoveUndone(_event) {
+  onMoveUndone() {
     let { gameTrees, gameIndex, treePosition } = this.state;
     let tree = gameTrees[gameIndex];
     
@@ -799,13 +799,6 @@ class App extends Component {
     });
 
     this.setCurrentTreePosition(newTree, nextTreePosition);
-    
-    // TODO// TODO// TODO// TODO// TODO// TODO// TODO// TODO
-    // Play sounds
-  }
-
-  onUndoRejected(event) {
-    console.error("todo undo rejected")
   }
 
   // Navigation
@@ -1424,6 +1417,7 @@ class App extends Component {
       h(OpponentPassedModal),
       h(OpponentQuitModal),
       h(WaitForBotModal),
+      h(WaitForUndoModal),
       // ↑ BUGOUT ↑
 
       h(MainView, state),

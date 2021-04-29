@@ -957,12 +957,10 @@ class GatewayConn {
 
           if (msg.type === "MoveUndone") {
             resolve(msg);
-            console.log("HELLO EVENT " + JSON.stringify(event.data));
             sabaki.events.emit("bugout-move-undone");
+            sabaki.events.emit("bugout-wait-for-undo", { showWait: false, showReject: false });
           } else if (msg.type === "UndoRejected") {
-            // todo
-            console.error("todo something ??");
-            sabaki.events.emit("bugout-undo-rejected", msg);
+            sabaki.events.emit("bugout-wait-for-undo", { showWait: false, showReject: true });
             resolve(msg);
           }
           // discard any other messages
@@ -974,6 +972,7 @@ class GatewayConn {
         }
       });
 
+      sabaki.events.emit("bugout-wait-for-undo", { showWait: true, showReject: false });
       this.webSocket.send(JSON.stringify(requestPayload));
     });
   }

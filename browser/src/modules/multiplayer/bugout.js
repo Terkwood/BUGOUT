@@ -98,12 +98,9 @@ const registerBoardSizeEvents = (app) => {
 };
 
 
-const registerUndoEvents = (app) => {
-  app.events.on("bugout-move-undone", event => {
-    app.onMoveUndone(event)
-  });
-  app.events.on("bugout-undo-rejected", event => {
-    app.onUndoRejected(event)
+const registerUndoEvent = (app) => {
+  app.events.on("bugout-move-undone", () => {
+    app.onMoveUndone();
   });
 }
 
@@ -254,7 +251,7 @@ const load = () => {
 
             registerReconnectEvents(app);
             registerBoardSizeEvents(app);
-            registerUndoEvents(app);
+            registerUndoEvent(app);
           }
         }, placeholderColor);
       }
