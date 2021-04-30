@@ -2,7 +2,7 @@
 
 We have packer files, some example bash scripts, you name it.
 
-## Getting started
+## Using packer to build the VM image
 
 You need to [install packer](https://learn.hashicorp.com/tutorials/packer/get-started-install-cli) on a local machine which will drive the deployment.
 
@@ -19,11 +19,25 @@ You should use the [gateway packer file](gateway-packer.json), as is. You do not
 
 You must create FCOS ignition file, as in [gateway-example.yaml](gateway-example.yaml).
 
-## Where is the most recent FCOS version shown?
+## Launching the instance
+
+You can use [launch.sh](launch.sh) to launch the instance. You need to have several env vars sourced to make it work:
+
+```sh
+TEMPLATE_ID=xyz \
+AMI_ID=abc \
+SUBNET_ID=def \
+AZ=availzone00wat \
+sh launch.sh
+```
+
+## Trivia
+
+### Where is the most recent FCOS version shown?
 
 [Look at their downloads page](https://getfedora.org/coreos/download).
 
-## Weird Trivia: Disable rpm-ostreed During Packer Build
+## Disable rpm-ostreed During Packer Build
 
 If you take a look [here](https://github.com/Terkwood/BUGOUT/pull/295) and [here](https://github.com/coreos/rpm-ostree/issues/1692#issuecomment-443215317) you'll find that the `systemctl stop rpm-ostreed` command in the packer.json files for gateway and kafka is necessary to prevent a transient error.
 
