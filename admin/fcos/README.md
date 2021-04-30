@@ -15,9 +15,21 @@ mkdir -p /path/to/bugout/dev/env-files
 
 You need a valid `vpc-id` and `subnet-id` for your AWS instance. Copy [set_vpc_subnet_env.example.sh](./set_vpc_subnet_env.example.sh) and fill in these values.
 
+### Packer config
+
 You should use the [gateway packer file](gateway-packer.json), as is. You do not need to make a copy of this file, but it will rely on your env variables (including AWS secrets!) to be set correctly. Usage of this packer file is demonstrated in [pack-example.sh](pack-example.sh).
 
-You must create FCOS ignition file, as in [gateway-example.yaml](gateway-example.yaml).
+### Create FCOS ignition file
+
+You must create FCOS ignition file, as in [gateway-example.yaml](gateway-example.yaml). This file requires your ssh pubkey to be pasted in.
+
+```sh
+sh fcct-transform.sh < gateway.yaml > gateway.ign
+```
+
+### Pack it
+
+You should create a `pack.sh` file which is derived from [pack-example.sh](pack-example.sh), and run it. This will create the VM image in AWS.
 
 ## Launching the instance
 
