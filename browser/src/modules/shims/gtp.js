@@ -10,7 +10,7 @@ const {
   IdleStatus,
   EntryMethod,
   emitReadyState,
-  Player,
+  Player
 } = require("../multiplayer/bugout");
 
 // for dev: host port 33012 should be mapped to container 3012
@@ -162,6 +162,10 @@ class WebSocketController extends EventEmitter {
     sabaki.events.on("resign", () => {
       this.gameId = null;
     });
+
+    sabaki.events.on("undo", ({ player }) => {
+      this.gatewayConn.undoMove(player);
+    })
 
     this.clientId = ClientId.fromStorage();
 
@@ -493,7 +497,8 @@ class WebSocketController extends EventEmitter {
 
     let playerUp = otherPlayer(opponent);
 
-    // In case white needs to dismiss its initial screen
+    // In case white needs to dismiss its initial screen,
+    // or we need to brighten the UNDO button during AI play
     sabaki.events.emit("they-moved", { playerUp });
 
     // - In case we need to show that the opponent passed
@@ -928,6 +933,39 @@ class GatewayConn {
 
       // We want to show the modal while we wait for a response from gateway
       this.handleWaitForOpponent({ gap: true, hasEvent: false });
+      this.webSocket.send(JSON.stringify(requestPayload));
+    });
+  }
+
+  async undoMove(player) {
+    return new Promise((resolve, reject) => {
+      let requestPayload = {
+        type: "UndoMove",
+        player,
+      };
+
+      this.webSocket.addEventListener("message", (event) => {
+        try {
+          let msg = JSON.parse(event.data);
+
+          if (msg.type === "MoveUndone") {
+            resolve(msg);
+            sabaki.events.emit("bugout-move-undone");
+            sabaki.events.emit("bugout-wait-for-undo", { showWait: false, showReject: false });
+          } else if (msg.type === "UndoRejected") {
+            sabaki.events.emit("bugout-wait-for-undo", { showWait: false, showReject: true });
+            resolve(msg);
+          }
+          // discard any other messages
+        } catch (err) {
+          console.log(
+            `Error processing websocket message: ${JSON.stringify(err)}`
+          );
+          reject();
+        }
+      });
+
+      sabaki.events.emit("bugout-wait-for-undo", { showWait: true, showReject: false });
       this.webSocket.send(JSON.stringify(requestPayload));
     });
   }

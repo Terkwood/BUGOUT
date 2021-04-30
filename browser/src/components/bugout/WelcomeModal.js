@@ -91,6 +91,7 @@ class WelcomeModal extends Component {
               {
                 accept: true,
                 onClick: () => {
+                  sabaki.events.emit("bugout-player-wants-bot"); // handled in wait for undo modal
                   this.setState({ showDialog: false });
                   update(EntryMethod.PLAY_BOT);
                 },

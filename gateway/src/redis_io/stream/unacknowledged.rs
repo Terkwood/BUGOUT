@@ -12,6 +12,8 @@ pub struct Unacknowledged {
     private_game_rejected: Vec<XReadEntryId>,
     colors_chosen: Vec<XReadEntryId>,
     bot_attached: Vec<XReadEntryId>,
+    move_undone: Vec<XReadEntryId>,
+    undo_rejected: Vec<XReadEntryId>,
 }
 
 const INIT_ACK_CAPACITY: usize = 25;
@@ -74,6 +76,22 @@ impl Unacknowledged {
                 self.bot_attached.clear();
             }
         }
+
+        if !self.move_undone.is_empty() {
+            if let Err(_) = stream.ack_move_undone(&self.move_undone) {
+                error!("ack move undone failed")
+            } else {
+                self.move_undone.clear();
+            }
+        }
+
+        if !self.undo_rejected.is_empty() {
+            if let Err(_) = stream.ack_undo_rejected(&self.undo_rejected) {
+                error!("ack undo rejected failed")
+            } else {
+                self.undo_rejected.clear();
+            }
+        }
     }
     pub fn push(&mut self, xid: XReadEntryId, event: StreamData) {
         match event {
@@ -85,6 +103,8 @@ impl Unacknowledged {
             StreamData::PrivGameRejected(_) => self.private_game_rejected.push(xid),
             StreamData::ColorsChosen(_) => self.colors_chosen.push(xid),
             StreamData::BotAttached(_) => self.bot_attached.push(xid),
+            StreamData::MoveUndone(_) => self.move_undone.push(xid),
+            StreamData::UndoRejected(_) => self.undo_rejected.push(xid),
         }
     }
 }
@@ -103,6 +123,8 @@ impl Default for Unacknowledged {
             private_game_rejected: nv(),
             colors_chosen: nv(),
             bot_attached: nv(),
+            move_undone: nv(),
+            undo_rejected: nv(),
         }
     }
 }

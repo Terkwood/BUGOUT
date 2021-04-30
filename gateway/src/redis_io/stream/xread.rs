@@ -30,16 +30,7 @@ pub type XReadResult = Vec<HashMap<String, Vec<HashMap<String, redis::Value>>>>;
 const CONSUMER_NAME: &str = "singleton";
 pub fn create_consumer_group(client: &redis::Client) {
     let mut conn = client.get_connection().expect("group create conn");
-    let to_create = vec![
-        topics::MOVE_MADE_TOPIC,
-        topics::HISTORY_PROVIDED_TOPIC,
-        topics::SYNC_REPLY_TOPIC,
-        topics::WAIT_FOR_OPPONENT_TOPIC,
-        topics::GAME_READY_TOPIC,
-        topics::PRIVATE_GAME_REJECTED_TOPIC,
-        topics::COLORS_CHOSEN_TOPIC,
-        topics::BOT_ATTACHED_TOPIC,
-    ];
+    let to_create = INPUT_TOPICS.to_vec();
     for topic in to_create {
         let created: Result<(), _> = conn.xgroup_create_mkstream(topic, GROUP_NAME, "$");
         if let Err(e) = created {
@@ -55,7 +46,7 @@ pub struct RedisXReader {
     pub client: Arc<redis::Client>,
 }
 
-const ALL_TOPICS: &[&str; 8] = &[
+const INPUT_TOPICS: &[&str; 10] = &[
     topics::BOT_ATTACHED_TOPIC,
     topics::MOVE_MADE_TOPIC,
     topics::HISTORY_PROVIDED_TOPIC,
@@ -64,9 +55,12 @@ const ALL_TOPICS: &[&str; 8] = &[
     topics::GAME_READY_TOPIC,
     topics::PRIVATE_GAME_REJECTED_TOPIC,
     topics::COLORS_CHOSEN_TOPIC,
+    topics::MOVE_UNDONE_TOPIC,
+    topics::UNDO_REJECTED_TOPIC,
 ];
+
 lazy_static! {
-    static ref AUTO_IDS: Vec<&'static str> = ALL_TOPICS.iter().map(|_| ">").collect();
+    static ref AUTO_IDS: Vec<&'static str> = INPUT_TOPICS.iter().map(|_| ">").collect();
 }
 
 const BLOCK_MS: usize = 5000;
@@ -78,7 +72,7 @@ impl XReader for RedisXReader {
                     .block(BLOCK_MS)
                     .group(GROUP_NAME, CONSUMER_NAME);
 
-                let ser: StreamReadReply = conn.xread_options(ALL_TOPICS, &AUTO_IDS, opts)?;
+                let ser: StreamReadReply = conn.xread_options(INPUT_TOPICS, &AUTO_IDS, opts)?;
 
                 let unsorted: HashMap<XReadEntryId, StreamData> = deser(ser)?;
                 let sorted_keys: Vec<XReadEntryId> = {
@@ -133,6 +127,12 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamData>, Stre
                             .ok(),
                         topics::COLORS_CHOSEN_TOPIC => bincode::deserialize(&data)
                             .map(|c| StreamData::ColorsChosen(c))
+                            .ok(),
+                        topics::MOVE_UNDONE_TOPIC => bincode::deserialize(&data)
+                            .map(|m| StreamData::MoveUndone(m))
+                            .ok(),
+                        topics::UNDO_REJECTED_TOPIC => bincode::deserialize(&data)
+                            .map(|u| StreamData::UndoRejected(u))
                             .ok(),
                         _ => {
                             error!("Unknown key {}", key);
