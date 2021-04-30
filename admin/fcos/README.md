@@ -6,9 +6,18 @@ We have packer files, some example bash scripts, you name it.
 
 You need to [install packer](https://learn.hashicorp.com/tutorials/packer/get-started-install-cli) on a local machine which will drive the deployment.
 
-You should create a directory like `/path/to/dev` which will contain implementations of the example scripts.
+You should create a directory which will contain implementations of the example scripts, and a directory where you can store `.env` files for each service:
 
-You need a valid `vpc-id` and `subnet-id` for your AWS instance.  Copy [set_vpc_subnet_env.example.sh](./set_vpc_subnet_env.example.sh) and fill in these values.
+```sh
+mkdir -p /path/to/bugout/dev
+mkdir -p /path/to/bugout/dev/env-files
+```
+
+You need a valid `vpc-id` and `subnet-id` for your AWS instance. Copy [set_vpc_subnet_env.example.sh](./set_vpc_subnet_env.example.sh) and fill in these values.
+
+You should use the [gateway packer file](gateway-packer.json), as is. You do not need to make a copy of this file, but it will rely on your env variables (including AWS secrets!) to be set correctly. Usage of this packer file is demonstrated in [pack-example.sh](pack-example.sh).
+
+You must create FCOS ignition file, as in [gateway-example.yaml](gateway-example.yaml).
 
 ## Where is the most recent FCOS version shown?
 
