@@ -9,3 +9,4 @@ export DOCKER_BUILDKIT=1
 /usr/bin/docker-compose build micro-color-chooser
 /usr/bin/docker-compose build micro-sync
 /usr/bin/docker-compose build botlink
+/usr/bin/docker-compose build undo

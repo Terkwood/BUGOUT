@@ -6,5 +6,6 @@ sh compose.sh build micro-changelog
 sh compose.sh build micro-game-lobby
 sh compose.sh build micro-color-chooser
 sh compose.sh build micro-sync
+sh compose.sh build undo
 sh compose.sh build botlink
 
