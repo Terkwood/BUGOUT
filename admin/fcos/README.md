@@ -2,6 +2,10 @@
 
 We have packer files, some example bash scripts, you name it.
 
+## Getting started
+
+You need to [install packer](https://learn.hashicorp.com/tutorials/packer/get-started-install-cli) on a local machine which will drive the deployment.
+
 ## Where is the most recent FCOS version shown?
 
 [Look at their downloads page](https://getfedora.org/coreos/download).
