@@ -6,6 +6,10 @@ We have packer files, some example bash scripts, you name it.
 
 You need to [install packer](https://learn.hashicorp.com/tutorials/packer/get-started-install-cli) on a local machine which will drive the deployment.
 
+You should create a directory like `/path/to/dev` which will contain implementations of the example scripts.
+
+You need a valid `vpc-id` and `subnet-id` for your AWS instance.  Copy [set_vpc_subnet_env.example.sh](./set_vpc_subnet_env.example.sh) and fill in these values.
+
 ## Where is the most recent FCOS version shown?
 
 [Look at their downloads page](https://getfedora.org/coreos/download).
