@@ -1,6 +1,10 @@
 # FCOS admin support
 
-We have packer files, some example bash scripts, you name it.
+This directory contains packer and Fedora CoreOS configurations and scripts.
+
+## Warning! FCOS should be replaced with Debian
+
+There's something [painfully broken](https://bugzilla.redhat.com/show_bug.cgi?id=1876194) in recent versions of FCOS. We plan to switch to Debian linux for the production docker host.
 
 ## Using packer to build the VM image
 
