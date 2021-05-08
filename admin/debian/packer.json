@@ -34,6 +34,18 @@
     {
       "type": "shell",
       "inline": [
+        "export DEBIAN_FRONTEND=noninteractive"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo apt update && sudo apt install -y git"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
         "git clone https://github.com/Terkwood/BUGOUT.git"
       ]
     },
