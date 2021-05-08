@@ -19,18 +19,7 @@
       "subnet_id": "{{user `subnet_id`}}",
       "secret_key": "{{user `aws_secret_key`}}",
       "user_data_file": "{{user `user_data_file`}}",
-      "source_ami_filter": {
-        "filters": {
-          "virtualization-type": "hvm",
-          "name": "ami-0adb6517915458bdb",
-          "root-device-type": "ebs"
-        },
-        "owners": [
-          "125523088429"
-        ],
-        "most_recent": true
-      },
-      "ssh_username": "TODO",
+      "source_ami": "ami-0adb6517915458bdb",
       "launch_block_device_mappings": [
         {
           "device_name": "/dev/xvda",
