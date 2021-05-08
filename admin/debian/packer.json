@@ -4,7 +4,6 @@
     "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
     "vpc_id": "{{env `VPC_ID`}}",
     "subnet_id": "{{env `SUBNET_ID`}}",
-    "user_data_file": "{{env `USER_DATA_FILE`}}",
     "dotenv_src": "{{env `DOTENV_SRC`}}",
     "region": "us-east-1"
   },
@@ -20,6 +19,7 @@
       "secret_key": "{{user `aws_secret_key`}}",
       "user_data_file": "{{user `user_data_file`}}",
       "source_ami": "ami-0adb6517915458bdb",
+      "ssh_username": "debian",
       "launch_block_device_mappings": [
         {
           "device_name": "/dev/xvda",
