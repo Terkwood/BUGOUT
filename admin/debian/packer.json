@@ -94,6 +94,21 @@
       ]
     },
     {
+      "type": "file",
+      "destination": "/etc/systemd/system",
+      "source": "bugout.service"
+    },
+    {
+      "type": "file",
+      "destination": "/etc/systemd/system",
+      "source": "config-redis.service"
+    },
+    {
+      "type": "file",
+      "destination": "/etc/systemd/system",
+      "source": "config-ulimit.service"
+    },
+    {
       "type": "shell",
       "inline": ["cd /home/admin/BUGOUT", 
         "git checkout admin/use-debian-for-cloud",
