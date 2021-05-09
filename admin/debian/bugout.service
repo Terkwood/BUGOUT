@@ -1,0 +1,10 @@
+[Unit]
+Description=BUGOUT
+After=docker.service
+Wants=docker.service
+
+[Service]
+ExecStart=/usr/bin/sh /home/admin/BUGOUT/admin/start-gateway-host.sh
+
+[Install]
+WantedBy=multi-user.target

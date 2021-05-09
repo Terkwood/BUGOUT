@@ -1,0 +1,8 @@
+[Unit]
+Description=Configures ulimit (useful for reverse-proxy)
+
+[Service]
+ExecStart=ulimit -n 8192
+
+[Install]
+WantedBy=multi-user.target
