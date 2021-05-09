@@ -3,6 +3,7 @@
     "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
     "vpc_id": "{{env `VPC_ID`}}",
+    "ssh_pubkey": "{{env `SSH_PUBKEY`}}",
     "subnet_id": "{{env `SUBNET_ID`}}",
     "dotenv_src": "{{env `DOTENV_SRC`}}",
     "region": "us-east-1"
@@ -34,13 +35,8 @@
     {
       "type": "shell",
       "inline": [
-        "mkdir -p /home/admin/.ssh"
+        "mkdir -p ~/.ssh && echo \"{{user `ssh_pubkey`}}\" > ~/.ssh/authorized_keys"
       ]
-    },
-    {
-      "type": "file",
-      "destination": "/home/admin/.ssh/authorized_keys",
-      "source": "~/.ssh/id_rsa.pub"
     },
     {
       "type": "shell",
