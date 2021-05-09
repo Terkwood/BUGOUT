@@ -2,6 +2,13 @@
 
 export COMPOSE_DOCKER_CLI_BUILD=1 
 export DOCKER_BUILDKIT=1
+#TODO
+#TODO
+#TODO
+git checkout admin/use-debian-for-cloud
+#TODO
+#TODO
+#TODO
 /usr/local/bin/docker-compose build gateway
 /usr/local/bin/docker-compose build micro-judge
 /usr/local/bin/docker-compose build micro-changelog
