@@ -3,7 +3,6 @@
     "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
     "vpc_id": "{{env `VPC_ID`}}",
-    "ssh_pubkey": "{{env `SSH_PUBKEY`}}",
     "subnet_id": "{{env `SUBNET_ID`}}",
     "dotenv_src": "{{env `DOTENV_SRC`}}",
     "region": "us-east-1"
@@ -35,8 +34,13 @@
     {
       "type": "shell",
       "inline": [
-        "mkdir -p ~/.ssh && echo \"{{user `ssh_pubkey`}}\" > ~/.ssh/authorized_keys"
+        "mkdir -p ~/.ssh"
       ]
+    },
+    {
+      "type": "file",
+      "destination": "/home/admin/.ssh/authorized_keys",
+      "source": "id_rsa.pub"
     },
     {
       "type": "shell",
@@ -44,7 +48,7 @@
     },
     {
       "type": "shell",
-      "inline": ["sudo apt update && sudo apt install -y git htop tmux"]
+      "inline": ["sudo apt-get update && sudo apt-get install -y git htop tmux"]
     },
     {
       "type": "shell",
@@ -95,24 +99,38 @@
     },
     {
       "type": "file",
-      "destination": "/etc/systemd/system",
+      "destination": "/tmp/",
       "source": "bugout.service"
     },
     {
       "type": "file",
-      "destination": "/etc/systemd/system",
+      "destination": "/tmp/",
       "source": "config-redis.service"
     },
     {
       "type": "file",
-      "destination": "/etc/systemd/system",
+      "destination": "/tmp/",
       "source": "config-ulimit.service"
     },
     {
       "type": "shell",
-      "inline": ["cd /home/admin/BUGOUT", 
+      "inline": [
+        "sudo mkdir -p /etc/systemd/system",
+        "sudo mv /tmp/bugout.service /etc/systemd/system/.",
+        "sudo mv /tmp/config-ulimit.service /etc/systemd/system/.",
+        "sudo mv /tmp/config-redis.service /etc/systemd/system/.",
+        "sudo systemctl enable bugout",
+        "sudo systemctl enable config-redis",
+        "sudo systemctl enable config-ulimit"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "cd /home/admin/BUGOUT",
         "git checkout admin/use-debian-for-cloud",
-        "sudo sh build-cloud.sh"]
+        "sudo sh build-cloud.sh"
+      ]
     }
   ]
 }
