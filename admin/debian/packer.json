@@ -40,33 +40,23 @@
     },
     {
       "type": "shell",
-      "inline": [
-        "export DEBIAN_FRONTEND=noninteractive"
-      ]
+      "inline": ["export DEBIAN_FRONTEND=noninteractive"]
     },
     {
       "type": "shell",
-      "inline": [
-        "sudo apt update && sudo apt install -y git"
-      ]
+      "inline": ["sudo apt update && sudo apt install -y git htop tmux"]
     },
     {
       "type": "shell",
-      "inline": [
-        "git clone https://github.com/Terkwood/BUGOUT.git"
-      ]
+      "inline": ["git clone https://github.com/Terkwood/BUGOUT.git"]
     },
     {
       "type": "shell",
-      "inline": [
-        "sudo mkdir -p /mnt/stateful_partition/BUGOUT/reverse-proxy"
-      ]
+      "inline": ["sudo mkdir -p /mnt/stateful_partition/BUGOUT/reverse-proxy"]
     },
     {
       "type": "shell",
-      "inline": [
-        "sudo mkdir -p /mnt/stateful_partition/BUGOUT/redis"
-      ]
+      "inline": ["sudo mkdir -p /mnt/stateful_partition/BUGOUT/redis"]
     },
     {
       "type": "shell",
@@ -76,37 +66,36 @@
     },
     {
       "type": "file",
-      "destination": "/home/core/BUGOUT/gateway/",
+      "destination": "/home/admin/BUGOUT/gateway/",
       "source": "{{user `dotenv_src`}}/gateway/.env"
     },
     {
       "type": "file",
-      "destination": "/home/core/BUGOUT/botlink/",
+      "destination": "/home/admin/BUGOUT/botlink/",
       "source": "{{user `dotenv_src`}}/botlink/.env"
     },
     {
       "type": "shell",
       "inline": [
-        "sudo systemctl stop rpm-ostreed",
-        "sudo rpm-ostree upgrade",
-        "sudo rpm-ostree install docker-compose",
-        "sudo rpm-ostree install htop",
-        "sudo rpm-ostree install tmux"
+        "sudo apt-get install  -y ca-certificates  curl gnupg lsb-release",
+        "curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg",
+        "echo \"deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
+        "sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io",
+        "sudo docker run hello-world",
+        "sudo systemctl enable docker.service",
+        "sudo systemctl enable containerd.service"
       ]
     },
     {
       "type": "shell",
       "inline": [
-        "sudo systemctl reboot"
-      ],
-      "expect_disconnect": true
+        "sudo curl -L --fail https://github.com/docker/compose/releases/download/1.29.1/run.sh -o /usr/local/bin/docker-compose",
+        "sudo chmod +x /usr/local/bin/docker-compose"
+      ]
     },
     {
       "type": "shell",
-      "inline": [
-        "cd /home/core/BUGOUT",
-        "sh build-fcos.sh"
-      ]
+      "inline": ["cd /home/admin/BUGOUT", "sudo sh build-cloud.sh"]
     }
   ]
 }
