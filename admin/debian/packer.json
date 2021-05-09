@@ -32,15 +32,16 @@
   ],
   "provisioners": [
     {
-      "type": "shell",
-      "inline": [
-        "mkdir -p ~/.ssh"
-      ]
+      "type": "file",
+      "destination": "/tmp/",
+      "source": "id_rsa.pub"
     },
     {
-      "type": "file",
-      "destination": "/home/admin/.ssh/authorized_keys",
-      "source": "id_rsa.pub"
+      "type": "shell",
+      "inline": [
+        "mkdir -p ~/.ssh",
+        "cat /tmp/id_rsa.pub >> ~/.ssh/authorized_keys"
+      ]
     },
     {
       "type": "shell",
