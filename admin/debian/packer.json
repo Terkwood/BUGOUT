@@ -95,7 +95,9 @@
     },
     {
       "type": "shell",
-      "inline": ["cd /home/admin/BUGOUT", "sudo sh build-cloud.sh"]
+      "inline": ["cd /home/admin/BUGOUT", 
+        "git checkout admin/use-debian-for-cloud",
+        "sudo sh build-cloud.sh"]
     }
   ]
 }
