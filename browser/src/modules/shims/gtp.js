@@ -504,6 +504,8 @@ class WebSocketController extends EventEmitter {
     // - In case we need to show that the opponent passed
     // - Also used by BugoutSync to delay sync requests after move
     sabaki.events.emit("bugout-move-made", msg);
+
+    this.removeMessageListener();
   }
 
   handleOpponentQuit(resolve) {
