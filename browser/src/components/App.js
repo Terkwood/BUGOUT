@@ -787,10 +787,13 @@ class App extends Component {
   onMoveUndone() {
     let { gameTrees, gameIndex, treePosition } = this.state;
     let tree = gameTrees[gameIndex];
+    console.error(`tree ${JSON.stringify(tree, 2)}`);
+    console.error(`remove treePosition ${treePosition}`);
     
     // Try going back two moves
     let thisMove = tree.get(treePosition);
     let oneMoveAgo = tree.get(thisMove.parentId);
+    console.error(`thisMove.parentId ${thisMove.parentId}`);
     
     // Update data
     let nextTreePosition = oneMoveAgo.parentId;
@@ -799,7 +802,9 @@ class App extends Component {
       draft.removeNode(thisMove.parentId);  // one move ago
     });
 
-    this.setCurrentTreePosition(newTree, nextTreePosition);
+    console.error(`new tree ${JSON.stringify(newTree, 2)}`);
+
+    this.setCurrentTreePosition(newTree, nextTreePosition, {clearCache: true});
   }
 
   // Navigation
