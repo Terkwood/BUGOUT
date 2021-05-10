@@ -50,12 +50,16 @@ fn validate_move(make_move: &MakeMove, game_state: &GameState) -> bool {
         }
     };
     let valid_coord = || {
-        coord_exists()
+        let coord_ok = coord_exists()
             && game_state
                 .board
                 .pieces
                 .get(&make_move.coord.unwrap())
-                .is_none()
+                .is_none();
+        if !coord_ok {
+            log::warn!("!! COORD IS NOT OK !!");
+        }
+        coord_ok
     };
     correct_player && (passing || valid_coord())
 }
