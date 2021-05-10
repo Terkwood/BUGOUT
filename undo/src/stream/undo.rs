@@ -34,7 +34,12 @@ fn reject(undo_move: &UndoMove, reg: &Components) -> Result<(), StreamAddErr> {
 }
 
 fn rollback(game_state: &GameState) -> GameState {
-    let moves = game_state.moves[0..(&game_state.moves.len() - 2)].to_vec();
+    let moves = {
+        let mut ms = game_state.moves.clone();
+        ms.pop();
+        ms.pop();
+        ms
+    };
     let board = compute_board(&moves, game_state.board.size);
     let captures = compute_captures(&moves);
 
