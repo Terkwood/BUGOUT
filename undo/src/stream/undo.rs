@@ -66,6 +66,10 @@ fn compute_board(moves: &[MoveMade], size: u16) -> Board {
         ..Default::default()
     };
     for m in moves.iter() {
+        for c in &m.captured {
+            out.pieces.remove(c);
+        }
+
         if let Some(coord) = m.coord {
             out.pieces.insert(coord, m.player);
         }
