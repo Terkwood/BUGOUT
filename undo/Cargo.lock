@@ -408,7 +408,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "undo"
-version = "0.1.1-a"
+version = "0.1.1"
 dependencies = [
  "bincode",
  "bot-model",
