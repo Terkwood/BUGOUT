@@ -125,6 +125,7 @@ fn update_game_state(
         orig.moves.push(move_acc.clone());
         orig
     })?;
+    info!("🐌 game state: {:?}", new_game_state.clone());
     game_states_repo::write(&game_id, &new_game_state, &components)?;
     Ok(new_game_state)
 }

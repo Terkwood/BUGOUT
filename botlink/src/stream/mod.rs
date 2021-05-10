@@ -95,6 +95,8 @@ fn process_game_state(game_state: &GameState, opts: &mut StreamOpts) {
     let game_id = &game_state.game_id;
     match opts.attachment_repo.get(&game_id, player_up) {
         Ok(Some(attachment)) => {
+            info!("🐌 game state: {:?}", game_state.clone());
+
             if let Err(e) = opts.compute_move_in.send(ComputeMove {
                 game_id: game_id.clone(),
                 game_state: game_state.clone(),

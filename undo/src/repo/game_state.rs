@@ -22,6 +22,7 @@ impl GameStateRepo for Rc<Client> {
     }
 
     fn put(&self, game_state: &GameState) -> Result<(), RepoErr> {
+        log::info!("🐌 game state: {:?}", game_state.clone());
         let mut conn = self.get_connection()?;
         let bytes = bincode::serialize(&game_state)?;
         conn.set(key(&game_state.game_id), bytes)?;
