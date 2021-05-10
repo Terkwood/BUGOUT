@@ -1,0 +1,8 @@
+[Unit]
+Description=Configure kernel for redis
+
+[Service]
+ExecStart=/usr/bin/sh /home/admin/BUGOUT/admin/config-redis.sh
+
+[Install]
+WantedBy=multi-user.target

@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cd /home/core/BUGOUT
+cd /home/admin/BUGOUT
 docker-compose down && docker-compose up -d

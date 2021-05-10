@@ -1,0 +1,136 @@
+{
+  "variables": {
+    "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+    "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+    "vpc_id": "{{env `VPC_ID`}}",
+    "subnet_id": "{{env `SUBNET_ID`}}",
+    "dotenv_src": "{{env `DOTENV_SRC`}}",
+    "region": "us-east-1"
+  },
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "access_key": "{{user `aws_access_key`}}",
+      "ami_name": "debian-bugout-{{timestamp}}",
+      "instance_type": "t3.xlarge",
+      "region": "{{user `region`}}",
+      "vpc_id": "{{user `vpc_id`}}",
+      "subnet_id": "{{user `subnet_id`}}",
+      "secret_key": "{{user `aws_secret_key`}}",
+      "user_data_file": "{{user `user_data_file`}}",
+      "source_ami": "ami-0adb6517915458bdb",
+      "ssh_username": "admin",
+      "launch_block_device_mappings": [
+        {
+          "device_name": "/dev/xvda",
+          "volume_size": 16,
+          "volume_type": "gp2",
+          "delete_on_termination": true
+        }
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "file",
+      "destination": "/tmp/",
+      "source": "id_rsa.pub"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "mkdir -p ~/.ssh",
+        "cat /tmp/id_rsa.pub >> ~/.ssh/authorized_keys"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": ["export DEBIAN_FRONTEND=noninteractive"]
+    },
+    {
+      "type": "shell",
+      "inline": ["sudo apt-get update && sudo apt-get install -y git htop tmux"]
+    },
+    {
+      "type": "shell",
+      "inline": ["git clone https://github.com/Terkwood/BUGOUT.git"]
+    },
+    {
+      "type": "shell",
+      "inline": ["sudo mkdir -p /mnt/stateful_partition/BUGOUT/reverse-proxy"]
+    },
+    {
+      "type": "shell",
+      "inline": ["sudo mkdir -p /mnt/stateful_partition/BUGOUT/redis"]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo cp BUGOUT/reverse-proxy/Caddyfile.example.prod /mnt/stateful_partition/BUGOUT/reverse-proxy/Caddyfile"
+      ]
+    },
+    {
+      "type": "file",
+      "destination": "/home/admin/BUGOUT/gateway/",
+      "source": "{{user `dotenv_src`}}/gateway/.env"
+    },
+    {
+      "type": "file",
+      "destination": "/home/admin/BUGOUT/botlink/",
+      "source": "{{user `dotenv_src`}}/botlink/.env"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo apt-get install  -y ca-certificates  curl gnupg lsb-release",
+        "curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg",
+        "echo \"deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
+        "sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io",
+        "sudo docker run hello-world",
+        "sudo systemctl enable docker.service",
+        "sudo systemctl enable containerd.service"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo curl -L --fail https://github.com/docker/compose/releases/download/1.29.1/run.sh -o /usr/local/bin/docker-compose",
+        "sudo chmod +x /usr/local/bin/docker-compose"
+      ]
+    },
+    {
+      "type": "file",
+      "destination": "/tmp/",
+      "source": "bugout.service"
+    },
+    {
+      "type": "file",
+      "destination": "/tmp/",
+      "source": "config-redis.service"
+    },
+    {
+      "type": "file",
+      "destination": "/tmp/",
+      "source": "config-ulimit.service"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo mkdir -p /etc/systemd/system",
+        "sudo mv /tmp/bugout.service /etc/systemd/system/.",
+        "sudo mv /tmp/config-ulimit.service /etc/systemd/system/.",
+        "sudo mv /tmp/config-redis.service /etc/systemd/system/.",
+        "sudo systemctl enable bugout",
+        "sudo systemctl enable config-redis",
+        "sudo systemctl enable config-ulimit"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "cd /home/admin/BUGOUT",
+        "sudo sh build-cloud.sh"
+      ]
+    }
+  ]
+}
