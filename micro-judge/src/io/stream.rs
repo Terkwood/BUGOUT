@@ -19,7 +19,7 @@ pub fn process(opts: StreamOpts) {
             for time_ordered_event in xread_result {
                 match time_ordered_event {
                     (entry_id, StreamData::MM(mm)) => {
-                        info!("Stream: Move Made {:?}", &mm);
+                        info!("Make Move {:?}", &mm);
                         let fetched_gs = opts.game_states_repo.fetch(&mm.game_id);
                         match fetched_gs {
                             Ok(Some(game_state)) => match judge(&mm, &game_state) {
