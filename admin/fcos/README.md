@@ -1,4 +1,6 @@
-# FCOS admin support
+# deprecated: FCOS admin support
+
+Use the [debian configuration](../debian) instead.
 
 This directory contains packer and Fedora CoreOS configurations and scripts.
 
