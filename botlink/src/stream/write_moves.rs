@@ -24,8 +24,6 @@ pub fn xadd_loop(
 
                         if let Err(e) = xadder.xadd_make_move_command(&command) {
                             error!("could not xadd move command : {:?}",e)
-                        } else {
-                            info!("🆗 {:?}", command)
                         }
                     } else {
                         error!("Could not fetch board size for {}", game_id.0)
