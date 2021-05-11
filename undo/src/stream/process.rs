@@ -2,7 +2,7 @@ use super::undo::consume_undo;
 use super::*;
 use crate::repo::Botness;
 use crate::Components;
-use log::{error, info};
+use log::error;
 use redis_streams::XReadEntryId;
 
 pub fn process(reg: &Components) {
