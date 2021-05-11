@@ -11,7 +11,7 @@ pub enum Judgement {
     Rejected,
 }
 pub fn judge(mm: &MakeMove, game_state: &GameState) -> Judgement {
-    info!("Judge {:?}", mm);
+    info!("Judge {:?} {:?} ", mm.player, mm.coord);
     if validate_move(mm, game_state) {
         let captured: Vec<Coord> = mm
             .coord
