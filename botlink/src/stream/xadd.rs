@@ -46,6 +46,7 @@ impl XAdder for Arc<Client> {
         }
     }
     fn xadd_make_move_command(&self, command: &MakeMove) -> Result<(), StreamAddError> {
+        info!("XADD MakeMove {:?}", command);
         match self.get_connection() {
             Ok(mut conn) => {
                 let mut redis_cmd = redis::cmd("XADD");
