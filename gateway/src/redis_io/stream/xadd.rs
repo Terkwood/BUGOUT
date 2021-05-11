@@ -53,6 +53,7 @@ impl XAddCommands for RedisXAddCommands {
         }
     }
     fn xadd_make_move(&self, command: MakeMoveCommand) {
+        log::info!("🚒 XADD MAKE MOVE {:?} {:?}", command.player, command.coord);
         if let Ok(mut conn) = self.client.get_connection() {
             let mut redis_cmd = redis::cmd("XADD");
             redis_cmd
