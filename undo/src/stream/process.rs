@@ -11,7 +11,6 @@ pub fn process(reg: &Components) {
         match reg.xread.xread_sorted() {
             Ok(xrr) => {
                 for (xid, data) in xrr {
-                    info!("🧮 Processing {:?}", &data);
                     consume(xid, &data, &reg);
                     unacked.push(xid, data);
                 }
