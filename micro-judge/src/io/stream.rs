@@ -10,7 +10,6 @@ use std::rc::Rc;
 
 use log::{error, info, warn};
 
-/// Spins too much.  See https://github.com/Terkwood/BUGOUT/issues/217
 pub fn process(opts: StreamOpts) {
     loop {
         if let Ok(xread_result) = read_sorted(&opts.topics, &opts.client) {
