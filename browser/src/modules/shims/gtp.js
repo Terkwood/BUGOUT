@@ -562,6 +562,7 @@ class WebSocketController extends EventEmitter {
 
         let payload = JSON.stringify(makeMove);
 
+        console.error(`🚒 MAKE MOVE ${makeMove.player} ${makeMove.coord}`);
         this.webSocket.send(payload);
 
         // Sync will be delayed as a result
