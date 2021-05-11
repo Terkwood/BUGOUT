@@ -43,7 +43,13 @@ pub fn process(opts: StreamOpts) {
                         mm_processed.push(entry_id);
                     }
                     (entry_id, StreamData::GS(game_state)) => {
-                        info!("🐌 game state: {:?}", game_state.clone());
+                        //info!("🐌 game state: {:?}", game_state.clone());
+                        info!(
+                            "🐌 game turn: {}, playerup: {:?}, moves: {}",
+                            game_state.turn,
+                            game_state.player_up,
+                            game_state.moves.len()
+                        );
                         if let Err(e) = &opts
                             .game_states_repo
                             .write(&game_state.game_id, &game_state)
