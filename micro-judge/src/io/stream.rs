@@ -10,6 +10,7 @@ use std::rc::Rc;
 
 use log::{error, info, warn};
 
+/// Spins too much.  See https://github.com/Terkwood/BUGOUT/issues/217
 pub fn process(opts: StreamOpts) {
     loop {
         if let Ok(xread_result) = read_sorted(&opts.topics, &opts.client) {
@@ -18,6 +19,7 @@ pub fn process(opts: StreamOpts) {
             for time_ordered_event in xread_result {
                 match time_ordered_event {
                     (entry_id, StreamData::MM(mm)) => {
+                        info!("Stream: Move Made {:?}", &mm);
                         let fetched_gs = opts.game_states_repo.fetch(&mm.game_id);
                         match fetched_gs {
                             Ok(Some(game_state)) => match judge(&mm, &game_state) {
@@ -29,7 +31,7 @@ pub fn process(opts: StreamOpts) {
                                     ) {
                                         error!("Error XADD to move_accepted {:?}", e)
                                     } else {
-                                        info!("👩‍⚖️ {:?} wrote to Move Accepted", &mm.game_id)
+                                        info!("👩‍⚖️ {:?} OK", &mm.game_id)
                                     }
                                 }
                                 Judgement::Rejected => warn!("MOVE REJECTED: {:#?}", mm),
@@ -41,13 +43,7 @@ pub fn process(opts: StreamOpts) {
                         mm_processed.push(entry_id);
                     }
                     (entry_id, StreamData::GS(game_state)) => {
-                        //info!("🐌 game state: {:?}", game_state.clone());
-                        info!(
-                            "🐌 game turn: {}, playerup: {:?}, moves: {}",
-                            game_state.turn,
-                            game_state.player_up,
-                            game_state.moves.len()
-                        );
+                        info!("Stream: Game State {:?}", &game_state.game_id);
                         if let Err(e) = &opts
                             .game_states_repo
                             .write(&game_state.game_id, &game_state)
@@ -56,6 +52,8 @@ pub fn process(opts: StreamOpts) {
                         }
 
                         gs_processed.push(entry_id);
+
+                        info!("💾 Game State Saved {:?}", &game_state.game_id);
                     }
                 }
             }

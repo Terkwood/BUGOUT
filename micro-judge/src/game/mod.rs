@@ -11,7 +11,7 @@ pub enum Judgement {
     Rejected,
 }
 pub fn judge(mm: &MakeMove, game_state: &GameState) -> Judgement {
-    info!("Judge {:?} {:?} ", mm.player, mm.coord);
+    info!("Judge {:?}", mm);
     if validate_move(mm, game_state) {
         let captured: Vec<Coord> = mm
             .coord
@@ -50,16 +50,12 @@ fn validate_move(make_move: &MakeMove, game_state: &GameState) -> bool {
         }
     };
     let valid_coord = || {
-        let coord_ok = coord_exists()
+        coord_exists()
             && game_state
                 .board
                 .pieces
                 .get(&make_move.coord.unwrap())
-                .is_none();
-        if !coord_ok {
-            log::warn!("!! COORD IS NOT OK !!");
-        }
-        coord_ok
+                .is_none()
     };
     correct_player && (passing || valid_coord())
 }
