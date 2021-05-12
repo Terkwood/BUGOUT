@@ -526,7 +526,6 @@ class WebSocketController extends EventEmitter {
       }
 
       if (command.name == "play") {
-        console.error("🔍 gtp sendCommand is 'play'");
         let player = letterToPlayer(command.args[0]);
         this.opponent = otherPlayer(player);
 
@@ -563,13 +562,11 @@ class WebSocketController extends EventEmitter {
 
         let payload = JSON.stringify(makeMove);
 
-        console.error(`🚒 MAKE MOVE ${JSON.stringify(makeMove.player)} ${JSON.stringify(makeMove.coord)}`);
         this.webSocket.send(payload);
 
         // Sync will be delayed as a result
         sabaki.events.emit("bugout-make-move");
       } else if (command.name === "genmove") {
-        console.error("🔍 gtp sendCommand is 'genmove'");
         let opponent = letterToPlayer(command.args[0]);
         this.opponent = opponent;
 

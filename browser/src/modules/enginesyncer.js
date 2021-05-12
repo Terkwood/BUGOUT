@@ -207,7 +207,6 @@ class EngineSyncer extends EventEmitter {
       if (coord == null) coord = "pass";
 
       try {
-        console.error("🔍 🎖️  enginesyncer enginePlay 🎖️ ");
         let { error } = await controller.sendCommand({
           name: "play",
           args: [color, coord],
@@ -248,7 +247,6 @@ class EngineSyncer extends EventEmitter {
 
         if (coords.length > 0) {
           moves.push({ sign: 1, vertices });
-          console.error("🤯🤯😡");
         
           promises.push(() =>
             controller
@@ -282,7 +280,6 @@ class EngineSyncer extends EventEmitter {
 
           moves.push({ sign, vertex });
           promises.push(() => enginePlay(sign, vertex));
-          console.error("🐊🐊🐊");
           engineBoard = engineBoard.makeMove(sign, vertex);
         }
       
@@ -304,8 +301,6 @@ class EngineSyncer extends EventEmitter {
         sharedHistoryLength = Math.min(this.state.moves.length, moves.length);
       let undoLength = this.state.moves.length - sharedHistoryLength;
 
-    
-      console.error("🤯 ");
       promises = [
         ...[...Array(undoLength)].map(() => () =>
           controller.sendCommand({ name: "undo" }).then((r) => !r.error)
@@ -313,8 +308,6 @@ class EngineSyncer extends EventEmitter {
         ...promises.slice(sharedHistoryLength),
       ];
        
-
-      console.error("🔍 how many promises? "+promises.length);
       let result = await Promise.all(promises.map((x) => x()));
       let success = result.every((x) => x);
       if (success) return;
@@ -334,8 +327,6 @@ class EngineSyncer extends EventEmitter {
 
       for (let vertex of diff) {
         let sign = board.get(vertex);
-
-        console.error("🤯🤯🍌");
         
         promises.push(() => enginePlay(sign, vertex));
         engineBoard = engineBoard.makeMove(board.get(vertex), vertex);
@@ -349,9 +340,6 @@ class EngineSyncer extends EventEmitter {
     }
 
     // Complete rearrangement
-
-    console.error("🤯🤯🐒");
-        
     promises = [() => controller.sendCommand({ name: "clear_board" })];
     engineBoard = new Board(board.width, board.height);
 
@@ -360,8 +348,6 @@ class EngineSyncer extends EventEmitter {
         let vertex = [x, y];
         let sign = board.get(vertex);
         if (sign === 0) continue;
-
-        console.error("🤯🤯🅏");
         
         promises.push(() => enginePlay(sign, vertex));
         engineBoard = engineBoard.makeMove(sign, vertex);

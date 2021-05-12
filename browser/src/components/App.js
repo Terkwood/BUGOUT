@@ -761,7 +761,6 @@ class App extends Component {
       let passPlayer = pass ? player : null;
       setTimeout(
         () => {
-          console.error("🔎 App: generateMove call timeout in makeMove");
           this.generateMove({ passPlayer })
         },
         setting.get("gtp.move_delay")
@@ -1201,7 +1200,6 @@ class App extends Component {
     this.setBusy(true);
 
     try {
-      console.error("🔍 app generateMove calls this.syncEngines()");
       await this.syncEngines({ showErrorDialog: false });
     } catch (err) {
       this.stopGeneratingMoves();
@@ -1225,7 +1223,6 @@ class App extends Component {
       : new Promise((resolve, reject) => {
           let interval = setting.get("board.analysis_interval").toString();
 
-          console.error("🚒 ⚰️ Time to fail? No.");
           playerSyncer.controller
             .sendCommand(
               { name: commandName, args: [color, interval] },
@@ -1283,7 +1280,6 @@ class App extends Component {
 
     if (followUp && otherSyncer != null && !doublePass) {
       await helper.wait(setting.get("gtp.move_delay"));
-      console.error("🔎 App: generateMove sub call for followUp");
       this.generateMove({
         passPlayer: pass ? sign : null,
         firstMove: false,
