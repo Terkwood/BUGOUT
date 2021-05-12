@@ -34,15 +34,22 @@ fn reject(undo_move: &UndoMove, reg: &Components) -> Result<(), StreamAddErr> {
 }
 
 fn rollback(game_state: &GameState) -> GameState {
-    let moves = game_state.moves[0..(&game_state.moves.len() - 2)].to_vec();
+    let moves = {
+        let mut ms = game_state.moves.clone();
+        ms.pop();
+        ms.pop();
+        ms
+    };
+    let board = compute_board(&moves, game_state.board.size);
+    let captures = compute_captures(&moves);
 
     GameState {
         game_id: game_state.game_id.clone(),
         turn: game_state.turn - 2,
         player_up: game_state.player_up,
         moves,
-        board: compute_board(&game_state.moves, game_state.board.size),
-        captures: compute_captures(&game_state.moves),
+        board,
+        captures,
     }
 }
 
@@ -64,6 +71,10 @@ fn compute_board(moves: &[MoveMade], size: u16) -> Board {
         ..Default::default()
     };
     for m in moves.iter() {
+        for c in &m.captured {
+            out.pieces.remove(c);
+        }
+
         if let Some(coord) = m.coord {
             out.pieces.insert(coord, m.player);
         }

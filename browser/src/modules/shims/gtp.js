@@ -504,6 +504,8 @@ class WebSocketController extends EventEmitter {
     // - In case we need to show that the opponent passed
     // - Also used by BugoutSync to delay sync requests after move
     sabaki.events.emit("bugout-move-made", msg);
+
+    this.removeMessageListener();
   }
 
   handleOpponentQuit(resolve) {
@@ -937,6 +939,19 @@ class GatewayConn {
     });
   }
 
+  removeUndoListener() {
+    this.undoListener &&
+      this.webSocket.removeEventListener("message", this.undoListener);
+  }
+
+  updateUndoListener(listener) {
+    if (listener) {
+      this.removeUndoListener();
+      this.undoListener = listener;
+      this.webSocket.addEventListener("message", listener);
+    }
+  }
+
   async undoMove(player) {
     return new Promise((resolve, reject) => {
       let requestPayload = {
@@ -944,16 +959,18 @@ class GatewayConn {
         player,
       };
 
-      this.webSocket.addEventListener("message", (event) => {
+      this.updateUndoListener((event) => {
         try {
           let msg = JSON.parse(event.data);
 
           if (msg.type === "MoveUndone") {
+            this.removeUndoListener();
             resolve(msg);
             sabaki.events.emit("bugout-move-undone");
             sabaki.events.emit("bugout-wait-for-undo", { showWait: false, showReject: false });
           } else if (msg.type === "UndoRejected") {
             sabaki.events.emit("bugout-wait-for-undo", { showWait: false, showReject: true });
+            this.removeUndoListener();
             resolve(msg);
           }
           // discard any other messages

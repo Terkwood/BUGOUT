@@ -3,7 +3,7 @@ use crate::repo::BoardSizeRepo;
 use bot_model::{api::MoveComputed, AlphaNumCoord};
 use core_model::ReqId;
 use crossbeam_channel::{select, Receiver};
-use log::{error, info};
+use log::error;
 use move_model::{Coord, MakeMove};
 use std::sync::Arc;
 use uuid::Uuid;
@@ -24,8 +24,6 @@ pub fn xadd_loop(
 
                         if let Err(e) = xadder.xadd_make_move_command(&command) {
                             error!("could not xadd move command : {:?}",e)
-                        } else {
-                            info!("🆗 {:?}", command)
                         }
                     } else {
                         error!("Could not fetch board size for {}", game_id.0)

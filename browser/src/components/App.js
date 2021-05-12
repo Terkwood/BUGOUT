@@ -1,4 +1,4 @@
-const EDITION = "Revisited";
+const EDITION = "Earl";
 
 const EventEmitter = require("events");
 const { ipcRenderer, remote } = require("electron");
@@ -787,7 +787,7 @@ class App extends Component {
   onMoveUndone() {
     let { gameTrees, gameIndex, treePosition } = this.state;
     let tree = gameTrees[gameIndex];
-    
+
     // Try going back two moves
     let thisMove = tree.get(treePosition);
     let oneMoveAgo = tree.get(thisMove.parentId);
@@ -795,6 +795,7 @@ class App extends Component {
     // Update data
     let nextTreePosition = oneMoveAgo.parentId;
     let newTree = tree.mutate((draft) => {
+      draft.removeNode(treePosition); // this move
       draft.removeNode(thisMove.parentId);  // one move ago
     });
 
@@ -836,7 +837,7 @@ class App extends Component {
 
     this.recordHistory({ prevGameIndex, prevTreePosition });
 
-    this.events.emit("navigate");
+    this.events.emit("navigate"); // trim this, nothing uses it
   }
 
   // 😇 BUGOUT trimmed 😇

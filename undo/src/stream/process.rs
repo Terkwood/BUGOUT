@@ -2,7 +2,7 @@ use super::undo::consume_undo;
 use super::*;
 use crate::repo::Botness;
 use crate::Components;
-use log::{error, info};
+use log::error;
 use redis_streams::XReadEntryId;
 
 pub fn process(reg: &Components) {
@@ -11,7 +11,6 @@ pub fn process(reg: &Components) {
         match reg.xread.xread_sorted() {
             Ok(xrr) => {
                 for (xid, data) in xrr {
-                    info!("🧮 Processing {:?}", &data);
                     consume(xid, &data, &reg);
                     unacked.push(xid, data);
                 }
