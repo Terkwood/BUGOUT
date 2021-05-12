@@ -640,7 +640,7 @@ dependencies = [
 
 [[package]]
 name = "gateway"
-version = "1.2.1-a"
+version = "1.2.0"
 dependencies = [
  "bincode",
  "bot-model",
