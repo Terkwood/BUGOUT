@@ -26,8 +26,6 @@ pub fn write(
     game_state: &GameState,
     components: &Components,
 ) -> Result<String, WriteErr> {
-    log::info!("🐌 game state: {:?}", game_state.clone());
-
     let mut conn = components.client.get_connection().expect("write conn");
 
     let key = components.redis_key_provider.game_states(game_id);
