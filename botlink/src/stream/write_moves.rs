@@ -3,7 +3,7 @@ use crate::repo::BoardSizeRepo;
 use bot_model::{api::MoveComputed, AlphaNumCoord};
 use core_model::ReqId;
 use crossbeam_channel::{select, Receiver};
-use log::{error, info};
+use log::error;
 use move_model::{Coord, MakeMove};
 use std::sync::Arc;
 use uuid::Uuid;
