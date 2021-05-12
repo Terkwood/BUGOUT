@@ -760,7 +760,10 @@ class App extends Component {
 
       let passPlayer = pass ? player : null;
       setTimeout(
-        () => this.generateMove({ passPlayer }),
+        () => {
+          console.error("🔎 App: generateMove call timeout in makeMove");
+          this.generateMove({ passPlayer })
+        },
         setting.get("gtp.move_delay")
       );
     }
@@ -799,12 +802,12 @@ class App extends Component {
       draft.removeNode(thisMove.parentId);  // one move ago
     });
 
-    this.setCurrentTreePosition(newTree, nextTreePosition, {clearCache: true});
+    this.setCurrentTreePosition(newTree, nextTreePosition);
   }
 
   // Navigation
 
-  setCurrentTreePosition(tree, id, { clearCache = false } = {}) {
+  setCurrentTreePosition(tree, id, { clearCache = false, undo = false } = {}) {
     if (clearCache) gametree.clearBoardCache();
 
     if (["scoring", "estimator"].includes(this.state.mode)) {
@@ -837,7 +840,7 @@ class App extends Component {
 
     this.recordHistory({ prevGameIndex, prevTreePosition });
 
-    this.events.emit("navigate");
+    this.events.emit("navigate"); // trim this, nothing uses it
   }
 
   // 😇 BUGOUT trimmed 😇
@@ -1198,6 +1201,7 @@ class App extends Component {
     this.setBusy(true);
 
     try {
+      console.error("🔍 app generateMove calls this.syncEngines()");
       await this.syncEngines({ showErrorDialog: false });
     } catch (err) {
       this.stopGeneratingMoves();
@@ -1221,6 +1225,7 @@ class App extends Component {
       : new Promise((resolve, reject) => {
           let interval = setting.get("board.analysis_interval").toString();
 
+          console.error("🚒 ⚰️ Time to fail? No.");
           playerSyncer.controller
             .sendCommand(
               { name: commandName, args: [color, interval] },
@@ -1278,6 +1283,7 @@ class App extends Component {
 
     if (followUp && otherSyncer != null && !doublePass) {
       await helper.wait(setting.get("gtp.move_delay"));
+      console.error("🔎 App: generateMove sub call for followUp");
       this.generateMove({
         passPlayer: pass ? sign : null,
         firstMove: false,
