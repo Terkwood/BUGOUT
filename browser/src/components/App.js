@@ -804,7 +804,7 @@ class App extends Component {
 
   // Navigation
 
-  setCurrentTreePosition(tree, id, { clearCache = false, undo = false } = {}) {
+  setCurrentTreePosition(tree, id, { clearCache = false } = {}) {
     if (clearCache) gametree.clearBoardCache();
 
     if (["scoring", "estimator"].includes(this.state.mode)) {
