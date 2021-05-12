@@ -146,7 +146,7 @@ fn process_game_state(game_state: &GameState, components: &Components) {
 }
 
 fn process_move_made(move_made: &MoveMade, components: &Components) {
-    info!("Move Made {:?}", move_made);
+    info!("Stream: Move Made {:?}", move_made);
     // Check ReplyOnMove repo to see if we have a req_sync associated with this
     // game_id & req_id combination.
     match components

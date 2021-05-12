@@ -68,7 +68,6 @@ impl XAdd for Rc<Client> {
     }
 
     fn add_make_move(&self, data: MakeMove) -> Result<(), XAddErr> {
-        log::info!("🚒 XADD MAKE MOVE");
         // See _clean_add_make_move to satisfy #363
         // and get rid of this complex data format
         if let Ok(mut conn) = self.get_connection() {
