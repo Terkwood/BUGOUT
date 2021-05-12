@@ -760,9 +760,7 @@ class App extends Component {
 
       let passPlayer = pass ? player : null;
       setTimeout(
-        () => {
-          this.generateMove({ passPlayer })
-        },
+        () => this.generateMove({ passPlayer }),
         setting.get("gtp.move_delay")
       );
     }
