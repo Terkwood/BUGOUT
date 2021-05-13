@@ -1,11 +1,11 @@
 use super::topics;
-use super::GROUP_NAME;
 use crate::Components;
 use log::error;
 use redis::Client;
 use redis_stream::consumer::{Consumer, ConsumerOpts, Message};
 
 const BLOCK_MS: usize = 5000;
+const GROUP_NAME: &str = "undo";
 const CONSUMER_NAME: &str = "singleton";
 
 pub fn init(client: &Client, _components: Components) {
@@ -15,7 +15,13 @@ pub fn init(client: &Client, _components: Components) {
             .timeout(BLOCK_MS)
     };
 
-    let game_states_handler = |_id: &str, _message: &Message| Ok(todo!());
+    let game_states_handler = |_id: &str, message: &Message| {
+        todo!("this is a hash of key -> Value");
+        todo!("so we still have to do some sorting to make this work");
+        todo!("bring back that sorting from the old impl. ");
+        todo!("the consumers simply drag out all the data , then we sort, then we need to work through ALL the heterogeneous messages across the various streams, _in time order_");
+        Ok(())
+    };
     let bot_attached_handler = |_id: &str, _message: &Message| Ok(todo!());
     let undo_move_handler = |_id: &str, _message: &Message| Ok(todo!());
 
@@ -47,5 +53,21 @@ pub fn init(client: &Client, _components: Components) {
         if let Err(e) = undo_move_consumer.consume() {
             error!("could not consume UNDO MOVE stream {:?}", e)
         }
+    }
+}
+
+use super::undo::consume_undo;
+use super::*;
+use crate::repo::Botness;
+
+fn consume_log(game_state: &GameState, reg: &Components) {
+    if let Err(e) = reg.game_state_repo.put(&game_state) {
+        error!("could not track game state: {:?}", e)
+    }
+}
+
+fn consume_bot_attached(ba: &BotAttached, reg: &Components) {
+    if let Err(e) = reg.botness_repo.put(&ba.game_id, ba.player, Botness::IsBot) {
+        error!("could not track bot attached: {:?}", e)
     }
 }
