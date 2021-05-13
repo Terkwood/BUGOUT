@@ -750,10 +750,6 @@ class App extends Component {
       }
     }
 
-    // Emit event
-
-    this.events.emit("moveMake", { pass, capture, suicide, ko, enterScoring });
-
     if (sendToEngine && this.attachedEngineSyncers.some((x) => x != null)) {
       // Send command to engine
 
