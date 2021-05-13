@@ -565,7 +565,7 @@ class App extends Component {
   clickVertex(vertex, { button = 0 } = {}) {
     this.closeDrawer();
 
-    let { gameTrees, gameIndex, gameCurrents, treePosition } = this.state;
+    let { gameTrees, gameIndex, treePosition } = this.state;
     let tree = gameTrees[gameIndex];
     let board = gametree.getBoard(tree, treePosition);
 
@@ -1175,7 +1175,7 @@ class App extends Component {
     let { gameTrees, gameIndex } = this.state;
     let { currentPlayer } = this.inferredState;
     let tree = gameTrees[gameIndex];
-    let [color, opponent] = currentPlayer > 0 ? ["B", "W"] : ["W", "B"];
+    let color = currentPlayer > 0 ? "B" : "W";
     let [playerIndex, otherIndex] = currentPlayer > 0 ? [0, 1] : [1, 0];
     let playerSyncer = this.attachedEngineSyncers[playerIndex];
     let otherSyncer = this.attachedEngineSyncers[otherIndex];
@@ -1287,8 +1287,6 @@ class App extends Component {
 
   stopGeneratingMoves() {
     if (!this.state.generatingMoves) return;
-
-    let t = i18n.context("app.engine");
 
     this.setState({ generatingMoves: false });
   }

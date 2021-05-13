@@ -217,7 +217,7 @@ class WebSocketController extends EventEmitter {
     });
     sabaki.events.on(
       "sync-server-ahead",
-      ({ type, replyTo, playerUp, turn, moves }) => {
+      ({ playerUp, moves }) => {
         sabaki.generateMove();
 
         let syncLastMove = moves[moves.length - 1];
