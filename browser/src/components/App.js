@@ -1,4 +1,4 @@
-const EDITION = "Earl";
+const EDITION = "Slim";
 
 const EventEmitter = require("events");
 const { ipcRenderer, remote } = require("electron");
@@ -490,7 +490,6 @@ class App extends Component {
 
     this.setBusy(false);
     this.window.setProgressBar(-1);
-    this.events.emit("fileLoad");
 
     if (gameTrees.length > 1) {
       await helper.wait(setting.get("gamechooser.show_delay"));
@@ -836,8 +835,6 @@ class App extends Component {
     });
 
     this.recordHistory({ prevGameIndex, prevTreePosition });
-
-    this.events.emit("navigate"); // trim this, nothing uses it
   }
 
   // 😇 BUGOUT trimmed 😇
