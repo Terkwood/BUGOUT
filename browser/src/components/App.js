@@ -1204,11 +1204,9 @@ class App extends Component {
     }
 
     let { commands } = this.attachedEngineSyncers[playerIndex];
-    let commandName = [
-      "genmove_analyze",
-      "lz-genmove_analyze",
-      "genmove",
-    ].find((x) => commands.includes(x));
+    let commandName = ["genmove_analyze", "genmove"].find((x) =>
+      commands.includes(x)
+    );
     if (commandName == null) commandName = "genmove";
 
     let responseContent = await (commandName === "genmove"
