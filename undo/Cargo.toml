@@ -13,7 +13,6 @@ log = "0.4.14"
 move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20e6620"}
 redis = {version = "0.20.0", features = ["r2d2"]}
 redis-stream = "0.1.2"
-redis_streams = {git = "https://github.com/Terkwood/BUGOUT", rev = "2ea71cd"}
 serde = "1.0.125"
 serde_derive = "1.0.125"
 undo-model = {path = "undo-model"}

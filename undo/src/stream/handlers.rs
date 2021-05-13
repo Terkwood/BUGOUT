@@ -5,8 +5,15 @@ use log::error;
 use redis::Client;
 use redis_stream::consumer::{Consumer, ConsumerOpts, Message};
 
+const BLOCK_MS: usize = 5000;
+const CONSUMER_NAME: &str = "singleton";
+
 pub fn init(client: &Client, _components: Components) {
-    let opts = || ConsumerOpts::default().group(GROUP_NAME, "singleton");
+    let opts = || {
+        ConsumerOpts::default()
+            .group(GROUP_NAME, CONSUMER_NAME)
+            .timeout(BLOCK_MS)
+    };
 
     let game_states_handler = |_id: &str, _message: &Message| Ok(todo!());
     let bot_attached_handler = |_id: &str, _message: &Message| Ok(todo!());
