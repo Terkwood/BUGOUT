@@ -23,13 +23,9 @@ class PlayBar extends Component {
     super();
     this.state = { showUndo: false, undoDisabled: true };
 
-    sabaki.events.on(
-      "bugout-player-wants-bot",
-      () => {
-        this.setState({ showUndo: true });
-      }
-    );
-
+    sabaki.events.on("bugout-player-wants-bot", () => {
+      this.setState({ showUndo: true });
+    });
 
     // listen for moves, so that we know when to dim the undo button
     sabaki.events.on("they-moved", () => {
@@ -38,7 +34,7 @@ class PlayBar extends Component {
         this.setState({ undoDisabled: false });
       }
     });
-    
+
     // human player moved
     sabaki.events.on("bugout-make-move", () => {
       let { showUndo } = this.state;
@@ -46,7 +42,6 @@ class PlayBar extends Component {
         this.setState({ undoDisabled: true });
       }
     });
-
 
     this.handlePassClick = () => {
       if (isPlayerTurn(sabaki.state.currentPlayer)) {
@@ -119,7 +114,7 @@ class PlayBar extends Component {
     return h(
       "a",
       {
-        class: "spacer-fake-button"
+        class: "spacer-fake-button",
       },
       h("button", {}, t("AAAA"))
     );
@@ -127,14 +122,16 @@ class PlayBar extends Component {
 
   renderUndo() {
     let { showUndo, undoDisabled } = this.state;
-    return showUndo ? h(
-      "a",
-      {
-        class: "undo-button",
-        onClick: this.handleUndoClick,
-      },
-      h("button", { disabled: undoDisabled }, t("UNDO"))
-    ) : this.renderSpacer();
+    return showUndo
+      ? h(
+          "a",
+          {
+            class: "undo-button",
+            onClick: this.handleUndoClick,
+          },
+          h("button", { disabled: undoDisabled }, t("UNDO"))
+        )
+      : this.renderSpacer();
   }
 
   render({
@@ -266,7 +263,7 @@ class PlayBar extends Component {
       ),
 
       this.renderSpacer(),
-      
+
       h(
         "a",
         {

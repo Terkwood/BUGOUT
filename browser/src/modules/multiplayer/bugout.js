@@ -97,12 +97,11 @@ const registerBoardSizeEvents = (app) => {
   app.events.on("bugout-game-ready", ({ boardSize }) => setSize(boardSize));
 };
 
-
 const registerUndoEvent = (app) => {
   app.events.on("bugout-move-undone", () => {
     app.onMoveUndone();
   });
-}
+};
 
 const registerReconnectEvents = (app) => {
   app.events.on("websocket-closed", () =>
@@ -161,7 +160,6 @@ const registerReconnectEvents = (app) => {
     );
   });
 };
-
 
 const emitReadyState = (ws, events) => {
   switch (ws.readyState) {

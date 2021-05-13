@@ -224,7 +224,7 @@ class EngineSyncer extends EventEmitter {
     let promises = [];
     let synced = true;
     let nodes = [...tree.listNodesVertically(id, -1, {})].reverse();
- 
+
     for (let node of nodes) {
       let nodeBoard = gametree.getBoard(tree, node.id);
       let placedHandicapStones = false;
@@ -247,7 +247,7 @@ class EngineSyncer extends EventEmitter {
 
         if (coords.length > 0) {
           moves.push({ sign: 1, vertices });
-        
+
           promises.push(() =>
             controller
               .sendCommand({ name: "set_free_handicap", args: coords })
@@ -255,7 +255,7 @@ class EngineSyncer extends EventEmitter {
           );
 
           for (let vertex of vertices) {
-            if (engineBoard.get(vertex) !== 0) continue; 
+            if (engineBoard.get(vertex) !== 0) continue;
             engineBoard = engineBoard.makeMove(1, vertex);
           }
 
@@ -272,7 +272,6 @@ class EngineSyncer extends EventEmitter {
           ...node.data[prop].map(sgf.parseCompressedVertices)
         );
 
-         
         for (let vertex of vertices) {
           if (engineBoard.hasVertex(vertex) && engineBoard.get(vertex) !== 0)
             continue;
@@ -282,7 +281,6 @@ class EngineSyncer extends EventEmitter {
           promises.push(() => enginePlay(sign, vertex));
           engineBoard = engineBoard.makeMove(sign, vertex);
         }
-      
       }
 
       if (engineBoard.getPositionHash() !== nodeBoard.getPositionHash()) {
@@ -290,7 +288,7 @@ class EngineSyncer extends EventEmitter {
         break;
       }
 
-      if (node.id === id)  break;
+      if (node.id === id) break;
     }
 
     if (synced) {
@@ -307,7 +305,7 @@ class EngineSyncer extends EventEmitter {
         ),
         ...promises.slice(sharedHistoryLength),
       ];
-       
+
       let result = await Promise.all(promises.map((x) => x()));
       let success = result.every((x) => x);
       if (success) return;
@@ -327,7 +325,7 @@ class EngineSyncer extends EventEmitter {
 
       for (let vertex of diff) {
         let sign = board.get(vertex);
-        
+
         promises.push(() => enginePlay(sign, vertex));
         engineBoard = engineBoard.makeMove(board.get(vertex), vertex);
       }
@@ -348,7 +346,7 @@ class EngineSyncer extends EventEmitter {
         let vertex = [x, y];
         let sign = board.get(vertex);
         if (sign === 0) continue;
-        
+
         promises.push(() => enginePlay(sign, vertex));
         engineBoard = engineBoard.makeMove(sign, vertex);
       }

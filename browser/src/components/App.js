@@ -790,12 +790,12 @@ class App extends Component {
     // Try going back two moves
     let thisMove = tree.get(treePosition);
     let oneMoveAgo = tree.get(thisMove.parentId);
-    
+
     // Update data
     let nextTreePosition = oneMoveAgo.parentId;
     let newTree = tree.mutate((draft) => {
       draft.removeNode(treePosition); // this move
-      draft.removeNode(thisMove.parentId);  // one move ago
+      draft.removeNode(thisMove.parentId); // one move ago
     });
 
     this.setCurrentTreePosition(newTree, nextTreePosition);
