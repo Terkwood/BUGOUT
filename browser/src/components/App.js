@@ -490,7 +490,6 @@ class App extends Component {
 
     this.setBusy(false);
     this.window.setProgressBar(-1);
-    this.events.emit("fileLoad");
 
     if (gameTrees.length > 1) {
       await helper.wait(setting.get("gamechooser.show_delay"));
