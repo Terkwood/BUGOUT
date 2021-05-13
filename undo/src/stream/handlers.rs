@@ -12,7 +12,7 @@ const GROUP_NAME: &str = "undo";
 const CONSUMER_NAME: &str = "singleton";
 const DATA_FIELD: &str = "data";
 
-pub fn init(client: &Client, _components: Components) {
+pub fn init(client: &Client, components: Components) {
   let opts = || {
     ConsumerOpts::default()
       .group(GROUP_NAME, CONSUMER_NAME)
@@ -96,16 +96,6 @@ pub fn init(client: &Client, _components: Components) {
     Consumer::init(&mut c3, topics::UNDO_MOVE, undo_move_handler, opts())
       .expect("undo move consumer init");
 
-  /*
-  let xrr = conn.xread_options(
-          &[UNDO_MOVE, BOT_ATTACHED, GAME_STATES_CHANGELOG],
-          &[READ_OP, READ_OP, READ_OP],
-          opts,
-      )?;
-      let unsorted = deser(xrr)?;
-
-  */
-
   loop {
     if let Err(e) = game_states_consumer.consume() {
       error!("could not consume game states stream {:?}", e)
@@ -120,20 +110,35 @@ pub fn init(client: &Client, _components: Components) {
     let mut u = unsorted.lock().expect("lock");
     let mut sorted_keys: Vec<XID> = u.keys().map(|k| *k).collect();
     sorted_keys.sort();
-    let mut answer = vec![];
+    let mut sorted_inputs = vec![];
     for sk in sorted_keys {
       if let Some(data) = u.get(&sk) {
-        answer.push((sk, data.clone()))
+        sorted_inputs.push(data.clone())
       }
     }
-
     u.clear();
+
+    for stream_input in sorted_inputs {
+      consume(&stream_input, &components)
+    }
   }
 }
 
 use super::undo::consume_undo;
 use super::*;
 use crate::repo::Botness;
+
+fn consume(event: &StreamInput, reg: &Components) {
+  match event {
+    StreamInput::LOG(game_state) => consume_log(game_state, reg),
+    StreamInput::BA(bot_attached) => consume_bot_attached(bot_attached, reg),
+    StreamInput::UM(undo_move) => {
+      if let Err(e) = consume_undo(undo_move, reg) {
+        error!("could not process undo move event {:?}", e)
+      }
+    }
+  }
+}
 
 fn consume_log(game_state: &GameState, reg: &Components) {
   if let Err(e) = reg.game_state_repo.put(&game_state) {
