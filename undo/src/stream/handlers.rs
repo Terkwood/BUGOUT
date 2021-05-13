@@ -3,10 +3,12 @@ use crate::Components;
 use log::error;
 use redis::Client;
 use redis_stream::consumer::{Consumer, ConsumerOpts, Message};
+use std::collections::HashMap;
 
 const BLOCK_MS: usize = 5000;
 const GROUP_NAME: &str = "undo";
 const CONSUMER_NAME: &str = "singleton";
+const DATA_ID: &str = "data";
 
 pub fn init(client: &Client, _components: Components) {
     let opts = || {
@@ -14,12 +16,23 @@ pub fn init(client: &Client, _components: Components) {
             .group(GROUP_NAME, CONSUMER_NAME)
             .timeout(BLOCK_MS)
     };
+    let mut unsorted: HashMap<String, StreamInput> = HashMap::new();
 
     let game_states_handler = |_id: &str, message: &Message| {
-        todo!("this is a hash of key -> Value");
-        todo!("so we still have to do some sorting to make this work");
-        todo!("bring back that sorting from the old impl. ");
-        todo!("the consumers simply drag out all the data , then we sort, then we need to work through ALL the heterogeneous messages across the various streams, _in time order_");
+        for (key, v) in message.iter() {
+            if key.trim().to_lowercase() == DATA_ID {
+                if let redis::Value::Data(bytes) = v {
+                    if let Some(stream_input) = bincode::deserialize(&bytes)
+                        .map(|gs| StreamInput::LOG(gs))
+                        .ok()
+                    {
+                        let k = key.clone();
+                        unsorted.insert(k, stream_input.clone());
+                    }
+                }
+            }
+        }
+
         Ok(())
     };
     let bot_attached_handler = |_id: &str, _message: &Message| Ok(todo!());
@@ -42,6 +55,23 @@ pub fn init(client: &Client, _components: Components) {
     let mut undo_move_consumer =
         Consumer::init(&mut c3, topics::UNDO_MOVE, undo_move_handler, opts())
             .expect("undo move consumer init");
+
+    /*
+    let xrr = conn.xread_options(
+            &[UNDO_MOVE, BOT_ATTACHED, GAME_STATES_CHANGELOG],
+            &[READ_OP, READ_OP, READ_OP],
+            opts,
+        )?;
+        let unsorted = deser(xrr)?;
+        let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
+        sorted_keys.sort();
+        let mut answer = vec![];
+        for sk in sorted_keys {
+            if let Some(data) = unsorted.get(&sk) {
+                answer.push((sk, data.clone()))
+            }
+        }
+    */
 
     loop {
         if let Err(e) = game_states_consumer.consume() {
