@@ -77,7 +77,7 @@ class EngineSyncer extends EventEmitter {
 
         this.busy = this.controller.busy;
 
-        if (!["lz-genmove_analyze", "genmove_analyze"].includes(command.name)) {
+        if (!["genmove_analyze"].includes(command.name)) {
           try {
             res = await getResponse();
             if (res.error) return;
