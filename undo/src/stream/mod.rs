@@ -1,4 +1,4 @@
-mod init;
+mod handlers;
 mod process;
 mod topics;
 mod undo;
@@ -6,7 +6,7 @@ mod xack;
 mod xadd;
 mod xread;
 
-pub use init::*;
+pub use handlers::init;
 pub use process::*;
 pub use xack::*;
 pub use xadd::*;

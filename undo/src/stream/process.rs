@@ -5,23 +5,6 @@ use crate::Components;
 use log::error;
 use redis_streams::XReadEntryId;
 
-pub fn process(reg: &Components) {
-    let mut unacked = Unacknowledged::default();
-    loop {
-        match reg.xread.xread_sorted() {
-            Ok(xrr) => {
-                for (xid, data) in xrr {
-                    consume(xid, &data, &reg);
-                    unacked.push(xid, data);
-                }
-            }
-            Err(e) => error!("Stream err {:?}", e),
-        }
-
-        unacked.ack_all(&reg)
-    }
-}
-
 fn consume(_xid: XReadEntryId, event: &StreamInput, reg: &Components) {
     match event {
         StreamInput::LOG(game_state) => consume_log(game_state, reg),

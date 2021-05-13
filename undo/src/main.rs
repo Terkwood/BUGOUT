@@ -8,6 +8,5 @@ fn main() {
     info!("🔢 {}", VERSION);
     let client = redis_client();
     let components = Components::new(client.clone());
-    stream::create_consumer_group(&client);
-    stream::process(&components)
+    stream::init(&client, components);
 }
