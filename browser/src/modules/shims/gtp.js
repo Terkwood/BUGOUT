@@ -10,7 +10,7 @@ const {
   IdleStatus,
   EntryMethod,
   emitReadyState,
-  Player
+  Player,
 } = require("../multiplayer/bugout");
 
 // for dev: host port 33012 should be mapped to container 3012
@@ -165,7 +165,7 @@ class WebSocketController extends EventEmitter {
 
     sabaki.events.on("undo", ({ player }) => {
       this.gatewayConn.undoMove(player);
-    })
+    });
 
     this.clientId = ClientId.fromStorage();
 
@@ -967,9 +967,15 @@ class GatewayConn {
             this.removeUndoListener();
             resolve(msg);
             sabaki.events.emit("bugout-move-undone");
-            sabaki.events.emit("bugout-wait-for-undo", { showWait: false, showReject: false });
+            sabaki.events.emit("bugout-wait-for-undo", {
+              showWait: false,
+              showReject: false,
+            });
           } else if (msg.type === "UndoRejected") {
-            sabaki.events.emit("bugout-wait-for-undo", { showWait: false, showReject: true });
+            sabaki.events.emit("bugout-wait-for-undo", {
+              showWait: false,
+              showReject: true,
+            });
             this.removeUndoListener();
             resolve(msg);
           }
@@ -982,7 +988,10 @@ class GatewayConn {
         }
       });
 
-      sabaki.events.emit("bugout-wait-for-undo", { showWait: true, showReject: false });
+      sabaki.events.emit("bugout-wait-for-undo", {
+        showWait: true,
+        showReject: false,
+      });
       this.webSocket.send(JSON.stringify(requestPayload));
     });
   }
