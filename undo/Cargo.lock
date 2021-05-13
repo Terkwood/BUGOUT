@@ -310,6 +310,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "redis_streams"
+version = "0.4.0"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=2ea71cd#2ea71cd657bb0922b7c5badd8523b7c0ac741b53"
+dependencies = [
+ "uuid",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -426,6 +434,7 @@ dependencies = [
  "move-model",
  "redis",
  "redis-stream",
+ "redis_streams",
  "serde",
  "serde_derive",
  "undo-model",
