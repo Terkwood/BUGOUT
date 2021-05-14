@@ -5,7 +5,8 @@ use redis::Client;
 use redis_stream::consumer::{Consumer, ConsumerOpts, Message};
 use redis_streams::XReadEntryId as XID;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::rc::Rc;
+use std::sync::Mutex;
 
 const BLOCK_MS: usize = 5000;
 const GROUP_NAME: &str = "undo";
@@ -18,7 +19,7 @@ pub fn init(client: &Client, components: Components) {
       .group(GROUP_NAME, CONSUMER_NAME)
       .timeout(BLOCK_MS)
   };
-  let unsorted: Arc<Mutex<HashMap<XID, StreamInput>>> = Arc::new(Mutex::new(HashMap::new()));
+  let unsorted: Rc<Mutex<HashMap<XID, StreamInput>>> = Rc::new(Mutex::new(HashMap::new()));
 
   let game_states_handler = |id: &str, message: &Message| {
     for (field, v) in message.iter() {
