@@ -18,8 +18,6 @@ where
     pub group: Group,
     pub handled_messages: u32,
     pub handler: F,
-    pub next_pos: String,
-    pub process_pending: bool,
     pub redis: &'a mut Connection,
     pub stream: String,
     pub timeout: usize,
@@ -74,8 +72,6 @@ pub struct ConsumerGroupOpts {
     pub count: Option<usize>,
     pub create_stream_if_not_exists: bool,
     pub group: Group,
-    pub process_pending: bool,
-    pub start_pos: StartPosition,
     pub timeout_ms: usize,
 }
 
@@ -85,8 +81,6 @@ impl ConsumerGroupOpts {
             count: None,
             create_stream_if_not_exists: true,
             group,
-            process_pending: true,
-            start_pos: StartPosition::EndOfStream,
             timeout_ms: 5_000,
         }
     }
@@ -110,19 +104,6 @@ impl ConsumerGroupOpts {
             group_name: group_name.to_string(),
             consumer_name: consumer_name.to_string(),
         };
-        self
-    }
-
-    /// Start by processing pending messages before switching to real time data
-    /// (default: `true`)
-    pub fn process_pending(mut self, process_pending: bool) -> Self {
-        self.process_pending = process_pending;
-        self
-    }
-
-    /// Where to start reading messages in the stream.
-    pub fn start_pos(mut self, start_pos: StartPosition) -> Self {
-        self.start_pos = start_pos;
         self
     }
 
