@@ -1,4 +1,5 @@
 pub mod consumer_group;
+pub mod sorted_streams;
 
 #[derive(Debug, Copy, Clone, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct XReadEntryId {
