@@ -42,8 +42,7 @@ where
     /// Process a message by calling the handler, returning the same XId
     /// passed to the handler.
     fn handle_message(&mut self, xid: XId, message: &Message) -> Result<XId> {
-        // Call handler
-        (self.handler)(xid, message)?;
+        (self.handler)(xid, message)?; // Call handler
         self.handled_messages += 1;
         Ok(xid)
     }
