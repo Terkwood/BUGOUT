@@ -33,16 +33,16 @@ where
         let stream_names: Vec<String> =
             self.handlers.iter().map(|h| h.stream.to_string()).collect();
         let read_ops: Vec<String> = stream_names.iter().map(|_| READ_OP.to_string()).collect();
-        
+
         let _xrr: StreamReadReply = self.redis.xread_options(&stream_names, &read_ops, opts)?;
 
         for _consumer_group in &self.handlers {
             todo!()
         }
 
-        for ((stream, group), xids) in unacked.0 {
+        for (stream, xids) in unacked.0 {
             let ids: Vec<String> = xids.iter().map(|xid| xid.to_string()).collect();
-            self.redis.xack(&stream, &group.group_name, &ids)?
+            self.redis.xack(&stream, &self.group.group_name, &ids)?
         }
 
         Ok(())
@@ -50,7 +50,7 @@ where
 }
 
 /// Track unacknowledged messages by stream name
-struct Unacknowledged(pub HashMap<(String, Group), Vec<XId>>);
+struct Unacknowledged(pub HashMap<String, Vec<XId>>);
 impl Default for Unacknowledged {
     fn default() -> Self {
         Self(HashMap::new())
