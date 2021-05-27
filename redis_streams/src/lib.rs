@@ -1,4 +1,4 @@
-pub mod consumer;
+pub mod consumer_group;
 
 #[derive(Debug, Copy, Clone, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct XReadEntryId {
