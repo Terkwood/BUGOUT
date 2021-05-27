@@ -1,4 +1,4 @@
-pub mod consumer_group;
+pub mod stream_handler;
 pub mod sorted_streams;
 
 #[derive(Debug, Copy, Clone, Eq, Ord, PartialEq, PartialOrd, Hash)]

@@ -8,22 +8,21 @@ use std::collections::HashMap;
 
 /// Handles connection to Redis and consumes messages from an individual stream.
 /// Uses XREADGROUP only, never XREAD.
-pub struct ConsumerGroup<F>
+pub struct StreamHandler<F>
 where
     F: FnMut(XId, &Message) -> Result<()>,
 {
     pub count: Option<usize>,
-    pub group: Group,
     pub handled_messages: u32,
     pub handler: F,
     pub stream: String,
 }
 
-impl<F> ConsumerGroup<F>
+impl<F> StreamHandler<F>
 where
     F: FnMut(XId, &Message) -> Result<()>,
 {
-    /// Initializes a new `stream::Consumer` and returns a ConsumerGroup struct.
+    /// Calls xgroup_create_mkstream on the given stream name and returns this struct.
     pub fn init(
         stream: &str,
         handler: F,
@@ -31,9 +30,8 @@ where
         redis: &mut Connection,
     ) -> Result<Self> {
         redis.xgroup_create_mkstream(stream, &opts.group.group_name, "$")?;
-        Ok(ConsumerGroup {
+        Ok(StreamHandler {
             count: opts.count,
-            group: opts.group,
             handled_messages: 0,
             stream: stream.to_string(),
             handler,
