@@ -30,10 +30,10 @@ where
 {
     /// Initializes a new `stream::Consumer`.
     pub fn init(
-        redis: &'a mut Connection,
-        stream: &str,
-        handler: F,
-        opts: ConsumerGroupOpts,
+        _redis: &'a mut Connection,
+        _stream: &str,
+        _handler: F,
+        _opts: ConsumerGroupOpts,
     ) -> Result<Self> {
         todo!()
     }
@@ -59,7 +59,7 @@ pub struct ConsumerGroupOpts {
     pub group: Group,
     pub process_pending: bool,
     pub start_pos: StartPosition,
-    pub timeout: usize,
+    pub timeout_ms: usize,
 }
 
 impl ConsumerGroupOpts {
@@ -70,7 +70,7 @@ impl ConsumerGroupOpts {
             group,
             process_pending: true,
             start_pos: StartPosition::EndOfStream,
-            timeout: 2_000,
+            timeout_ms: 5_000,
         }
     }
 
@@ -110,8 +110,8 @@ impl ConsumerGroupOpts {
     }
 
     /// Maximum ms duration to block waiting for messages.
-    pub fn timeout(mut self, timeout: usize) -> Self {
-        self.timeout = timeout;
+    pub fn timeout(mut self, timeout_ms: usize) -> Self {
+        self.timeout_ms = timeout_ms;
         self
     }
 }
