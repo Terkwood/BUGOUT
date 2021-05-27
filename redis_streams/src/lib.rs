@@ -1,3 +1,5 @@
+pub mod consumer;
+
 #[derive(Debug, Copy, Clone, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct XReadEntryId {
     pub millis_time: u64,
