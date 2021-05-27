@@ -12,7 +12,7 @@ where
     F: FnMut(&str, &Message) -> Result<()>,
 {
     pub count: Option<usize>,
-    pub group: Option<(String, String)>,
+    pub group: (String, String),
     pub handled_messages: u32,
     pub handler: F,
     pub next_pos: String,
