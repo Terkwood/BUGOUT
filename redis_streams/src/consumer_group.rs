@@ -1,5 +1,6 @@
 //! Defines consumer groups and streaming logic.
 
+use super::XId;
 use anyhow::{Context, Result};
 use redis::streams::{StreamReadOptions, StreamReadReply};
 use redis::{Commands, Connection, RedisResult, Value};
@@ -11,10 +12,10 @@ pub type Message = HashMap<String, Value>;
 /// Uses XREADGROUP only, never XREAD.
 pub struct ConsumerGroup<'a, F>
 where
-    F: FnMut(&str, &Message) -> Result<()>,
+    F: FnMut(XId, &Message) -> Result<()>,
 {
     pub count: Option<usize>,
-    pub group: (String, String),
+    pub group: Group,
     pub handled_messages: u32,
     pub handler: F,
     pub next_pos: String,
@@ -26,7 +27,7 @@ where
 
 impl<'a, F> ConsumerGroup<'a, F>
 where
-    F: FnMut(&str, &Message) -> Result<()>,
+    F: FnMut(XId, &Message) -> Result<()>,
 {
     /// Initializes a new `stream::Consumer`.
     pub fn init(
@@ -36,6 +37,23 @@ where
         _opts: ConsumerGroupOpts,
     ) -> Result<Self> {
         todo!()
+    }
+
+    /// Process a message by calling the handler, returning the same XId
+    /// passed to the handler.
+    fn handle_message(&mut self, xid: XId, message: &Message) -> Result<XId> {
+        // Call handler
+        (self.handler)(xid, message)?;
+        self.handled_messages += 1;
+        Ok(xid)
+    }
+
+    /// Acknowledge messages by ID
+    fn ack_messages(&mut self, xids: &[XId]) -> Result<()> {
+        let ids: Vec<String> = xids.iter().map(|xid| xid.to_string()).collect();
+        Ok(self
+            .redis
+            .xack(&self.stream, &self.group.group_name, &ids)?)
     }
 }
 

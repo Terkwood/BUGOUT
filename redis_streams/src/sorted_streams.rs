@@ -1,4 +1,4 @@
-use crate::consumer_group::{ConsumerGroup, Message};
+use crate::{XId, consumer_group::{ConsumerGroup, Message}};
 use anyhow::{Context, Result};
 
 trait SortedStreams {
@@ -7,7 +7,7 @@ trait SortedStreams {
 
 impl<'a, F> SortedStreams for Vec<ConsumerGroup<'a, F>>
 where
-    F: FnMut(&str, &Message) -> Result<()>,
+    F: FnMut(XId, &Message) -> Result<()>,
 {
     fn consume(&self) -> Result<()> {
         for _consumer_group in self {
