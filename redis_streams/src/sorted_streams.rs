@@ -13,7 +13,7 @@ pub struct SortedStreams<'a, F>
 where
     F: FnMut(XId, &Message) -> Result<()>,
 {
-    pub handlers: Vec<StreamHandler<F>>,
+    pub handlers: HashMap<String, StreamHandler<F>>,
     pub group: Group,
     pub timeout: usize,
     pub redis: &'a mut Connection,
@@ -24,14 +24,14 @@ impl<'a, F> SortedStreams<'a, F>
 where
     F: FnMut(XId, &Message) -> Result<()>,
 {
-    /// "xreadgroup >" across streams, handle all the messages in time order, and acknowledge them all
+    /// "XREADGROUP >" across streams, handle all the messages in time order,
+    /// and acknowledge them all
     pub fn consume(&mut self) -> Result<()> {
         let unacked = Unacknowledged::default();
         let opts = StreamReadOptions::default()
             .block(self.timeout)
             .group(&self.group.group_name, &self.group.consumer_name);
-        let stream_names: Vec<String> =
-            self.handlers.iter().map(|h| h.stream.to_string()).collect();
+        let stream_names: Vec<String> = self.handlers.keys().cloned().collect();
         let read_ops: Vec<String> = stream_names.iter().map(|_| READ_OP.to_string()).collect();
 
         let _xrr: StreamReadReply = self.redis.xread_options(&stream_names, &read_ops, opts)?;
