@@ -20,6 +20,7 @@ where
 }
 
 const READ_OP: &str = ">";
+
 struct StreamMessage(pub String, pub Message);
 impl<'a, F> SortedStreams<'a, F>
 where
@@ -36,19 +37,22 @@ where
         let read_ops: Vec<String> = stream_names.iter().map(|_| READ_OP.to_string()).collect();
 
         let xrr: StreamReadReply = self.redis.xread_options(&stream_names, &read_ops, opts)?;
-        let mut by_time: HashMap<XId, StreamMessage> = HashMap::new();
+        let mut by_time: Vec<(XId, StreamMessage)> = Vec::with_capacity(50);
 
         for k in xrr.keys {
             let key = k.key;
             for x in k.ids {
                 if let Ok(xid) = XId::from_str(&x.id) {
-                    by_time.insert(xid, StreamMessage(key.clone(), x.map));
+                    by_time.push((xid, StreamMessage(key.clone(), x.map)));
                 }
-                todo!("ANYTHING ELSE ?!")
             }
         }
 
-        todo!("sort etc");
+        by_time.sort_by_key(|t| t.0);
+
+        for (xid, StreamMessage(stream, message)) in by_time {
+            todo!("handle -- think about casing")
+        }
 
         for (stream, xids) in unacked.0 {
             let ids: Vec<String> = xids.iter().map(|xid| xid.to_string()).collect();
