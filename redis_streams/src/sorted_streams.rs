@@ -20,6 +20,7 @@ where
 }
 
 const READ_OP: &str = ">";
+struct StreamMessage(pub String, pub Message);
 impl<'a, F> SortedStreams<'a, F>
 where
     F: FnMut(XId, &Message) -> Result<()>,
@@ -34,11 +35,20 @@ where
         let stream_names: Vec<String> = self.handlers.keys().cloned().collect();
         let read_ops: Vec<String> = stream_names.iter().map(|_| READ_OP.to_string()).collect();
 
-        let _xrr: StreamReadReply = self.redis.xread_options(&stream_names, &read_ops, opts)?;
+        let xrr: StreamReadReply = self.redis.xread_options(&stream_names, &read_ops, opts)?;
+        let mut by_time: HashMap<XId, StreamMessage> = HashMap::new();
 
-        for _consumer_group in &self.handlers {
-            todo!()
+        for k in xrr.keys {
+            let key = k.key;
+            for x in k.ids {
+                if let Ok(xid) = XId::from_str(&x.id) {
+                    by_time.insert(xid, StreamMessage(key.clone(), x.map));
+                }
+                todo!("ANYTHING ELSE ?!")
+            }
         }
+
+        todo!("sort etc");
 
         for (stream, xids) in unacked.0 {
             let ids: Vec<String> = xids.iter().map(|xid| xid.to_string()).collect();
