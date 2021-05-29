@@ -1,7 +1,5 @@
-mod init;
 mod xadd;
 
-pub use init::*;
 use redis_streams::ConsumerGroupOpts;
 use redis_streams::SortedStreams;
 pub use xadd::*;
