@@ -17,7 +17,7 @@ fn main() {
     let stream_handlers: Vec<(&str, Box<dyn FnMut(XId, &Message) -> anyhow::Result<()>>)> = vec![
         (
             topics::FIND_PUBLIC_GAME,
-            Box::new(|_xid, msg| Ok(lobby.consume_fpg(msg))),
+            Box::new(|_xid, msg| lobby.consume_fpg(msg)),
         ),
         (
             topics::JOIN_PRIVATE_GAME,

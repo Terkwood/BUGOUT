@@ -72,10 +72,10 @@ fn deser(srr: StreamReadReply) -> Result<HashMap<XReadEntryId, StreamInput>, XRe
         let key = k.key;
         for e in k.ids {
             if let Ok(eid) = XReadEntryId::from_str(&e.id) {
-                let maybe_data: Option<Vec<u8>> = e.get("data");
+                
                 if let Some(data) = maybe_data {
                     let sd: Option<StreamInput> = if key == FIND_PUBLIC_GAME {
-                        bincode::deserialize(&data)
+                        
                             .map(|fpg| StreamInput::FPG(fpg))
                             .ok()
                     } else if key == CREATE_GAME {
