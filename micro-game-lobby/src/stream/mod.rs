@@ -259,9 +259,9 @@ mod test {
                 game_lobby_repo: Box::new(FakeGameLobbyRepo { contents: fgl }),
                 xadd: Box::new(FakeXAdd(xadd_in)),
             };
-            let fake_sorted_streams = FakeSortedStreams;
-            let lobby_streams = LobbyStreams::new(components, todo!());
-            lobby_streams.process();
+            let mut fake_sorted_streams = FakeSortedStreams;
+            let mut lobby_streams = LobbyStreams::new(components);
+            lobby_streams.process(&mut fake_sorted_streams);
         });
 
         // emit some events

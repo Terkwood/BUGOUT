@@ -19,7 +19,7 @@ fn main() {
     let mut conn = client.get_connection().expect("redis conn");
     let stream_handlers: Vec<(&str, Box<dyn FnMut(XId, &Message) -> anyhow::Result<()>>)> = vec![
         (
-            "some-stream",
+            topics::FIND_PUBLIC_GAME,
             Box::new(|xid, msg| Ok(lobby_streams.consume_fpg(msg))),
         ),
         ("another-stream", todo!()),
