@@ -9,5 +9,6 @@ fn main() {
     let client = redis_client();
     let components = Components::new(client.clone());
     stream::create_consumer_group(&client);
-    stream::process(&components)
+    let mut lobby_streams = stream::LobbyStreams::new(components, client);
+    lobby_streams.process()
 }

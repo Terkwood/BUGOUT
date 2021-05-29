@@ -2,6 +2,7 @@ mod init;
 mod xadd;
 
 pub use init::*;
+use redis_streams::SortedStreams;
 pub use xadd::*;
 
 use crate::components::Components;
@@ -32,66 +33,86 @@ pub enum StreamOutput {
     LOG(GameState),
 }
 
-pub fn process(reg: &Components) {
-    loop {
-        todo!("generic consumer")
-        /*
-        match todo!("was xread sorted") {
-            Ok(xrr) => {
-                for (xid, data) in xrr {
-                    info!("🧮 Processing {:?}", &data);
-                    consume(xid, &data, &reg);
-                }
-            }
-            Err(e) => error!("Stream err {:?}", e),
-        }*/
-    }
+pub struct LobbyStreams {
+    pub reg: Components,
+    pub sorted_streams: Box<dyn SortedStreams>,
 }
 
-fn consume(_eid: XId, event: &StreamInput, reg: &Components) {
-    match event {
-        StreamInput::FPG(fpg) => consume_fpg(fpg, reg),
-        StreamInput::CG(cg) => consume_cg(cg, reg),
-        StreamInput::JPG(jpg) => consume_jpg(jpg, reg),
-        StreamInput::SD(sd) => consume_sd(sd, reg),
-    }
-}
+use redis_streams::{anyhow, Message, RedisSortedStreams};
+use std::rc::Rc;
+impl LobbyStreams {
+    pub fn new(reg: Components, client: Rc<redis::Client>) -> Self {
+        let mut conn = client.get_connection().expect("redis conn");
+        let stream_handlers: Vec<(&str, Box<dyn FnMut(XId, &Message) -> anyhow::Result<()>>)> = vec![
+            ("some-stream", todo!()),
+            ("another-stream", todo!()),
+            ("fix-the-names", todo!()),
+        ];
+        let sorted_streams = Box::new(
+            RedisSortedStreams::xgroup_create_mkstreams(stream_handlers, todo!("opts"), &mut conn)
+                .expect("stream creation"),
+        );
 
-fn consume_fpg(fpg: &FindPublicGame, reg: &Components) {
-    let visibility = Visibility::Public;
-    let session_id = &fpg.session_id;
-    if let Ok(lobby) = reg.game_lobby_repo.get() {
-        if let Some(queued) = lobby
-            .games
-            .iter()
-            .find(|g| g.visibility == Visibility::Public)
-        {
-            ready_game(session_id, &lobby, queued, reg)
-        } else {
-            let game_id = GameId::new();
-            let updated: GameLobby = lobby.open(Game {
-                board_size: PUBLIC_GAME_BOARD_SIZE,
-                creator: session_id.clone(),
-                visibility,
-                game_id: game_id.clone(),
-            });
-            if let Err(_) = reg.game_lobby_repo.put(&updated) {
-                error!("game lobby write F2");
-            } else {
-                if let Err(_) = reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
-                    event_id: EventId::new(),
-                    game_id,
-                    session_id: session_id.clone(),
-                    visibility,
-                })) {
-                    error!("XADD: Wait for oppo")
-                } else {
-                    trace!("Public game open. Lobby: {:?}", &updated)
-                }
+        Self {
+            reg,
+            sorted_streams,
+        }
+    }
+
+    pub fn process(&mut self) {
+        loop {
+            if let Err(e) = self.sorted_streams.consume() {
+                error!("Stream err {:?}", e)
             }
         }
-    } else {
-        error!("Failed to fetch game lobby: FPG")
+    }
+
+    fn consume(&mut self, _eid: XId, event: &StreamInput, reg: &Components) {
+        match event {
+            StreamInput::FPG(fpg) => self.consume_fpg(fpg),
+            StreamInput::CG(cg) => todo!(),   //consume_cg(cg),
+            StreamInput::JPG(jpg) => todo!(), //consume_jpg(jpg),
+            StreamInput::SD(sd) => todo!(),   //consume_sd(sd),
+        }
+    }
+
+    fn consume_fpg(&mut self, fpg: &FindPublicGame) {
+        let reg = &self.reg;
+        let visibility = Visibility::Public;
+        let session_id = &fpg.session_id;
+        if let Ok(lobby) = reg.game_lobby_repo.get() {
+            if let Some(queued) = lobby
+                .games
+                .iter()
+                .find(|g| g.visibility == Visibility::Public)
+            {
+                ready_game(session_id, &lobby, queued, &reg)
+            } else {
+                let game_id = GameId::new();
+                let updated: GameLobby = lobby.open(Game {
+                    board_size: PUBLIC_GAME_BOARD_SIZE,
+                    creator: session_id.clone(),
+                    visibility,
+                    game_id: game_id.clone(),
+                });
+                if let Err(_) = reg.game_lobby_repo.put(&updated) {
+                    error!("game lobby write F2");
+                } else {
+                    if let Err(_) = reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
+                        event_id: EventId::new(),
+                        game_id,
+                        session_id: session_id.clone(),
+                        visibility,
+                    })) {
+                        error!("XADD: Wait for oppo")
+                    } else {
+                        trace!("Public game open. Lobby: {:?}", &updated)
+                    }
+                }
+            }
+        } else {
+            error!("Failed to fetch game lobby: FPG")
+        }
     }
 }
 
@@ -258,9 +279,10 @@ mod test {
             let components = Components {
                 game_lobby_repo: Box::new(FakeGameLobbyRepo { contents: fgl }),
                 xadd: Box::new(FakeXAdd(xadd_in)),
-                sorted_streams: Box::new(FakeSortedStreams)
             };
-            process(&components);
+            let fake_sorted_streams = FakeSortedStreams;
+            let lobby_streams = LobbyStreams::new(components, todo!());
+            lobby_streams.process();
         });
 
         // emit some events
