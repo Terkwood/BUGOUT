@@ -37,7 +37,19 @@ where
     ) -> Result<Self> {
         let mut handlers = HashMap::new();
         for (stream, handler) in stream_handlers {
-            redis.xgroup_create_mkstream(stream, &opts.group.group_name, "$")?;
+            let _: Result<(), redis::RedisError> = match redis
+                .xgroup_create_mkstream(stream, &opts.group.group_name, "$")
+                .map(|_: redis::Value| ())
+            {
+                Err(err) => {
+                    if err.to_string() == "BUSYGROUP: Consumer Group name already exists" {
+                        Ok(()) // ignore busygroup
+                    } else {
+                        Err(err)
+                    }
+                }
+                _ => Ok(()),
+            };
             handlers.insert(stream.to_string(), StreamHandler::new(stream, handler));
         }
 
