@@ -22,7 +22,10 @@ fn main() {
             topics::FIND_PUBLIC_GAME,
             Box::new(|_xid, msg| Ok(lobby_streams.consume_fpg(msg))),
         ),
-        (topics::JOIN_PRIVATE_GAME, todo!()),
+        (
+            topics::JOIN_PRIVATE_GAME,
+            Box::new(|_xid, msg| Ok(lobby_streams.consume_jpg(msg))),
+        ),
         (
             topics::CREATE_GAME,
             Box::new(|_xid, msg| Ok(lobby_streams.consume_cg(msg))),

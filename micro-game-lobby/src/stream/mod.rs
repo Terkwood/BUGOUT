@@ -53,7 +53,7 @@ impl LobbyStreams {
         }
     }
 
-    pub fn consume_fpg(&mut self, msg: &Message) {
+    pub fn consume_fpg(&self, msg: &Message) {
         todo!("deser");
         let fpg: FindPublicGame = todo!();
         let reg = &self.reg;
@@ -94,7 +94,7 @@ impl LobbyStreams {
         }
     }
 
-    pub fn consume_cg(&mut self, msg: &Message) {
+    pub fn consume_cg(&self, msg: &Message) {
         todo!("deser");
         let mut cg: CreateGame = todo!();
         let session_id = &cg.session_id;
@@ -130,7 +130,7 @@ impl LobbyStreams {
     /// we will simply log a warning.
     /// Consider implementing logic related to handling
     /// private game rejection: https://github.com/Terkwood/BUGOUT/issues/304
-    pub fn consume_jpg(&mut self) {
+    pub fn consume_jpg(&self, msg: &Message) {
         let jpg: JoinPrivateGame = todo!();
         todo!("deser");
 
