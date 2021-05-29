@@ -3,8 +3,9 @@ use log::{error, warn};
 use move_model::{GameState, MoveMade};
 use redis::streams::StreamReadOptions;
 use redis::Commands;
-use redis_streams::XReadEntryId;
+use redis_streams::XId;
 use std::collections::HashMap;
+use std::str::FromStr;
 
 #[derive(Clone, Debug)]
 pub enum StreamData {
@@ -19,7 +20,7 @@ const BLOCK_MS: usize = 5000;
 pub fn read_sorted(
     topics: &StreamTopics,
     client: &redis::Client,
-) -> Result<Vec<(XReadEntryId, StreamData)>, redis::RedisError> {
+) -> Result<Vec<(XId, StreamData)>, redis::RedisError> {
     let mut conn = client.get_connection().expect("conn");
     let opts = StreamReadOptions::default()
         .block(BLOCK_MS)
@@ -31,7 +32,7 @@ pub fn read_sorted(
     )?;
 
     let unsorted = deser(ser, &topics);
-    let mut sorted_keys: Vec<XReadEntryId> = unsorted.keys().map(|k| *k).collect();
+    let mut sorted_keys: Vec<XId> = unsorted.keys().map(|k| *k).collect();
     sorted_keys.sort();
 
     let mut answer = vec![];
@@ -46,7 +47,7 @@ pub fn read_sorted(
 pub fn ack(
     key: &str,
     group: &str,
-    ids: &[XReadEntryId],
+    ids: &[XId],
     client: &redis::Client,
 ) -> Result<(), redis::RedisError> {
     let mut conn = client.get_connection().expect("conn");
@@ -55,7 +56,7 @@ pub fn ack(
     Ok(())
 }
 
-fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntryId, StreamData> {
+fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XId, StreamData> {
     let mut stream_data = HashMap::new();
     let move_accepted_topic = &topics.move_accepted_ev;
     let game_states_topic = &topics.game_states_changelog;
@@ -65,7 +66,7 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                 for with_timestamps in xread_move_data {
                     for (k, v) in with_timestamps {
                         if let (Ok(seq_no), Some(move_accepted)) = (
-                            XReadEntryId::from_str(k),
+                            XId::from_str(k),
                             v.1.clone().and_then(|mm| {
                                 let move_made_deser: Option<MoveMade> =
                                     bincode::deserialize(&mm).ok();
@@ -82,7 +83,7 @@ fn deser(xread_result: XReadResult, topics: &StreamTopics) -> HashMap<XReadEntry
                 for with_timestamps in xread_move_data {
                     for (k, v) in with_timestamps {
                         if let (Ok(seq_no), Some(game_state)) = (
-                            XReadEntryId::from_str(k),
+                            XId::from_str(k),
                             v.1.clone().and_then(|bytes| GameState::from(&bytes).ok()),
                         ) {
                             stream_data.insert(seq_no, StreamData::GS(game_state));
