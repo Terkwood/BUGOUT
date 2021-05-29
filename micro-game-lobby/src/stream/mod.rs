@@ -131,8 +131,7 @@ impl LobbyStreams {
     /// Consider implementing logic related to handling
     /// private game rejection: https://github.com/Terkwood/BUGOUT/issues/304
     pub fn consume_jpg(&self, msg: &Message) {
-        let jpg: JoinPrivateGame = todo!();
-        todo!("deser");
+        let jpg: JoinPrivateGame = todo!("deser");
 
         let reg = &self.reg;
         if let Ok(lobby) = reg.game_lobby_repo.get() {
@@ -156,20 +155,22 @@ impl LobbyStreams {
             error!("game lobby JPG get")
         }
     }
-}
-fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
-    if let Ok(game_lobby) = reg.game_lobby_repo.get() {
-        let updated: GameLobby = game_lobby.abandon(&sd.session_id);
-        if let Err(_) = reg.game_lobby_repo.put(&updated) {
-            error!("game lobby write F1");
+
+    pub fn consume_sd(&self, msg: &Message) {
+        let sd: SessionDisconnected = todo!("deser");
+        let reg = &self.reg;
+        if let Ok(game_lobby) = reg.game_lobby_repo.get() {
+            let updated: GameLobby = game_lobby.abandon(&sd.session_id);
+            if let Err(_) = reg.game_lobby_repo.put(&updated) {
+                error!("game lobby write F1");
+            } else {
+                trace!("session {} abandoned: {:?}", sd.session_id.0, &updated);
+            }
         } else {
-            trace!("session {} abandoned: {:?}", sd.session_id.0, &updated);
+            error!("SD GAME REPO GET")
         }
-    } else {
-        error!("SD GAME REPO GET")
     }
 }
-
 fn ready_game(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Components) {
     let updated: GameLobby = lobby.ready(queued);
     if let Err(_) = reg.game_lobby_repo.put(&updated) {

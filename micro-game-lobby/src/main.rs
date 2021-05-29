@@ -30,6 +30,10 @@ fn main() {
             topics::CREATE_GAME,
             Box::new(|_xid, msg| Ok(lobby_streams.consume_cg(msg))),
         ),
+        (
+            topics::SESSION_DISCONNECTED,
+            Box::new(|_xid, msg| Ok(lobby_streams.consume_sd(msg))),
+        ),
     ];
     let mut sorted_streams =
         RedisSortedStreams::xgroup_create_mkstreams(stream_handlers, todo!("opts"), &mut conn)
