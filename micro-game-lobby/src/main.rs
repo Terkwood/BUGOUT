@@ -20,10 +20,13 @@ fn main() {
     let stream_handlers: Vec<(&str, Box<dyn FnMut(XId, &Message) -> anyhow::Result<()>>)> = vec![
         (
             topics::FIND_PUBLIC_GAME,
-            Box::new(|xid, msg| Ok(lobby_streams.consume_fpg(msg))),
+            Box::new(|_xid, msg| Ok(lobby_streams.consume_fpg(msg))),
         ),
-        ("another-stream", todo!()),
-        ("fix-the-names", todo!()),
+        (topics::JOIN_PRIVATE_GAME, todo!()),
+        (
+            topics::CREATE_GAME,
+            Box::new(|_xid, msg| Ok(lobby_streams.consume_cg(msg))),
+        ),
     ];
     let mut sorted_streams =
         RedisSortedStreams::xgroup_create_mkstreams(stream_handlers, todo!("opts"), &mut conn)

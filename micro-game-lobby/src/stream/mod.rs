@@ -93,34 +93,36 @@ impl LobbyStreams {
             error!("Failed to fetch game lobby: FPG")
         }
     }
-}
 
-fn consume_cg(cg: &CreateGame, reg: &Components) {
-    let session_id = &cg.session_id;
-    let game_id = cg.game_id.clone().unwrap_or(GameId::new());
-    if let Ok(lobby) = reg.game_lobby_repo.get() {
-        let updated: GameLobby = lobby.open(Game {
-            game_id: game_id.clone(),
-            board_size: cg.board_size,
-            creator: session_id.clone(),
-            visibility: cg.visibility,
-        });
-        if let Err(_) = reg.game_lobby_repo.put(&updated) {
-            error!("game lobby write F1");
-        } else {
-            if let Err(_) = reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
+    pub fn consume_cg(&mut self, msg: &Message) {
+        todo!("deser");
+        let mut cg: CreateGame = todo!();
+        let session_id = &cg.session_id;
+        let game_id = cg.game_id.clone().unwrap_or(GameId::new());
+        if let Ok(lobby) = self.reg.game_lobby_repo.get() {
+            let updated: GameLobby = lobby.open(Game {
                 game_id: game_id.clone(),
-                session_id: session_id.clone(),
-                event_id: EventId::new(),
+                board_size: cg.board_size,
+                creator: session_id.clone(),
                 visibility: cg.visibility,
-            })) {
-                error!("XADD Game ready")
+            });
+            if let Err(_) = self.reg.game_lobby_repo.put(&updated) {
+                error!("game lobby write F1");
             } else {
-                trace!("Game created. Lobby: {:?}", &updated);
+                if let Err(_) = self.reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
+                    game_id: game_id.clone(),
+                    session_id: session_id.clone(),
+                    event_id: EventId::new(),
+                    visibility: cg.visibility,
+                })) {
+                    error!("XADD Game ready")
+                } else {
+                    trace!("Game created. Lobby: {:?}", &updated);
+                }
             }
+        } else {
+            error!("CG GAME REPO GET")
         }
-    } else {
-        error!("CG GAME REPO GET")
     }
 }
 /// Consumes the command to join a private game.
@@ -237,7 +239,7 @@ mod test {
     struct FakeSortedStreams;
     impl redis_streams::SortedStreams for FakeSortedStreams {
         fn consume(&mut self) -> redis_streams::anyhow::Result<()> {
-            todo!()
+            todo!("write some sort of test, i guess")
         }
     }
 
