@@ -2,7 +2,7 @@
 //! messages from given stream, in time order.
 use crate::*;
 use anyhow::Result;
-use redis::{Commands, Connection, Value};
+use redis::Value;
 use std::collections::HashMap;
 
 /// Handles connection to Redis and consumes messages from an individual stream.

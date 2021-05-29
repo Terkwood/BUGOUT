@@ -16,9 +16,6 @@ where
     pub redis: &'a mut Connection,
 }
 
-const READ_OP: &str = ">";
-
-struct StreamMessage(pub String, pub Message);
 impl<'a, F> SortedStreams<'a, F>
 where
     F: FnMut(XId, &Message) -> Result<()>,
@@ -84,6 +81,10 @@ where
         Ok(())
     }
 }
+
+const READ_OP: &str = ">";
+
+struct StreamMessage(pub String, pub Message);
 
 /// Track unacknowledged messages by stream name
 struct Unacknowledged(pub HashMap<String, Vec<XId>>);
