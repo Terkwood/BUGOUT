@@ -67,45 +67,43 @@ impl LobbyStreams {
     pub fn consume_fpg(&self, msg: &Message) -> anyhow::Result<()> {
         let maybe_value = msg.get("data");
         Ok(if let Some(redis::Value::Data(data)) = maybe_value {
-            /*                 let fpg: FindPublicGame = bincode::deserialize(&data)?;
-                        let reg = &self.reg;
-                        let visibility = Visibility::Public;
-                        let session_id = &fpg.session_id;
-                        if let Ok(lobby) = reg.game_lobby_repo.get() {
-                            if let Some(queued) = lobby
-                                .games
-                                .iter()
-                                .find(|g| g.visibility == Visibility::Public)
-                            {
-                                ready_game(session_id, &lobby, queued, &reg)
-                            } else {
-                                let game_id = GameId::new();
-                                let updated: GameLobby = lobby.open(Game {
-                                    board_size: PUBLIC_GAME_BOARD_SIZE,
-                                    creator: session_id.clone(),
-                                    visibility,
-                                    game_id: game_id.clone(),
-                                });
-                                if let Err(_) = reg.game_lobby_repo.put(&updated) {
-                                    error!("game lobby write F2");
-                                } else {
-                                    if let Err(_) = reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
-                                        event_id: EventId::new(),
-                                        game_id,
-                                        session_id: session_id.clone(),
-                                        visibility,
-                                    })) {
-                                        error!("XADD: Wait for oppo")
-                                    } else {
-                                        trace!("Public game open. Lobby: {:?}", &updated)
-                                    }
-                                }
-                            }
+            let fpg: FindPublicGame = bincode::deserialize(&data)?;
+            let reg = &self.reg;
+            let visibility = Visibility::Public;
+            let session_id = &fpg.session_id;
+            if let Ok(lobby) = reg.game_lobby_repo.get() {
+                if let Some(queued) = lobby
+                    .games
+                    .iter()
+                    .find(|g| g.visibility == Visibility::Public)
+                {
+                    ready_game(session_id, &lobby, queued, &reg)
+                } else {
+                    let game_id = GameId::new();
+                    let updated: GameLobby = lobby.open(Game {
+                        board_size: PUBLIC_GAME_BOARD_SIZE,
+                        creator: session_id.clone(),
+                        visibility,
+                        game_id: game_id.clone(),
+                    });
+                    if let Err(_) = reg.game_lobby_repo.put(&updated) {
+                        error!("game lobby write F2");
+                    } else {
+                        if let Err(_) = reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
+                            event_id: EventId::new(),
+                            game_id,
+                            session_id: session_id.clone(),
+                            visibility,
+                        })) {
+                            error!("XADD: Wait for oppo")
                         } else {
-                            error!("Failed to fetch game lobby: FPG")
-                        }}
-
-            */
+                            trace!("Public game open. Lobby: {:?}", &updated)
+                        }
+                    }
+                }
+            } else {
+                error!("Failed to fetch game lobby: FPG")
+            }
         })
     }
 
