@@ -13,7 +13,7 @@ use lobby_model::api::*;
 use lobby_model::*;
 use log::{error, info, trace};
 use move_model::GameState;
-use redis_streams::XId;
+use redis_streams::{Message, XId};
 
 pub const GROUP_NAME: &str = "micro-game-lobby";
 
@@ -35,48 +35,27 @@ pub enum StreamOutput {
 
 pub struct LobbyStreams {
     pub reg: Components,
-    pub sorted_streams: Box<dyn SortedStreams>,
 }
 
-use redis_streams::{anyhow, Message, RedisSortedStreams};
+use redis_streams::{anyhow, RedisSortedStreams};
+use std::borrow::BorrowMut;
 use std::rc::Rc;
 impl LobbyStreams {
-    pub fn new(reg: Components, client: Rc<redis::Client>) -> Self {
-        let mut conn = client.get_connection().expect("redis conn");
-        let stream_handlers: Vec<(&str, Box<dyn FnMut(XId, &Message) -> anyhow::Result<()>>)> = vec![
-            ("some-stream", todo!()),
-            ("another-stream", todo!()),
-            ("fix-the-names", todo!()),
-        ];
-        let sorted_streams = Box::new(
-            RedisSortedStreams::xgroup_create_mkstreams(stream_handlers, todo!("opts"), &mut conn)
-                .expect("stream creation"),
-        );
-
-        Self {
-            reg,
-            sorted_streams,
-        }
+    pub fn new(reg: Components) -> Self {
+        Self { reg }
     }
 
-    pub fn process(&mut self) {
+    pub fn process(&mut self, streams: &mut dyn SortedStreams) {
         loop {
-            if let Err(e) = self.sorted_streams.consume() {
+            if let Err(e) = streams.consume() {
                 error!("Stream err {:?}", e)
             }
         }
     }
 
-    fn consume(&mut self, _eid: XId, event: &StreamInput, reg: &Components) {
-        match event {
-            StreamInput::FPG(fpg) => self.consume_fpg(fpg),
-            StreamInput::CG(cg) => todo!(),   //consume_cg(cg),
-            StreamInput::JPG(jpg) => todo!(), //consume_jpg(jpg),
-            StreamInput::SD(sd) => todo!(),   //consume_sd(sd),
-        }
-    }
-
-    fn consume_fpg(&mut self, fpg: &FindPublicGame) {
+    pub fn consume_fpg(&mut self, msg: &Message) {
+        todo!("deser");
+        let fpg: FindPublicGame = todo!();
         let reg = &self.reg;
         let visibility = Visibility::Public;
         let session_id = &fpg.session_id;
