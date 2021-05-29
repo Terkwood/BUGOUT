@@ -29,7 +29,7 @@ where
     /// "XREADGROUP >" across streams, handle all the messages in time order,
     /// and acknowledge them all
     pub fn consume(&mut self) -> Result<()> {
-        let unacked = Unacknowledged::default();
+        let mut unacked = Unacknowledged::default();
         let opts = StreamReadOptions::default()
             .block(self.timeout)
             .group(&self.group.group_name, &self.group.consumer_name);
@@ -51,7 +51,12 @@ where
         by_time.sort_by_key(|t| t.0);
 
         for (xid, StreamMessage(stream, message)) in by_time {
-            todo!("handle -- think about casing")
+            if let Some(handler) = self.handlers.get_mut(&stream) {
+                handler.handle_message(xid, &message)?;
+                if let Some(unacked_for_stream) = unacked.0.get_mut(&stream) {
+                    unacked_for_stream.push(xid);
+                }
+            }
         }
 
         for (stream, xids) in unacked.0 {
