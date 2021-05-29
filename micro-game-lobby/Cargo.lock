@@ -430,7 +430,7 @@ dependencies = [
 [[package]]
 name = "redis_streams"
 version = "1.0.0-a"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=9c5de56#9c5de569a751bcd2a8cfe42cb0efa2e5819a4a91"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=7d26526#7d265268a47b8b34171b6198f1ae508bac8c07bd"
 dependencies = [
  "anyhow",
  "redis",

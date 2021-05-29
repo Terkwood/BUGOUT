@@ -234,6 +234,13 @@ mod test {
         }
     }
 
+    struct FakeSortedStreams;
+    impl redis_streams::SortedStreams for FakeSortedStreams {
+        fn consume(&mut self) -> anyhow::Result<()> {
+            todo!()
+        }
+    }
+
     #[test]
     fn test_process() {
         let (xadd_in, xadd_out) = unbounded();
@@ -245,7 +252,6 @@ mod test {
         // set up a loop to process game lobby requests
         let fake_game_lobby_contents = Arc::new(Mutex::new(GameLobby::default()));
 
-        let sfs = sorted_fake_stream.clone();
         let fgl = fake_game_lobby_contents.clone();
 
         thread::spawn(move || {
@@ -256,9 +262,7 @@ mod test {
             process(&components);
         });
 
-        // emit some events in a time-ordered fashion
-        // (we need to use time-ordered push since the
-        //   FakeXRead impl won't sort its underlying data )
+        // emit some events
 
         let mut fake_time_ms = 100;
         let incr_ms = 100;
