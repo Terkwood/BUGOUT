@@ -7,7 +7,15 @@ use redis::{
 use std::collections::HashMap;
 use std::str::FromStr;
 
-pub struct SortedStreams<'a, F>
+trait SortedStreams {
+    /// "XREADGROUP >" across streams, handle all the messages in time order,
+    /// and acknowledge them all.  The XACK calls happen once per stream,
+    /// acknowleding all XIds for that stream at once.  The XACK calls happen
+    /// after _all_ individual message handlers have been invoked.
+    fn consume(&mut self) -> Result<()>;
+}
+
+pub struct RedisSortedStreams<'a, F>
 where
     F: FnMut(XId, &Message) -> Result<()>,
 {
@@ -17,7 +25,7 @@ where
     pub redis: &'a mut Connection,
 }
 
-impl<'a, F> SortedStreams<'a, F>
+impl<'a, F> RedisSortedStreams<'a, F>
 where
     F: FnMut(XId, &Message) -> Result<()>,
 {
@@ -40,12 +48,13 @@ where
             handlers,
         })
     }
+}
 
-    /// "XREADGROUP >" across streams, handle all the messages in time order,
-    /// and acknowledge them all.  The XACK calls happen once per stream,
-    /// acknowleding all XIds for that stream at once.  The XACK calls happen
-    /// after _all_ individual message handlers have been invoked.
-    pub fn consume(&mut self) -> Result<()> {
+impl<'a, F> SortedStreams for RedisSortedStreams<'a, F>
+where
+    F: FnMut(XId, &Message) -> Result<()>,
+{
+    fn consume(&mut self) -> Result<()> {
         let mut unacked = Unacknowledged::default();
         let opts = StreamReadOptions::default()
             .block(self.block_ms)
