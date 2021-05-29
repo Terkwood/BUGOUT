@@ -2,7 +2,7 @@
 
 A generic way to handle reading from redis streams using consumer groups.
 
-It has been customized process messages from multiple streams, in order by time.
+It has been customized to process messages from multiple streams, in order by time.
 
 ## Attribution
 
