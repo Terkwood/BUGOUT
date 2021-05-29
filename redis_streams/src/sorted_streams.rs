@@ -5,6 +5,7 @@ use redis::{
     Commands, Connection,
 };
 use std::collections::HashMap;
+use std::str::FromStr;
 
 pub struct SortedStreams<'a, F>
 where

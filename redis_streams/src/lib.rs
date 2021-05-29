@@ -20,8 +20,10 @@ impl Default for XId {
     }
 }
 
-impl XId {
-    pub fn from_str(s: &str) -> Result<XId, StreamDeserError> {
+impl std::str::FromStr for XId {
+    type Err = StreamDeserError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts: Vec<&str> = s.split('-').collect();
         if parts.len() != 2 {
             Err(StreamDeserError)
@@ -34,9 +36,11 @@ impl XId {
             })
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        format!("{}-{}", self.millis_time, self.seq_no)
+impl std::fmt::Display for XId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}-{}", self.millis_time, self.seq_no)
     }
 }
 
