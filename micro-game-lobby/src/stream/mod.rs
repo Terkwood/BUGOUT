@@ -124,35 +124,39 @@ impl LobbyStreams {
             error!("CG GAME REPO GET")
         }
     }
-}
-/// Consumes the command to join a private game.
-/// In the event that the game is invalid,
-/// we will simply log a warning.
-/// Consider implementing logic related to handling
-/// private game rejection: https://github.com/Terkwood/BUGOUT/issues/304
-fn consume_jpg(jpg: &JoinPrivateGame, reg: &Components) {
-    if let Ok(lobby) = reg.game_lobby_repo.get() {
-        if let Some(queued) = lobby
-            .games
-            .iter()
-            .find(|g| g.visibility == Visibility::Private && g.game_id == jpg.game_id)
-        {
-            ready_game(&jpg.session_id, &lobby, queued, reg)
-        } else {
-            if let Err(e) = reg.xadd.xadd(StreamOutput::PGR(PrivateGameRejected {
-                client_id: jpg.client_id.clone(),
-                event_id: EventId::new(),
-                game_id: jpg.game_id.clone(),
-                session_id: jpg.session_id.clone(),
-            })) {
-                error!("Error writing private game rejection to stream {:?}", e)
+
+    /// Consumes the command to join a private game.
+    /// In the event that the game is invalid,
+    /// we will simply log a warning.
+    /// Consider implementing logic related to handling
+    /// private game rejection: https://github.com/Terkwood/BUGOUT/issues/304
+    pub fn consume_jpg(&mut self) {
+        let jpg: JoinPrivateGame = todo!();
+        todo!("deser");
+
+        let reg = &self.reg;
+        if let Ok(lobby) = reg.game_lobby_repo.get() {
+            if let Some(queued) = lobby
+                .games
+                .iter()
+                .find(|g| g.visibility == Visibility::Private && g.game_id == jpg.game_id)
+            {
+                ready_game(&jpg.session_id, &lobby, queued, reg)
+            } else {
+                if let Err(e) = reg.xadd.xadd(StreamOutput::PGR(PrivateGameRejected {
+                    client_id: jpg.client_id.clone(),
+                    event_id: EventId::new(),
+                    game_id: jpg.game_id.clone(),
+                    session_id: jpg.session_id.clone(),
+                })) {
+                    error!("Error writing private game rejection to stream {:?}", e)
+                }
             }
+        } else {
+            error!("game lobby JPG get")
         }
-    } else {
-        error!("game lobby JPG get")
     }
 }
-
 fn consume_sd(sd: &SessionDisconnected, reg: &Components) {
     if let Ok(game_lobby) = reg.game_lobby_repo.get() {
         let updated: GameLobby = game_lobby.abandon(&sd.session_id);
