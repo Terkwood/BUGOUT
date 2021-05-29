@@ -1,12 +1,8 @@
 mod init;
-mod xack;
 mod xadd;
-mod xread;
 
 pub use init::*;
-pub use xack::*;
 pub use xadd::*;
-pub use xread::*;
 
 use crate::components::Components;
 use crate::game_lobby::GameLobbyOps;
@@ -16,9 +12,17 @@ use lobby_model::api::*;
 use lobby_model::*;
 use log::{error, info, trace};
 use move_model::GameState;
-use redis_streams::XReadEntryId;
+use redis_streams::XId;
 
 pub const GROUP_NAME: &str = "micro-game-lobby";
+
+#[derive(Clone, Debug)]
+pub enum StreamInput {
+    FPG(FindPublicGame),
+    CG(CreateGame),
+    JPG(JoinPrivateGame),
+    SD(SessionDisconnected),
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum StreamOutput {
@@ -29,24 +33,22 @@ pub enum StreamOutput {
 }
 
 pub fn process(reg: &Components) {
-    let mut unacked = Unacknowledged::default();
     loop {
-        match reg.xread.xread_sorted() {
+        todo!("generic consumer")
+        /*
+        match todo!("was xread sorted") {
             Ok(xrr) => {
                 for (xid, data) in xrr {
                     info!("🧮 Processing {:?}", &data);
                     consume(xid, &data, &reg);
-                    unacked.push(xid, data);
                 }
             }
             Err(e) => error!("Stream err {:?}", e),
-        }
-
-        unacked.ack_all(&reg)
+        }*/
     }
 }
 
-fn consume(_eid: XReadEntryId, event: &StreamInput, reg: &Components) {
+fn consume(_eid: XId, event: &StreamInput, reg: &Components) {
     match event {
         StreamInput::FPG(fpg) => consume_fpg(fpg, reg),
         StreamInput::CG(cg) => consume_cg(cg, reg),
@@ -203,7 +205,7 @@ mod test {
     use crate::components::Components;
     use crate::repo::*;
     use crossbeam_channel::{select, unbounded, Sender};
-    use redis_streams::XReadEntryId;
+    use redis_streams::XId;
     use std::sync::{Arc, Mutex};
     use std::time::Duration;
 
@@ -224,29 +226,6 @@ mod test {
         }
     }
 
-    struct FakeXRead {
-        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
-    }
-    impl XRead for FakeXRead {
-        /// Be careful, this implementation assumes
-        /// that the underlying data is pre-sorted
-        fn xread_sorted(
-            &self,
-        ) -> Result<Vec<(redis_streams::XReadEntryId, super::StreamInput)>, XReadErr> {
-            {
-                let mut data = self.sorted_data.lock().expect("lock");
-                if data.is_empty() {
-                    // stop the test thread from spinning like crazy
-                    std::thread::sleep(Duration::from_millis(1));
-                    Ok(vec![])
-                } else {
-                    let result = data.clone();
-                    *data = vec![];
-                    Ok(result)
-                }
-            }
-        }
-    }
     struct FakeXAdd(Sender<StreamOutput>);
     impl XAdd for FakeXAdd {
         fn xadd(&self, data: StreamOutput) -> Result<(), XAddErr> {
@@ -255,60 +234,9 @@ mod test {
         }
     }
 
-    enum AckType {
-        FPG,
-        CG,
-        JPG,
-        SD,
-    }
-    struct ItWasAcked {
-        ack_type: AckType,
-        xids: Vec<XReadEntryId>,
-    }
-    struct FakeXAck(Sender<ItWasAcked>);
-    impl XAck for FakeXAck {
-        fn ack_find_public_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            if let Err(_) = self.0.send(ItWasAcked {
-                ack_type: AckType::FPG,
-                xids: xids.to_vec(),
-            }) {}
-            Ok(())
-        }
-
-        fn ack_join_priv_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            Ok(self
-                .0
-                .send(ItWasAcked {
-                    ack_type: AckType::JPG,
-                    xids: xids.to_vec(),
-                })
-                .expect("send"))
-        }
-
-        fn ack_create_game(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            Ok(self
-                .0
-                .send(ItWasAcked {
-                    ack_type: AckType::CG,
-                    xids: xids.to_vec(),
-                })
-                .expect("send"))
-        }
-
-        fn ack_session_disconnected(&self, xids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            Ok(self
-                .0
-                .send(ItWasAcked {
-                    ack_type: AckType::SD,
-                    xids: xids.to_vec(),
-                })
-                .expect("send"))
-        }
-    }
     #[test]
     fn test_process() {
         let (xadd_in, xadd_out) = unbounded();
-        let (xack_in, xack_out) = unbounded();
 
         let sorted_fake_stream = Arc::new(Mutex::new(vec![]));
 
@@ -323,11 +251,7 @@ mod test {
         thread::spawn(move || {
             let components = Components {
                 game_lobby_repo: Box::new(FakeGameLobbyRepo { contents: fgl }),
-                xread: Box::new(FakeXRead {
-                    sorted_data: sfs.clone(),
-                }),
                 xadd: Box::new(FakeXAdd(xadd_in)),
-                xack: Box::new(FakeXAck(xack_in)),
             };
             process(&components);
         });
@@ -353,16 +277,6 @@ mod test {
         ));
 
         thread::sleep(timeout);
-        // We should have seen a single XACK  for a find public game record
-        select! {
-            recv(xack_out) -> msg => match msg {
-                Ok(ItWasAcked { ack_type: AckType::FPG , xids }) =>  {
-                    assert_eq!(xids.len(), 1);
-                    assert_eq!(xids[0], xid0)
-                }
-                _ => panic!("fpg ack")
-            }
-        }
 
         // The game lobby repo should now contain one game
         assert_eq!(
@@ -406,8 +320,8 @@ mod test {
         }
     }
 
-    fn quick_eid(ms: u64) -> XReadEntryId {
-        XReadEntryId {
+    fn quick_eid(ms: u64) -> XId {
+        XId {
             millis_time: ms,
             seq_no: 0,
         }

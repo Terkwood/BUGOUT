@@ -116,10 +116,3 @@ pub enum XReadDeserErr {
     DataDeser(String),
 }
 
-#[derive(Clone, Debug)]
-pub enum StreamInput {
-    FPG(FindPublicGame),
-    CG(CreateGame),
-    JPG(JoinPrivateGame),
-    SD(SessionDisconnected),
-}
