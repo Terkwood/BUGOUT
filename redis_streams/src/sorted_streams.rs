@@ -42,7 +42,9 @@ where
     }
 
     /// "XREADGROUP >" across streams, handle all the messages in time order,
-    /// and acknowledge them all
+    /// and acknowledge them all.  The XACK calls happen once per stream,
+    /// acknowleding all XIds for that stream at once.  The XACK calls happen
+    /// after _all_ individual message handlers have been invoked.
     pub fn consume(&mut self) -> Result<()> {
         let mut unacked = Unacknowledged::default();
         let opts = StreamReadOptions::default()
