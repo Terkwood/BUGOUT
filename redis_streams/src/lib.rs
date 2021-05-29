@@ -1,5 +1,10 @@
-pub mod stream_handler;
-pub mod sorted_streams;
+mod consumer_group_opts;
+mod sorted_streams;
+mod stream_handler;
+
+pub use consumer_group_opts::*;
+pub use sorted_streams::*;
+pub use stream_handler::*;
 
 #[derive(Debug, Copy, Clone, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct XId {

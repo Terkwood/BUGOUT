@@ -1,6 +1,6 @@
 //! Wraps a a function which is used to process individual
 //! messages from given stream, in time order.
-use super::XId;
+use crate::*;
 use anyhow::Result;
 use redis::{Commands, Connection, Value};
 use std::collections::HashMap;
@@ -52,43 +52,4 @@ pub type Message = HashMap<String, Value>;
 pub struct Group {
     pub group_name: String,
     pub consumer_name: String,
-}
-
-#[derive(Debug)]
-pub struct ConsumerGroupOpts {
-    pub count: Option<usize>,
-    pub group: Group,
-    pub block_ms: usize,
-}
-
-impl ConsumerGroupOpts {
-    pub fn new(group: Group) -> Self {
-        Self {
-            count: None,
-            group,
-            block_ms: 5_000,
-        }
-    }
-
-    /// Maximum number of message to read from the stream in one batch
-    pub fn count(mut self, count: usize) -> Self {
-        self.count = Some(count);
-        self
-    }
-
-    /// Name of the group and consumer. Enables Redis group consumer behavior if
-    /// specified
-    pub fn group(mut self, group_name: &str, consumer_name: &str) -> Self {
-        self.group = Group {
-            group_name: group_name.to_string(),
-            consumer_name: consumer_name.to_string(),
-        };
-        self
-    }
-
-    /// Maximum ms duration to block waiting for messages.
-    pub fn block_ms(mut self, timeout_ms: usize) -> Self {
-        self.block_ms = timeout_ms;
-        self
-    }
 }

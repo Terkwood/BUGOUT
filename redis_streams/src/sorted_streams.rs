@@ -1,7 +1,4 @@
-use crate::{
-    stream_handler::{Group, Message, StreamHandler},
-    XId,
-};
+use crate::*;
 use anyhow::Result;
 use redis::{
     streams::{StreamReadOptions, StreamReadReply},
@@ -26,6 +23,10 @@ impl<'a, F> SortedStreams<'a, F>
 where
     F: FnMut(XId, &Message) -> Result<()>,
 {
+    pub fn init_redis_streams(opts: ConsumerGroupOpts, redis: &'a mut Connection) {
+        todo!()
+    }
+
     /// "XREADGROUP >" across streams, handle all the messages in time order,
     /// and acknowledge them all
     pub fn consume(&mut self) -> Result<()> {
