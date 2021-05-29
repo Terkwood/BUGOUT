@@ -13,6 +13,7 @@ fn main() {
     stream::create_consumer_group(&client);
 
     let lobby = stream::LobbyStreams::new(components);
+
     let mut conn = client.get_connection().expect("redis conn");
     let stream_handlers: Vec<(&str, Box<dyn FnMut(XId, &Message) -> anyhow::Result<()>>)> = vec![
         (
@@ -29,7 +30,7 @@ fn main() {
         ),
         (
             topics::SESSION_DISCONNECTED,
-            Box::new(|_xid, msg| Ok(lobby.consume_sd(msg))),
+            Box::new(|_xid, msg| lobby.consume_sd(msg)),
         ),
     ];
     let mut streams =

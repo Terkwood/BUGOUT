@@ -181,19 +181,24 @@ impl LobbyStreams {
         })
     }
 
-    pub fn consume_sd(&self, msg: &Message) {
-        let sd: SessionDisconnected = todo!("deser");
-        let reg = &self.reg;
-        if let Ok(game_lobby) = reg.game_lobby_repo.get() {
-            let updated: GameLobby = game_lobby.abandon(&sd.session_id);
-            if let Err(_) = reg.game_lobby_repo.put(&updated) {
-                error!("game lobby write F1");
+    pub fn consume_sd(&self, msg: &Message) -> anyhow::Result<()> {
+        let maybe_value = msg.get("data");
+        Ok(if let Some(redis::Value::Data(data)) = maybe_value {
+            let sd: SessionDisconnected = bincode::deserialize(&data)?;
+            let reg = &self.reg;
+            if let Ok(game_lobby) = reg.game_lobby_repo.get() {
+                let updated: GameLobby = game_lobby.abandon(&sd.session_id);
+                if let Err(_) = reg.game_lobby_repo.put(&updated) {
+                    error!("game lobby write F1");
+                } else {
+                    trace!("session {} abandoned: {:?}", sd.session_id.0, &updated);
+                }
             } else {
-                trace!("session {} abandoned: {:?}", sd.session_id.0, &updated);
+                error!("SD GAME REPO GET")
             }
         } else {
-            error!("SD GAME REPO GET")
-        }
+            error!("could not deser session disconn data field")
+        })
     }
 }
 fn ready_game(session_id: &SessionId, lobby: &GameLobby, queued: &Game, reg: &Components) {
