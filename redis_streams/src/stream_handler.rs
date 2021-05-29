@@ -1,4 +1,5 @@
-//! Defines XREADGROUP / XACK streaming logic tied to a redis connection.
+//! Wraps a a function which is used to process individual
+//! messages from given stream, in time order.
 use super::XId;
 use anyhow::Result;
 use redis::{Commands, Connection, Value};
@@ -46,13 +47,6 @@ where
 }
 
 pub type Message = HashMap<String, Value>;
-
-#[derive(Clone, Debug)]
-pub enum StartPosition {
-    EndOfStream,
-    Other(String),
-    StartOfStream,
-}
 
 #[derive(Debug)]
 pub struct Group {
