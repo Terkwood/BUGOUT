@@ -236,7 +236,7 @@ mod test {
 
     struct FakeSortedStreams;
     impl redis_streams::SortedStreams for FakeSortedStreams {
-        fn consume(&mut self) -> anyhow::Result<()> {
+        fn consume(&mut self) -> redis_streams::anyhow::Result<()> {
             todo!()
         }
     }
@@ -258,6 +258,7 @@ mod test {
             let components = Components {
                 game_lobby_repo: Box::new(FakeGameLobbyRepo { contents: fgl }),
                 xadd: Box::new(FakeXAdd(xadd_in)),
+                sorted_streams: Box::new(FakeSortedStreams)
             };
             process(&components);
         });
