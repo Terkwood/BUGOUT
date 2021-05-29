@@ -1,10 +1,7 @@
-pub mod init;
 mod topics;
 mod xadd;
-mod xread;
 
 pub use xadd::*;
-pub use xread::*;
 
 use crate::components::*;
 use crate::player::other_player;
@@ -13,181 +10,166 @@ use crate::ToHistory;
 use core_model::*;
 use log::{error, info, trace, warn};
 use move_model::*;
+use redis_streams::SortedStreams;
 use sync_model::api::*;
 use sync_model::Move;
 use sync_model::*;
 
 const GROUP_NAME: &str = "micro-sync";
 
-#[derive(Clone, Debug)]
-pub enum StreamInput {
-    PH(ProvideHistory),
-    GS(GameState),
-    RS(ReqSync),
-    MM(MoveMade),
+pub struct SyncStreams {
+    pub components: Components,
 }
-
-pub fn process(components: &Components) {
-    let mut unacked = Unacknowledged::default();
-    loop {
-        match components.xread.read_sorted() {
-            Ok(xrr) => {
-                for (xid, event) in xrr {
-                    process_event(&event, components);
-                    unacked.push(xid, event);
-                }
+impl SyncStreams {
+    pub fn process(&self, streams: &mut dyn SortedStreams) {
+        loop {
+            if let Err(e) = streams.consume() {
+                error!("Stream err {:?}", e)
             }
-            Err(_) => error!("xread"),
         }
-
-        unacked.ack_all(&components)
     }
-}
 
-fn process_event(event: &StreamInput, components: &Components) {
-    match event {
-        StreamInput::RS(rs) => process_req_sync(rs, components),
-        StreamInput::PH(ph) => process_prov_hist(ph, components),
-        StreamInput::GS(game_state) => process_game_state(game_state, components),
-        StreamInput::MM(mm) => process_move_made(mm, components),
-    }
-}
+    fn process_prov_hist(&self, ph: &ProvideHistory) {
+        info!("Stream: Provide History {:?}", ph);
 
-fn process_req_sync(rs: &ReqSync, components: &Components) {
-    info!("Stream: Req Sync {:?}", rs);
-    match components.history_repo.get(&rs.game_id) {
-        Ok(maybe_history) => {
-            let history = maybe_history.unwrap_or_default();
-            let system_last_move = history.last();
-            let system_player_up = system_last_move
-                .map(|m| other_player(m.player))
-                .unwrap_or(Player::BLACK);
-            let system_turn = system_last_move.map(|m| m.turn).unwrap_or(0) + 1;
-
-            if is_client_ahead_by_one_turn(rs, system_turn, system_player_up) {
-                // client is ahead of server by a single turn
-                // and their move needs to be processed
-                if let Some(missed_move) = &rs.last_move {
-                    let make_move = MakeMove {
-                        game_id: rs.game_id.clone(),
-                        req_id: rs.req_id.clone(),
-                        player: missed_move.player,
-                        coord: missed_move.coord,
-                    };
-
-                    if let Err(e) = components.xadd.add_make_move(make_move) {
-                        error!("xadd make move {:?}", e)
-                    }
-
-                    // Very important ... 😈
-                    // We need to remember this request, so that
-                    // when a move is finally made by changelog,
-                    // we don't forget to send a sync reply.
-
-                    // The reply will ultimately be processed in our
-                    // process loop's StreamInput::MM(move_made) branch !
-                    if let Err(_) = components.reply_repo.put(rs) {
-                        error!("fail to put req in reply repo")
-                    }
-                }
-            } else {
-                // in every other case, we should send the server's view:
-                // - no op: client is caught up
-                // - client is behind by one move
-                // - client has a state which we cannot reconcile
-                //            ...(but maybe they can fix themselves)
-                let sync_reply = SyncReply {
-                    moves: history,
-                    game_id: rs.game_id.clone(),
-                    reply_to: rs.req_id.clone(),
-                    player_up: system_player_up,
-                    turn: system_turn,
-                    session_id: rs.session_id.clone(),
+        let components = &self.components;
+        let maybe_hist_r = components.history_repo.get(&ph.game_id);
+        match maybe_hist_r {
+            Ok(Some(moves)) => {
+                let hp = HistoryProvided {
+                    moves,
+                    event_id: EventId::new(),
+                    epoch_millis: crate::time::now_millis() as u64,
+                    game_id: ph.game_id.clone(),
+                    reply_to: ph.req_id.clone(),
                 };
-                if let Err(e) = components.xadd.add_sync_reply(sync_reply) {
-                    error!("xadd sync reply {:?}", e)
+                if let Err(e) = components.xadd.add_history_provided(hp) {
+                    error!("error in xadd {:?}", e)
                 }
             }
+            Ok(None) => warn!("no history for game {:?}", ph.game_id),
+            Err(e) => error!("history lookup error in prov hist: {:?}", e),
         }
-        Err(e) => error!("history lookup for req sync : {:?}", e),
     }
-}
 
-fn process_prov_hist(ph: &ProvideHistory, components: &Components) {
-    info!("Stream: Provide History {:?}", ph);
-    let maybe_hist_r = components.history_repo.get(&ph.game_id);
-    match maybe_hist_r {
-        Ok(Some(moves)) => {
-            let hp = HistoryProvided {
-                moves,
-                event_id: EventId::new(),
-                epoch_millis: crate::time::now_millis() as u64,
-                game_id: ph.game_id.clone(),
-                reply_to: ph.req_id.clone(),
-            };
-            if let Err(e) = components.xadd.add_history_provided(hp) {
-                error!("error in xadd {:?}", e)
+    fn process_game_state(&self, game_state: &GameState) {
+        info!("Stream: Game State   {:?}", game_state.game_id);
+        trace!("Full game state: {:?}", game_state);
+        let components = &self.components;
+        if let Err(_e) = components
+            .history_repo
+            .put(&game_state.game_id, game_state.to_history())
+        {
+            error!("write to history repo")
+        }
+    }
+
+    fn process_move_made(&self, move_made: &MoveMade) {
+        info!("Stream: Move Made {:?}", move_made);
+        let components = &self.components;
+        // Check ReplyOnMove repo to see if we have a req_sync associated with this
+        // game_id & req_id combination.
+        match components
+            .reply_repo
+            .get(&move_made.game_id, &move_made.reply_to)
+        {
+            Ok(Some(req_sync)) => {
+                // We were waiting to hear about this move being made.
+                //  we need to create a
+                // sync reply based on this move.  This branch executes in the
+                // case where a client was previously ahead of the backend and we
+                // emitted a MakeMove request.  This MoveMade is the result
+                // of changelog recording our move
+                match components.history_repo.get(&move_made.game_id) {
+                    Ok(history_nested) => {
+                        let history = history_nested.unwrap_or_default();
+                        let mut all_moves = history.clone();
+                        let the_turn = (history.last().map(|l| l.turn)).unwrap_or_default() + 1;
+                        all_moves.push(Move {
+                            player: move_made.player,
+                            coord: move_made.coord,
+                            turn: the_turn,
+                        });
+
+                        let sync_reply = SyncReply {
+                            session_id: req_sync.session_id,
+                            game_id: req_sync.game_id,
+                            reply_to: req_sync.req_id,
+                            moves: all_moves,
+                            turn: the_turn + 1,
+                            player_up: other_player(move_made.player),
+                        };
+                        if let Err(_) = components.xadd.add_sync_reply(sync_reply) {
+                            error!("xadd sync reply")
+                        }
+                    }
+                    Err(e) => error!("history fetch err in move made processor: {:?}", e),
+                }
             }
+            Ok(None) => (),
+            Err(e) => error!("error fetching from reply repo: {:?}", e),
         }
-        Ok(None) => warn!("no history for game {:?}", ph.game_id),
-        Err(e) => error!("history lookup error in prov hist: {:?}", e),
     }
-}
 
-fn process_game_state(game_state: &GameState, components: &Components) {
-    info!("Stream: Game State   {:?}", game_state.game_id);
-    trace!("Full game state: {:?}", game_state);
-    if let Err(_e) = components
-        .history_repo
-        .put(&game_state.game_id, game_state.to_history())
-    {
-        error!("write to history repo")
-    }
-}
+    fn process_req_sync(&self, rs: &ReqSync) {
+        info!("Stream: Req Sync {:?}", rs);
+        let components = &self.components;
+        match components.history_repo.get(&rs.game_id) {
+            Ok(maybe_history) => {
+                let history = maybe_history.unwrap_or_default();
+                let system_last_move = history.last();
+                let system_player_up = system_last_move
+                    .map(|m| other_player(m.player))
+                    .unwrap_or(Player::BLACK);
+                let system_turn = system_last_move.map(|m| m.turn).unwrap_or(0) + 1;
 
-fn process_move_made(move_made: &MoveMade, components: &Components) {
-    info!("Stream: Move Made {:?}", move_made);
-    // Check ReplyOnMove repo to see if we have a req_sync associated with this
-    // game_id & req_id combination.
-    match components
-        .reply_repo
-        .get(&move_made.game_id, &move_made.reply_to)
-    {
-        Ok(Some(req_sync)) => {
-            // We were waiting to hear about this move being made.
-            //  we need to create a
-            // sync reply based on this move.  This branch executes in the
-            // case where a client was previously ahead of the backend and we
-            // emitted a MakeMove request.  This MoveMade is the result
-            // of changelog recording our move
-            match components.history_repo.get(&move_made.game_id) {
-                Ok(history_nested) => {
-                    let history = history_nested.unwrap_or_default();
-                    let mut all_moves = history.clone();
-                    let the_turn = (history.last().map(|l| l.turn)).unwrap_or_default() + 1;
-                    all_moves.push(Move {
-                        player: move_made.player,
-                        coord: move_made.coord,
-                        turn: the_turn,
-                    });
+                if is_client_ahead_by_one_turn(rs, system_turn, system_player_up) {
+                    // client is ahead of server by a single turn
+                    // and their move needs to be processed
+                    if let Some(missed_move) = &rs.last_move {
+                        let make_move = MakeMove {
+                            game_id: rs.game_id.clone(),
+                            req_id: rs.req_id.clone(),
+                            player: missed_move.player,
+                            coord: missed_move.coord,
+                        };
 
+                        if let Err(e) = components.xadd.add_make_move(make_move) {
+                            error!("xadd make move {:?}", e)
+                        }
+
+                        // Very important ... 😈
+                        // We need to remember this request, so that
+                        // when a move is finally made by changelog,
+                        // we don't forget to send a sync reply.
+
+                        // The reply will ultimately be processed in our
+                        // process loop's Message::MM(move_made) branch !
+                        if let Err(_) = components.reply_repo.put(rs) {
+                            error!("fail to put req in reply repo")
+                        }
+                    }
+                } else {
+                    // in every other case, we should send the server's view:
+                    // - no op: client is caught up
+                    // - client is behind by one move
+                    // - client has a state which we cannot reconcile
+                    //            ...(but maybe they can fix themselves)
                     let sync_reply = SyncReply {
-                        session_id: req_sync.session_id,
-                        game_id: req_sync.game_id,
-                        reply_to: req_sync.req_id,
-                        moves: all_moves,
-                        turn: the_turn + 1,
-                        player_up: other_player(move_made.player),
+                        moves: history,
+                        game_id: rs.game_id.clone(),
+                        reply_to: rs.req_id.clone(),
+                        player_up: system_player_up,
+                        turn: system_turn,
+                        session_id: rs.session_id.clone(),
                     };
-                    if let Err(_) = components.xadd.add_sync_reply(sync_reply) {
-                        error!("xadd sync reply")
+                    if let Err(e) = components.xadd.add_sync_reply(sync_reply) {
+                        error!("xadd sync reply {:?}", e)
                     }
                 }
-                Err(e) => error!("history fetch err in move made processor: {:?}", e),
             }
+            Err(e) => error!("history lookup for req sync : {:?}", e),
         }
-        Ok(None) => (),
-        Err(e) => error!("error fetching from reply repo: {:?}", e),
     }
 }
 
@@ -197,7 +179,8 @@ mod test {
     use crate::repo::*;
     use crate::Components;
     use crossbeam_channel::{select, unbounded, Receiver, Sender};
-    use redis_streams::XReadEntryId;
+    use redis_streams::Message;
+    use redis_streams::XId;
     use std::sync::atomic::{AtomicU64, Ordering};
     use std::sync::{Arc, Mutex};
     use std::thread;
@@ -259,13 +242,16 @@ mod test {
         }
     }
     struct FakeXRead {
-        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
+        sorted_data: Arc<Mutex<Vec<(XId, Message)>>>,
         fake_acks: Arc<FakeAcks>,
     }
+
+    struct StreamReadErr;
+    trait XRead {
+        fn read_sorted(&self) -> Result<Vec<(redis_streams::XId, Message)>, StreamReadErr>;
+    }
     impl XRead for FakeXRead {
-        fn read_sorted(
-            &self,
-        ) -> Result<Vec<(redis_streams::XReadEntryId, StreamInput)>, StreamReadErr> {
+        fn read_sorted(&self) -> Result<Vec<(redis_streams::XId, Message)>, StreamReadErr> {
             let max_xid_ms = self.fake_acks.max_read_xid_ms.load(Ordering::Relaxed);
 
             let data: Vec<_> = self
@@ -289,25 +275,9 @@ mod test {
             }
             Ok(data)
         }
-
-        fn ack_req_sync(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            Ok(self.update_max_id(&self.fake_acks.last_rs_ack_ms, ids))
-        }
-
-        fn ack_prov_hist(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            Ok(self.update_max_id(&self.fake_acks.last_ph_ack_ms, ids))
-        }
-
-        fn ack_game_states(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            Ok(self.update_max_id(&self.fake_acks.last_gs_ack_ms, ids))
-        }
-
-        fn ack_move_made(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
-            Ok(self.update_max_id(&self.fake_acks.last_mm_ack_ms, ids))
-        }
     }
     impl FakeXRead {
-        fn update_max_id(&self, some: &AtomicU64, ids: &[XReadEntryId]) {
+        fn update_max_id(&self, some: &AtomicU64, ids: &[XId]) {
             if let Some(max_id_millis) = ids.iter().map(|id| id.millis_time).max() {
                 some.swap(max_id_millis, Ordering::Relaxed);
             }
@@ -333,8 +303,8 @@ mod test {
         }
     }
 
-    fn quick_xid(ms: u64) -> XReadEntryId {
-        XReadEntryId {
+    fn quick_xid(ms: u64) -> XId {
+        XId {
             millis_time: ms,
             seq_no: 0,
         }
@@ -344,7 +314,7 @@ mod test {
     struct TestFakes {
         history_contents: Arc<Mutex<Option<Vec<Move>>>>,
         reply_contents: Arc<Mutex<Option<ReqSync>>>,
-        sorted_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
+        sorted_stream: Arc<Mutex<Vec<(XId, Message)>>>,
         sync_reply_xadd_out: Receiver<SyncReply>,
         hist_prov_xadd_out: Receiver<HistoryProvided>,
         make_move_xadd_out: Receiver<MakeMove>,
@@ -352,7 +322,7 @@ mod test {
         time_ms: u64,
     }
     impl TestFakes {
-        pub fn emit_sleep(&mut self, input: StreamInput) -> XReadEntryId {
+        pub fn emit_sleep(&mut self, input: Message) -> XId {
             let xid = quick_xid(self.time_ms);
             self.sorted_stream.lock().expect("lock").push((xid, input));
 
@@ -375,8 +345,7 @@ mod test {
         let history_contents: Arc<Mutex<Option<Vec<Move>>>> = Arc::new(Mutex::new(None));
         let reply_contents: Arc<Mutex<Option<ReqSync>>> = Arc::new(Mutex::new(None));
 
-        let sorted_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
-            Arc::new(Mutex::new(vec![]));
+        let sorted_stream: Arc<Mutex<Vec<(XId, Message)>>> = Arc::new(Mutex::new(vec![]));
 
         let sfs = sorted_stream.clone();
         let fh = history_contents.clone();
@@ -388,17 +357,14 @@ mod test {
             let components = Components {
                 history_repo: Box::new(FakeHistoryRepo { contents: fh }),
                 reply_repo: Box::new(FakeReplyRepo { contents: fr }),
-                xread: Box::new(FakeXRead {
-                    sorted_data: sfs.clone(),
-                    fake_acks: ackss,
-                }),
+
                 xadd: Box::new(FakeXAdd {
                     hist_prov_in: hist_prov_xadd_in,
                     sync_reply_in: sync_reply_xadd_in,
                     make_move_in: make_move_xadd_in,
                 }),
             };
-            process(&components);
+            todo!(); //process(&components);
         });
 
         TestFakes {
@@ -452,7 +418,7 @@ mod test {
         // force fake history repo to respond as we expect
         *fakes.history_contents.lock().expect("lock") = Some(moves.clone());
 
-        let xid_rs = fakes.emit_sleep(StreamInput::RS(req_sync));
+        let xid_rs = fakes.emit_sleep(todo!()); //Message::RS(req_sync));
 
         // request sync event should be acknowledged
         // during stream::process
@@ -513,7 +479,7 @@ mod test {
         // note that it is one move ahead of the client's view
         *fakes.history_contents.lock().expect("lock") = Some(moves.clone());
 
-        let xid_rs = fakes.emit_sleep(StreamInput::RS(req_sync));
+        let xid_rs = fakes.emit_sleep(todo!()); //Message::RS(req_sync));
 
         // request sync event should be acknowledged
         // during stream::process
@@ -583,7 +549,7 @@ mod test {
         // make sure fake history repo is configured
         *fakes.history_contents.lock().expect("lock") = Some(moves.clone());
 
-        let xid_rs = fakes.emit_sleep(StreamInput::RS(req_sync));
+        let xid_rs = fakes.emit_sleep(todo!()); //Message::RS(req_sync));
 
         // request sync event should be acknowledged
         // during stream::process
@@ -655,7 +621,7 @@ mod test {
         // make sure fake history repo is configured
         *fakes.history_contents.lock().expect("lock") = Some(server_moves.clone());
 
-        let xid_rs = fakes.emit_sleep(StreamInput::RS(req_sync.clone()));
+        let xid_rs = fakes.emit_sleep(todo!()); //Message::RS(req_sync.clone()));
 
         // request sync event should be acknowledged
         // during stream::process
@@ -692,7 +658,7 @@ mod test {
             event_id: EventId::new(),
             captured: Vec::new(),
         };
-        let xid_mm = fakes.emit_sleep(StreamInput::MM(move_made_at_changelog));
+        let xid_mm = fakes.emit_sleep(todo!()); //Message::MM(move_made_at_changelog));
 
         let mm_ack = fakes.acks.last_mm_ack_ms.load(Ordering::Relaxed);
         assert_eq!(mm_ack, xid_mm.millis_time);
@@ -736,14 +702,14 @@ mod test {
             },
         ];
         let fake_player_up = Player::BLACK;
-        let xid_gs = fakes.emit_sleep(StreamInput::GS(GameState {
-            moves: fake_moves,
-            player_up: fake_player_up,
-            board: Board::default(),
-            captures: Captures::default(),
-            game_id: fake_game_id.clone(),
-            turn: 1,
-        }));
+        let xid_gs = fakes.emit_sleep(todo!()); /*Message::GS(GameState {
+                                                    moves: fake_moves,
+                                                    player_up: fake_player_up,
+                                                    board: Board::default(),
+                                                    captures: Captures::default(),
+                                                    game_id: fake_game_id.clone(),
+                                                    turn: 1,
+                                                }));*/
 
         // history repo should now contain the moves from that game
         let actual_moves = fakes
@@ -773,10 +739,10 @@ mod test {
 
         // request history
         let fake_req_id = ReqId(uuid::Uuid::default());
-        let xid_ph = fakes.emit_sleep(StreamInput::PH(ProvideHistory {
-            game_id: fake_game_id.clone(),
-            req_id: fake_req_id.clone(),
-        }));
+        let xid_ph = fakes.emit_sleep(todo!()); /*Message::PH(ProvideHistory {
+                                                    game_id: fake_game_id.clone(),
+                                                    req_id: fake_req_id.clone(),
+                                                }));*/
 
         // There should be an XADD triggered on history-provided stream
         select! {
