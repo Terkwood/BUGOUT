@@ -13,7 +13,6 @@ fn main() {
     stream::create_consumer_group(&client);
 
     let lobby = stream::LobbyStreams::new(components);
-
     let mut conn = client.get_connection().expect("redis conn");
     let stream_handlers: Vec<(&str, Box<dyn FnMut(XId, &Message) -> anyhow::Result<()>>)> = vec![
         (
