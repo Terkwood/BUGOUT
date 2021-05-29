@@ -2,6 +2,7 @@ mod consumer_group_opts;
 mod sorted_streams;
 mod stream_handler;
 
+pub use anyhow;
 pub use consumer_group_opts::*;
 pub use sorted_streams::*;
 pub use stream_handler::*;
