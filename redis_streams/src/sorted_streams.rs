@@ -2,7 +2,7 @@ use crate::{
     stream_handler::{Group, Message, StreamHandler},
     XId,
 };
-use anyhow::{Context, Result};
+use anyhow::Result;
 use redis::{
     streams::{StreamReadOptions, StreamReadReply},
     Commands, Connection,

@@ -1,9 +1,7 @@
-//! Defines consumer groups and streaming logic.
-
+//! Defines XREADGROUP / XACK streaming logic tied to a redis connection.
 use super::XId;
-use anyhow::{Context, Result};
-use redis::streams::{StreamReadOptions, StreamReadReply};
-use redis::{Commands, Connection, RedisResult, Value};
+use anyhow::Result;
+use redis::{Commands, Connection, Value};
 use std::collections::HashMap;
 
 /// Handles connection to Redis and consumes messages from an individual stream.
@@ -23,7 +21,7 @@ where
     F: FnMut(XId, &Message) -> Result<()>,
 {
     /// Calls xgroup_create_mkstream on the given stream name and returns this struct.
-    pub fn init(
+    pub fn init_redis_stream(
         stream: &str,
         handler: F,
         opts: ConsumerGroupOpts,
@@ -66,7 +64,7 @@ pub struct Group {
 pub struct ConsumerGroupOpts {
     pub count: Option<usize>,
     pub group: Group,
-    pub timeout_ms: usize,
+    pub block_ms: usize,
 }
 
 impl ConsumerGroupOpts {
@@ -74,7 +72,7 @@ impl ConsumerGroupOpts {
         Self {
             count: None,
             group,
-            timeout_ms: 5_000,
+            block_ms: 5_000,
         }
     }
 
@@ -95,8 +93,8 @@ impl ConsumerGroupOpts {
     }
 
     /// Maximum ms duration to block waiting for messages.
-    pub fn timeout(mut self, timeout_ms: usize) -> Self {
-        self.timeout_ms = timeout_ms;
+    pub fn block_ms(mut self, timeout_ms: usize) -> Self {
+        self.block_ms = timeout_ms;
         self
     }
 }
