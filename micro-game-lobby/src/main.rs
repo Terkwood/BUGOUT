@@ -1,5 +1,3 @@
-use std::borrow::BorrowMut;
-
 use log::info;
 use micro_game_lobby::*;
 
@@ -14,7 +12,7 @@ fn main() {
     let components = Components::new(client.clone());
     stream::create_consumer_group(&client);
 
-    let mut lobby_streams = stream::LobbyStreams::new(components);
+    let lobby_streams = stream::LobbyStreams::new(components);
 
     let mut conn = client.get_connection().expect("redis conn");
     let stream_handlers: Vec<(&str, Box<dyn FnMut(XId, &Message) -> anyhow::Result<()>>)> = vec![
@@ -36,7 +34,7 @@ fn main() {
         ),
     ];
     let mut sorted_streams =
-        RedisSortedStreams::xgroup_create_mkstreams(stream_handlers, todo!("opts"), &mut conn)
+        RedisSortedStreams::xgroup_create_mkstreams(stream_handlers, &stream::opts(), &mut conn)
             .expect("stream creation");
 
     lobby_streams.process(&mut sorted_streams)

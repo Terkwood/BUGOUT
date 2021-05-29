@@ -8,7 +8,6 @@ use redis_streams::XReadEntryId;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-const BLOCK_MS: usize = 5000;
 
 /// xread_sorted performs a redis xread then sorts the results
 ///

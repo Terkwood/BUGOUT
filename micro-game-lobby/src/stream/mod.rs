@@ -2,6 +2,7 @@ mod init;
 mod xadd;
 
 pub use init::*;
+use redis_streams::ConsumerGroupOpts;
 use redis_streams::SortedStreams;
 pub use xadd::*;
 
@@ -11,9 +12,9 @@ use crate::PUBLIC_GAME_BOARD_SIZE;
 use core_model::*;
 use lobby_model::api::*;
 use lobby_model::*;
-use log::{error, info, trace};
+use log::{error, trace};
 use move_model::GameState;
-use redis_streams::{Message, XId};
+use redis_streams::Message;
 
 pub const GROUP_NAME: &str = "micro-game-lobby";
 
@@ -37,15 +38,24 @@ pub struct LobbyStreams {
     pub reg: Components,
 }
 
-use redis_streams::{anyhow, RedisSortedStreams};
-use std::borrow::BorrowMut;
-use std::rc::Rc;
+use redis_streams::Group;
+const BLOCK_MS: usize = 5000;
+pub fn opts() -> ConsumerGroupOpts {
+    ConsumerGroupOpts {
+        block_ms: BLOCK_MS,
+        group: Group {
+            group_name: GROUP_NAME.to_string(),
+            consumer_name: "singleton".to_string(),
+        },
+    }
+}
+
 impl LobbyStreams {
     pub fn new(reg: Components) -> Self {
         Self { reg }
     }
 
-    pub fn process(&mut self, streams: &mut dyn SortedStreams) {
+    pub fn process(&self, streams: &mut dyn SortedStreams) {
         loop {
             if let Err(e) = streams.consume() {
                 error!("Stream err {:?}", e)
