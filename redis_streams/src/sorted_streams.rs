@@ -7,7 +7,7 @@ use redis::{
 use std::collections::HashMap;
 use std::str::FromStr;
 
-trait SortedStreams {
+pub trait SortedStreams {
     /// "XREADGROUP >" across streams, handle all the messages in time order,
     /// and acknowledge them all.  The XACK calls happen once per stream,
     /// acknowleding all XIds for that stream at once.  The XACK calls happen
