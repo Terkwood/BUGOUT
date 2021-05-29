@@ -104,38 +104,45 @@ impl LobbyStreams {
             } else {
                 error!("Failed to fetch game lobby: FPG")
             }
+        } else {
+            error!("could not deserialize FPG data field")
         })
     }
 
-    pub fn consume_cg(&self, msg: &Message) {
-        todo!("deser");
-        let mut cg: CreateGame = todo!();
-        let session_id = &cg.session_id;
-        let game_id = cg.game_id.clone().unwrap_or(GameId::new());
-        if let Ok(lobby) = self.reg.game_lobby_repo.get() {
-            let updated: GameLobby = lobby.open(Game {
-                game_id: game_id.clone(),
-                board_size: cg.board_size,
-                creator: session_id.clone(),
-                visibility: cg.visibility,
-            });
-            if let Err(_) = self.reg.game_lobby_repo.put(&updated) {
-                error!("game lobby write F1");
-            } else {
-                if let Err(_) = self.reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
+    pub fn consume_cg(&self, msg: &Message) -> anyhow::Result<()> {
+        let maybe_value = msg.get("data");
+        Ok(if let Some(redis::Value::Data(data)) = maybe_value {
+            let cg: CreateGame = bincode::deserialize(&data)?;
+
+            let session_id = &cg.session_id;
+            let game_id = cg.game_id.clone().unwrap_or(GameId::new());
+            if let Ok(lobby) = self.reg.game_lobby_repo.get() {
+                let updated: GameLobby = lobby.open(Game {
                     game_id: game_id.clone(),
-                    session_id: session_id.clone(),
-                    event_id: EventId::new(),
+                    board_size: cg.board_size,
+                    creator: session_id.clone(),
                     visibility: cg.visibility,
-                })) {
-                    error!("XADD Game ready")
+                });
+                if let Err(_) = self.reg.game_lobby_repo.put(&updated) {
+                    error!("game lobby write F1");
                 } else {
-                    trace!("Game created. Lobby: {:?}", &updated);
+                    if let Err(_) = self.reg.xadd.xadd(StreamOutput::WFO(WaitForOpponent {
+                        game_id: game_id.clone(),
+                        session_id: session_id.clone(),
+                        event_id: EventId::new(),
+                        visibility: cg.visibility,
+                    })) {
+                        error!("XADD Game ready")
+                    } else {
+                        trace!("Game created. Lobby: {:?}", &updated);
+                    }
                 }
+            } else {
+                error!("CG GAME REPO GET")
             }
         } else {
-            error!("CG GAME REPO GET")
-        }
+            error!("could not deser create game data field")
+        })
     }
 
     /// Consumes the command to join a private game.
@@ -143,30 +150,35 @@ impl LobbyStreams {
     /// we will simply log a warning.
     /// Consider implementing logic related to handling
     /// private game rejection: https://github.com/Terkwood/BUGOUT/issues/304
-    pub fn consume_jpg(&self, msg: &Message) {
-        let jpg: JoinPrivateGame = todo!("deser");
+    pub fn consume_jpg(&self, msg: &Message) -> anyhow::Result<()> {
+        let maybe_value = msg.get("data");
+        Ok(if let Some(redis::Value::Data(data)) = maybe_value {
+            let jpg: JoinPrivateGame = bincode::deserialize(&data)?;
 
-        let reg = &self.reg;
-        if let Ok(lobby) = reg.game_lobby_repo.get() {
-            if let Some(queued) = lobby
-                .games
-                .iter()
-                .find(|g| g.visibility == Visibility::Private && g.game_id == jpg.game_id)
-            {
-                ready_game(&jpg.session_id, &lobby, queued, reg)
-            } else {
-                if let Err(e) = reg.xadd.xadd(StreamOutput::PGR(PrivateGameRejected {
-                    client_id: jpg.client_id.clone(),
-                    event_id: EventId::new(),
-                    game_id: jpg.game_id.clone(),
-                    session_id: jpg.session_id.clone(),
-                })) {
-                    error!("Error writing private game rejection to stream {:?}", e)
+            let reg = &self.reg;
+            if let Ok(lobby) = reg.game_lobby_repo.get() {
+                if let Some(queued) = lobby
+                    .games
+                    .iter()
+                    .find(|g| g.visibility == Visibility::Private && g.game_id == jpg.game_id)
+                {
+                    ready_game(&jpg.session_id, &lobby, queued, reg)
+                } else {
+                    if let Err(e) = reg.xadd.xadd(StreamOutput::PGR(PrivateGameRejected {
+                        client_id: jpg.client_id.clone(),
+                        event_id: EventId::new(),
+                        game_id: jpg.game_id.clone(),
+                        session_id: jpg.session_id.clone(),
+                    })) {
+                        error!("Error writing private game rejection to stream {:?}", e)
+                    }
                 }
+            } else {
+                error!("game lobby JPG get")
             }
         } else {
-            error!("game lobby JPG get")
-        }
+            error!("could not consume JoinPrivateGame data field")
+        })
     }
 
     pub fn consume_sd(&self, msg: &Message) {

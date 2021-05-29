@@ -21,11 +21,11 @@ fn main() {
         ),
         (
             topics::JOIN_PRIVATE_GAME,
-            Box::new(|_xid, msg| Ok(lobby.consume_jpg(msg))),
+            Box::new(|_xid, msg| lobby.consume_jpg(msg)),
         ),
         (
             topics::CREATE_GAME,
-            Box::new(|_xid, msg| Ok(lobby.consume_cg(msg))),
+            Box::new(|_xid, msg| lobby.consume_cg(msg)),
         ),
         (
             topics::SESSION_DISCONNECTED,
