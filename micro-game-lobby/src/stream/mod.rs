@@ -18,14 +18,6 @@ use redis_streams::Message;
 
 pub const GROUP_NAME: &str = "micro-game-lobby";
 
-#[derive(Clone, Debug)]
-pub enum StreamInput {
-    FPG(FindPublicGame),
-    CG(CreateGame),
-    JPG(JoinPrivateGame),
-    SD(SessionDisconnected),
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum StreamOutput {
     WFO(WaitForOpponent),
