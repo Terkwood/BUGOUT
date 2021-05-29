@@ -12,30 +12,30 @@ fn main() {
     let components = Components::new(client.clone());
     stream::create_consumer_group(&client);
 
-    let lobby_streams = stream::LobbyStreams::new(components);
+    let lobby = stream::LobbyStreams::new(components);
 
     let mut conn = client.get_connection().expect("redis conn");
     let stream_handlers: Vec<(&str, Box<dyn FnMut(XId, &Message) -> anyhow::Result<()>>)> = vec![
         (
             topics::FIND_PUBLIC_GAME,
-            Box::new(|_xid, msg| Ok(lobby_streams.consume_fpg(msg))),
+            Box::new(|_xid, msg| Ok(lobby.consume_fpg(msg))),
         ),
         (
             topics::JOIN_PRIVATE_GAME,
-            Box::new(|_xid, msg| Ok(lobby_streams.consume_jpg(msg))),
+            Box::new(|_xid, msg| Ok(lobby.consume_jpg(msg))),
         ),
         (
             topics::CREATE_GAME,
-            Box::new(|_xid, msg| Ok(lobby_streams.consume_cg(msg))),
+            Box::new(|_xid, msg| Ok(lobby.consume_cg(msg))),
         ),
         (
             topics::SESSION_DISCONNECTED,
-            Box::new(|_xid, msg| Ok(lobby_streams.consume_sd(msg))),
+            Box::new(|_xid, msg| Ok(lobby.consume_sd(msg))),
         ),
     ];
-    let mut sorted_streams =
+    let mut streams =
         RedisSortedStreams::xgroup_create_mkstreams(stream_handlers, &stream::opts(), &mut conn)
             .expect("stream creation");
 
-    lobby_streams.process(&mut sorted_streams)
+    lobby.process(&mut streams)
 }
