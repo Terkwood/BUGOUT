@@ -278,8 +278,6 @@ mod test {
         sorted_data: Arc<Mutex<Vec<(XId, StreamMessage)>>>,
     }
     impl XReadGroupSorted for FakeXRead {
-        /// Be careful, this implementation assumes
-        /// that the underlying data is pre-sorted
         fn read(
             &mut self,
             _stream_names: &[String],
@@ -331,11 +329,7 @@ mod test {
         thread::spawn(move || {
             let components = Components {
                 game_lobby_repo: Box::new(FakeGameLobbyRepo { contents: fgl }),
-                //xread: Box::new(FakeXRead {
-                //    sorted_data: sfs.clone(),
-                //}),
                 xadd: Box::new(FakeXAdd(xadd_in)),
-                //xack: Box::new(FakeXAck(xack_in)),
             };
             let lobby = LobbyStreams::new(components);
 
@@ -376,9 +370,6 @@ mod test {
         });
 
         // emit some events in a time-ordered fashion
-        // (we need to use time-ordered push since the
-        //   FakeXRead impl won't sort its underlying data )
-
         let mut fake_time_ms = 100;
         let incr_ms = 100;
 
