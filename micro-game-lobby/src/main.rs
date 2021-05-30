@@ -13,7 +13,6 @@ fn main() {
 
     let lobby = stream::LobbyStreams::new(components);
 
-    let mut conn = client.get_connection().expect("redis conn");
     let stream_handlers: Vec<(&str, Box<dyn FnMut(XId, &Message) -> anyhow::Result<()>>)> = vec![
         (
             topics::FIND_PUBLIC_GAME,
@@ -32,8 +31,9 @@ fn main() {
             Box::new(|_xid, msg| lobby.consume_sd(msg)),
         ),
     ];
+
     let mut streams =
-        RedisSortedStreams::xgroup_create_mkstreams(stream_handlers, &stream::opts(), &mut conn)
+        RedisSortedStreams::xgroup_create_mkstreams(stream_handlers, &stream::opts(), client)
             .expect("stream creation");
 
     lobby.process(&mut streams)

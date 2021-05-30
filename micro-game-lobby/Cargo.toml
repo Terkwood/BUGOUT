@@ -14,4 +14,7 @@ lobby-model = {path = "lobby-model"}
 log = "0.4.8"
 move-model = {git = "https://github.com/Terkwood/BUGOUT", rev = "20e6620"}
 redis = {version = "0.20.0", features = ["r2d2"]}
-redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "1.0.0", rev = "a394d46"}
+redis_streams = {git = "https://github.com/Terkwood/BUGOUT", version = "1.0.0", rev = "f8e4853"}
+
+[dev-dependencies]
+serde = "1.0.126"

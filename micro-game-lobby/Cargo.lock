@@ -332,6 +332,7 @@ dependencies = [
  "move-model",
  "redis",
  "redis_streams",
+ "serde",
 ]
 
 [[package]]
@@ -430,7 +431,7 @@ dependencies = [
 [[package]]
 name = "redis_streams"
 version = "1.0.0"
-source = "git+https://github.com/Terkwood/BUGOUT?rev=a394d46#a394d4650faba1c834770d9213323617208c53ab"
+source = "git+https://github.com/Terkwood/BUGOUT?rev=f8e4853#f8e4853c6a7202f0f899afe23004202f3bb59da9"
 dependencies = [
  "anyhow",
  "redis",
