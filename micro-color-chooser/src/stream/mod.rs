@@ -1,5 +1,5 @@
 mod init;
-mod topics;
+pub mod topics;
 mod xadd;
 
 pub use init::*;
@@ -32,7 +32,7 @@ impl ColorChooserStreams {
         }
     }
 
-    fn consume_game_ready(&self, msg: &Message) -> anyhow::Result<()> {
+    pub fn consume_game_ready(&self, msg: &Message) -> anyhow::Result<()> {
         let maybe_value = msg.get("data");
         Ok(if let Some(redis::Value::Data(data)) = maybe_value {
             let gr: GameReady = bincode::deserialize(&data)?;
@@ -40,7 +40,7 @@ impl ColorChooserStreams {
         })
     }
 
-    fn consume_choose_color_pref(&self, msg: &Message) -> anyhow::Result<()> {
+    pub fn consume_choose_color_pref(&self, msg: &Message) -> anyhow::Result<()> {
         todo!()
     }
 }
