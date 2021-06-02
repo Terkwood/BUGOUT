@@ -1,11 +1,9 @@
 mod init;
 mod topics;
 mod xadd;
-mod xread;
 
 pub use init::*;
 pub use xadd::*;
-pub use xread::*;
 
 use crate::components::*;
 use crate::service::{choose, game_color_prefs};
@@ -13,99 +11,115 @@ use color_model::api::*;
 use color_model::*;
 
 use log::{error, info};
-use redis_streams::XReadEntryId;
-
-#[derive(Clone)]
-pub enum StreamInput {
-    GR(GameReady),
-    CCP(ChooseColorPref),
-}
-
-enum Processed {
-    GR(XReadEntryId),
-    CCP(XReadEntryId),
-}
+use redis_streams::{anyhow, Message, SortedStreams, XId};
 
 const GROUP_NAME: &str = "micro-color-chooser";
+
+pub struct ColorChooserStreams {
+    pub reg: Components,
+}
+
+impl ColorChooserStreams {
+    pub fn new(reg: Components) -> Self {
+        Self { reg }
+    }
+
+    pub fn process(&self, streams: &mut dyn SortedStreams) {
+        loop {
+            if let Err(e) = streams.consume() {
+                error!("Stream err {:?}", e)
+            }
+        }
+    }
+
+    fn consume_game_ready(&self, msg: &Message) -> anyhow::Result<()> {
+        let maybe_value = msg.get("data");
+        Ok(if let Some(redis::Value::Data(data)) = maybe_value {
+            let gr: GameReady = bincode::deserialize(&data)?;
+            todo!()
+        })
+    }
+
+    fn consume_choose_color_pref(&self, msg: &Message) -> anyhow::Result<()> {
+        todo!()
+    }
+}
+
+use redis_streams::{ConsumerGroupOpts, Group};
+const BLOCK_MS: usize = 5000;
+pub fn opts() -> ConsumerGroupOpts {
+    ConsumerGroupOpts {
+        block_ms: BLOCK_MS,
+        group: Group {
+            group_name: GROUP_NAME.to_string(),
+            consumer_name: "singleton".to_string(),
+        },
+    }
+}
 
 const ACK_QUEUE_CAPACITY: usize = 25;
 
 pub fn process(components: &mut Components) {
     let repos = Repos::new(components);
     loop {
-        let mut gr_processed: Vec<XReadEntryId> = Vec::with_capacity(ACK_QUEUE_CAPACITY);
-        let mut ccp_processed: Vec<XReadEntryId> = Vec::with_capacity(ACK_QUEUE_CAPACITY);
-        match components.xread.sorted() {
-            Ok(xrr) => {
-                for time_ordered_event in xrr {
-                    let (result, pxid) = match time_ordered_event {
-                        (xid, StreamInput::CCP(ccp)) => {
-                            info!("Stream: Choose Color Pref {:?}", &ccp);
-                            let scp = SessionColorPref {
-                                color_pref: ccp.color_pref,
-                                session_id: ccp.session_id.clone(),
-                                client_id: ccp.client_id,
-                            };
+        // match components.xread.sorted() {
+        //   Ok(xrr) => {
+        //     for time_ordered_event in xrr {
+        /*
+        let (result, pxid) = match time_ordered_event {
+            (xid, StreamInput::CCP(ccp)) => {
+                info!("Stream: Choose Color Pref {:?}", &ccp);
+                let scp = SessionColorPref {
+                    color_pref: ccp.color_pref,
+                    session_id: ccp.session_id.clone(),
+                    client_id: ccp.client_id,
+                };
 
-                            if let Err(_e) = components.prefs_repo.put(&scp) {
-                                error!("write to pref repo")
-                            }
-
-                            (
-                                game_color_prefs::by_session_id(&ccp.session_id, &repos),
-                                Processed::CCP(xid),
-                            )
-                        }
-                        (xid, StreamInput::GR(gr)) => {
-                            info!("Stream: Game Ready {:?}", &gr);
-
-                            if let Err(_e) = components.game_ready_repo.put(gr.clone()) {
-                                error!("write to session game repo 0")
-                            }
-                            if let Err(_e) = components.game_ready_repo.put(gr.clone()) {
-                                error!("write to session game repo 0")
-                            }
-
-                            (
-                                game_color_prefs::by_game_ready(&gr, &repos),
-                                Processed::GR(xid),
-                            )
-                        }
-                    };
-
-                    match result {
-                        Ok(GameColorPref::Complete { game_id, prefs }) => {
-                            let colors_chosen =
-                                choose(&prefs.0, &prefs.1, &game_id, &mut components.random);
-                            if let Err(_e) = components.xadd.xadd(&colors_chosen) {
-                                error!("error writing to colors chose stream")
-                            }
-
-                            info!("🎨 Completed: {:?}", colors_chosen)
-                        }
-                        Ok(other) => info!("⌚ Do Nothing: {:?}", other),
-                        Err(e) => error!("fetch error checking game color prefs {:?}", e),
-                    }
-
-                    match pxid {
-                        Processed::CCP(xid) => ccp_processed.push(xid),
-                        Processed::GR(xid) => gr_processed.push(xid),
-                    }
+                if let Err(_e) = components.prefs_repo.put(&scp) {
+                    error!("write to pref repo")
                 }
+
+                (
+                    game_color_prefs::by_session_id(&ccp.session_id, &repos),
+                    Processed::CCP(xid),
+                )
             }
-            Err(_) => error!("xread"),
+            (xid, StreamInput::GR(gr)) => {
+                info!("Stream: Game Ready {:?}", &gr);
+
+                if let Err(_e) = components.game_ready_repo.put(gr.clone()) {
+                    error!("write to session game repo 0")
+                }
+                if let Err(_e) = components.game_ready_repo.put(gr.clone()) {
+                    error!("write to session game repo 0")
+                }
+
+                (
+                    game_color_prefs::by_game_ready(&gr, &repos),
+                    Processed::GR(xid),
+                )
+            }
+        };
+
+        match result {
+            Ok(GameColorPref::Complete { game_id, prefs }) => {
+                let colors_chosen =
+                    choose(&prefs.0, &prefs.1, &game_id, &mut components.random);
+                if let Err(_e) = components.xadd.xadd(&colors_chosen) {
+                    error!("error writing to colors chose stream")
+                }
+
+                info!("🎨 Completed: {:?}", colors_chosen)
+            }
+            Ok(other) => info!("⌚ Do Nothing: {:?}", other),
+            Err(e) => error!("fetch error checking game color prefs {:?}", e),
         }
 
-        if !gr_processed.is_empty() {
-            if let Err(_e) = &components.xread.ack_game_ready(&gr_processed) {
-                error!("ack for game ready failed")
-            }
+        match pxid {
+            Processed::CCP(xid) => ccp_processed.push(xid),
+            Processed::GR(xid) => gr_processed.push(xid),
         }
-        if !ccp_processed.is_empty() {
-            if let Err(_e) = &components.xread.ack_choose_color_pref(&ccp_processed) {
-                error!("ack for choose color prefs failed")
-            }
-        }
+        */
     }
 }
 
@@ -116,7 +130,7 @@ mod tests {
     use crate::Components;
     use core_model::*;
     use crossbeam_channel::{unbounded, Receiver, Sender};
-    use redis_streams::XReadEntryId;
+    use redis_streams::XId;
     use std::collections::HashMap;
     use std::rc::Rc;
     use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
@@ -174,11 +188,11 @@ mod tests {
         gr_ack_ms: Arc<AtomicU64>,
         ccp_ack_ms: Arc<AtomicU64>,
         max_read_millis: AtomicU64,
-        sorted_data: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>>,
+        sorted_data: Arc<Mutex<Vec<(XId, StreamInput)>>>,
     }
 
     impl XRead for FakeXRead {
-        fn sorted(&self) -> Result<Vec<(XReadEntryId, StreamInput)>, StreamReadErr> {
+        fn sorted(&self) -> Result<Vec<(XId, StreamInput)>, StreamReadErr> {
             let max_ms = self.max_read_millis.load(Relaxed);
             let data: Vec<_> = self
                 .sorted_data
@@ -204,7 +218,7 @@ mod tests {
             Ok(data)
         }
 
-        fn ack_choose_color_pref(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+        fn ack_choose_color_pref(&self, ids: &[XId]) -> Result<(), StreamAckErr> {
             if let Some(max_id_millis) = ids.iter().map(|id| id.millis_time).max() {
                 self.ccp_ack_ms.swap(max_id_millis, Relaxed);
             }
@@ -212,7 +226,7 @@ mod tests {
             Ok(())
         }
 
-        fn ack_game_ready(&self, ids: &[XReadEntryId]) -> Result<(), StreamAckErr> {
+        fn ack_game_ready(&self, ids: &[XId]) -> Result<(), StreamAckErr> {
             if let Some(max_id_millis) = ids.iter().map(|id| id.millis_time).max() {
                 self.gr_ack_ms.swap(max_id_millis, Relaxed);
             }
@@ -228,8 +242,8 @@ mod tests {
         }
     }
 
-    fn quick_xid(millis_time: u64) -> XReadEntryId {
-        XReadEntryId {
+    fn quick_xid(millis_time: u64) -> XId {
+        XId {
             millis_time,
             seq_no: 0,
         }
@@ -256,8 +270,7 @@ mod tests {
         let fake_game_ready_contents: Arc<Mutex<HashMap<SessionId, GameReady>>> =
             Arc::new(Mutex::new(HashMap::new()));
 
-        let sorted_fake_stream: Arc<Mutex<Vec<(XReadEntryId, StreamInput)>>> =
-            Arc::new(Mutex::new(vec![]));
+        let sorted_fake_stream: Arc<Mutex<Vec<(XId, StreamInput)>>> = Arc::new(Mutex::new(vec![]));
 
         let sfs = sorted_fake_stream.clone();
         let fp = fake_prefs_contents.clone();

@@ -1,13 +1,12 @@
 use crate::repo::*;
 use crate::service::Random;
-use crate::stream::{XAdd, XRead};
+use crate::stream::XAdd;
 use redis::Client;
 use std::rc::Rc;
 
 pub struct Components {
     pub prefs_repo: Rc<dyn PrefsRepo>,
     pub game_ready_repo: Rc<dyn GameReadyRepo>,
-    pub xread: Box<dyn XRead>,
     pub xadd: Box<dyn XAdd>,
     pub random: Random,
 }
@@ -17,7 +16,6 @@ impl Components {
         Components {
             prefs_repo: Rc::new(client.clone()),
             game_ready_repo: Rc::new(client.clone()),
-            xread: Box::new(client.clone()),
             xadd: Box::new(client.clone()),
             random: Random::new(),
         }
