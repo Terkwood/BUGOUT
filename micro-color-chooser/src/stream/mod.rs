@@ -186,8 +186,6 @@ mod tests {
     }
 
     struct FakeXRead {
-        gr_ack_ms: Arc<AtomicU64>,
-        ccp_ack_ms: Arc<AtomicU64>,
         max_read_millis: AtomicU64,
         sorted_data: Arc<Mutex<Vec<(XId, Message)>>>,
     }
@@ -246,7 +244,7 @@ mod tests {
         pub game_ready_contents: Arc<Mutex<HashMap<SessionId, GameReady>>>,
     }
 
-    fn run_stream(events: Vec<StreamInput>) -> TestOutputs {
+    fn run_stream(events: Vec<Message>) -> TestOutputs {
         let gr_ack_ms = Arc::new(AtomicU64::new(0));
         let ccp_ack_ms = Arc::new(AtomicU64::new(0));
 
@@ -259,7 +257,7 @@ mod tests {
         let fake_game_ready_contents: Arc<Mutex<HashMap<SessionId, GameReady>>> =
             Arc::new(Mutex::new(HashMap::new()));
 
-        let sorted_fake_stream: Arc<Mutex<Vec<(XId, StreamInput)>>> = Arc::new(Mutex::new(vec![]));
+        let sorted_fake_stream: Arc<Mutex<Vec<(XId, Message)>>> = Arc::new(Mutex::new(vec![]));
 
         let sfs = sorted_fake_stream.clone();
         let fp = fake_prefs_contents.clone();
@@ -275,12 +273,6 @@ mod tests {
                 prefs_repo: Rc::new(FakePrefsRepo {
                     contents: fp,
                     put_in: put_prefs_in,
-                }),
-                xread: Box::new(FakeXRead {
-                    gr_ack_ms: gra,
-                    ccp_ack_ms: ca,
-                    sorted_data: sfs.clone(),
-                    max_read_millis: AtomicU64::new(0),
                 }),
                 xadd: Box::new(FakeXAdd(xadd_call_in)),
                 random: crate::service::Random::new(),
@@ -306,10 +298,11 @@ mod tests {
             fake_time_ms += incr_ms;
             thread::sleep(wait_time);
 
-            match event {
+            /*match event {
                 StreamInput::CCP(_) => assert_eq!(ccp_ack_ms.load(Relaxed), xid.millis_time),
                 StreamInput::GR(_) => assert_eq!(gr_ack_ms.load(Relaxed), xid.millis_time),
-            }
+            }*/
+            todo!("what happened")
         }
 
         TestOutputs {
@@ -327,7 +320,7 @@ mod tests {
         let sessions = (SessionId(Uuid::new_v4()), SessionId(Uuid::new_v4()));
         let clients = (ClientId(Uuid::new_v4()), ClientId(Uuid::new_v4()));
 
-        let first_client_pref = StreamInput::CCP(ChooseColorPref {
+        /*let first_client_pref = StreamInput::CCP(ChooseColorPref {
             client_id: clients.0,
             session_id: sessions.0.clone(),
             color_pref: ColorPref::White,
@@ -350,7 +343,8 @@ mod tests {
         test_outputs.put_prefs_out.recv().expect("recv");
         test_outputs.put_prefs_out.recv().expect("recv");
         test_outputs.put_game_ready_out.recv().expect("recv");
-        test_outputs.xadd_call_out.recv().expect("recv");
+        test_outputs.xadd_call_out.recv().expect("recv");*/
+        todo!("write this test")
     }
 
     #[test]
@@ -359,7 +353,7 @@ mod tests {
         let sessions = (SessionId(Uuid::new_v4()), SessionId(Uuid::new_v4()));
         let clients = (ClientId(Uuid::new_v4()), ClientId(Uuid::new_v4()));
 
-        let first_client_pref = StreamInput::CCP(ChooseColorPref {
+        /*let first_client_pref = StreamInput::CCP(ChooseColorPref {
             client_id: clients.0,
             session_id: sessions.0.clone(),
             color_pref: ColorPref::White,
@@ -382,7 +376,8 @@ mod tests {
         test_outputs.put_prefs_out.recv().expect("recv");
         test_outputs.put_prefs_out.recv().expect("recv");
         test_outputs.put_game_ready_out.recv().expect("recv");
-        test_outputs.xadd_call_out.recv().expect("recv");
+        test_outputs.xadd_call_out.recv().expect("recv");*/
+        todo!("test")
     }
 
     #[test]
@@ -390,7 +385,7 @@ mod tests {
         let sessions = (SessionId(Uuid::new_v4()), SessionId(Uuid::new_v4()));
         let clients = (ClientId(Uuid::new_v4()), ClientId(Uuid::new_v4()));
 
-        let first_client_pref = StreamInput::CCP(ChooseColorPref {
+        /*let first_client_pref = StreamInput::CCP(ChooseColorPref {
             client_id: clients.0,
             session_id: sessions.0.clone(),
             color_pref: ColorPref::White,
@@ -405,7 +400,8 @@ mod tests {
 
         test_outputs.put_prefs_out.recv().expect("recv");
         test_outputs.put_prefs_out.recv().expect("recv");
-        assert!(test_outputs.xadd_call_out.is_empty())
+        assert!(test_outputs.xadd_call_out.is_empty())*/
+        todo!("test")
     }
 
     #[test]
@@ -413,7 +409,7 @@ mod tests {
         let sessions = (SessionId(Uuid::new_v4()), SessionId(Uuid::new_v4()));
         let clients = (ClientId(Uuid::new_v4()), ClientId(Uuid::new_v4()));
 
-        let first_client_pref = StreamInput::CCP(ChooseColorPref {
+        /*let first_client_pref = StreamInput::CCP(ChooseColorPref {
             client_id: clients.0,
             session_id: sessions.0.clone(),
             color_pref: ColorPref::White,
@@ -431,6 +427,7 @@ mod tests {
 
         test_outputs.put_prefs_out.recv().expect("recv");
         test_outputs.put_game_ready_out.recv().expect("recv");
-        assert!(test_outputs.xadd_call_out.is_empty())
+        assert!(test_outputs.xadd_call_out.is_empty())*/
+        todo!("test")
     }
 }
