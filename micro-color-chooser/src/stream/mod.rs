@@ -131,6 +131,7 @@ mod tests {
     use core_model::*;
     use crossbeam_channel::{unbounded, Receiver, Sender};
     use redis_streams::XId;
+    use redis_streams::XReadGroupSorted;
     use std::collections::HashMap;
     use std::rc::Rc;
     use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
@@ -188,13 +189,16 @@ mod tests {
         gr_ack_ms: Arc<AtomicU64>,
         ccp_ack_ms: Arc<AtomicU64>,
         max_read_millis: AtomicU64,
-        sorted_data: Arc<Mutex<Vec<(XId, StreamInput)>>>,
+        sorted_data: Arc<Mutex<Vec<(XId, Message)>>>,
     }
 
-    impl XRead for FakeXRead {
-        fn sorted(&self) -> Result<Vec<(XId, StreamInput)>, StreamReadErr> {
+    impl XReadGroupSorted for FakeXRead {
+        fn read(
+            &mut self,
+            _stream_names: &[String],
+        ) -> anyhow::Result<Vec<(XId, redis_streams::StreamMessage)>> {
             let max_ms = self.max_read_millis.load(Relaxed);
-            let data: Vec<_> = self
+            /*let data: Vec<_> = self
                 .sorted_data
                 .lock()
                 .expect("lock")
@@ -215,23 +219,8 @@ mod tests {
                 self.max_read_millis
                     .swap(new_max_eid_millis.millis_time, Relaxed);
             }
-            Ok(data)
-        }
-
-        fn ack_choose_color_pref(&self, ids: &[XId]) -> Result<(), StreamAckErr> {
-            if let Some(max_id_millis) = ids.iter().map(|id| id.millis_time).max() {
-                self.ccp_ack_ms.swap(max_id_millis, Relaxed);
-            }
-
-            Ok(())
-        }
-
-        fn ack_game_ready(&self, ids: &[XId]) -> Result<(), StreamAckErr> {
-            if let Some(max_id_millis) = ids.iter().map(|id| id.millis_time).max() {
-                self.gr_ack_ms.swap(max_id_millis, Relaxed);
-            }
-
-            Ok(())
+            Ok(data)*/
+            todo!()
         }
     }
 
