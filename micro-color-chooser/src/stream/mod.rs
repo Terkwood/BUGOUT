@@ -54,8 +54,8 @@ impl ColorChooserStreams {
                 game_color_prefs::by_game_ready(&gr, &repos);
             match gcp {
                 Ok(GameColorPref::Complete { game_id, prefs }) => {
-                    let rng_mutex = self.rng.lock();
-                    match rng_mutex {
+                    let mutex = self.rng.lock();
+                    match mutex {
                         Ok(mut rng) => {
                             let colors_chosen = choose(&prefs.0, &prefs.1, &game_id, &mut rng);
                             if let Err(_e) = self.reg.xadd.xadd(&colors_chosen) {
