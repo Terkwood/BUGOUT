@@ -5,7 +5,7 @@ extern crate redis_streams;
 
 mod components;
 mod repo;
-mod service;
+pub mod service;
 pub mod stream;
 
 pub use components::Components;

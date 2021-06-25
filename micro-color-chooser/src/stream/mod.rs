@@ -14,14 +14,19 @@ use log::{error, info};
 use redis_streams::{anyhow, Message, SortedStreams, XId};
 
 const GROUP_NAME: &str = "micro-color-chooser";
+use crate::service::Random;
 
+use std::rc::Rc;
+use std::sync::Mutex;
 pub struct ColorChooserStreams {
     pub reg: Components,
+    pub rng: Rc<Mutex<Random>>,
 }
 
 impl ColorChooserStreams {
     pub fn new(reg: Components) -> Self {
-        Self { reg }
+        let rng = Rc::new(Mutex::new(Random::new()));
+        Self { reg, rng }
     }
 
     pub fn process(&self, streams: &mut dyn SortedStreams) {
@@ -49,12 +54,18 @@ impl ColorChooserStreams {
                 game_color_prefs::by_game_ready(&gr, &repos);
             match gcp {
                 Ok(GameColorPref::Complete { game_id, prefs }) => {
-                    let colors_chosen = choose(&prefs.0, &prefs.1, &game_id, todo!("rng"));
-                    if let Err(_e) = self.reg.xadd.xadd(&colors_chosen) {
-                        error!("error writing to colors chose stream")
-                    }
+                    let rng_mutex = self.rng.lock();
+                    match rng_mutex {
+                        Ok(mut rng) => {
+                            let colors_chosen = choose(&prefs.0, &prefs.1, &game_id, &mut rng);
+                            if let Err(_e) = self.reg.xadd.xadd(&colors_chosen) {
+                                error!("error writing to colors chose stream")
+                            }
 
-                    info!("🎨 Completed: {:?}", colors_chosen)
+                            info!("🎨 Completed: {:?}", colors_chosen)
+                        }
+                        Err(_) => todo!(),
+                    }
                 }
                 Ok(_) => todo!(),
                 Err(_) => todo!(),
