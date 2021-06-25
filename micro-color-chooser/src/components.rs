@@ -28,7 +28,7 @@ pub struct Repos {
 }
 
 impl Repos {
-    pub fn new(c: &mut Components) -> Self {
+    pub fn new(c: &Components) -> Self {
         Self {
             prefs: c.prefs_repo.clone(),
             game_ready: c.game_ready_repo.clone(),

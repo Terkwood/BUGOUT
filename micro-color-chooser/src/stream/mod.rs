@@ -34,8 +34,32 @@ impl ColorChooserStreams {
 
     pub fn consume_game_ready(&self, msg: &Message) -> anyhow::Result<()> {
         let maybe_value = msg.get("data");
+        let repos = Repos::new(&self.reg);
         Ok(if let Some(redis::Value::Data(data)) = maybe_value {
             let gr: GameReady = bincode::deserialize(&data)?;
+
+            if let Err(_e) = self.reg.game_ready_repo.put(gr.clone()) {
+                error!("write to session game repo 0")
+            }
+            if let Err(_e) = self.reg.game_ready_repo.put(gr.clone()) {
+                error!("write to session game repo 0")
+            }
+
+            let gcp: Result<GameColorPref, crate::repo::FetchErr> =
+                game_color_prefs::by_game_ready(&gr, &repos);
+            match gcp {
+                Ok(GameColorPref::Complete { game_id, prefs }) => {
+                    let colors_chosen = choose(&prefs.0, &prefs.1, &game_id, todo!("rng"));
+                    if let Err(_e) = self.reg.xadd.xadd(&colors_chosen) {
+                        error!("error writing to colors chose stream")
+                    }
+
+                    info!("🎨 Completed: {:?}", colors_chosen)
+                }
+                Ok(_) => todo!(),
+                Err(_) => todo!(),
+            }
+
             todo!()
         })
     }
@@ -57,10 +81,7 @@ pub fn opts() -> ConsumerGroupOpts {
     }
 }
 
-const ACK_QUEUE_CAPACITY: usize = 25;
-
 pub fn process(components: &mut Components) {
-    let repos = Repos::new(components);
     loop {
         // match components.xread.sorted() {
         //   Ok(xrr) => {
@@ -87,17 +108,7 @@ pub fn process(components: &mut Components) {
             (xid, StreamInput::GR(gr)) => {
                 info!("Stream: Game Ready {:?}", &gr);
 
-                if let Err(_e) = components.game_ready_repo.put(gr.clone()) {
-                    error!("write to session game repo 0")
-                }
-                if let Err(_e) = components.game_ready_repo.put(gr.clone()) {
-                    error!("write to session game repo 0")
-                }
 
-                (
-                    game_color_prefs::by_game_ready(&gr, &repos),
-                    Processed::GR(xid),
-                )
             }
         };
 

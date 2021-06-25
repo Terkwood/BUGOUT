@@ -14,7 +14,7 @@ pub fn main() {
     let client = micro_color_chooser::create_redis_client();
     let components = Components::new(&client);
 
-    let chooser_streams = stream::ColorChooserStreams::new(components);
+    let mut chooser_streams = stream::ColorChooserStreams::new(components);
 
     let stream_handlers: Vec<(&str, Box<dyn FnMut(XId, &Message) -> anyhow::Result<()>>)> = vec![
         (
