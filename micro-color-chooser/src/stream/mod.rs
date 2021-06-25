@@ -71,7 +71,7 @@ impl ColorChooserStreams {
                 Err(_) => todo!(),
             }
 
-            todo!()
+            todo!("greetings")
         })
     }
 
