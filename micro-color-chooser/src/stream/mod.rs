@@ -351,31 +351,34 @@ mod tests {
         let sessions = (SessionId(Uuid::new_v4()), SessionId(Uuid::new_v4()));
         let clients = (ClientId(Uuid::new_v4()), ClientId(Uuid::new_v4()));
 
-        /*let first_client_pref = StreamInput::CCP(ChooseColorPref {
+        let first_client_pref = ChooseColorPref {
             client_id: clients.0,
             session_id: sessions.0.clone(),
             color_pref: ColorPref::White,
-        });
-        let second_client_pref = StreamInput::CCP(ChooseColorPref {
+        };
+        let second_client_pref = ChooseColorPref {
             client_id: clients.1,
             session_id: sessions.1.clone(),
             color_pref: ColorPref::Black,
-        });
+        };
 
         let board_size = 9;
-        let game_ready = StreamInput::GR(GameReady {
+        let game_ready = GameReady {
             game_id,
             sessions,
             event_id: EventId::new(),
             board_size,
-        });
-        let test_outputs = run_stream(vec![first_client_pref, second_client_pref, game_ready]);
+        };
+        let test_outputs = run_stream(vec![
+            ccp_to_msg(first_client_pref),
+            ccp_to_msg(second_client_pref),
+            gr_to_msg(game_ready),
+        ]);
 
         test_outputs.put_prefs_out.recv().expect("recv");
         test_outputs.put_prefs_out.recv().expect("recv");
         test_outputs.put_game_ready_out.recv().expect("recv");
-        test_outputs.xadd_call_out.recv().expect("recv");*/
-        todo!("write this test")
+        test_outputs.xadd_call_out.recv().expect("recv");
     }
 
     #[test]
@@ -448,14 +451,14 @@ mod tests {
         let sessions = (SessionId(Uuid::new_v4()), SessionId(Uuid::new_v4()));
         let clients = (ClientId(Uuid::new_v4()), ClientId(Uuid::new_v4()));
 
-        let first_client_pref =  ChooseColorPref {
+        let first_client_pref = ChooseColorPref {
             client_id: clients.0,
             session_id: sessions.0.clone(),
             color_pref: ColorPref::White,
         };
         let game_id = GameId::new();
         let board_size = 9;
-        let game_ready =  GameReady {
+        let game_ready = GameReady {
             game_id,
             sessions,
             event_id: EventId::new(),
